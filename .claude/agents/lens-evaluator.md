@@ -39,6 +39,18 @@ End with:
 3. ...
 ```
 
+## Solve mode
+
+When the caller says **Mode: solve**, you propose solutions instead of verdicts. The caller gives you a brief (roster of agents and people, reserved IDs, the output template) and an area of the book (chapters plus lens range).
+
+1. Read the brief, the target document and, if one is given, the lens review (for example `docs/reviews/AstroLex-Master-Plan-v2-Lens-Review.md`), so your solutions answer the review's findings for your lenses.
+2. If the brief names the book reference, you may skim the chapters for your area to check that every topic they cover is addressed. Use it only for coverage. Never quote or paraphrase passages from it.
+3. Group your lenses into a small number of solutions. Each solution is a concrete design, with starting values as data keys, followed by a step-by-step implementation path. Each step names who does it (a roster agent or a human role), its inputs, its output, and when it's done.
+4. Name the resources for each solution: tools, data sources (with licence notes), references and people. Where a licence or price must be checked, say so. Don't assert it.
+5. End with a coverage table listing every lens in your range, and every book topic in your area, against the solution that answers it.
+
+Follow the output template in the brief exactly, and use only the spec and decision IDs it reserves for you.
+
 ## Rules
 
 - Stay inside the document. No generic advice and no restating the lens questions.
