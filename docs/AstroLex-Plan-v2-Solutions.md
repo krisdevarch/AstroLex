@@ -2,6 +2,7 @@
 
 > **What this is:** the proposed answers to the 100-lens review of Draft 2 (`docs/reviews/AstroLex-Master-Plan-v2-Lens-Review.md`). For each problem it gives a concrete design, a step-by-step implementation path, who does each step (an AI agent or a person), and the resources to use.
 > **How it was made:** eight instances of the `lens-evaluator` agent (`.claude/agents/lens-evaluator.md`, in *solve* mode) each took one area of the game design book and its lenses. Their sections were merged, and the IDs and roster reconciled. Together the areas cover all 32 chapters and all 100 lenses (§3).
+> **Draft 3 note:** the plan is now Draft 3 (`AstroLex-Master-Plan-v3.md`), which targets millennials first and older Gen Z second. Where this document conflicts with Draft 3's audience changes, §6 rule 12 applies.
 > **Status:** proposals. Nothing here changes an approved spec. Each item becomes a spec, a spec amendment or a decision through the normal lifecycle (plan §3.2). The owner approves or rejects each one.
 
 ---
@@ -155,6 +156,8 @@ Solutions often span phases. Each is listed at the phase where it **starts**, an
 
 **Every gate:** the QA-001 gate pack (§6, rule 6).
 
+**Draft 3:** accounts, the Daily Signal share card, Friend Signals and safety basics move to Phase 3, and the rival VANTA arrives there too (§6, rule 12).
+
 ---
 
 ## 5. Decisions for the owner
@@ -164,7 +167,7 @@ These extend the plan's Part 5. Each one has a default, so work isn't blocked. R
 | # | Decision | Default | Source |
 |---|----------|---------|--------|
 | O-9 | Visor selection | Chosen per level on a "Record briefing" card that shows each unlocked visor's multiplier, drain and best stars. Teaching levels and act-closing levels are locked to the act's visor on the first clear. Enigma is available only where every word has an approved clue. | B2 |
-| O-10 | Primary player persona | "Mara, the commute word-gamer": age 24–45, plays word games daily in 3–8 minute sessions, one-handed, portrait. Accepts light time pressure; dislikes twitch aiming and losing progress. | A2 |
+| O-10 | Primary player persona | **Answered in Draft 3 (§1.0):** millennials (about 27–40) first, older Gen Z (about 18–26) second. The A2 "Mara" persona remains the millennial example, narrowed to 27–40. | A2, Draft 3 |
 | O-11 | Contractor budget and timing | Budgeted in person-days in `docs/production/budget.md`: art style test 4d, Phase 2 art 30d, Phases 3–5 art 20d each, audio 10d then 8d per phase, VO 2 sessions, legal 1d (Phase 1) and 3d (Phase 6), 20% contingency. If the budget is short, fall back to flat vector backdrops. | G1 |
 | O-12 | Clue review level | Merged default (see §6, rule 4): 100% owner review of campaign clues; Daily Signal and season clues tiered, with a 10% sample that is earned after 3 clean batches. | C5 + G3 |
 | O-13 | Babel letter-pool scope | `level`. If CONT-000 shows fewer than 80% of Act II–IV levels can carry the minimum number of lines, switch to `act` (letters caught so far this act), shown in a "Babel echo" strip. | A4 |
@@ -202,6 +205,12 @@ The eight areas were written in parallel, and in a few places they overlap or di
 9. **Roster changes the areas surfaced.** Add a **sensitivity reader** (contract, Phase 0 and each act script; A6) for story beats close to aphasia and speech loss. **Legal / privacy counsel** starts in Phase 1 for playtest consent (G5), not Phase 6. G2 writes the missing agent definition files to `.claude/agents/` as each agent is first needed.
 10. **Earlier social features.** F2 and F4 move a META-007 v0 and ghost recording into Phase 6, and Friend Signals into Phase 7, ahead of Phase 9 multiplayer. §4 reflects this.
 11. **Name entry.** D2 is authoritative: the name is entered *after* the call-sign catch, framed in the fiction, and stored on-device only (with H6). Non-Latin names are transliterated with an editable preview, and there is no silent fallback.
+12. **Draft 3 audience changes win over this document.** Draft 3 targets millennials first and older Gen Z second. It changes these solutions:
+    - **Social timing:** F4 Friend Signals (ONL-205), ONL-001 accounts, the Daily Signal share card (META-006) and ONL-209 safety basics move to **Phase 3**, ahead of the Phase 6–7 timing in F2, F4 and F6. ONL-208 Catcher Profile stays in Phase 6.
+    - **Modes:** B4's time budget gains a *Drift* mode (no drain over time) alongside *Pressure*, with stars tracked separately.
+    - **Story:** D5's rival VANTA arrives in Phase 3, and a crew of two peers (Ade, Kit) joins the cast. Chat comms (new UX-010) replace cutscene-style comms. The Loud Wars are reframed as the internet era.
+    - **Money:** H3's business model becomes hybrid, as O-7 in Draft 3 describes (free start, one-time campaign unlock, season pass, cosmetics). The Phase 2 gate runs a two-audience fake-door test, and the Phase 7 gate adds sharing targets.
+    - **Seasons:** slang is allowed only in seasonal content, and COM-003 player-made Babel lines stay moderated.
 
 ---
 
