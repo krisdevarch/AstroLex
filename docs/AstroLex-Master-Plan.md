@@ -1,6 +1,6 @@
 # AstroLex — Master Plan
 
-> Status: **v1.0 draft** · Replaces "Game Development Execution Plan: AstroLex" (wiki) as the plan of record.
+> Status: **v1.0, superseded** by `AstroLex-Master-Plan-v2.md` (Draft 2). Replaced the "Game Development Execution Plan: AstroLex" (wiki).
 > Design references: Jesse Schell, *The Art of Game Design: A Book of Lenses* (wiki: `Game-Design-Book-ref`). Lens numbers are cited as **[L#]**.
 
 ## How to use this document
