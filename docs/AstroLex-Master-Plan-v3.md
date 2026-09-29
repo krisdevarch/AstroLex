@@ -1,6 +1,6 @@
 # AstroLex: Master Plan (Draft 3)
 
-> **Status:** Draft 3. It supersedes Draft 2 (`AstroLex-Master-Plan-v2.md`) as the plan of record.
+> **Status:** Draft 3, **superseded** by Draft 4 (`AstroLex-Master-Plan-v4.md`), the agent-built execution plan. Part 1 of this draft remains the story source of truth until `docs/story-bible.md` replaces it. It superseded Draft 2 (`AstroLex-Master-Plan-v2.md`).
 >
 > **What changed from Draft 2: the target audience.** Draft 3 aims the game at **millennials (primary, about 27–40) and older Gen Z (secondary, about 18–26)**, and adjusts the story and plan to suit them:
 > - **Story:** the Loud Wars become recognisably the internet era. The Catcher is a young recruit with a crew of peers. Babel's voice is witty and quotable. Comms arrive as chat messages. Slang stays out of the main story and appears only in seasonal events. (Part 1)
