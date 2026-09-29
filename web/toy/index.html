@@ -296,9 +296,19 @@
     ev('round_start', { mode, act: actKey, words: words.slice(), round: roundNo, ramp: ramp() });
   }
   function setupWord() {
-    slots = words[wi].split('').map(ch => ({ ch, filled: false }));
+    // letters already caught into the preview word carry over when it becomes the active word
+    slots = (previewSlots.length && previewSlots.map(s => s.ch).join('') === words[wi]) ? previewSlots : words[wi].split('').map(ch => ({ ch, filled: false }));
     previewSlots = wi + 1 < words.length ? words[wi + 1].split('').map(ch => ({ ch, filled: false })) : [];
     renderWords();
+  }
+  // 2. once the record has enough of a letter, surplus copies dissolve instead of lurking as wrong catches
+  function trimSurplus() {
+    const need = neededCounts(); const seen = {};
+    for (const L of letters.slice()) {
+      if (L.decoy || L.fly || L.dissolve) continue;
+      seen[L.ch] = (seen[L.ch] || 0) + 1;
+      if (seen[L.ch] > (need[L.ch] || 0)) { L.alive = false; L.dissolve = { t0: performance.now(), dur: reduceMotion ? 1 : 420 }; ev('dissolve', { ch: L.ch }); }
+    }
   }
   function neededCounts() {
     const need = {};
@@ -387,13 +397,19 @@
   // ---------- input ----------
   const ray = new THREE.Raycaster(); const v2 = new THREE.Vector2(); const v3 = new THREE.Vector3();
   function screenPos(mesh) { v3.copy(mesh.position).project(camera); return { x: (v3.x + 1) / 2 * innerWidth, y: (1 - v3.y) / 2 * innerHeight }; }
+  let pending = null; // one queued tap while a tether is in flight
+  function tileRadiusPx(L) { const pxPerUnit = (innerHeight / 2) / halfHeightAt(L.plane.z); return 0.5 * L.mesh.scale.x * pxPerUnit * 1.2; }
+  function hitTest(x, y) {
+    const base = T['tap.radiusPx'] * (mode === 'drift' ? T['tap.radiusDriftMul'] : 1);
+    let best = null, bd2 = Infinity;
+    for (const L of letters) { if (!L.alive || L.fly || L.dissolve) continue; const p = screenPos(L.mesh); const d = Math.hypot(p.x - x, p.y - y); const r = Math.max(base, tileRadiusPx(L) + 6); if (d < r && d < bd2) { best = L; bd2 = d; } }
+    return best;
+  }
   canvas.addEventListener('pointerdown', (e) => {
     if (state !== 'play') return; audio();
-    if (shot) return; // one tether at a time
-    const radius = T['tap.radiusPx'] * (mode === 'drift' ? T['tap.radiusDriftMul'] : 1) * (devicePixelRatio > 2 ? 1.1 : 1);
-    let best = null, bd2 = Infinity;
-    for (const L of letters) { const p = screenPos(L.mesh); const d = Math.hypot(p.x - e.clientX, p.y - e.clientY); const r = radius * (L.plane.z === 0 ? 1 : 0.9); if (d < r && d < bd2) { best = L; bd2 = d; } }
-    if (!best) { ev('tap_miss', { x: e.clientX | 0, y: e.clientY | 0 }); tone(300, 0.05, 'sine', 0.02); return; }
+    const best = hitTest(e.clientX, e.clientY);
+    if (!best) { ev('tap_miss', { x: e.clientX | 0, y: e.clientY | 0, inFlight: !!shot }); tone(300, 0.05, 'sine', 0.02); return; }
+    if (shot) { if (best !== shot.L) { pending = best; best.queued = true; tone(900, 0.04, 'triangle', 0.02); ev('queue', { ch: best.ch }); } return; }
     fire(best);
   });
   function fire(L) {
@@ -404,7 +420,11 @@
   }
   function resolveShot() {
     const { L, end } = shot; shot = null; tether.visible = tip.visible = false;
-    if (!L.alive) return;
+    const next = pending; pending = null;
+    if (L.alive) resolveHit(L, end);
+    if (next && next.alive && !next.fly && !next.dissolve && state === 'play') fire(next);
+  }
+  function resolveHit(L, end) {
     const d = L.mesh.position.distanceTo(end);
     if (d > T['tether.hitTolerance'] * (mode === 'drift' ? 1.6 : 1)) { escapes++; sfx.escape(); ev('escape', { ch: L.ch, d: +d.toFixed(2) }); toast('It drifted off'); return; }
     // which slot?
@@ -416,10 +436,10 @@
     combo = Math.min(T['combo.max'], combo + T['combo.step']);
     burst(L.mesh.position, 0x5fd3c9); sfx.catchNote(where === 'active' ? slots.filter(s => s.filled).length - 1 : 0); buzz(12);
     flyToSlot(L, where, idx);
-    ev('catch', { ch: L.ch, where, combo: +combo.toFixed(1) });
+    ev('catch', { ch: L.ch, where, combo: +combo.toFixed(1), queued: !!L.queued });
     renderWords(); if (where === 'active') flashSlot(idx, 'flash');
     if (slots.every(s => s.filled)) wordRestored();
-    else { spawnForWords(); }
+    else { spawnForWords(); trimSurplus(); }
     renderHud();
   }
   function flyToSlot(L, where, idx) {
@@ -435,7 +455,8 @@
     L.flash = performance.now();
     if (mode === 'pressure') { oxygen = Math.max(0, oxygen - T['oxygen.wrongCost']); toast(`Not in the record. −${T['oxygen.wrongCost']} air`); if (oxygen <= 0) return gameOver(false); }
     else toast('Not in the record');
-    ev('wrong', { ch: L.ch, decoy: L.decoy });
+    const inWords = (words[wi] || '').includes(L.ch) || (words[wi + 1] || '').includes(L.ch);
+    ev('wrong', { ch: L.ch, decoy: L.decoy, kind: inWords ? 'surplus' : 'unneeded' });
     renderHud();
   }
   function wordRestored() {
@@ -445,7 +466,8 @@
     sfx.restore(); buzz(30); ev('restore', { word: w, score: Math.round(ws) });
     wi++;
     if (wi >= words.length) { return gameOver(true); }
-    setupWord(); spawnForWords(); ensureDecoys();
+    setupWord(); spawnForWords(); trimSurplus(); ensureDecoys();
+    if (slots.every(s => s.filled)) { setTimeout(wordRestored, 400); return; }
     const line = babelLine(); if (line) setTimeout(() => showBabel(line), 350);
   }
   function gameOver(won) {
@@ -470,6 +492,7 @@
     // drift
     for (const L of letters) {
       const m = L.mesh;
+      if (L.dissolve) { const k = Math.min(1, (now - L.dissolve.t0) / L.dissolve.dur); m.scale.setScalar(Math.max(0.01, (1 - k)) * (L.plane.z === 0 ? 1 : 0.92)); m.rotation.z += dt * 3; if (k >= 1) removeLetter(L); continue; }
       if (L.fly) { const k = Math.min(1, (now - L.fly.t0) / L.fly.dur); const e = 1 - Math.pow(1 - k, 3); m.position.lerpVectors(L.fly.from, L.fly.to, e); m.scale.setScalar((1 - k) * 0.8 + 0.2); if (k >= 1) removeLetter(L); continue; }
       if (state === 'play') { m.position.x += L.vel.x * dt; m.position.y += L.vel.y * dt; }
       const f = 1 + (-L.plane.z) / camera.position.z * 0.9; const hw = bounds.hw * f, top = bounds.top * f, bot = bounds.bottom * f;
@@ -520,7 +543,7 @@
   $('applyBtn').addEventListener('click', () => { for (const k of sliders) T[k] = parseFloat(document.getElementById('t_' + k).value); actKey = actSel.value; ev('tunables', Object.assign({ act: actKey }, T)); $('debug').hidden = true; $('end').hidden = true; if (state !== 'idle') startRound(); });
 
   // test hook (read-only view for the smoke test; not used by the game)
-  window.__toy = { get letters() { return letters; }, screenPos, get state() { return state; }, get shot() { return shot; }, compose, count, get stats() { return { catches, wrong, escapes, score, oxygen, wi, words: words.slice(), slots: slots.map(s => s.filled) }; }, T, get mode() { return mode; } };
+  window.__toy = { get letters() { return letters; }, screenPos, get state() { return state; }, get shot() { return shot; }, compose, count, get stats() { return { catches, wrong, escapes, score, oxygen, wi, words: words.slice(), slots: slots.map(s => s.filled), preview: previewSlots.map(s => s.filled) }; }, T, get mode() { return mode; } };
   // boot
   resize(); requestAnimationFrame(frame);
   // idle attract: a few letters drifting behind the start card
