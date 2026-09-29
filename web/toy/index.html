@@ -247,7 +247,7 @@
     const s = plane.z === 0 ? 1 : 0.92; mesh.scale.setScalar(s);
     const hw = bounds.hw * (1 + (-plane.z) / camera.position.z * 0.9), top = bounds.top * (1 + (-plane.z) / camera.position.z * 0.9), bot = bounds.bottom * (1 + (-plane.z) / camera.position.z * 0.9);
     mesh.position.set(rand(-hw, hw), rand(bot, top), plane.z);
-    const a = Math.random() * 6.283, sp = T['drift.speed'] * rand(0.6, 1.3);
+    const a = Math.random() * 6.283, sp = T['drift.speed'] * ramp().drift * rand(0.6, 1.3);
     const L = { mesh, ch, plane, vel: new THREE.Vector2(Math.cos(a) * sp, Math.sin(a) * sp), phase: Math.random() * 6.283, spin: rand(0.5, 1.2), decoy, alive: true, born: performance.now() };
     if (plane.z !== 0) { front.color.setHex(0xcfd6ea); }
     scene.add(mesh); letters.push(L); return L;
@@ -279,19 +279,21 @@
   let mode = 'drift';
   let state = 'idle'; // idle | play | over
   let words = [], wi = 0, slots = [], previewSlots = [];
-  let oxygen = 100, score = 0, combo = 1.0, wrong = 0, escapes = 0, catches = 0, firstCatchAt = null, lowTick = 0;
+  let oxygen = 100, score = 0, combo = 1.0, wrong = 0, escapes = 0, catches = 0, firstCatchAt = null, lowTick = 0, minOxygen = 100;
   let restoredPool = []; // letters restored this level (for Babel)
   let restoredWords = [];
-  let babelTimer = null, lastBabel = '';
+  let babelTimer = null, lastBabel = '', shownLines = new Set(), roundNo = 0;
 
+  // gentle per-round ramp so a second and third round stay interesting (logged with every round)
+  function ramp() { const r = Math.max(0, roundNo - 1); return { drift: +(1 + 0.08 * r).toFixed(2), decoys: Math.min(8, T['spawner.decoys'] + r), drain: +(1 + 0.10 * r).toFixed(2) }; }
   function pick(arr, n) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); }
   function startRound() {
     for (const L of letters.slice()) removeLetter(L);
     words = pick(D.acts[actKey].words, T['spawner.wordsPerLevel']); wi = 0;
-    oxygen = T['oxygen.max']; score = 0; combo = 1; wrong = 0; escapes = 0; catches = 0; firstCatchAt = null; restoredPool = []; restoredWords = []; lastBabel = '';
+    oxygen = T['oxygen.max']; score = 0; combo = 1; wrong = 0; escapes = 0; catches = 0; firstCatchAt = null; restoredPool = []; restoredWords = []; lastBabel = ''; shownLines = new Set(); roundNo++; minOxygen = T['oxygen.max'];
     roundStart = performance.now(); state = 'play'; shot = null; tether.visible = tip.visible = false;
     setupWord(); spawnForWords(); ensureDecoys(); renderHud(); showBabel('');
-    ev('round_start', { mode, act: actKey, words: words.slice() });
+    ev('round_start', { mode, act: actKey, words: words.slice(), round: roundNo, ramp: ramp() });
   }
   function setupWord() {
     slots = words[wi].split('').map(ch => ({ ch, filled: false }));
@@ -311,7 +313,7 @@
   }
   const FREQ = { e: 127, t: 91, a: 82, o: 75, i: 70, n: 67, s: 63, h: 61, r: 60, d: 43, l: 40, c: 28, u: 28, m: 24, w: 24, f: 22, g: 20, y: 20, p: 19, b: 15, v: 10, k: 8, j: 2, x: 2, q: 1, z: 1 };
   function weightedLetter() { let tot = 0; for (const c in FREQ) tot += FREQ[c]; let r = Math.random() * tot; for (const c in FREQ) { r -= FREQ[c]; if (r <= 0) return c; } return 'e'; }
-  function ensureDecoys() { let n = letters.filter(L => L.decoy).length; while (n < T['spawner.decoys']) { spawnLetter(weightedLetter(), true); n++; } }
+  function ensureDecoys() { let n = letters.filter(L => L.decoy).length; while (n < ramp().decoys) { spawnLetter(weightedLetter(), true); n++; } }
 
   // ---------- HUD ----------
   function renderWords() {
@@ -367,16 +369,16 @@
   }
   function babelLine() {
     const pool = count(restoredPool.join(''));
-    const lines = compose(pool, restoredWords);
+    const lines = compose(pool, restoredWords).filter(l => !shownLines.has(l.text));
     if (!lines.length) return '';
     const pref = ['signature', 'not_that', 'you_i', 'is', 'or', 'then', 'no', 'so', 'who', 'still', 'adj_noun', 'theme'];
-    for (const id of pref) { const c = lines.filter(l => l.id === id && l.text !== lastBabel); if (c.length && Math.random() < (id === 'signature' ? 0.9 : 0.55)) return c[Math.floor(Math.random() * c.length)].text; }
+    for (const id of pref) { const c = lines.filter(l => l.id === id); if (c.length && Math.random() < (id === 'signature' ? 0.9 : 0.55)) return c[Math.floor(Math.random() * c.length)].text; }
     return lines[Math.floor(Math.random() * lines.length)].text;
   }
   function showBabel(text) {
     const b = $('babel'); clearTimeout(babelTimer);
     if (!text) { b.classList.remove('on'); b.textContent = ''; return; }
-    lastBabel = text; b.textContent = ''; b.classList.add('on'); sfx.babel();
+    lastBabel = text; shownLines.add(text); b.textContent = ''; b.classList.add('on'); sfx.babel();
     let i = 0; const tick = () => { b.textContent = text.slice(0, ++i); if (i < text.length) babelTimer = setTimeout(tick, reduceMotion ? 0 : 38); else babelTimer = setTimeout(() => b.classList.remove('on'), T['babel.showSeconds'] * 1000); };
     tick();
     ev('babel_line', { text });
@@ -450,7 +452,7 @@
     state = 'over'; shot = null; tether.visible = tip.visible = false;
     if (won && mode === 'pressure') score += T['score.oxygenBonus'] * oxygen;
     const secs = (performance.now() - roundStart) / 1000;
-    const r = { mode, act: actKey, won, words: restoredWords.length, total: words.length, score: Math.round(score), secs: +secs.toFixed(1), catches, wrong, escapes, firstCatch: firstCatchAt === null ? null : +firstCatchAt.toFixed(1) };
+    const r = { round: roundNo, ramp: ramp(), mode, act: actKey, won, words: restoredWords.length, total: words.length, score: Math.round(score), secs: +secs.toFixed(1), catches, wrong, escapes, firstCatch: firstCatchAt === null ? null : +firstCatchAt.toFixed(1), minOxygen: +minOxygen.toFixed(0) };
     log.rounds.push(r); ev('round_end', r); persist();
     const q = babelLine();
     $('endTitle').textContent = won ? 'Sector cleared' : 'Out of air';
@@ -473,7 +475,7 @@
       const f = 1 + (-L.plane.z) / camera.position.z * 0.9; const hw = bounds.hw * f, top = bounds.top * f, bot = bounds.bottom * f;
       if (m.position.x > hw) { m.position.x = hw; L.vel.x = -Math.abs(L.vel.x) * 0.9; } if (m.position.x < -hw) { m.position.x = -hw; L.vel.x = Math.abs(L.vel.x) * 0.9; }
       if (m.position.y > top) { m.position.y = top; L.vel.y = -Math.abs(L.vel.y) * 0.9; } if (m.position.y < bot) { m.position.y = bot; L.vel.y = Math.abs(L.vel.y) * 0.9; }
-      const sp = L.vel.length(), want = T['drift.speed']; if (sp < want * 0.5 || sp > want * 1.6) L.vel.multiplyScalar(0.98 + (sp < want * 0.5 ? 0.05 : 0));
+      const sp = L.vel.length(), want = T['drift.speed'] * ramp().drift; if (sp < want * 0.5 || sp > want * 1.6) L.vel.multiplyScalar(0.98 + (sp < want * 0.5 ? 0.05 : 0));
       if (!reduceMotion) { const t = now / 1000 * T['drift.spin'] * L.spin; m.rotation.x = Math.sin(t + L.phase) * 0.32; m.rotation.y = Math.sin(t * 0.8 + L.phase * 1.7) * 0.42; m.rotation.z = Math.sin(t * 0.5 + L.phase) * 0.08; }
       if (L.flash) { const k = (now - L.flash) / 260; const c = k < 1 ? 1 : 0; m.material[4].emissive = m.material[4].emissive || new THREE.Color(); m.material[4].emissive.setRGB(0.6 * (1 - k) * c, 0.05, 0.08 * c); if (k >= 1) L.flash = 0; }
     }
@@ -487,7 +489,8 @@
     for (const b of bursts.slice()) { const k = (now - b.t0) / 550; const pos = b.p.geometry.attributes.position; for (let i = 0; i < b.vel.length; i++) { pos.array[i * 3] += b.vel[i].x * dt; pos.array[i * 3 + 1] += b.vel[i].y * dt; pos.array[i * 3 + 2] += b.vel[i].z * dt; } pos.needsUpdate = true; b.p.material.opacity = 1 - k; if (k >= 1) { scene.remove(b.p); bursts.splice(bursts.indexOf(b), 1); } }
     // oxygen
     if (state === 'play' && mode === 'pressure') {
-      oxygen -= T['oxygen.drainPerSec'] * dt; if (oxygen <= 0) { oxygen = 0; renderHud(); gameOver(false); }
+      if (oxygen < minOxygen) minOxygen = oxygen;
+      oxygen -= T['oxygen.drainPerSec'] * ramp().drain * dt; if (oxygen <= 0) { oxygen = 0; renderHud(); gameOver(false); }
       else { if (oxygen < 25 && now - lowTick > 1100) { lowTick = now; sfx.low(); } if (now - hudTick > 100) { hudTick = now; renderHud(); } }
     }
     renderer.render(scene, camera);
