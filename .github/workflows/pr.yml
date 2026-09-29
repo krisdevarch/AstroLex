@@ -1,0 +1,40 @@
+name: pr
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  tools:
+    name: tools tests, data schemas, content validators
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install tools
+        run: pip install -e "./tools[dev]"
+      - name: Fetch WordNet (Princeton licence, see data/words/LICENCES.md)
+        run: |
+          mkdir -p ~/nltk_data/corpora
+          curl -sSL -o ~/nltk_data/corpora/wordnet.zip https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/wordnet.zip
+          unzip -q -o ~/nltk_data/corpora/wordnet.zip -d ~/nltk_data/corpora
+      - name: Validate data files against schemas
+        run: python -m astrolex_tools.validate_data
+      - name: Unit tests
+        run: pytest tools
+      - name: Build word database
+        run: python -m astrolex_tools.words.build
+      - name: Blocklist board scan (CONT-001)
+        run: python -m astrolex_tools.words.scan --boards 20000
+      - name: Babel validator over act lists (STORY-004)
+        run: python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: reports/ci

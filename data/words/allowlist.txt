@@ -1,0 +1,12 @@
+# Tokens that are never treated as blocked, even if a future seed list contains them.
+sex
+style
+girls
+women
+beaver
+booty
+clover
+scat  # jazz
+mound
+venus
+poop  # mild, allowed only in the dictionary, never chosen as a target

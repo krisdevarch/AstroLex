@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astrolex-tools"
+version = "0.1.0"
+description = "AstroLex content tooling: word database, blocklist, Babel voice composer and feasibility checks."
+requires-python = ">=3.11"
+dependencies = [
+  "wordfreq>=3.1",
+  "nltk>=3.9",
+  "jsonschema>=4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["astrolex_tools*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
