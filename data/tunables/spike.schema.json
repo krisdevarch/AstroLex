@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AstroLex Phase 1 spike tunables",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spawner.decoysPerLevel",
+    "spawner.wordsPerLevel",
+    "spawner.maxLettersOnScreen",
+    "babel.minCandidateLines",
+    "babel.maxWordsPerLine",
+    "babel.minLineLetters",
+    "haz002.minCounterWords",
+    "haz002.counterWordMinLength",
+    "feasibility.levelsPerAct",
+    "feasibility.passShare",
+    "feasibility.seed",
+    "blocklist.scanBoards",
+    "blocklist.maxFormableLength",
+    "difficulty.zipf.easyMin",
+    "difficulty.zipf.mediumMin",
+    "babel.anagramZipfMin",
+    "haz002.counterWordZipfMin"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "spawner.decoysPerLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 12
+    },
+    "spawner.wordsPerLevel": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8
+    },
+    "spawner.maxLettersOnScreen": {
+      "type": "integer",
+      "minimum": 6,
+      "maximum": 40
+    },
+    "babel.minCandidateLines": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "babel.maxWordsPerLine": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "babel.minLineLetters": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "haz002.minCounterWords": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "haz002.counterWordMinLength": {
+      "type": "integer",
+      "minimum": 3
+    },
+    "feasibility.levelsPerAct": {
+      "type": "integer",
+      "minimum": 10
+    },
+    "feasibility.passShare": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "feasibility.seed": {
+      "type": "integer"
+    },
+    "blocklist.scanBoards": {
+      "type": "integer",
+      "minimum": 100
+    },
+    "blocklist.maxFormableLength": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 8
+    },
+    "difficulty.zipf.easyMin": {
+      "type": "number"
+    },
+    "difficulty.zipf.mediumMin": {
+      "type": "number"
+    },
+    "babel.anagramZipfMin": {
+      "type": "number"
+    },
+    "haz002.counterWordZipfMin": {
+      "type": "number"
+    }
+  }
+}

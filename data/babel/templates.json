@@ -1,0 +1,19 @@
+{
+  "$schema": "./templates.schema.json",
+  "status": "draft",
+  "notes": "Babel speaks only in letters the player has caught. Every token, literal or slot, must be spelled from the level's letter pool. Slots: {T} a restored word of this level, {ANAGRAM_T} a dictionary anagram of a restored word, {W} any lexicon word, {N} noun, {V} verb, {A} adjective, {THEME} a thematic word (silence, listening, noise). Uppercase literals are fixed glue words.",
+  "templates": [
+    {"id": "signature", "pattern": "{ANAGRAM_T}.", "note": "The pure rearrangement. SILENT -> LISTEN."},
+    {"id": "not_that", "pattern": "NOT {T}. {ANAGRAM_T}.", "note": "Babel corrects the record."},
+    {"id": "is", "pattern": "{N} IS {N}.", "note": "A flat equation. NOISE IS WAR."},
+    {"id": "no", "pattern": "NO {W}.", "note": "The mute button."},
+    {"id": "still", "pattern": "STILL {A}?", "note": "Dry check-in."},
+    {"id": "then", "pattern": "{W}, THEN {W}.", "note": "Cause and effect, Babel's version."},
+    {"id": "who", "pattern": "WHO {V}?", "note": "Rhetorical."},
+    {"id": "adj_noun", "pattern": "{A} {N}.", "note": "A label on what the player just did."},
+    {"id": "you_i", "pattern": "YOU {V}. I {V}.", "note": "Contrast. YOU SPEAK. I LISTEN."},
+    {"id": "or", "pattern": "{N} OR {N}?", "note": "A choice Babel thinks is obvious."},
+    {"id": "theme", "pattern": "{THEME}.", "note": "One word, on theme."},
+    {"id": "so", "pattern": "SO {A}.", "note": "Deadpan."}
+  ]
+}

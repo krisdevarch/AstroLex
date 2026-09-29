@@ -1,0 +1,24 @@
+# Thematic words Babel favours. Must exist in the word database. status: draft
+silence
+silent
+listen
+quiet
+hush
+mute
+still
+noise
+loud
+word
+words
+name
+voice
+speak
+hear
+heard
+said
+say
+sound
+echo
+signal
+peace
+war

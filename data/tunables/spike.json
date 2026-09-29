@@ -1,0 +1,20 @@
+{
+  "$schema": "./spike.schema.json",
+  "spawner.decoysPerLevel": 4,
+  "spawner.wordsPerLevel": 4,
+  "spawner.maxLettersOnScreen": 24,
+  "babel.minCandidateLines": 3,
+  "babel.maxWordsPerLine": 3,
+  "babel.minLineLetters": 4,
+  "haz002.minCounterWords": 1,
+  "haz002.counterWordMinLength": 4,
+  "feasibility.levelsPerAct": 100,
+  "feasibility.passShare": 0.8,
+  "feasibility.seed": 20260929,
+  "blocklist.scanBoards": 100000,
+  "blocklist.maxFormableLength": 6,
+  "difficulty.zipf.easyMin": 4.5,
+  "difficulty.zipf.mediumMin": 3.3,
+  "babel.anagramZipfMin": 3.5,
+  "haz002.counterWordZipfMin": 3.3
+}
