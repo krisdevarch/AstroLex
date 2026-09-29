@@ -32,11 +32,13 @@
 
 # Part 1: Goal
 
-## 1.1 Success (owner to confirm, default below)
+## 1.1 Success (owner's answer, 29 September 2026)
 
-> *Within twelve months, AstroLex is a finished, well-reviewed game on iOS, Android and the web with a daily habit loop that grows without paid marketing, a few thousand daily players, contractor costs recovered within a year of launch, and an audience and pipeline for a second game. A licensing or featuring conversation with a platform or media company is a welcome outcome, not the plan.*
+The owner's framing: **this is a proof of concept first.** Twelve months is too far to commit to; the near goal is to find out, cheaply, whether the game is worth building. Money decisions (price, contractor budget) wait for later stages.
 
-This paragraph is the tie-breaker for every scope argument. If a feature does not move one of its clauses, it waits.
+> *Near term (Phases 1–3, about 12 weeks): a browser prototype that people ask to play again, and a free Daily Signal on iOS and the web that grows without paid marketing. If those hold, the longer goal applies: a finished, well-reviewed game with a daily habit loop, a few thousand daily players, contractor costs recovered within a year of launch, and an audience for a second game. A licensing or featuring conversation is a welcome outcome, not the plan.*
+
+This paragraph is the tie-breaker for every scope argument. If a feature does not move the near-term clause, it waits. **Platforms: iOS first, then Android.** The owner works on a Mac and an iPhone, so the first mobile builds go to TestFlight; Android follows once the iOS build is stable.
 
 ## 1.2 Essential experience (one sentence, to be settled by the Phase 2 prototype)
 
@@ -180,7 +182,7 @@ Durations assume agents implement and the owner reviews within the 6-hour budget
 
 | WP | Work package | Agent | Output | Acceptance and evidence |
 |---|---|---|---|---|
-| 0.1 | Goal paragraph and essential experience | Owner (drafted by `story-writer`) | Part 1 confirmed in this file | Owner edits or accepts §1.1–1.2 |
+| 0.1 | Goal paragraph and essential experience | Owner (drafted by `story-writer`) | Part 1 confirmed in this file | **Done 29 September 2026:** proof of concept first, iOS first, money later (§1.1) |
 | 0.2 | Repo scaffold | `builder` | `tools/` with pytest, `data/` schemas, `web/` skeleton, `wps/`, `reports/`, `.github/workflows/pr.yml` | CI green on an empty PR; `pytest` and schema check run |
 | 0.3 | Agent definitions | `builder` | `.claude/agents/{builder,content-curator,story-writer,verify-runner}.md` | Each file states does, never does, inputs, evidence format |
 | 0.4 | Decisions | Owner | Part 5 rows answered or defaulted, recorded in `wps/_index.md` | Every row has a value |
@@ -237,9 +239,9 @@ Durations assume agents implement and the owner reviews within the 6-hour budget
 | WP | Work package | Agent | Output | Acceptance and evidence |
 |---|---|---|---|---|
 | 3.1 | Rules core | `builder` | `tools/rules/` (Python reference) and `game/rules/` (GDScript port): drift, tether, catch taxonomy, oxygen model per mode, scoring, spawner with exact letters plus decoys, seeded and fixed-step, never an unwinnable board | Property tests: 10,000 seeded boards all solvable; Python and GDScript produce identical outcomes for 100 recorded input streams |
-| 3.2 | Godot project and CI | `builder` + `verify-runner` | `game/` on Godot 4.7, Mobile renderer, headless Android export in CI, iOS export on the Mac, gdUnit4 in CI, weekly builds to Play internal and TestFlight | Installable on both reference phones from CI artefacts; evidence with build hashes |
+| 3.2 | Godot project and CI | `builder` + `verify-runner` | `game/` on Godot 4.7, Mobile renderer, iOS export on the owner's Mac first (TestFlight), headless Android export in CI second, gdUnit4 in CI, weekly builds to TestFlight then the Play internal track | Installable on the owner's iPhone, then on the reference Android; evidence with build hashes |
 | 3.3 | Daily Signal, web | `builder` | `web/daily/`: today's seed from the date, 3–5 words, the winning mode as default with the other selectable, Babel's line of the day identical for everyone, results screen, spoiler-free emoji share card with a deep link to the same puzzle, streak with two freezes a week | Card renders on iOS and Android share sheets and in chat previews; Lighthouse performance over 90 on mobile |
-| 3.4 | Daily Signal, mobile | `builder` | The same puzzle in the Godot client, Prologue as the tutorial (three text-free teaching levels), settings (text size, dyslexia-friendly font, reduced motion, colour-blind palette, haptics) | 60 fps and no thermal throttling in 15 minutes on the reference Android; FTUE completion tracked |
+| 3.4 | Daily Signal, mobile | `builder` | The same puzzle in the Godot client, **iOS first via TestFlight**, Android on the Play closed track once iOS is stable; Prologue as the tutorial (three text-free teaching levels), settings (text size, dyslexia-friendly font, reduced motion, colour-blind palette, haptics) | 60 fps and no thermal throttling in 15 minutes on the owner's iPhone, then on the reference Android; FTUE completion tracked |
 | 3.5 | Platform services | `builder` | `game/services/`: Game Center and Play Games leaderboards for today's Signal, iCloud and Play Games saved-games cloud save, privacy-friendly analytics (events from WP-2.4 plus day-1 and day-7 return, share taps), remote tunables from a static JSON on a CDN | Each service behind a one-file interface; a fake implementation passes the same tests |
 | 3.6 | Store set-up | Owner + `market-analyst` | Apple and Google developer accounts, app records, privacy labels, IARC rating, a first store page draft, a featuring nomination draft | Accounts live; TestFlight and Play closed track accepting testers |
 | 3.7 | Story bible v1 | `story-writer` + owner | `docs/story-bible.md`: Draft 3 Part 1 plus world rules (how removing a word from the signal removes it from minds; how oxygen is resupplied), three traits per character, ten sample Babel lines, Prologue script | Owner approves in one sitting |
@@ -356,21 +358,21 @@ Defaults apply unless the owner overrides. Recorded in `wps/_index.md`.
 | O-4 | Launch language | English (US and UK accepted) |
 | O-5 | Wagering | Cut |
 | O-6 | Backend | **None at launch.** Platform leaderboards and platform cloud save. An HTTP backend only when ghosts (Phase 7) need it. |
-| O-7 | Business model | Prologue, Act I and the Daily Signal free. **One-time campaign unlock, $5.99–7.99 lifetime, price tested at launch.** Acts III–IV included as free updates. Cosmetics, seasons and PC later per Phase 7. No energy, timers, loot boxes or pay-to-win. |
+| O-7 | Business model | Prologue, Act I and the Daily Signal free. **One-time campaign unlock, $5.99–7.99 lifetime, price tested at launch.** Acts III–IV included as free updates. Cosmetics, seasons and PC later per Phase 7. No energy, timers, loot boxes or pay-to-win. **Owner, 29 September 2026: money decisions are deferred until after the proof of concept (Phase 3 gate); this row is a placeholder until then.** |
 | O-8 | Owner review of agent content | 100% of Babel lines, story text and shipped clues. Word lists sampled at 10% after the blocklist scan. |
 | O-9 | Visor selection | Any unlocked visor per level, chosen on a briefing card; teaching and act-closing levels locked on first clear |
 | O-10 | Persona | See O-1 |
-| O-11 | Contractor budget | Style test 4 days, Act I art 30 days, 20 days per later act, audio 10 then 8 days per act, 20% contingency. **Spent from Phase 4 only.** Fallback: flat vector backdrops. |
+| O-11 | Contractor budget | Style test 4 days, Act I art 30 days, 20 days per later act, audio 10 then 8 days per act, 20% contingency. **Spent from Phase 4 only, and the cash cap is decided at the Phase 3 gate (owner, 29 September 2026).** Fallback: flat vector backdrops. |
 | O-12 | Clue review | 100% owner-read for every shipped clue while volume is in the hundreds; tiered sampling only if volume passes 1,000 |
 | O-13 | Babel letter-pool scope | Decided by WP-1.5: `level` if at least 80% of levels qualify, else `act` |
 | O-14 | AI-content policy | Agents draft code, specs, text and placeholders. Shipped art, audio and voice are human-made. **Babel is a deterministic algorithm; no runtime language model.** Licensed word data only. Disclosure text where a store requires it. |
 | O-15 | Funding | Self-funded through Phase 5. The Phase 4 slice is kept pitch-ready. |
 | O-16 | Phase 10 split | Replaced by the Phase 7 trigger table |
-| **O-17** | **Engine** | **Godot 4.7 with GDScript for the shipping client. Three.js for the prototype and the web daily. Python for tools.** Defold if letters become pre-rendered sprites. Unity only if the owner already has deep Unity experience. |
+| **O-17** | **Engine** | **Godot 4.7 with GDScript for the shipping client. Three.js for the prototype and the web daily. Python for tools.** The owner has a Mac, so iOS export is available from day one; iOS ships first, Android second. Defold if letters become pre-rendered sprites. Unity only if the owner already has deep Unity experience. |
 | **O-18** | **Default mode** | **Decided by the Phase 2 gate.** The owner commits now to following the result. |
 | **O-19** | **v1 cuts** | Accounts, friends, ghosts, duels, both currencies, upgrade trees, season pass, cosmetics store, rewarded ads, and clue volume above 300 are all out of v1. Each has a trigger in Phase 7. |
 | **O-20** | **Owner load cap** | 6 hours a week; review queue cap of 4 |
-| **O-21** | **Success paragraph** | §1.1, confirmed in WP-0.1 |
+| **O-21** | **Success paragraph** | §1.1, answered by the owner on 29 September 2026: proof of concept first; the 12-month goal applies only if Phases 1–3 hold. |
 
 ---
 
