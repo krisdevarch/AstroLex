@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AstroLex Toy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+  /* Layout: one-screen app. WebGL field fills the viewport; HUD floats at the top (Babel band, word slots, oxygen),
+     the Catcher's tether origin sits at the bottom centre; overlays cover the field for start and debrief. */
+  :root {
+    --bg: #070b16;          /* deep space */
+    --bg-2: #0e1730;        /* nebula shadow */
+    --fg: #e9eef8;          /* signal white */
+    --fg-dim: #8e9ab8;      /* faded record */
+    --line: #2a3554;        /* hairline */
+    --accent: #ffb347;      /* amber: the Corps' tether */
+    --accent-2: #5fd3c9;    /* teal: restored words */
+    --danger: #ff5d6c;      /* oxygen warning */
+    --babel: #b9a6ff;       /* Babel's violet */
+    --font-ui: "IBM Plex Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-ui); overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; }
+  #backdrop, #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #gl { touch-action: none; }
+  /* HUD */
+  #hud { position: absolute; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 0; pointer-events: none; display: flex; flex-direction: column; gap: 8px; }
+  #babel { min-height: 2.4em; font-family: var(--font-mono); font-weight: 600; font-size: clamp(15px, 4.2vw, 20px); letter-spacing: 0.08em; color: var(--babel); text-align: center; opacity: 0; transition: opacity .35s; text-shadow: 0 0 18px rgba(185,166,255,.35); }
+  #babel.on { opacity: 1; }
+  #words { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .word { display: flex; gap: 6px; }
+  .slot { width: clamp(30px, 8.5vw, 44px); height: clamp(38px, 10.5vw, 54px); border: 1.5px solid var(--line); border-radius: 8px; display: grid; place-items: center; font-family: var(--font-mono); font-weight: 600; font-size: clamp(18px, 5.5vw, 26px); color: var(--fg); background: rgba(14,23,48,.55); transition: transform .18s, background .18s, border-color .18s; }
+  .slot.ghost { color: var(--fg-dim); opacity: .7; }
+  .slot.filled { border-color: var(--accent-2); background: rgba(95,211,201,.16); color: var(--fg); }
+  .slot.flash { transform: scale(1.12); }
+  .word.preview .slot { width: clamp(22px, 6vw, 30px); height: clamp(28px, 7.5vw, 38px); font-size: clamp(13px, 3.8vw, 18px); border-color: rgba(42,53,84,.7); }
+  #meters { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+  #o2wrap { flex: 1; height: 8px; border-radius: 4px; background: rgba(42,53,84,.6); overflow: hidden; }
+  #o2 { height: 100%; width: 100%; background: var(--accent-2); transition: width .2s linear, background .3s; }
+  #o2.low { background: var(--danger); }
+  #score { min-width: 4ch; text-align: right; color: var(--fg); font-weight: 600; }
+  #combo { min-width: 3.5ch; }
+  #frost { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(120,190,255,.28) 100%); transition: opacity .4s; }
+  /* bottom */
+  #bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 10px); display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; font-size: 12px; color: var(--fg-dim); }
+  #bottom button { pointer-events: auto; }
+  .chip { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-dim); background: rgba(7,11,22,.5); }
+  button { font: inherit; }
+  .btn { pointer-events: auto; cursor: pointer; border: 1px solid var(--line); background: rgba(14,23,48,.85); color: var(--fg); border-radius: 12px; padding: 10px 14px; font-weight: 600; }
+  .btn:focus-visible, .mode:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.primary { background: var(--accent); color: #1a1205; border-color: transparent; }
+  .btn.icon { width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+  /* overlays */
+  .overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(7,11,22,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); overflow: auto; }
+  .card { width: min(92vw, 420px); background: var(--bg-2); border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px; display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 0; font-family: var(--font-mono); font-weight: 600; letter-spacing: .14em; font-size: 20px; text-transform: uppercase; color: var(--accent); text-wrap: balance; }
+  h2 { margin: 0; font-size: 18px; font-weight: 700; text-wrap: balance; }
+  p { margin: 0; line-height: 1.45; color: var(--fg-dim); font-size: 14px; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mode { cursor: pointer; text-align: left; border: 1.5px solid var(--line); background: rgba(7,11,22,.5); color: var(--fg); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .mode strong { font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; font-size: 13px; }
+  .mode small { color: var(--fg-dim); font-size: 12px; line-height: 1.35; }
+  .mode.sel { border-color: var(--accent); background: rgba(255,179,71,.12); }
+  label { font-size: 12px; color: var(--fg-dim); display: flex; flex-direction: column; gap: 4px; }
+  input[type=text] { font: inherit; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(7,11,22,.6); color: var(--fg); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+  .stat b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--fg-dim); letter-spacing: .06em; text-transform: uppercase; }
+  .quote { font-family: var(--font-mono); color: var(--babel); letter-spacing: .06em; font-size: 15px; border-left: 2px solid var(--babel); padding-left: 10px; }
+  #debug .card { gap: 10px; }
+  #debug label { flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
+  #debug label span { min-width: 9ch; text-align: right; font-variant-numeric: tabular-nums; color: var(--fg); }
+  #debug input[type=range] { flex: 1; }
+  select { font: inherit; padding: 8px; border-radius: 10px; border: 1px solid var(--line); background: rgba(7,11,22,.6); color: var(--fg); }
+  #toast { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 70px); transform: translateX(-50%); background: var(--bg-2); border: 1px solid var(--line); color: var(--fg); padding: 8px 12px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #toast.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .slot, #babel, #o2 { transition: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="backdrop" aria-hidden="true"></canvas>
+  <canvas id="gl" aria-label="Play field: tap a drifting letter to tether it"></canvas>
+  <div id="frost"></div>
+  <div id="hud">
+    <div id="babel" aria-live="polite"></div>
+    <div id="words"></div>
+    <div id="meters"><span id="modeChip" class="chip">Drift</span><div id="o2wrap" title="Oxygen"><div id="o2"></div></div><span id="combo">×1.0</span><span id="score">0</span></div>
+  </div>
+  <div id="bottom">
+    <span class="chip" id="levelChip">Low Orbit · word 1 of 4</span>
+    <button class="btn icon" id="gear" aria-label="Tuning panel" title="Tuning">⚙</button>
+  </div>
+  <div id="toast" role="status"></div>
+
+  <div class="overlay" id="start">
+    <div class="card">
+      <h1>AstroLex</h1>
+      <h2>Catch the letters. Spell the word back into the world.</h2>
+      <p>Babel scattered every word into orbit. Tap a drifting letter to fire your tether and reel it into the record at the top. Letters can be caught in any order. Choose your suit:</p>
+      <div class="modes" role="radiogroup" aria-label="Mode">
+        <button class="mode sel" data-mode="drift" role="radio" aria-checked="true"><strong>Drift</strong><small>Calm sector. No clock. Wrong catches just bounce off.</small></button>
+        <button class="mode" data-mode="pressure" role="radio" aria-checked="false"><strong>Pressure</strong><small>Your air is running out. Restoring a word refills it. Wrong catches cost air.</small></button>
+      </div>
+      <label>Tester code (optional, for the playtest)<input type="text" id="tester" maxlength="12" autocomplete="off" placeholder="e.g. M07"></label>
+      <div class="row"><button class="btn primary" id="startBtn">Start</button><span class="chip" id="soundChip">Sound on</span></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="end" hidden>
+    <div class="card">
+      <h1 id="endTitle">Sector cleared</h1>
+      <div class="quote" id="endQuote"></div>
+      <div class="stats">
+        <div class="stat"><b id="sScore">0</b><span>score</span></div>
+        <div class="stat"><b id="sWords">0/4</b><span>words</span></div>
+        <div class="stat"><b id="sTime">0s</b><span>time</span></div>
+        <div class="stat"><b id="sCatch">0</b><span>catches</span></div>
+        <div class="stat"><b id="sWrong">0</b><span>wrong</span></div>
+        <div class="stat"><b id="sEscape">0</b><span>escapes</span></div>
+      </div>
+      <div class="modes" aria-label="Mode for the next round">
+        <button class="mode" data-mode="drift"><strong>Drift</strong><small>No clock</small></button>
+        <button class="mode" data-mode="pressure"><strong>Pressure</strong><small>Oxygen clock</small></button>
+      </div>
+      <div class="row"><button class="btn primary" id="againBtn">Play again</button><button class="btn" id="copyBtn">Copy results</button></div>
+      <p id="copyHint">Copy results puts your anonymous play data on the clipboard so you can paste it back to the person running the test.</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="debug" hidden>
+    <div class="card">
+      <h2>Tuning</h2>
+      <label>Act <select id="actSel"></select></label>
+      <label>Drift speed <input type="range" id="t_drift.speed" min="0.1" max="1.6" step="0.05"><span></span></label>
+      <label>Tether travel (s) <input type="range" id="t_tether.travelTime" min="0.05" max="0.6" step="0.01"><span></span></label>
+      <label>Tap radius (px) <input type="range" id="t_tap.radiusPx" min="12" max="60" step="1"><span></span></label>
+      <label>Decoys <input type="range" id="t_spawner.decoys" min="0" max="12" step="1"><span></span></label>
+      <label>O₂ drain /s <input type="range" id="t_oxygen.drainPerSec" min="0.2" max="3" step="0.1"><span></span></label>
+      <label>Wrong catch cost <input type="range" id="t_oxygen.wrongCost" min="0" max="15" step="1"><span></span></label>
+      <div class="row"><button class="btn primary" id="applyBtn">Apply and restart round</button><button class="btn" id="closeDebug">Close</button></div>
+      <p>Values live in <code>data.js</code>. Changes here last for this visit only and are logged with your results.</p>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  const D = window.ASTROLEX_DATA;
+  const T = Object.assign({}, D.tunables);
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- telemetry ----------
+  const log = { session: Math.random().toString(36).slice(2, 8), tester: '', events: [], rounds: [] };
+  let roundStart = 0;
+  function ev(type, data) { log.events.push(Object.assign({ t: +(performance.now() / 1000).toFixed(2), type }, data || {})); }
+  function persist() { try { const all = JSON.parse(localStorage.getItem('astrolex_toy') || '[]'); all.push(summary()); localStorage.setItem('astrolex_toy', JSON.stringify(all.slice(-30))); } catch (e) {} }
+  function summary() { return { session: log.session, tester: log.tester, ua: navigator.userAgent, screen: [innerWidth, innerHeight], tunables: T, rounds: log.rounds, events: log.events.slice(-600) }; }
+
+  // ---------- audio ----------
+  let AC = null, soundOn = true;
+  function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { soundOn = false; } } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+  function tone(freq, dur, type, gain, slide) {
+    if (!soundOn) return; const ac = audio(); if (!ac) return;
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(freq, ac.currentTime);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, ac.currentTime + dur);
+    g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.exponentialRampToValueAtTime(gain || 0.08, ac.currentTime + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur + 0.02);
+  }
+  const PENTA = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3, 784.0];
+  const sfx = {
+    fire() { tone(1200, 0.07, 'triangle', 0.04, 500); },
+    catchNote(i) { tone(PENTA[Math.min(i, PENTA.length - 1)], 0.22, 'sine', 0.09); tone(PENTA[Math.min(i, PENTA.length - 1)] * 2, 0.12, 'triangle', 0.03); },
+    wrong() { tone(140, 0.18, 'square', 0.05, 90); },
+    escape() { tone(520, 0.25, 'sine', 0.04, 260); },
+    restore() { [0, 4, 7].forEach((s, k) => setTimeout(() => tone(392 * Math.pow(2, s / 12), 0.5, 'sine', 0.07), k * 70)); },
+    low() { tone(220, 0.12, 'sine', 0.05); },
+    babel() { tone(880, 0.05, 'square', 0.02); setTimeout(() => tone(660, 0.05, 'square', 0.02), 60); },
+  };
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+
+  // ---------- backdrop ----------
+  const bd = $('backdrop');
+  function drawBackdrop() {
+    const w = bd.width = Math.floor(innerWidth * Math.min(devicePixelRatio, 2)), h = bd.height = Math.floor(innerHeight * Math.min(devicePixelRatio, 2));
+    const c = bd.getContext('2d'); const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0b1224'); g.addColorStop(1, '#05070f'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    const rnd = mulberry(7);
+    for (const [x, y, r, col] of [[0.2, 0.3, 0.45, 'rgba(95,90,170,0.22)'], [0.8, 0.55, 0.5, 'rgba(60,140,150,0.18)'], [0.5, 0.85, 0.4, 'rgba(255,150,80,0.10)']]) {
+      const rg = c.createRadialGradient(x * w, y * h, 0, x * w, y * h, r * Math.max(w, h)); rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = rg; c.fillRect(0, 0, w, h);
+    }
+    for (let i = 0; i < 260; i++) { const x = rnd() * w, y = rnd() * h, s = rnd() * 1.6 + 0.3; c.fillStyle = `rgba(233,238,248,${0.25 + rnd() * 0.6})`; c.beginPath(); c.arc(x, y, s, 0, 6.283); c.fill(); }
+  }
+  function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  // ---------- three ----------
+  const canvas = $('gl');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100); camera.position.set(0, 0, 14);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(3, 6, 8); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9fd8ff, 0.5); rim.position.set(-4, -3, 4); scene.add(rim);
+  const PLANES = [{ z: 0, name: 'front' }, { z: -3.5, name: 'mid' }];
+  let bounds = { hw: 3, top: 3, bottom: -5 }; // world units at z=0
+  function halfHeightAt(z) { return Math.tan(camera.fov * Math.PI / 360) * (camera.position.z - z); }
+  function resize() {
+    const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    const hh = halfHeightAt(0), hw = hh * camera.aspect;
+    const hudPx = $('hud').getBoundingClientRect().height + 8, botPx = 70;
+    bounds = { hw: hw * 0.92, top: hh - (hudPx / h) * 2 * hh - 0.6, bottom: -hh + (botPx / h) * 2 * hh + 0.4 };
+    drawBackdrop();
+  }
+  addEventListener('resize', resize);
+
+  // glyph tiles
+  const glyphTex = {};
+  function glyph(ch) {
+    if (glyphTex[ch]) return glyphTex[ch];
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    x.fillStyle = '#9aa6c6'; x.fillRect(0, 0, 256, 256);
+    x.fillStyle = '#f4f6fb'; roundRect(x, 8, 8, 240, 240, 40); x.fill();
+    x.fillStyle = '#12182b'; x.font = '700 168px "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(ch.toUpperCase(), 128, 140);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; glyphTex[ch] = t; return t;
+  }
+  function roundRect(x, l, t, w, h, r) { x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r); x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath(); }
+  const sideMat = new THREE.MeshStandardMaterial({ color: 0x9aa6c6, roughness: 0.55, metalness: 0.15 });
+  const tileGeo = new THREE.BoxGeometry(1, 1, 0.26);
+  const letters = []; // {mesh, ch, plane, vel, phase, decoy}
+  function spawnLetter(ch, decoy) {
+    const plane = PLANES[Math.random() < 0.62 ? 0 : 1];
+    const front = new THREE.MeshStandardMaterial({ map: glyph(ch), roughness: 0.4, metalness: 0.05 });
+    const mesh = new THREE.Mesh(tileGeo, [sideMat, sideMat, sideMat, sideMat, front, sideMat]);
+    const s = plane.z === 0 ? 1 : 0.92; mesh.scale.setScalar(s);
+    const hw = bounds.hw * (1 + (-plane.z) / camera.position.z * 0.9), top = bounds.top * (1 + (-plane.z) / camera.position.z * 0.9), bot = bounds.bottom * (1 + (-plane.z) / camera.position.z * 0.9);
+    mesh.position.set(rand(-hw, hw), rand(bot, top), plane.z);
+    const a = Math.random() * 6.283, sp = T['drift.speed'] * rand(0.6, 1.3);
+    const L = { mesh, ch, plane, vel: new THREE.Vector2(Math.cos(a) * sp, Math.sin(a) * sp), phase: Math.random() * 6.283, spin: rand(0.5, 1.2), decoy, alive: true, born: performance.now() };
+    if (plane.z !== 0) { front.color.setHex(0xcfd6ea); }
+    scene.add(mesh); letters.push(L); return L;
+  }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function removeLetter(L) { L.alive = false; scene.remove(L.mesh); const i = letters.indexOf(L); if (i >= 0) letters.splice(i, 1); }
+
+  // tether
+  const tetherGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  const tether = new THREE.Line(tetherGeo, new THREE.LineBasicMaterial({ color: 0xffb347, transparent: true, opacity: 0.95 }));
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffd58a })); tip.visible = false;
+  scene.add(tether, tip); tether.visible = false;
+  let shot = null; // {target, start, end, t0, dur, L}
+  function origin() { return new THREE.Vector3(0, bounds.bottom - 0.9, 0.6); }
+
+  // particles
+  const bursts = [];
+  function burst(pos, color) {
+    if (reduceMotion) return;
+    const n = 14, arr = new Float32Array(n * 3), vel = [];
+    for (let i = 0; i < n; i++) { arr[i * 3] = pos.x; arr[i * 3 + 1] = pos.y; arr[i * 3 + 2] = pos.z; const a = Math.random() * 6.283, s = rand(1.5, 4); vel.push(new THREE.Vector3(Math.cos(a) * s, Math.sin(a) * s, rand(-1, 1))); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    const p = new THREE.Points(g, new THREE.PointsMaterial({ color, size: 0.12, transparent: true, opacity: 1 })); scene.add(p); bursts.push({ p, vel, t0: performance.now() });
+  }
+
+  // ---------- game state ----------
+  const ACTS = Object.keys(D.acts);
+  let actKey = 'act1_low_orbit';
+  let mode = 'drift';
+  let state = 'idle'; // idle | play | over
+  let words = [], wi = 0, slots = [], previewSlots = [];
+  let oxygen = 100, score = 0, combo = 1.0, wrong = 0, escapes = 0, catches = 0, firstCatchAt = null, lowTick = 0;
+  let restoredPool = []; // letters restored this level (for Babel)
+  let restoredWords = [];
+  let babelTimer = null, lastBabel = '';
+
+  function pick(arr, n) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); }
+  function startRound() {
+    for (const L of letters.slice()) removeLetter(L);
+    words = pick(D.acts[actKey].words, T['spawner.wordsPerLevel']); wi = 0;
+    oxygen = T['oxygen.max']; score = 0; combo = 1; wrong = 0; escapes = 0; catches = 0; firstCatchAt = null; restoredPool = []; restoredWords = []; lastBabel = '';
+    roundStart = performance.now(); state = 'play'; shot = null; tether.visible = tip.visible = false;
+    setupWord(); spawnForWords(); ensureDecoys(); renderHud(); showBabel('');
+    ev('round_start', { mode, act: actKey, words: words.slice() });
+  }
+  function setupWord() {
+    slots = words[wi].split('').map(ch => ({ ch, filled: false }));
+    previewSlots = wi + 1 < words.length ? words[wi + 1].split('').map(ch => ({ ch, filled: false })) : [];
+    renderWords();
+  }
+  function neededCounts() {
+    const need = {};
+    for (const s of slots) if (!s.filled) need[s.ch] = (need[s.ch] || 0) + 1;
+    for (const s of previewSlots) if (!s.filled) need[s.ch] = (need[s.ch] || 0) + 1;
+    return need;
+  }
+  function spawnForWords() {
+    const need = neededCounts(); const have = {};
+    for (const L of letters) if (!L.decoy) have[L.ch] = (have[L.ch] || 0) + 1;
+    for (const ch in need) for (let k = (have[ch] || 0); k < need[ch]; k++) spawnLetter(ch, false);
+  }
+  const FREQ = { e: 127, t: 91, a: 82, o: 75, i: 70, n: 67, s: 63, h: 61, r: 60, d: 43, l: 40, c: 28, u: 28, m: 24, w: 24, f: 22, g: 20, y: 20, p: 19, b: 15, v: 10, k: 8, j: 2, x: 2, q: 1, z: 1 };
+  function weightedLetter() { let tot = 0; for (const c in FREQ) tot += FREQ[c]; let r = Math.random() * tot; for (const c in FREQ) { r -= FREQ[c]; if (r <= 0) return c; } return 'e'; }
+  function ensureDecoys() { let n = letters.filter(L => L.decoy).length; while (n < T['spawner.decoys']) { spawnLetter(weightedLetter(), true); n++; } }
+
+  // ---------- HUD ----------
+  function renderWords() {
+    const W = $('words'); W.innerHTML = '';
+    const w1 = document.createElement('div'); w1.className = 'word';
+    slots.forEach((s, i) => { const d = document.createElement('div'); d.className = 'slot' + (s.filled ? ' filled' : ' ghost'); d.textContent = s.ch.toUpperCase(); d.dataset.i = i; w1.appendChild(d); });
+    W.appendChild(w1);
+    if (previewSlots.length) { const w2 = document.createElement('div'); w2.className = 'word preview'; previewSlots.forEach(s => { const d = document.createElement('div'); d.className = 'slot' + (s.filled ? ' filled' : ' ghost'); d.textContent = s.ch.toUpperCase(); w2.appendChild(d); }); W.appendChild(w2); }
+    $('levelChip').textContent = `${D.acts[actKey].title.split(':')[0].replace(/^Act [IV]+, /, '')} · word ${Math.min(wi + 1, words.length)} of ${words.length}`;
+  }
+  function renderHud() {
+    $('o2').style.width = Math.max(0, oxygen) + '%'; $('o2').classList.toggle('low', oxygen < 25);
+    $('frost').style.opacity = mode === 'pressure' && oxygen < 30 ? String((30 - oxygen) / 30 * 0.9) : '0';
+    $('score').textContent = Math.round(score); $('combo').textContent = '×' + combo.toFixed(1);
+    $('modeChip').textContent = mode === 'drift' ? 'Drift' : 'Pressure';
+    $('o2wrap').style.visibility = mode === 'pressure' ? 'visible' : 'hidden';
+  }
+  function flashSlot(i, cls) { const d = $('words').querySelector(`.slot[data-i="${i}"]`); if (!d) return; d.classList.add(cls); setTimeout(() => d.classList.remove(cls), 220); }
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1600); }
+
+  // ---------- Babel composer (mirrors tools/astrolex_tools/babel/compose.py) ----------
+  const LEX = D.lexicon.map(([w, pos]) => ({ w, pos, c: count(w) }));
+  const THEME = new Set(D.theme);
+  function count(s) { const c = {}; for (const ch of s) c[ch] = (c[ch] || 0) + 1; return c; }
+  function fits(c, pool) { for (const k in c) if ((pool[k] || 0) < c[k]) return false; return true; }
+  function slotCandidates(slot, pool, targets) {
+    if (slot === 'T') return targets.filter(t => fits(count(t), pool));
+    if (slot === 'ANAGRAM_T') { const out = []; for (const t of targets) for (const a of (D.anagrams[t] || [])) if (fits(count(a), pool)) out.push(a); return out; }
+    if (slot === 'THEME') return LEX.filter(l => THEME.has(l.w) && fits(l.c, pool)).map(l => l.w);
+    if (slot === 'W') return LEX.filter(l => fits(l.c, pool)).map(l => l.w);
+    return LEX.filter(l => l.pos === slot && fits(l.c, pool)).map(l => l.w);
+  }
+  function compose(pool, targets) {
+    const lines = [];
+    for (const tp of D.templates) {
+      const parts = tp.pattern.split(' ').map(tok => { const m = tok.match(/^(\{[A-Z_]+\}|[A-Za-z']+)([.,?!]*)$/); return { core: m[1], punct: m[2] }; });
+      const literals = parts.filter(p => !p.core.startsWith('{')).map(p => p.core.toLowerCase());
+      const litCount = count(literals.join('')); if (!fits(litCount, pool)) continue;
+      const remaining = Object.assign({}, pool); for (const k in litCount) remaining[k] -= litCount[k];
+      const opts = []; let ok = true;
+      for (const p of parts) if (p.core.startsWith('{')) { const c = slotCandidates(p.core.slice(1, -1), remaining, targets); if (!c.length) { ok = false; break; } opts.push(c); }
+      if (!ok) continue;
+      for (let tries = 0; tries < 40; tries++) {
+        let oi = 0; const ws = parts.map(p => p.core.startsWith('{') ? opts[oi++][Math.floor(Math.random() * opts[oi - 1].length)] : p.core.toLowerCase());
+        if (new Set(ws).size < ws.length) continue;
+        if (!fits(count(ws.join('')), pool)) continue;
+        if (ws.join('').length < T['babel.minLineLetters']) continue;
+        const text = ws.map((w, i) => w.toUpperCase() + parts[i].punct).join(' ');
+        if (!lines.some(l => l.text === text)) lines.push({ text, id: tp.id });
+      }
+    }
+    return lines;
+  }
+  function babelLine() {
+    const pool = count(restoredPool.join(''));
+    const lines = compose(pool, restoredWords);
+    if (!lines.length) return '';
+    const pref = ['signature', 'not_that', 'you_i', 'is', 'or', 'then', 'no', 'so', 'who', 'still', 'adj_noun', 'theme'];
+    for (const id of pref) { const c = lines.filter(l => l.id === id && l.text !== lastBabel); if (c.length && Math.random() < (id === 'signature' ? 0.9 : 0.55)) return c[Math.floor(Math.random() * c.length)].text; }
+    return lines[Math.floor(Math.random() * lines.length)].text;
+  }
+  function showBabel(text) {
+    const b = $('babel'); clearTimeout(babelTimer);
+    if (!text) { b.classList.remove('on'); b.textContent = ''; return; }
+    lastBabel = text; b.textContent = ''; b.classList.add('on'); sfx.babel();
+    let i = 0; const tick = () => { b.textContent = text.slice(0, ++i); if (i < text.length) babelTimer = setTimeout(tick, reduceMotion ? 0 : 38); else babelTimer = setTimeout(() => b.classList.remove('on'), T['babel.showSeconds'] * 1000); };
+    tick();
+    ev('babel_line', { text });
+  }
+
+  // ---------- input ----------
+  const ray = new THREE.Raycaster(); const v2 = new THREE.Vector2(); const v3 = new THREE.Vector3();
+  function screenPos(mesh) { v3.copy(mesh.position).project(camera); return { x: (v3.x + 1) / 2 * innerWidth, y: (1 - v3.y) / 2 * innerHeight }; }
+  canvas.addEventListener('pointerdown', (e) => {
+    if (state !== 'play') return; audio();
+    if (shot) return; // one tether at a time
+    const radius = T['tap.radiusPx'] * (mode === 'drift' ? T['tap.radiusDriftMul'] : 1) * (devicePixelRatio > 2 ? 1.1 : 1);
+    let best = null, bd2 = Infinity;
+    for (const L of letters) { const p = screenPos(L.mesh); const d = Math.hypot(p.x - e.clientX, p.y - e.clientY); const r = radius * (L.plane.z === 0 ? 1 : 0.9); if (d < r && d < bd2) { best = L; bd2 = d; } }
+    if (!best) { ev('tap_miss', { x: e.clientX | 0, y: e.clientY | 0 }); tone(300, 0.05, 'sine', 0.02); return; }
+    fire(best);
+  });
+  function fire(L) {
+    const end = L.mesh.position.clone(); const start = origin();
+    const dist = start.distanceTo(end); const dur = T['tether.travelTime'] * (0.7 + 0.3 * dist / 10);
+    shot = { L, start, end, t0: performance.now(), dur: dur * 1000 };
+    tether.visible = tip.visible = true; sfx.fire(); buzz(8); ev('fire', { ch: L.ch, decoy: L.decoy, plane: L.plane.name });
+  }
+  function resolveShot() {
+    const { L, end } = shot; shot = null; tether.visible = tip.visible = false;
+    if (!L.alive) return;
+    const d = L.mesh.position.distanceTo(end);
+    if (d > T['tether.hitTolerance'] * (mode === 'drift' ? 1.6 : 1)) { escapes++; sfx.escape(); ev('escape', { ch: L.ch, d: +d.toFixed(2) }); toast('It drifted off'); return; }
+    // which slot?
+    let idx = slots.findIndex(s => !s.filled && s.ch === L.ch), where = 'active';
+    if (idx < 0) { idx = previewSlots.findIndex(s => !s.filled && s.ch === L.ch); where = idx >= 0 ? 'preview' : 'none'; }
+    if (where === 'none') { wrongCatch(L); return; }
+    catches++; if (firstCatchAt === null) { firstCatchAt = (performance.now() - roundStart) / 1000; ev('first_catch', { s: +firstCatchAt.toFixed(1) }); }
+    (where === 'active' ? slots : previewSlots)[idx].filled = true;
+    combo = Math.min(T['combo.max'], combo + T['combo.step']);
+    burst(L.mesh.position, 0x5fd3c9); sfx.catchNote(where === 'active' ? slots.filter(s => s.filled).length - 1 : 0); buzz(12);
+    flyToSlot(L, where, idx);
+    ev('catch', { ch: L.ch, where, combo: +combo.toFixed(1) });
+    renderWords(); if (where === 'active') flashSlot(idx, 'flash');
+    if (slots.every(s => s.filled)) wordRestored();
+    else { spawnForWords(); }
+    renderHud();
+  }
+  function flyToSlot(L, where, idx) {
+    // animate the mesh towards the HUD slot, then remove it
+    const wordEls = $('words').querySelectorAll('.word'); const wordEl = where === 'active' ? wordEls[0] : wordEls[1]; const el = wordEl ? wordEl.children[idx] : null;
+    let target = new THREE.Vector3(0, bounds.top + 1.2, 0);
+    if (el) { const r = el.getBoundingClientRect(); v2.set(((r.left + r.width / 2) / innerWidth) * 2 - 1, -((r.top + r.height / 2) / innerHeight) * 2 + 1); const p = new THREE.Vector3(v2.x, v2.y, 0.5).unproject(camera); const dir = p.sub(camera.position).normalize(); target = camera.position.clone().add(dir.multiplyScalar(-camera.position.z / dir.z)); }
+    L.alive = false; L.fly = { from: L.mesh.position.clone(), to: target, t0: performance.now(), dur: reduceMotion ? 1 : 320 };
+  }
+  function wrongCatch(L) {
+    wrong++; combo = 1; sfx.wrong(); buzz([20, 40, 20]);
+    L.vel.multiplyScalar(-1).add(new THREE.Vector2(rand(-0.6, 0.6), rand(0.4, 1.0)));
+    L.flash = performance.now();
+    if (mode === 'pressure') { oxygen = Math.max(0, oxygen - T['oxygen.wrongCost']); toast(`Not in the record. −${T['oxygen.wrongCost']} air`); if (oxygen <= 0) return gameOver(false); }
+    else toast('Not in the record');
+    ev('wrong', { ch: L.ch, decoy: L.decoy });
+    renderHud();
+  }
+  function wordRestored() {
+    const w = words[wi]; restoredWords.push(w); restoredPool.push(...w.split(''));
+    const len = w.length; const ws = T['score.letterValue'] * len * (1 + T['score.lengthStep'] * (len - 3)) * combo; score += ws;
+    oxygen = Math.min(T['oxygen.max'], oxygen + T['oxygen.restoreBase'] + T['oxygen.restorePerLetter'] * len);
+    sfx.restore(); buzz(30); ev('restore', { word: w, score: Math.round(ws) });
+    wi++;
+    if (wi >= words.length) { return gameOver(true); }
+    setupWord(); spawnForWords(); ensureDecoys();
+    const line = babelLine(); if (line) setTimeout(() => showBabel(line), 350);
+  }
+  function gameOver(won) {
+    state = 'over'; shot = null; tether.visible = tip.visible = false;
+    if (won && mode === 'pressure') score += T['score.oxygenBonus'] * oxygen;
+    const secs = (performance.now() - roundStart) / 1000;
+    const r = { mode, act: actKey, won, words: restoredWords.length, total: words.length, score: Math.round(score), secs: +secs.toFixed(1), catches, wrong, escapes, firstCatch: firstCatchAt === null ? null : +firstCatchAt.toFixed(1) };
+    log.rounds.push(r); ev('round_end', r); persist();
+    const q = babelLine();
+    $('endTitle').textContent = won ? 'Sector cleared' : 'Out of air';
+    $('endQuote').textContent = q ? 'BABEL: ' + q : (won ? 'Babel says nothing. Yet.' : 'Babel waits for you to try again.');
+    $('sScore').textContent = r.score; $('sWords').textContent = `${r.words}/${r.total}`; $('sTime').textContent = r.secs + 's'; $('sCatch').textContent = catches; $('sWrong').textContent = wrong; $('sEscape').textContent = escapes;
+    document.querySelectorAll('#end .mode').forEach(b => b.classList.toggle('sel', b.dataset.mode === mode));
+    $('end').hidden = false; renderHud();
+  }
+
+  // ---------- loop ----------
+  let last = performance.now(), hudTick = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    // drift
+    for (const L of letters) {
+      const m = L.mesh;
+      if (L.fly) { const k = Math.min(1, (now - L.fly.t0) / L.fly.dur); const e = 1 - Math.pow(1 - k, 3); m.position.lerpVectors(L.fly.from, L.fly.to, e); m.scale.setScalar((1 - k) * 0.8 + 0.2); if (k >= 1) removeLetter(L); continue; }
+      if (state === 'play') { m.position.x += L.vel.x * dt; m.position.y += L.vel.y * dt; }
+      const f = 1 + (-L.plane.z) / camera.position.z * 0.9; const hw = bounds.hw * f, top = bounds.top * f, bot = bounds.bottom * f;
+      if (m.position.x > hw) { m.position.x = hw; L.vel.x = -Math.abs(L.vel.x) * 0.9; } if (m.position.x < -hw) { m.position.x = -hw; L.vel.x = Math.abs(L.vel.x) * 0.9; }
+      if (m.position.y > top) { m.position.y = top; L.vel.y = -Math.abs(L.vel.y) * 0.9; } if (m.position.y < bot) { m.position.y = bot; L.vel.y = Math.abs(L.vel.y) * 0.9; }
+      const sp = L.vel.length(), want = T['drift.speed']; if (sp < want * 0.5 || sp > want * 1.6) L.vel.multiplyScalar(0.98 + (sp < want * 0.5 ? 0.05 : 0));
+      if (!reduceMotion) { const t = now / 1000 * T['drift.spin'] * L.spin; m.rotation.x = Math.sin(t + L.phase) * 0.32; m.rotation.y = Math.sin(t * 0.8 + L.phase * 1.7) * 0.42; m.rotation.z = Math.sin(t * 0.5 + L.phase) * 0.08; }
+      if (L.flash) { const k = (now - L.flash) / 260; const c = k < 1 ? 1 : 0; m.material[4].emissive = m.material[4].emissive || new THREE.Color(); m.material[4].emissive.setRGB(0.6 * (1 - k) * c, 0.05, 0.08 * c); if (k >= 1) L.flash = 0; }
+    }
+    // tether
+    if (shot) {
+      const k = Math.min(1, (now - shot.t0) / shot.dur); const p = new THREE.Vector3().lerpVectors(shot.start, shot.end, k);
+      tetherGeo.setFromPoints([shot.start, p]); tip.position.copy(p);
+      if (k >= 1) resolveShot();
+    }
+    // bursts
+    for (const b of bursts.slice()) { const k = (now - b.t0) / 550; const pos = b.p.geometry.attributes.position; for (let i = 0; i < b.vel.length; i++) { pos.array[i * 3] += b.vel[i].x * dt; pos.array[i * 3 + 1] += b.vel[i].y * dt; pos.array[i * 3 + 2] += b.vel[i].z * dt; } pos.needsUpdate = true; b.p.material.opacity = 1 - k; if (k >= 1) { scene.remove(b.p); bursts.splice(bursts.indexOf(b), 1); } }
+    // oxygen
+    if (state === 'play' && mode === 'pressure') {
+      oxygen -= T['oxygen.drainPerSec'] * dt; if (oxygen <= 0) { oxygen = 0; renderHud(); gameOver(false); }
+      else { if (oxygen < 25 && now - lowTick > 1100) { lowTick = now; sfx.low(); } if (now - hudTick > 100) { hudTick = now; renderHud(); } }
+    }
+    renderer.render(scene, camera);
+  }
+
+  // ---------- UI wiring ----------
+  document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => {
+    mode = b.dataset.mode; b.closest('.overlay').querySelectorAll('.mode').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
+    ev('mode_select', { mode, screen: b.closest('.overlay').id });
+  }));
+  $('startBtn').addEventListener('click', () => { log.tester = $('tester').value.trim(); ev('start', { mode, tester: log.tester, firstChoice: true }); $('start').hidden = true; audio(); resize(); startRound(); });
+  $('againBtn').addEventListener('click', () => { $('end').hidden = true; ev('again', { mode }); resize(); startRound(); });
+  $('copyBtn').addEventListener('click', async () => {
+    const text = JSON.stringify(summary());
+    try { await navigator.clipboard.writeText(text); toast('Results copied'); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:8px;top:8px;width:90vw;height:40vh;'; document.body.appendChild(ta); ta.select(); toast('Select all and copy'); }
+  });
+  $('soundChip').addEventListener('click', () => { soundOn = !soundOn; $('soundChip').textContent = soundOn ? 'Sound on' : 'Sound off'; });
+  $('soundChip').style.pointerEvents = 'auto'; $('soundChip').style.cursor = 'pointer';
+  // debug panel
+  const actSel = $('actSel'); ACTS.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = D.acts[k].title; actSel.appendChild(o); });
+  const sliders = ['drift.speed', 'tether.travelTime', 'tap.radiusPx', 'spawner.decoys', 'oxygen.drainPerSec', 'oxygen.wrongCost'];
+  function syncSliders() { for (const k of sliders) { const i = document.getElementById('t_' + k); i.value = T[k]; i.nextElementSibling.textContent = T[k]; } actSel.value = actKey; }
+  sliders.forEach(k => document.getElementById('t_' + k).addEventListener('input', (e) => { e.target.nextElementSibling.textContent = e.target.value; }));
+  $('gear').addEventListener('click', () => { syncSliders(); $('debug').hidden = false; });
+  $('closeDebug').addEventListener('click', () => { $('debug').hidden = true; });
+  $('applyBtn').addEventListener('click', () => { for (const k of sliders) T[k] = parseFloat(document.getElementById('t_' + k).value); actKey = actSel.value; ev('tunables', Object.assign({ act: actKey }, T)); $('debug').hidden = true; $('end').hidden = true; if (state !== 'idle') startRound(); });
+
+  // test hook (read-only view for the smoke test; not used by the game)
+  window.__toy = { get letters() { return letters; }, screenPos, get state() { return state; }, get shot() { return shot; }, compose, count, get stats() { return { catches, wrong, escapes, score, oxygen, wi, words: words.slice(), slots: slots.map(s => s.filled) }; }, T, get mode() { return mode; } };
+  // boot
+  resize(); requestAnimationFrame(frame);
+  // idle attract: a few letters drifting behind the start card
+  ['a', 's', 't', 'r', 'o', 'l', 'e', 'x'].forEach(ch => spawnLetter(ch, true));
+})();
+</script>
+</body>
+</html>
