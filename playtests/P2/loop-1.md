@@ -10,6 +10,7 @@
 |---|---|---:|---:|---|---|---|
 | owner-01 | owner (iPhone, iOS 18.7, 440×894, in the Claude app) | 5.8 | 1 | Pressure | – | – |
 | owner-02 | owner, same phone, build v1.1 | 1.9 | 1 | Drift | (second session) | – |
+| owner-03 | owner, same phone, build v1.2 | 4.6 | 1 | Drift | (third session) | – |
 
 **Owner run, 29 Sep 2026** (`results/loop-1/owner-01.json`): won, 4 words in 27.5 s, 16 fires and 16 catches, 0 wrong, 0 escapes, combo at the 2.0 cap from word 3. Babel: `LAST.` after *salt*, `LAST.` again after *chair*, `ART IS ACT.` after *cat*. Oxygen never went below about 85: with drain 1.0/s and +12 +2/letter per word, a clean run gains air.
 
@@ -29,6 +30,8 @@
 - Once the record has enough of a letter, surplus non-decoy copies dissolve (logged as `dissolve`).
 - Hit test uses the tile's projected size plus 6 px, and one tap is queued while a tether is in flight (logged as `queue`).
 - Wrong catches are now logged with `kind: surplus | unneeded`.
+
+**Owner run 3, v1.2, Drift** (`results/loop-1/owner-03.json`): won, 4 words in 45.4 s, 22 fires, 22 catches, **0 wrong, 0 escapes, 0 empty taps**. Two `dissolve` events confirm the surplus fix on the device (a decoy I filled BRIDGE's slot and a decoy O filled DOOR's; the spare copies dissolved). Babel: `BIG ORDER.` then `ORDER OR GOD?`, no repeat. The owner's three smoke runs are complete; the build is ready for outside testers. Note for the owner's Babel review later: the lexicon includes ordinary words such as *god* that some players may not want in Babel's mouth; the toy composes freely, the shipped game will use owner-approved lines only.
 
 **Changes shipped as v1.1 before the first outside testers:** Babel never repeats a line within a round; per-round ramp (drift +8% per round, +1 decoy per round up to 8, Pressure drain +10% per round); round number logged in every summary.
 
