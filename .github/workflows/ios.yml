@@ -1,0 +1,45 @@
+name: ios
+
+on:
+  pull_request:
+    paths:
+      - "ios/**"
+      - "scripts/ios/**"
+      - ".github/workflows/ios.yml"
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - "scripts/ios/**"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  app:
+    name: iOS app builds and tests on the simulator
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      # Unsigned simulator build: no team or real bundle ID is needed in CI.
+      DEVELOPMENT_TEAM: ""
+      ASTROLEX_BUNDLE_ID: app.astrolex.ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          brew install xcodegen shellcheck
+          xcodebuild -version
+      - name: Lint iOS scripts
+        run: shellcheck -x scripts/ios/*.sh
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build and test
+        run: |
+          DEVICE="$(xcrun simctl list devices available | sed -n 's/^ *\(iPhone [^(]*\) (.*/\1/p' | sed 's/ *$//' | tail -n 1)"
+          echo "Simulator: $DEVICE"
+          xcodebuild test \
+            -project ios/AstroLex.xcodeproj \
+            -scheme AstroLex \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO

@@ -5,3 +5,11 @@ __pycache__/
 data/words/words.sqlite
 reports/ci/
 .venv/
+# iOS (generated or secret; see docs/ios/DEV-LOOP.md)
+build/
+DerivedData/
+ios/*.xcodeproj/
+ios/AstroLex/Info.plist
+ios/.env.local
+*.p8
+xcuserdata/

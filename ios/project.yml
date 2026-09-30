@@ -1,0 +1,74 @@
+# XcodeGen spec for the AstroLex iOS app (plan Part 7, Amendment A1).
+# The .xcodeproj is generated from this file and never committed:
+#   scripts/ios/generate.sh        # reads ios/.env.local, runs xcodegen
+# DEVELOPMENT_TEAM and ASTROLEX_BUNDLE_ID come from the environment so no
+# account detail lives in git. See docs/ios/DEV-LOOP.md.
+name: AstroLex
+options:
+  bundleIdPrefix: app.astrolex
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ${DEVELOPMENT_TEAM}
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+targets:
+  AstroLex:
+    type: application
+    platform: iOS
+    sources:
+      - path: AstroLex
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ${ASTROLEX_BUNDLE_ID}
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: AstroLex/Info.plist
+      properties:
+        CFBundleDisplayName: AstroLex
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIRequiresFullScreen: true
+        UIStatusBarHidden: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # 120 Hz on ProMotion iPhones (plan 7.2).
+        CADisableMinimumFrameDurationOnPhone: true
+        # No custom encryption: skips the export-compliance question on every TestFlight build.
+        ITSAppUsesNonExemptEncryption: false
+  AstroLexTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: AstroLexTests
+    dependencies:
+      - target: AstroLex
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ${ASTROLEX_BUNDLE_ID}.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  AstroLex:
+    build:
+      targets:
+        AstroLex: all
+        AstroLexTests: [test]
+    test:
+      config: Debug
+      targets:
+        - AstroLexTests
+    archive:
+      config: Release

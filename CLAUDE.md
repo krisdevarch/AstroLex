@@ -31,6 +31,17 @@ CI (`.github/workflows/pr.yml`) runs exactly these steps on every PR and push to
 
 The browser toy (`web/toy/index.html`) is a static page with no build step: open it in a browser or serve the folder. Three.js is vendored under `web/toy/vendor/`.
 
+iOS app (macOS with Xcode 16+ and `brew install xcodegen`; needs `ios/.env.local`, see `docs/ios/DEV-LOOP.md`). The scripts exit 0 without doing anything on Linux:
+
+```bash
+scripts/ios/generate.sh                  # regenerate ios/AstroLex.xcodeproj after adding or removing files
+scripts/ios/test.sh                      # simulator build + unit tests
+scripts/ios/ship-testflight.sh           # archive, upload to TestFlight, tag tf/<build> (use the ship-testflight skill)
+python3 scripts/ios/make_icon.py         # regenerate the placeholder app icon
+```
+
+CI `ios.yml` builds and tests the app on a macOS runner for PRs that touch `ios/` or `scripts/ios/`.
+
 ## Architecture
 
 **Data flows one way: `data/` → `tools/` → `reports/` and `web/`.**
@@ -39,7 +50,7 @@ The browser toy (`web/toy/index.html`) is a static page with no build step: open
 - `tools/astrolex_tools/words/` builds the word database from ENABLE + WordNet + wordfreq (`build.py`), exposes it via `WordDB` (`db.py`), and screens boards against `data/words/blocklist.txt` with rejection-sampled decoys (`decoys.py`, `scan.py`). `acts.py` loads the four act word lists in `data/words/acts/`.
 - `tools/astrolex_tools/babel/` is Babel's voice: `lexicon.py` (about 500 tagged words), `compose.py` (fills templates from `data/babel/templates.json` using only letters in a pool, with multiplicity), `validate.py` (rejects any line whose letters, blocked tokens or non-words break the rule), `feasibility.py` (counts candidate lines per sampled level and writes the CONT-000 report). Babel is deterministic; no language model runs anywhere in `tools/`.
 - `web/toy/` is the Phase 2 prototype. It cannot fetch, so `export_toy_data.py` bakes act words, lexicon, templates, precomputed anagrams and toy tunables into `data.js` as `window.ASTROLEX_DATA`. The JS composer mirrors `compose.py`; if you change the Python composer or templates, re-export and keep the two in step.
-- `game/` (Godot 4, GDScript) starts in Phase 3 and does not exist yet. When it does: rules code lives in `game/rules/` with no Node dependencies, and every external service sits behind a one-file interface in `game/services/` with a fake that passes the same tests.
+- `ios/` is the shipping client (plan Part 7, Amendment A1): Swift 6, SwiftUI, RealityKit, iOS 18, iPhone only. The Xcode project is generated from `ios/project.yml` by XcodeGen and never committed. Rules code will live in the `packages/AstroLexCore` Swift package (WP-3.1; Foundation only, so it builds and tests on Linux), kept in step with Python and the toy by golden vectors in `data/conformance/`. Every external service sits behind a one-file interface (a Swift protocol in `ios/AstroLex/Services/`) with a fake that passes the same tests.
 
 ## How work is done here
 
@@ -47,6 +58,7 @@ The browser toy (`web/toy/index.html`) is a static page with no build step: open
 - **Owner approval is data, not chat.** Word lists, Babel templates and lines, story text and clues carry a `status: draft` marker in the data file; only the owner flips it to `approved`. Agents never edit approved text; they add a change note in `wps/_index.md` for the owner.
 - **Owner load is capped.** The review queue in `wps/_index.md` holds at most 4 items. When it is full, work on tests, tooling and evidence instead of opening new owner decisions.
 - **Licences before sources.** Any new word or data source needs a row in `data/words/LICENCES.md` first. NASPA, Collins Scrabble Words and publisher crossword clues are never allowed.
+- **Every app change goes to TestFlight.** On the owner's Mac, after a change to the app builds and passes tests, commit it and ship it with the `ship-testflight` skill (`.claude/skills/ship-testflight/SKILL.md`). The owner tests on the phone and steers from the Claude mobile app. Never commit `ios/.env.local`, `*.p8` keys or `build/`.
 - **Scope.** Agents may propose WPs only for the current or next phase. Anything found outside the current WP goes in the Backlog section of `wps/_index.md`.
 
 ## Agents
