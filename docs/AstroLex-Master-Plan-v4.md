@@ -5,7 +5,7 @@
 > **What changed from Draft 3.** Draft 3 was a design plan organised by story act. Draft 4 is an **execution plan organised by evidence**, written so that Claude Code agents can build it and one owner can steer it in a few hours a week. It follows `docs/analysis/AstroLex-Repo-Analysis-and-Path-to-Success.md`:
 > - **Evidence before content.** The anagram feasibility spike and a browser prototype come first. Nothing else starts until they pass.
 > - **Daily Signal first, campaign second.** A free daily puzzle with a share card ships at week 12. Act I and the paid campaign follow only if the daily loop grows.
-> - **Engine: Godot 4 with GDScript** for the shipping client, a browser page for the prototype and the web daily, Python for all content tooling (`docs/analysis/Engine-Alternatives-to-Unity.md`).
+> - **Engine: native iOS (Swift, SwiftUI, RealityKit)** for the shipping client since Amendment A1 (30 September 2026, Part 7); Godot was the original choice. The browser toy stays as the Phase 2 test tool. Python stays for all content tooling.
 > - **v1 scope cut.** No accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store or rewarded ads at launch. One meta system (Codex and Silent City). Enigma clues in the low hundreds, not 1,500.
 > - **Audience widened** to adults 30–55 who play a daily word puzzle, with 18–29s who share puzzles as the secondary group.
 > - **Owner load capped** at about 6 hours a week, enforced by the operating model in Part 3.
@@ -136,7 +136,9 @@ data/
   clues/                 clue batches with status
   levels/                one JSON per level
 web/                     Phase 2 prototype and the web Daily Signal (Three.js, plain JS or TypeScript)
-game/                    Godot 4 project (GDScript), from Phase 3
+ios/                     Xcode project (Swift, SwiftUI, RealityKit), from Phase 3 (Amendment A1; replaces game/)
+packages/AstroLexCore/   Swift package: rules engine, Foundation only, tested on Linux and macOS (Amendment A1)
+data/conformance/        golden test vectors every rules implementation must pass (Amendment A1)
   rules/                 pure GDScript rules, no Node dependencies, tested headlessly
   services/              thin interfaces for store, ads, analytics, save, leaderboards
 .github/workflows/       CI
@@ -368,7 +370,7 @@ Defaults apply unless the owner overrides. Recorded in `wps/_index.md`.
 | O-14 | AI-content policy | Agents draft code, specs, text and placeholders. Shipped art, audio and voice are human-made. **Babel is a deterministic algorithm; no runtime language model.** Licensed word data only. Disclosure text where a store requires it. |
 | O-15 | Funding | Self-funded through Phase 5. The Phase 4 slice is kept pitch-ready. |
 | O-16 | Phase 10 split | Replaced by the Phase 7 trigger table |
-| **O-17** | **Engine** | **Godot 4.7 with GDScript for the shipping client. Three.js for the prototype and the web daily. Python for tools.** The owner has a Mac, so iOS export is available from day one; iOS ships first, Android second. Defold if letters become pre-rendered sprites. Unity only if the owner already has deep Unity experience. |
+| **O-17** | **Engine** | **Superseded by Amendment A1 (Part 7): native iOS with Swift 6, SwiftUI and RealityKit, minimum iOS 18.** The Three.js toy stays as the Phase 2 test tool; Python stays for tools; the telemetry endpoint is TypeScript. Android is deferred to after the Phase 5 gate. The original row (Godot 4.7) is kept in git history. |
 | **O-18** | **Default mode** | **Decided by the Phase 2 gate.** The owner commits now to following the result. |
 | **O-19** | **v1 cuts** | Accounts, friends, ghosts, duels, both currencies, upgrade trees, season pass, cosmetics store, rewarded ads, and clue volume above 300 are all out of v1. Each has a trigger in Phase 7. |
 | **O-20** | **Owner load cap** | 6 hours a week; review queue cap of 4 |
@@ -447,3 +449,78 @@ Solutions-document items not listed above (A1–H8) remain proposals. The ones D
 1. Owner confirms §1.1 and answers O-17 to O-21 (about 30 minutes).
 2. `builder` runs WP-0.2 and WP-0.3.
 3. `content-curator` starts WP-1.1 the same day. WP-1.5 is the first real evidence about this game, and it is due at the end of week 1.
+
+---
+
+# Part 7: Amendment A1 (30 September 2026): native iOS
+
+## 7.1 Decision
+
+The owner asked for the smoothest, most professional iOS experience and accepted native Swift development. O-17 changes accordingly. Everything else in Draft 4 stands: the phases, the gates, the evidence rules and the owner-load cap.
+
+**Why native, not Godot or a web wrapper.** App Store featuring is the main free discovery channel for this game (`docs/analysis/Market-Evidence-Review-2026.md` §3), and editors reward exactly the platform features that only native code does well. It also removes the two iOS weaknesses the toy exposed: no haptics in Safari, and no control over frame rate or audio latency.
+
+## 7.2 Stack
+
+| Layer | Choice | Notes |
+|---|---|---|
+| App shell | Swift 6, SwiftUI | Minimum iOS 18, which `RealityView` needs; the owner's phone runs 18.7 |
+| Play field | RealityKit in a `RealityView` with a virtual camera | Apple's recommended 3D engine; SceneKit was soft-deprecated at WWDC25. Fallback if RealityKit fights us: SpriteKit with tilted letter sprites |
+| Frame rate | 120 Hz on ProMotion iPhones, 60 Hz elsewhere | `CADisableMinimumFrameDurationOnPhone` in Info.plist |
+| Haptics | Core Haptics | One pattern per feedback-matrix event: tether snap, catch, wrong catch, restore, low air |
+| Audio | AVAudioEngine | Letter-as-note catch sounds scheduled on the beat |
+| Rules | `packages/AstroLexCore` Swift package, Foundation only | Drift, tether, catch taxonomy, oxygen, scoring, spawner, Babel composer; seeded and fixed-step; compiles and tests on Linux |
+| Platform | Game Center, WidgetKit, App Clip, iCloud key-value store, StoreKit 2 (Phase 5) | Leaderboard for today's Signal, a home-screen widget with today's Signal and streak, instant play from a shared link, streak sync |
+| Telemetry | Small TypeScript endpoint on a serverless host | Replaces Copy results; anonymous events only |
+| Web | The Three.js toy (Phase 2 only); a light web daily for Android share recipients in Phase 4 | |
+| Android | Deferred to after the Phase 5 gate | Then choose a Kotlin port against the conformance vectors, or a web build of the daily |
+
+## 7.3 One set of rules, three languages
+
+Python (tools), Swift (the app) and JavaScript (the toy, later a web daily) each implement parts of the rules. To stop them drifting:
+
+- `data/` stays the single source of truth for words, templates and tunables.
+- `data/conformance/*.json` holds golden vectors: a seed, tunables and an input stream, with the expected board, catches, score and Babel candidate set. Python generates them.
+- Every implementation runs the same vectors in CI. A mismatch fails the build.
+
+## 7.4 How agents build it
+
+| Work | Where it runs | Why |
+|---|---|---|
+| `AstroLexCore`, conformance vectors, Python tools, data, docs | Cloud sessions and GitHub Actions on Linux | Pure Swift and Python compile and test on Linux |
+| App target: SwiftUI, RealityKit, haptics, widget, App Clip | Claude Code on the owner's Mac, inside the repo | Needs Xcode, the simulator and on-device runs; fastest loop |
+| Release builds | Xcode Cloud to TestFlight | 25 compute hours a month are included in the Apple Developer Program |
+
+Cloud sessions cannot compile Swift today: the environment's network policy denies `download.swift.org`. Allowing that host in the environment's Network access settings lets cloud sessions run `swift test` directly; until then, Swift package tests run in GitHub Actions.
+
+## 7.5 Phase 3 work packages, revised
+
+| WP | Was | Now |
+|---|---|---|
+| 3.1 | Rules core in Python and GDScript | `AstroLexCore` Swift package ported from the toy, plus conformance vectors generated by Python; Swift and Python pass the same vectors |
+| 3.2 | Godot project and CI | `ios/` Xcode project, SwiftUI shell, RealityKit field at 120 Hz, Xcode Cloud workflow to TestFlight internal testing |
+| 3.3 | Daily Signal, web | Daily Signal in the app: date seed, winning mode as default, Babel's line of the day, results screen, share card image through the share sheet with a link back, streak with two freezes a week |
+| 3.4 | Daily Signal, mobile (Godot) | Merged into 3.3; adds the WidgetKit widget and the settings screen (text size, dyslexia-friendly font, reduced motion, colour-blind palette, haptics) |
+| 3.5 | Platform services behind one-file interfaces | Game Center leaderboard for today's Signal, iCloud key-value streak sync, TypeScript telemetry endpoint, remote tunables as static JSON; each behind a Swift protocol with a fake for tests |
+| 3.6 | Store set-up | Unchanged, but the Apple Developer account is needed in **week 1** for TestFlight and Xcode Cloud |
+| 3.10 (new) | – | App Clip: a shared Daily Signal link opens today's puzzle without installing; size budget 50 MB |
+| 3.11 (new) | – | Core Haptics and AVAudioEngine feedback pass, moved forward from WP-4.8 |
+
+WP-3.7 (story bible), 3.8 (community seed) and 3.9 (business model v0) are unchanged.
+
+**Gate additions:** 120 fps p95 on the owner's ProMotion iPhone during a run and 60 fps on a non-ProMotion iPhone; the first TestFlight build installed by week 2.
+
+## 7.6 What this gives up
+
+- **Android** becomes a separate build later, not a free export.
+- **Consoles** would need a port; the conformance vectors make that a port of the rules, not a redesign.
+- **Agent speed** on the app target depends on the owner's Mac being available for Claude Code sessions.
+
+## 7.7 Owner actions
+
+1. Join the Apple Developer Program ($99 a year) and install Xcode.
+2. Install Claude Code on the Mac and run it inside the repo for app work.
+3. Optional: allow `download.swift.org` in the cloud environment's Network access settings.
+4. Keep sending the web toy to testers; it still answers the Drift or Pressure question while the app is built.
+
+Sources: [Bring your SceneKit project to RealityKit, WWDC25](https://developer.apple.com/videos/play/wwdc2025/288/) · [Displaying 3D objects with RealityView on iOS](https://www.createwithswift.com/displaying-3d-objects-with-realityview-on-ios-ipados-and-macos/) · [Xcode Cloud](https://developer.apple.com/xcode-cloud/) · [WWDC23: What's new in App Clips](https://developer.apple.com/videos/play/wwdc2023/10178) · [WebKit Features in Safari 26.0](https://webkit.org/blog/17333/webkit-features-in-safari-26-0/)
