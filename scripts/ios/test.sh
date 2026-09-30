@@ -6,20 +6,13 @@ set -euo pipefail
 require_vars DEVELOPMENT_TEAM ASTROLEX_BUNDLE_ID
 "$(dirname "$0")/generate.sh" >/dev/null
 mkdir -p "$BUILD_DIR"
-# Use SIM_DEVICE if set, else the newest available iPhone simulator.
-DEVICE="${SIM_DEVICE:-}"
-if [ -z "$DEVICE" ]; then
-  DEVICE="$(xcrun simctl list devices available | sed -n 's/^ *\(iPhone [^(]*\) (.*/\1/p' | sed 's/ *$//' | tail -n 1)"
-fi
-if [ -z "$DEVICE" ]; then
-  echo "No iPhone simulator found. Install one in Xcode > Settings > Components." >&2
-  exit 1
-fi
-echo "Testing on simulator: $DEVICE"
+# SIM_DEVICE (exact name) if set, else an iPhone Pro on the newest iOS runtime.
+DEVICE_ID="$(xcrun simctl list devices available -j | python3 "$(dirname "$0")/pick_simulator.py")"
+echo "Testing on simulator: $DEVICE_ID"
 xcodebuild test \
   -project "$IOS_DIR/AstroLex.xcodeproj" \
   -scheme AstroLex \
-  -destination "platform=iOS Simulator,name=$DEVICE" \
+  -destination "platform=iOS Simulator,id=$DEVICE_ID" \
   -derivedDataPath "$BUILD_DIR/DerivedData" \
   -quiet \
   CODE_SIGNING_ALLOWED=NO
