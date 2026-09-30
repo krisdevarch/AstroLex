@@ -108,7 +108,7 @@ Paste this into the Mac session (from the phone or the Mac) to start WP-3.2:
 | `scripts/ios/asc.py` | App Store Connect follow-up: waits for processing, sets What to Test, handles the Friends group |
 | `.claude/skills/ship-testflight/SKILL.md` | When and how Claude ships |
 | `.claude/settings.json` | Lets Claude run these scripts without asking; blocks it from reading `.env.local` and `.p8` keys |
-| `.github/workflows/ios.yml` | GitHub Actions compiles and tests the app on macOS for every PR that touches `ios/` |
+| `.github/workflows/ios.yml` | GitHub Actions compiles and tests the app on macOS; manual-only (Actions → Run workflow) for now |
 
 ## Cost
 Everything above is covered by the $99 developer membership. The scripts build on your Mac, so no cloud build minutes are used. GitHub's macOS runners are free for public repositories. Xcode Cloud (25 hours a month included) stays available as a fallback if the Mac is away.

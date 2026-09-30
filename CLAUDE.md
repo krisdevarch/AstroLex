@@ -40,7 +40,7 @@ scripts/ios/ship-testflight.sh           # archive, upload to TestFlight, tag tf
 python3 scripts/ios/make_icon.py         # regenerate the placeholder app icon
 ```
 
-CI `ios.yml` builds and tests the app on a macOS runner for PRs that touch `ios/` or `scripts/ios/`.
+CI `ios.yml` builds and tests the app on a macOS runner. It is manual-only (Actions tab → Run workflow) until the owner's Apple setup is done.
 
 ## Architecture
 

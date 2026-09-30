@@ -1,17 +1,10 @@
 name: ios
 
+# Manual only while the owner's Apple setup is pending (docs/ios/DEV-LOOP.md).
+# Run it from the Actions tab ("Run workflow"). To run it on every iOS PR again, restore:
+#   pull_request: { paths: ["ios/**", "scripts/ios/**", ".github/workflows/ios.yml"] }
 on:
-  pull_request:
-    paths:
-      - "ios/**"
-      - "scripts/ios/**"
-      - ".github/workflows/ios.yml"
-  push:
-    branches: [main]
-    paths:
-      - "ios/**"
-      - "scripts/ios/**"
-      - ".github/workflows/ios.yml"
+  workflow_dispatch:
 
 concurrency:
   group: ios-${{ github.ref }}

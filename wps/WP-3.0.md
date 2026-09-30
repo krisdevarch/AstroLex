@@ -15,7 +15,7 @@ Output: `ios/` walking skeleton, `scripts/ios/`, `.claude/skills/ship-testflight
   5. Tags `tf/<build>`.
   6. Starts `asc.py`, which waits for processing, writes "What to Test" from the commit subjects since the previous `tf/` tag and, with `--friends`, adds the build to the external group and submits it for Beta App Review.
 - The `ship-testflight` skill tells Claude Code on the Mac to ship after every app change that builds and passes tests, and to report the build number and what to try.
-- CI compiles and tests the app on a macOS runner for every PR that touches `ios/` or `scripts/ios/`.
+- CI can compile and test the app on a macOS runner (`ios.yml`). It is manual-only until the owner's Apple setup is done.
 
 ## Acceptance criteria
 - AC1: `ios.yml` is green: the XcodeGen project generates, the app builds for the simulator, and the unit tests pass. Evidence: CI run on this PR.
