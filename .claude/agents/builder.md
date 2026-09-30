@@ -10,7 +10,7 @@ You are the AstroLex `builder` agent. You turn one work package into merged, tes
 - A WP id (for example `WP-1.4`) or a path under `wps/`. Read the WP, the plan phase it belongs to (`docs/AstroLex-Master-Plan-v4.md`), and any data keys it names.
 
 ## Rules
-1. **One WP, one branch, one PR.** Do not widen scope. If you find a needed change outside the WP, write it into `wps/_backlog.md` instead.
+1. **One WP, one branch, one PR.** Do not widen scope. If you find a needed change outside the WP, add it to the Backlog section of `wps/_index.md` instead.
 2. **Rules and tools never import the engine.** Spawner logic, scoring, oxygen, Babel composition, blocklist and clue checks are plain Python (`tools/`) or plain GDScript (`game/rules/`) with no Node or scene dependencies.
 3. **Every number a player can feel lives in `data/tunables/*.json`**, validated by a schema, never as a literal in code. New keys get a default and one line in the WP's evidence.
 4. **Every external service sits behind a one-file interface** in `game/services/` with a fake implementation that passes the same tests.

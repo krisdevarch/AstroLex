@@ -34,7 +34,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 |---|---|---|---|---|
 | WP-0.1 | Goal paragraph and essential experience | Owner | done (29 Sep 2026): proof of concept first, iOS first, money later | plan §1.1 |
 | WP-0.2 | Repo scaffold and CI | builder | done | `reports/WP-0.2/evidence.md` |
-| WP-0.3 | Agent definitions | builder | done | `reports/WP-0.2/evidence.md` |
+| WP-0.3 | Agent definitions | builder | done; `market-analyst` added 30 Sep 2026 (plan §3.1 roster now complete: builder, content-curator, story-writer, verify-runner, lens-evaluator, market-analyst) | `reports/WP-0.2/evidence.md` |
 | WP-0.4 | Decisions recorded | Owner | defaults recorded above | – |
 | WP-0.5 | Reference phones | Owner | owner's iPhone is the first reference device; a mid-range Android is needed before the Android build (Phase 3) | – |
 | WP-1.1 | Word database v0 | content-curator | done | `reports/WP-1.1/evidence.md` |
