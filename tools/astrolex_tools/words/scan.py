@@ -16,7 +16,7 @@ import sys
 import time
 from collections import Counter
 
-from astrolex_tools import load_tunables, reports_dir
+from astrolex_tools import load_tunables, report_path
 from astrolex_tools.words.acts import load_acts
 from astrolex_tools.words.blocklist import Blocklist
 from astrolex_tools.words.decoys import choose_decoys, draw_decoys
@@ -65,7 +65,7 @@ def main(argv=None) -> int:
     t = load_tunables("spike")
     started = time.time()
     r = scan(a.boards or t["blocklist.scanBoards"])
-    out = reports_dir() / (a.out or "WP-1.2/scan.md")
+    out = report_path(a.out or "WP-1.2/scan.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
         "# Blocklist board scan (CONT-001)\n\n"

@@ -18,7 +18,7 @@ import sys
 import time
 from collections import Counter
 
-from astrolex_tools import load_tunables, reports_dir
+from astrolex_tools import load_tunables, report_path
 from astrolex_tools.babel.compose import compose
 from astrolex_tools.words.acts import ACT_FILES, load_acts
 from astrolex_tools.words.blocklist import Blocklist
@@ -147,7 +147,7 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     started = time.time()
     r = run(levels_per_act=a.levels)
-    out = reports_dir() / a.out
+    out = report_path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render(r, time.time() - started))
     for act, res in r["acts"].items():

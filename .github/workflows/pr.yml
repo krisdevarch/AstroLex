@@ -30,7 +30,7 @@ jobs:
       - name: Build word database
         run: python -m astrolex_tools.words.build
       - name: Blocklist board scan (CONT-001)
-        run: python -m astrolex_tools.words.scan --boards 20000
+        run: python -m astrolex_tools.words.scan --boards 20000 --out reports/ci/scan.md
       - name: Babel validator over act lists (STORY-004)
         run: python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
       - name: Upload evidence

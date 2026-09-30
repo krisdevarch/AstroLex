@@ -26,6 +26,17 @@ def reports_dir() -> Path:
     return repo_root() / "reports"
 
 
+def report_path(p: str) -> Path:
+    """Resolve a CLI --out value. Absolute paths are used as given; a path that already
+    starts with reports/ is taken from the repo root; anything else is relative to reports/."""
+    path = Path(p)
+    if path.is_absolute():
+        return path
+    if path.parts and path.parts[0] == "reports":
+        return repo_root() / path
+    return reports_dir() / path
+
+
 def load_tunables(name: str) -> dict:
     """Load ``data/tunables/<name>.json``. Every number a player can feel lives there, never in code."""
     path = data_dir() / "tunables" / f"{name}.json"
