@@ -22,7 +22,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-14 | AI-content policy | Agents draft; shipped art, audio and voice human-made; Babel deterministic; licensed word data | default |
 | O-15 | Funding | Self-funded through Phase 5 | default |
 | O-16 | Phase 10 split | Replaced by the Phase 7 trigger table | default |
-| O-17 | Engine | Godot 4.7 + GDScript; Three.js for prototype and web daily; Python for tools. **iOS first, then Android** (owner has a Mac and iPhone) | default engine; platform order answered by owner (29 Sep 2026) |
+| O-17 | Engine | **Native iOS: Swift 6, SwiftUI, RealityKit, minimum iOS 18** (plan Part 7, Amendment A1). Three.js toy for Phase 2 testing; Python for tools; TypeScript telemetry endpoint. Android after the Phase 5 gate | answered by owner (30 Sep 2026): smoothest iOS, native Swift accepted |
 | O-18 | Default mode | Decided by the Phase 2 gate | pending Phase 2 |
 | O-19 | v1 cuts | Accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store, rewarded ads, clues above 300 | default |
 | O-20 | Owner load cap | 6 hours a week; review queue cap 4 | default |
@@ -55,6 +55,8 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 4. (free)
 
 ## Backlog (found while building, not in scope of any current WP)
+
+- After PR #6 merges: update `CLAUDE.md` and `.claude/agents/builder.md`, which still describe the Phase 3 client as Godot and GDScript (Amendment A1).
 
 - SCOWL import for UK spelling variants (CONT-001 US/UK rule).
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.
