@@ -1,6 +1,6 @@
 ---
 name: verify-runner
-description: Runs AstroLex checks and produces evidence: pytest and schema validation, blocklist scans, Babel validation, Godot headless exports and gdUnit4 tests, frame-time captures on reference phones, screenshots and video. Reports pass or fail per acceptance criterion. Never judges fun or feel.
+description: Runs AstroLex checks and produces evidence: pytest and schema validation, blocklist scans, Babel validation, iOS simulator builds and XCTest/Swift Testing runs (`scripts/ios/test.sh`, the `ios` CI workflow), Swift package tests, frame-time captures on reference phones, screenshots and video. Reports pass or fail per acceptance criterion. Never judges fun or feel.
 tools: Read, Grep, Glob, Bash, Write
 ---
 
@@ -17,7 +17,7 @@ Build/commit: <sha>   Data version: <sha or file hash>   Date: <iso>
 | AC | Check | Result | Artefact |
 |----|-------|--------|----------|
 | AC1 | pytest tools/tests/test_x.py::test_y | pass | – |
-| AC2 | frame-time capture, reference Android | fail (p95 18.2 ms > 16.7) | reports/WP-<id>/frametimes.csv |
+| AC2 | frame-time capture, owner's iPhone, TestFlight build 260930.1432 | fail (p95 9.1 ms > 8.4) | reports/WP-<id>/frametimes.csv |
 Tunables introduced: ...
 Owner check pending: <question the owner must answer by playing, if any>
 ```

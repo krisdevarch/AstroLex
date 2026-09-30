@@ -1,0 +1,48 @@
+name: ios
+
+# Manual only while the owner's Apple setup is pending (docs/ios/DEV-LOOP.md).
+# Run it from the Actions tab ("Run workflow"). To run it on every iOS PR again, restore:
+#   pull_request: { paths: ["ios/**", "scripts/ios/**", ".github/workflows/ios.yml"] }
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: iOS app builds and tests on the simulator
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      # Unsigned simulator build: no team or real bundle ID is needed in CI.
+      DEVELOPMENT_TEAM: ""
+      ASTROLEX_BUNDLE_ID: app.astrolex.ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          brew install xcodegen shellcheck
+          xcodebuild -version
+      - name: Lint iOS scripts
+        run: shellcheck -x scripts/ios/*.sh
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Boot simulator
+        timeout-minutes: 10
+        run: |
+          DEVICE_ID="$(xcrun simctl list devices available -j | python3 scripts/ios/pick_simulator.py)"
+          xcrun simctl list devices available | grep "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+      - name: Build and test
+        timeout-minutes: 15
+        run: |
+          xcodebuild test \
+            -project ios/AstroLex.xcodeproj \
+            -scheme AstroLex \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO

@@ -46,17 +46,17 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
+| WP-3.0 | iOS dev loop: Mac → TestFlight → owner's iPhone, steered from the Claude app | builder + Owner | tooling done (PR #8, CI green); owner one-time setup pending (`docs/ios/DEV-LOOP.md`) | `reports/WP-3.0/evidence.md`; AC1–3 pass, AC4–6 after first ship |
+| WP-3.2 | App shell and RealityKit field at 120 Hz | builder (on the Mac) | ready; starts after WP-3.0 AC4 | `wps/WP-3.2.md` |
 
 ## Review queue (cap 4)
 
 1. WP-1.3 act word lists: skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
 2. WP-1.5 feasibility report: O-13 `level` scope applies by default; say so if you disagree.
 3. Phase 2 loop 1: share the toy link with the first 5–7 outside testers per `playtests/P2/protocol.md`; paste each tester's Copy results output into `playtests/P2/results/loop-1/`.
-4. (free)
+4. WP-3.0 one-time setup: Apple Developer Program, API key, `ios/.env.local`, TestFlight groups, `claude remote-control` on the Mac (`docs/ios/DEV-LOOP.md` steps 1–8), then paste the kickoff prompt.
 
 ## Backlog (found while building, not in scope of any current WP)
-
-- After PR #6 merges: update `CLAUDE.md` and `.claude/agents/builder.md`, which still describe the Phase 3 client as Godot and GDScript (Amendment A1).
 
 - SCOWL import for UK spelling variants (CONT-001 US/UK rule).
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.

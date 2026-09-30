@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(scripts/ios/generate.sh)",
+      "Bash(scripts/ios/test.sh)",
+      "Bash(scripts/ios/ship-testflight.sh)",
+      "Bash(scripts/ios/ship-testflight.sh *)",
+      "Bash(xcodegen *)",
+      "Bash(xcodebuild *)",
+      "Bash(xcrun simctl *)",
+      "Bash(git tag *)",
+      "Bash(git push origin tf/*)"
+    ],
+    "deny": [
+      "Read(./ios/.env.local)",
+      "Read(**/*.p8)"
+    ]
+  }
+}
