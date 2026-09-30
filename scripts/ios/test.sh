@@ -9,6 +9,8 @@ mkdir -p "$BUILD_DIR"
 # SIM_DEVICE (exact name) if set, else an iPhone Pro on the newest iOS runtime.
 DEVICE_ID="$(xcrun simctl list devices available -j | python3 "$(dirname "$0")/pick_simulator.py")"
 echo "Testing on simulator: $DEVICE_ID"
+# Boot first (and wait) so a slow simulator start is not mistaken for a hung test run.
+xcrun simctl bootstatus "$DEVICE_ID" -b >/dev/null
 xcodebuild test \
   -project "$IOS_DIR/AstroLex.xcodeproj" \
   -scheme AstroLex \

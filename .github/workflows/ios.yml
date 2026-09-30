@@ -13,6 +13,10 @@ on:
       - "scripts/ios/**"
       - ".github/workflows/ios.yml"
 
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   app:
     name: iOS app builds and tests on the simulator
@@ -33,10 +37,16 @@ jobs:
       - name: Generate Xcode project
         working-directory: ios
         run: xcodegen generate
-      - name: Build and test
+      - name: Boot simulator
+        timeout-minutes: 10
         run: |
           DEVICE_ID="$(xcrun simctl list devices available -j | python3 scripts/ios/pick_simulator.py)"
           xcrun simctl list devices available | grep "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+      - name: Build and test
+        timeout-minutes: 15
+        run: |
           xcodebuild test \
             -project ios/AstroLex.xcodeproj \
             -scheme AstroLex \
