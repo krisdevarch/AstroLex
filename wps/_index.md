@@ -46,7 +46,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
-| WP-3.0 | iOS dev loop: Mac → TestFlight → owner's iPhone, steered from the Claude app | builder + Owner | tooling in review; owner one-time setup pending (`docs/ios/DEV-LOOP.md`) | `wps/WP-3.0.md`; AC1–3 in CI, AC4–6 after first ship |
+| WP-3.0 | iOS dev loop: Mac → TestFlight → owner's iPhone, steered from the Claude app | builder + Owner | tooling done (PR #8, CI green); owner one-time setup pending (`docs/ios/DEV-LOOP.md`) | `reports/WP-3.0/evidence.md`; AC1–3 pass, AC4–6 after first ship |
 | WP-3.2 | App shell and RealityKit field at 120 Hz | builder (on the Mac) | ready; starts after WP-3.0 AC4 | `wps/WP-3.2.md` |
 
 ## Review queue (cap 4)
