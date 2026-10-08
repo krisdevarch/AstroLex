@@ -63,11 +63,13 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.add_theme_color_override("font_color", GLYPH_COLOR)
 
 
-## Back plane: distant debris. Dim, desaturated, unlit, shadowless, never tilted.
-func set_back(alpha: float, glyph_alpha: float, desaturate: float) -> void:
+## Back plane: blank debris (a shard, no letter). Dim, desaturated, unlit, shadowless, never tilted.
+func set_back(alpha: float, desaturate: float) -> void:
 	is_back = true
 	modulate = Color(1.0, 1.0, 1.0, alpha)
-	glyph.modulate.a = glyph_alpha
+	glyph.visible = false
+	body.texture = TileTextures.shard()
+	body.rotation = fposmod(_phase, TAU)
 	shadow.visible = false
 	body.light_mask = 2
 	_mat.set_shader_parameter("unlit_gain", FLAT_GAIN)

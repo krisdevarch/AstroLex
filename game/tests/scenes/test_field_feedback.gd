@@ -187,7 +187,7 @@ func test_back_tiles_are_dim_flat_and_untilted() -> void:
 			n += 1
 			var v = f._views[t.id]
 			assert_true(v.modulate.a <= cap + 0.0001, "back alpha <= backAlpha")
-			assert_true(v.glyph.modulate.a <= 1.0 and not v.shadow.visible, "no shadow")
+			assert_true(not v.shadow.visible, "no shadow")
 			assert_true(v.body.light_mask == 2, "no lamp light")
 	assert_true(n > 0, "back tiles exist")
 	for _i in 30:
@@ -205,30 +205,30 @@ func _back_tap_point(f: Node2D) -> Vector2:
 	return Vector2.ZERO
 
 
-func test_back_plane_tap_shows_ripple_and_does_not_fire() -> void:
+func test_back_plane_tap_does_nothing() -> void:
 	var f := _make(false)
-	# clear catchable tiles from the tap point so only a back tile is under it
 	var p := _back_tap_point(f)
 	for t in f.game_round.tiles:
 		if t.plane < 2:
 			t.pos = Vector2(-5.0, -5.0)
 	var air_before: float = f.game_round.oxygen
 	var wrong_before: int = int(f.game_round.stats["wrong"])
+	var fx_before: int = f._fx_layer.get_child_count()
 	assert_eq(f.tap(p), -1)
 	assert_true(f.game_round.shot.is_empty(), "no fire")
-	var ripples := 0
-	for c in f._fx_layer.get_children():
-		if c.name.begins_with("Ripple") or c.name.begins_with("@Node2D"):
-			ripples += 1
-	assert_eq(ripples, 1, "one ripple")
+	assert_eq(f._fx_layer.get_child_count(), fx_before, "no effect")
 	assert_eq(f.game_round.oxygen, air_before, "no air cost")
 	assert_eq(int(f.game_round.stats["wrong"]), wrong_before)
 	f.free()
-	var g := _make(false, 12345, "tilt", true)
-	var q := _back_tap_point(g)
-	for t in g.game_round.tiles:
-		if t.plane < 2:
-			t.pos = Vector2(-5.0, -5.0)
-	g.tap(q)
-	assert_eq(g._fx.size(), 0, "no ripple with reduced motion")
-	g.free()
+
+
+func test_back_tiles_draw_no_letter() -> void:
+	var f := _make(false)
+	var n := 0
+	for t in f.game_round.tiles:
+		if t.plane >= 2:
+			n += 1
+			assert_true(not f._views[t.id].glyph.visible, "back debris has no glyph")
+			assert_true(t.ch != "", "rules still carry ch")
+	assert_true(n > 0, "back tiles exist")
+	f.free()

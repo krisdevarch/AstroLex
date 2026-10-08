@@ -23,6 +23,24 @@ static func body(kind: String) -> CanvasTexture:
 	return tex
 
 
+## Blank debris for the back plane: a faint four-point star fragment, no bevel, no glyph.
+static func shard() -> Texture2D:
+	if _cache.has("shard"):
+		return _cache["shard"]
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	var centre := Vector2(SIZE, SIZE) * 0.5
+	for y in SIZE:
+		for x in SIZE:
+			var p := Vector2(x + 0.5, y + 0.5) - centre
+			var r := HALF * (0.46 + 0.54 * pow(absf(cos(2.0 * p.angle())), 2.5))
+			var a := clampf(r - p.length() + 0.5, 0.0, 1.0)
+			var shade := 1.0 - 0.25 * clampf(p.length() / maxf(r, 1.0), 0.0, 1.0)
+			img.set_pixel(x, y, Color(BASE.r * shade, BASE.g * shade, BASE.b * shade, a))
+	var tex := ImageTexture.create_from_image(img)
+	_cache["shard"] = tex
+	return tex
+
+
 static func shadow() -> Texture2D:
 	if _cache.has("shadow"):
 		return _cache["shadow"]
