@@ -28,6 +28,9 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-20 | Owner load cap | 6 hours a week; review queue cap 4 | default |
 | O-21 | Success paragraph | Plan §1.1: proof of concept first; 12-month goal only if Phases 1–3 hold | answered by owner (29 Sep 2026) |
 | O-22 | Letter tile treatment | Default: tilt with light. Owner will send a drawing of the look (8 Oct 2026); decide from it | pending owner drawing |
+| O-23 | Back plane | Decorative blank star shards with no letters, never catchable. Owner (8 Oct 2026): faint letters still looked tappable | answered by owner (8 Oct 2026) |
+| O-24 | Playtest results and monitoring | GitHub, no server: **Send results** opens a `[playtest]` issue, **Copy results** gives the JSON; the `playtest-report` workflow keeps the "Playtest dashboard" issue up to date. Anonymous (public repo). Contract: `docs/playtest-telemetry.md` | answered by owner (8 Oct 2026) |
+| O-25 | Word hints in the slots | Setting with three levels (all letters, first and last letter, none); **default first and last**, which matches the Decryption visor. The owner worried full letters make it too easy; playtests #19 and #20 showed that blank slots mean guessing (34 wrong catches, all unneeded). Results log the level, so the levels can be compared | answered by owner (8 Oct 2026) |
 
 ## Work packages
 
@@ -47,14 +50,14 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
-| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026). Owner play: back letters looked catchable but were not (fixing: back plane reads as background); tiles readable, polish later; look waits on owner drawing (O-22) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md` |
+| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026); follow-ups merged: AstroLex loading screen (#13), blank back plane (#14, #15), playtest monitoring and dashboard (#15, #18), word hints (#21) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md`, `docs/PROJECT-BRIEF.md` |
 
 ## Review queue (cap 4)
 
 1. WP-1.3 act word lists: skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
 2. WP-1.5 feasibility report: O-13 `level` scope applies by default; say so if you disagree.
 3. Phase 2 loop 1: share the toy link with the first 5–7 outside testers per `playtests/P2/protocol.md`; paste each tester's Copy results output into `playtests/P2/results/loop-1/`.
-4. (free)
+4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the tile drawing for O-22.
 
 ## Backlog (found while building, not in scope of any current WP)
 
