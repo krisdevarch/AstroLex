@@ -7,10 +7,13 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { chromium } = require('playwright');
+const { chromium, webkit, devices } = require('playwright');
 
 const args = process.argv.slice(2);
 const AUTOPLAY = args.includes('--autoplay');
+// --browser=webkit runs Safari's engine with an iPhone profile; --url=<https://...> tests a deployed build.
+const BROWSER = (args.find((a) => a.startsWith('--browser=')) || '--browser=chromium').split('=')[1];
+const REMOTE = (args.find((a) => a.startsWith('--url=')) || '').slice('--url='.length);
 const pos = args.filter((a) => !a.startsWith('--'));
 const dir = path.resolve(pos[0] || 'build/web');
 const shot = pos[1];
@@ -29,16 +32,25 @@ const server = http.createServer((req, res) => {
 
 (async () => {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  const url = `http://127.0.0.1:${server.address().port}/index.html${AUTOPLAY ? '?autoplay=1' : ''}`;
-  const browser = await chromium.launch({
-    executablePath: process.env.CHROMIUM_PATH || undefined,
-    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-  });
-  const page = await browser.newPage({ viewport: { width: 432, height: 768 } });
+  const base = REMOTE || `http://127.0.0.1:${server.address().port}/index.html`;
+  const url = base + (AUTOPLAY ? (base.includes('?') ? '&' : '?') + 'autoplay=1' : '');
+  const browser = BROWSER === 'webkit'
+    ? await webkit.launch()
+    : await chromium.launch({
+      executablePath: process.env.CHROMIUM_PATH || undefined,
+      args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+    });
+  const page = BROWSER === 'webkit'
+    ? await (await browser.newContext({ ...devices['iPhone 13'] })).newPage()
+    : await browser.newPage({ viewport: { width: 432, height: 768 } });
+  console.log(`browser: ${BROWSER}, url: ${url}`);
   const errors = [];
   const lines = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => { lines.push(m.text()); if (m.type() === 'error') errors.push(m.text()); });
+  // WebKit logs this for Godot's Compatibility renderer on every frame; it is a warning, not a failure.
+  const BENIGN = /WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image/;
+  let benign = 0;
+  page.on('console', (m) => { lines.push(m.text()); if (BENIGN.test(m.text())) { benign++; return; } if (m.type() === 'error') errors.push(m.text()); });
 
   const t0 = Date.now();
   await page.goto(url);
@@ -54,6 +66,8 @@ const server = http.createServer((req, res) => {
   server.close();
 
   console.log(lines.filter((l) => /Godot Engine|OpenGL API|Build configuration|AstroLex/.test(l)).join('\n'));
+  if (benign) console.log(`note: ${benign} known WebKit WebGL blit warnings ignored`);
+  if (!ready || (AUTOPLAY && !won) || errors.length) console.error('--- last console lines ---\n' + lines.slice(-30).join('\n'));
   if (!ready) { console.error(`FAIL: no "AstroLex ready" line within ${TIMEOUT_MS / 1000} s`); process.exit(1); }
   if (AUTOPLAY && !won) { console.error(`FAIL: no "AstroLex round won" line within ${WON_TIMEOUT_MS / 1000} s`); process.exit(1); }
   if (errors.length) { console.error('FAIL: browser errors:\n' + errors.join('\n')); process.exit(1); }
