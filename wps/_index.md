@@ -47,7 +47,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
-| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | in progress | `wps/MILESTONE-first-draft.md` |
+| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | built; D1–D6 pass, D7 waits on CI for the PR; owner checks pending (feel, readability, tile treatment O-22) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md` |
 
 ## Review queue (cap 4)
 

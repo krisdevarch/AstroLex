@@ -14,8 +14,8 @@ Commit: 0375592 (branch claude/first-draft, uncommitted evidence) · Date: 2026-
 | D6 | test_field.gd::test_autoplay_wins_a_drift_round_and_the_hud_score_matches (headless); web smoke `--autoplay` waits for the won line | pass | smoke output below |
 | D7 test.sh green | 42 passed, 0 failed | pass | |
 | D7 web export + Chromium smoke | `scripts/godot/export.sh web` ok; smoke ok (below) | pass | build/web |
-| D7 CI green on the PR | | pending | |
-| D7 reviewer verdict | | pending | |
+| D7 CI green on the PR | `godot` workflow (tests, export, autoplay smoke) and `pr` workflow on the PR head | see PR checks | GitHub Actions |
+| D7 reviewer verdict | `reviewer` on 2730344..HEAD: 0 blocking; verdict ship after findings 1 and 2. All should-fix items are fixed (19bcff4, 34c3a70, view tests); look constants are accepted as placeholders (backlog, WP-4.2) | pass | – |
 
 ## Web export sizes (build/web)
 
@@ -41,3 +41,6 @@ None in this evidence run (game.json was covered by D1 in earlier WPs).
 - Does a catch feel snappy?
 - Are the tiles readable and big enough on the phone?
 - Which tile treatment do you prefer: flat, tilt or bevel (O-22)?
+
+## After the review fixes
+`scripts/godot/test.sh`: 48 passed, 0 failed. New: `test_field_feedback.gd` (wrong-catch flash and toast, dissolve frees the view, no leak over two rounds, tether visibility, treatments and reduced motion), a step-size test at dt 1/30, 1/60 and 1/120, and Babel calls no longer shift tile spawns. Chained restores emit one Babel event per word; the view shows the latest.
