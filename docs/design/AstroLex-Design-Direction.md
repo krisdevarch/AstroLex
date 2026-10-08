@@ -53,7 +53,7 @@ The first two steps cost no money and test the core claim cheaply: does seeing t
 ## 6. Risks
 
 - **Tone drift.** Ori is melancholy; AstroLex is "warm, funny and sincere". The crew banter and Babel's wit must stay, or the game turns solemn. Ori's sadness belongs to the Prologue and Act III only.
-- **Dark screens on phones.** A mostly dark field in sunlight is hard to read. The backdrop needs a floor of brightness, set as a tunable and checked on the owner's iPhone.
+- **Dark screens on phones.** A mostly dark field in sunlight is hard to read. The backdrop needs a floor of brightness, set as a tunable and checked in the web build on the owner's phone.
 - **Owner load.** A wordless Prologue is new story content in the review queue (cap 4). It should wait for a free slot.
 
 ## 7. Decisions for the owner
@@ -111,7 +111,7 @@ Signals on glass: back plane shards are small frosted glass with no glyph (O-23 
 **Risks and guardrails:**
 - Glass can hurt reading (Liquid Glass drew this criticism). The frost core and ink halo must keep the glyph at 4.5:1 contrast or better against the worst patch of every sky, checked by a script that samples the backdrops.
 - Frost, blur strength and edge tint are tunables, like every look number. A reduced-transparency setting makes the glass frosted and opaque.
-- Screen-texture reads cost GPU time. The first test is the frame rate on the owner's iPhone with 20 glass tiles on screen against the 60 fps gate.
+- Screen-texture reads cost GPU time. The first test is the frame rate of the web build in a phone browser (web comes first; native iOS comes later) with 20 glass tiles on screen against the 60 fps gate.
 
 ## 11. Painted-sky scenes
 
@@ -119,7 +119,7 @@ Backgrounds follow the owner's reference image: smooth gradient skies, a glowing
 
 ## 12. Decisions for the owner (updated)
 
-1. Glass tiles with a white glyph (recommended: yes, after the iPhone frame-rate test).
+1. Glass tiles with a white glyph (recommended: yes, after a frame-rate test of the web build in a phone browser).
 2. Painted-sky scenes with one landmark per act (recommended: yes).
 3. A signature colour per character (recommended: yes).
 4. A wordless Prologue with *water* as the first word (recommended: yes, as a cheap animatic first).

@@ -179,7 +179,7 @@ tr:last-child td{border-bottom:0}
       <li><b>Edge tint</b><span>The rim and the bottom of the glass pick up the act's accent colour. When the tile is caught, the glass fills with that light.</span></li>
     </ol>
   </div>
-  <p class="muted">In Godot this is one <code>canvas_item</code> shader that reads the screen behind the tile (one back-buffer copy per frame for all tiles), uses the tile's normal map to warp it, and samples a lower mip level for the blur. It runs on the Compatibility renderer and on the web. The first test is the frame rate on your iPhone with 20 glass tiles on screen.</p>
+  <p class="muted">In Godot this is one <code>canvas_item</code> shader that reads the screen behind the tile (one back-buffer copy per frame for all tiles), uses the tile's normal map to warp it, and samples a lower mip level for the blur. It runs on the Compatibility renderer and on the web. The first test is the frame rate of the web build in your phone's browser with 20 glass tiles on screen.</p>
 </section>
 
 <section class="stack">
@@ -247,7 +247,7 @@ tr:last-child td{border-bottom:0}
   <div class="card">
     <h3>Decisions for you</h3>
     <ol>
-      <li>Use <b>glass tiles</b> with a white glyph? <span class="muted">(recommended: yes, after an iPhone frame-rate test)</span></li>
+      <li>Use <b>glass tiles</b> with a white glyph? <span class="muted">(recommended: yes, after a frame-rate test of the web build on a phone)</span></li>
       <li>Use <b>painted-sky scenes</b>, one landmark per act? <span class="muted">(recommended: yes)</span></li>
       <li>Give each <b>character a signature colour</b>? <span class="muted">(recommended: yes)</span></li>
     </ol>
