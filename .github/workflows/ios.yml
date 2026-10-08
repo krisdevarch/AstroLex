@@ -1,0 +1,86 @@
+name: ios
+
+# iOS build check (WP-3.0). Exports the Godot game as an Xcode project and compiles it for
+# iPhone, unsigned: no Apple account or secret is needed here. Signing and the TestFlight
+# upload happen on the owner's Mac (scripts/ios/ship-testflight.sh, docs/ios/DEV-LOOP.md).
+# macOS minutes are dear, so it runs only when the iOS path itself changes, plus on demand.
+on:
+  pull_request:
+    paths:
+      - "game/export_presets.cfg"
+      - "game/project.godot"
+      - "scripts/ios/**"
+      - "scripts/godot/install.sh"
+      - "scripts/godot/export.sh"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Shell scripts pass shellcheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck -x scripts/ios/*.sh scripts/godot/*.sh
+      - name: The ship script refuses to run off a Mac
+        run: |
+          set +e
+          scripts/ios/ship-testflight.sh; code=$?
+          test "$code" -eq 3 || { echo "expected exit 3, got $code"; exit 1; }
+
+  build:
+    name: Godot iOS export compiles for iPhone (unsigned)
+    needs: lint
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Godot version
+        id: godot
+        run: echo "version=$(tr -d '[:space:]' < scripts/godot/VERSION)" >> "$GITHUB_OUTPUT"
+      - name: Cache Godot editor and iOS templates
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/godot
+            ~/Library/Application Support/Godot/export_templates
+          key: godot-ios-${{ runner.os }}-${{ steps.godot.outputs.version }}
+      - name: Install Godot and iOS templates
+        run: scripts/godot/install.sh --templates ios
+      - name: Godot headless tests (macOS)
+        run: scripts/godot/test.sh
+      - name: Export the Xcode project
+        run: scripts/godot/export.sh ios
+      - name: Build for iPhone
+        run: |
+          xcodebuild -version
+          xcodebuild build \
+            -project build/ios/AstroLex.xcodeproj \
+            -scheme AstroLex \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build/DerivedData \
+            -quiet \
+            PRODUCT_BUNDLE_IDENTIFIER=app.astrolex.ci \
+            MARKETING_VERSION="$(sed -n 's/^config\/version="\(.*\)"/\1/p' game/project.godot)" \
+            CURRENT_PROJECT_VERSION="$(date -u +%y%m%d).$((10#$(date -u +%H%M)))" \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Check the app bundle
+        run: |
+          APP="$(find build/DerivedData/Build/Products -maxdepth 2 -name 'AstroLex.app' -type d | head -n 1)"
+          test -n "$APP"
+          plutil -p "$APP/Info.plist" | grep -E 'CFBundleIdentifier|CFBundleShortVersionString|CFBundleVersion|UISupportedInterfaceOrientations|ITSAppUsesNonExemptEncryption' -A2
+          test -f "$APP/AstroLex.pck"
+          {
+            echo "### iOS build (unsigned)"
+            echo "| Item | Size |"
+            echo "|---|---:|"
+            echo "| AstroLex.app | $(du -sh "$APP" | cut -f1) |"
+            echo "| AstroLex.pck | $(du -h "$APP/AstroLex.pck" | cut -f1) |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -51,6 +51,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
 | M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026); follow-ups merged: AstroLex loading screen (#13), blank back plane (#14, #15), playtest monitoring and dashboard (#15, #18), word hints (#21) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md`, `docs/PROJECT-BRIEF.md` |
+| WP-3.0 | iOS dev loop for the Godot game: Godot iOS export → Xcode archive → TestFlight, steered from the Claude app | builder + Owner | tooling done, replaces PR #8 (owner go-ahead 8 Oct 2026); owner one-time setup pending (`docs/ios/DEV-LOOP.md`), joins the review queue when a slot frees | `reports/WP-3.0/evidence.md`; AC1–4 in CI, AC5–7 after the first ship |
 
 ## Review queue (cap 4)
 
@@ -60,8 +61,6 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the tile drawing for O-22.
 
 ## Backlog (found while building, not in scope of any current WP)
-
-- PR #8 (Swift skeleton plus TestFlight loop) predates Amendment A2. Rework it as WP-3.0 for a Godot iOS export, keeping the ship script, `asc.py`, the skill and the owner setup guide (plan §8.7); waiting on the owner's go-ahead.
 
 - First-draft look constants (tether width and colour, particles, flash and toast timings, back-plane dim, tilt multipliers, glyph size, bevel and lamp values in `game/scenes/` and `tile.gdshader`) are placeholders. Move them to `data/tunables/game.json` with the WP-4.2 art bible.
 - Keep `main.gd` the only wall-clock seed source when the Daily Signal date seed lands (review of the first draft).

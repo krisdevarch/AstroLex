@@ -32,7 +32,7 @@ AstroLex is a mobile word game. Letter tiles drift in space, and the player teth
 | 8 Oct | #15, #18 | Playtest monitoring: Send or Copy results, dashboard; wrong catches split into surplus and unneeded |
 | 8 Oct | #21 | Word hints in the slots: all letters, first and last (default), or none |
 
-PR #8 (the Swift TestFlight loop) is still open. Its upload half gets reworked for Godot iOS exports when iOS starts.
+WP-3.0 (8 Oct, replacing PR #8) reworked the TestFlight loop for Godot: the Mac exports the game for iOS, archives it and uploads it to TestFlight. It waits on the owner's Apple setup (`docs/ios/DEV-LOOP.md`).
 
 ## Last playtest findings (owner, iPhone, 8 Oct)
 - **Performance:** 60 fps steady, with frame-time p95 at 16.7 ms. Load takes 0.6–4.6 s (first visit 4.6 s), with no errors.

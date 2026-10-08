@@ -11,3 +11,8 @@ build/
 scripts/godot/web-smoke/node_modules/
 scripts/godot/web-smoke/package-lock.json
 game/data/build.json
+# iOS (WP-3.0; secret or generated, see docs/ios/DEV-LOOP.md)
+scripts/ios/.env.local
+*.p8
+DerivedData/
+xcuserdata/

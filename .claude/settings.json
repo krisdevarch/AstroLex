@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(scripts/godot/test.sh)",
+      "Bash(scripts/godot/export.sh *)",
+      "Bash(scripts/godot/install.sh *)",
+      "Bash(scripts/ios/ship-testflight.sh)",
+      "Bash(scripts/ios/ship-testflight.sh *)",
+      "Bash(xcodebuild *)",
+      "Bash(git tag *)",
+      "Bash(git push origin tf/*)"
+    ],
+    "deny": [
+      "Read(./scripts/ios/.env.local)",
+      "Read(**/*.p8)"
+    ]
+  }
+}
