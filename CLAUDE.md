@@ -42,6 +42,8 @@ cd scripts/godot/web-smoke && npm install && npx playwright install chromium && 
 
 CI `.github/workflows/godot.yml` runs the tests, then exports the web build, boots it in Chromium and uploads it as the `astrolex-web` artifact. It runs on PRs that touch `game/` or `scripts/godot/`. Tests extend `res://tests/test_case.gd` and define `test_*` methods. GDScript cannot catch runtime errors, so `test.sh` also fails on any `SCRIPT ERROR` in the log. Web is the only export target for now.
 
+Merges to main deploy the web build to https://krisdevarch.github.io/AstroLex/ (job `deploy-pages`).
+
 ## Architecture
 
 **Data flows one way: `data/` → `tools/` → `reports/` and `web/`.**
