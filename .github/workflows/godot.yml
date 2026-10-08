@@ -89,6 +89,18 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
           node smoke.cjs ../../../build/web ../../../build/web-smoke.png --autoplay
+      - name: Play it in WebKit as an iPhone (Safari's engine; diagnostic for now)
+        id: webkit
+        continue-on-error: true
+        working-directory: scripts/godot/web-smoke
+        run: |
+          npx playwright install --with-deps webkit
+          node smoke.cjs ../../../build/web ../../../build/webkit-smoke.png --autoplay --browser=webkit
+      - name: Check the live Pages site in WebKit (diagnostic)
+        if: always()
+        continue-on-error: true
+        working-directory: scripts/godot/web-smoke
+        run: node smoke.cjs ../../../build/web ../../../build/webkit-live.png --browser=webkit --url=https://krisdevarch.github.io/AstroLex/index.html
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:
@@ -100,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-smoke-screenshot
-          path: build/web-smoke.png
+          path: build/*.png
           if-no-files-found: ignore
           retention-days: 14
 
