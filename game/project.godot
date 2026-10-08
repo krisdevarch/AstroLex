@@ -1,0 +1,30 @@
+; Engine configuration file.
+; AstroLex Godot project (plan Part 8, Amendment A2): 2D world, 2.5D letter tiles,
+; Compatibility renderer, portrait 1080x1920.
+
+config_version=5
+
+[application]
+
+config/name="AstroLex"
+config/version="0.1.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7")
+boot_splash/bg_color=Color(0.02, 0.03, 0.08, 1)
+
+[display]
+
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/size/window_width_override=432
+window/size/window_height_override=768
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.02, 0.03, 0.08, 1)

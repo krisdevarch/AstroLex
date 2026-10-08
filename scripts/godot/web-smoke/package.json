@@ -1,0 +1,8 @@
+{
+  "name": "astrolex-web-smoke",
+  "private": true,
+  "description": "Boots the Godot web export in headless Chromium (CI: .github/workflows/godot.yml)",
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}

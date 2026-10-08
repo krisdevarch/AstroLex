@@ -5,3 +5,7 @@ __pycache__/
 data/words/words.sqlite
 reports/ci/
 .venv/
+# Godot (plan Part 8)
+game/.godot/
+build/
+scripts/godot/web-smoke/node_modules/

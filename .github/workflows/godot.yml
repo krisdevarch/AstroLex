@@ -1,0 +1,97 @@
+name: godot
+
+# Godot CI (plan Part 8, Amendment A2). Web only for now:
+#   test        import the project, run the headless GDScript tests
+#   export-web  export the web build, boot it in headless Chromium, upload it as an artifact
+on:
+  pull_request:
+    paths:
+      - "game/**"
+      - "scripts/godot/**"
+      - ".github/workflows/godot.yml"
+  push:
+    branches: [main]
+    paths:
+      - "game/**"
+      - "scripts/godot/**"
+      - ".github/workflows/godot.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: godot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Godot import and headless tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Godot version
+        id: godot
+        run: echo "version=$(tr -d '[:space:]' < scripts/godot/VERSION)" >> "$GITHUB_OUTPUT"
+      - name: Cache Godot editor
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/godot
+          key: godot-editor-${{ steps.godot.outputs.version }}
+      - name: Install Godot
+        run: scripts/godot/install.sh
+      - name: Import and run tests
+        run: scripts/godot/test.sh
+
+  export-web:
+    name: Web export and browser smoke test
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Godot version
+        id: godot
+        run: echo "version=$(tr -d '[:space:]' < scripts/godot/VERSION)" >> "$GITHUB_OUTPUT"
+      - name: Cache Godot editor and web templates
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/godot
+            ~/.local/share/godot/export_templates
+          key: godot-web-${{ steps.godot.outputs.version }}
+      - name: Install Godot and web templates
+        run: scripts/godot/install.sh --templates
+      - name: Export web build
+        run: scripts/godot/export.sh web
+      - name: Size report
+        run: |
+          {
+            echo "### Web build"
+            echo "| File | Size | gzip |"
+            echo "|---|---:|---:|"
+            for f in build/web/index.wasm build/web/index.pck build/web/index.js; do
+              printf '| %s | %s | %s |\n' "$(basename "$f")" "$(du -h "$f" | cut -f1)" "$(gzip -9 -c "$f" | wc -c | numfmt --to=iec)"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Boot the build in headless Chromium
+        working-directory: scripts/godot/web-smoke
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          node smoke.cjs ../../../build/web ../../../build/web-smoke.png
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: astrolex-web
+          path: build/web
+          retention-days: 14
+      - name: Upload smoke screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-smoke-screenshot
+          path: build/web-smoke.png
+          if-no-files-found: ignore
+          retention-days: 14
