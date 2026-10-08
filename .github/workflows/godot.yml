@@ -2,17 +2,25 @@ name: godot
 
 # Godot CI (plan Part 8, Amendment A2). Web only for now:
 #   test        import the project, run the headless GDScript tests
-#   export-web  export the web build, boot it in headless Chromium, upload it as an artifact
+#   export-web  export the web build, play one round in headless Chromium (autoplay), upload it as an artifact
 on:
   pull_request:
     paths:
       - "game/**"
+      - "data/tunables/game*.json"
+      - "data/babel/**"
+      - "data/words/acts/**"
+      - "tools/astrolex_tools/export_game_data.py"
       - "scripts/godot/**"
       - ".github/workflows/godot.yml"
   push:
     branches: [main]
     paths:
       - "game/**"
+      - "data/tunables/game*.json"
+      - "data/babel/**"
+      - "data/words/acts/**"
+      - "tools/astrolex_tools/export_game_data.py"
       - "scripts/godot/**"
       - ".github/workflows/godot.yml"
   workflow_dispatch:
@@ -80,7 +88,7 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
-          node smoke.cjs ../../../build/web ../../../build/web-smoke.png
+          node smoke.cjs ../../../build/web ../../../build/web-smoke.png --autoplay
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:

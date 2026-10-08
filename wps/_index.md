@@ -60,6 +60,8 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 
 - PR #8 (Swift skeleton plus TestFlight loop) predates Amendment A2. Rework it as WP-3.0 for a Godot iOS export, keeping the ship script, `asc.py`, the skill and the owner setup guide (plan §8.7); waiting on the owner's go-ahead.
 
+- First-draft look constants (tether width and colour, particles, flash and toast timings, back-plane dim, tilt multipliers, glyph size, bevel and lamp values in `game/scenes/` and `tile.gdshader`) are placeholders. Move them to `data/tunables/game.json` with the WP-4.2 art bible.
+- Keep `main.gd` the only wall-clock seed source when the Daily Signal date seed lands (review of the first draft).
 - SCOWL import for UK spelling variants (CONT-001 US/UK rule).
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.
 - Babel template set v2 once the owner has read v1 candidates; more glue words widen feasibility.

@@ -52,3 +52,13 @@ def test_anagrams_cover_every_act_word(exported):
     act_words = {w for act in con["acts"].values() for w in act["words"]}
     assert act_words <= set(con["anagrams"])
     assert all(isinstance(v, list) for v in con["anagrams"].values())
+
+
+@pytest.mark.db
+def test_committed_game_data_matches_a_fresh_export(exported):
+    """game/data/*.json is generated: a change to data/ without re-running the exporter fails here."""
+    from astrolex_tools import repo_root
+    tun, con = exported
+    committed = repo_root() / "game" / "data"
+    assert json.loads((committed / "tunables.json").read_text()) == tun, "run: python -m astrolex_tools.export_game_data"
+    assert json.loads((committed / "content.json").read_text()) == con, "run: python -m astrolex_tools.export_game_data"
