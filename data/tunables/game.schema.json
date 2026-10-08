@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AstroLex Godot client tunables (plan Part 8)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tether.travelTime",
+    "tether.travelMinMul",
+    "tether.travelDistMul",
+    "tether.hitTolerance",
+    "tether.driftToleranceMul",
+    "tap.marginPx",
+    "tap.driftMarginMul",
+    "drift.speed",
+    "drift.speedVariation",
+    "spawner.decoys",
+    "spawner.frontShare",
+    "spawner.wordsPerLevel",
+    "oxygen.max",
+    "oxygen.drainPerSec",
+    "oxygen.wrongCost",
+    "oxygen.restoreBase",
+    "oxygen.restorePerLetter",
+    "score.letterValue",
+    "score.lengthStep",
+    "combo.step",
+    "combo.max",
+    "score.oxygenBonus",
+    "ramp.driftStep",
+    "ramp.decoyStep",
+    "ramp.decoyMax",
+    "ramp.drainStep",
+    "babel.showSeconds",
+    "babel.minLineLetters",
+    "sim.stepSec",
+    "field.height",
+    "field.topMargin",
+    "tile.size",
+    "plane.frontScale",
+    "plane.midScale",
+    "plane.backScale",
+    "plane.backTiles",
+    "tile.maxTiltDeg",
+    "tile.swayDeg",
+    "tile.swaySpeed",
+    "tile.shadowOffset",
+    "fx.flyToSlotSec",
+    "fx.dissolveSec",
+    "autoplay.tapInterval"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "tether.travelTime": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds for the tether to reach a tile at mid range"
+    },
+    "tether.travelMinMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "travel time multiplier at zero distance"
+    },
+    "tether.travelDistMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "extra travel time multiplier at a full field height of distance"
+    },
+    "tether.hitTolerance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "field units: how far a tile may drift during travel and still be caught"
+    },
+    "tether.driftToleranceMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Drift mode multiplier on tether.hitTolerance"
+    },
+    "tap.marginPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "screen px (1080 base) added to a tile's drawn radius for hit testing"
+    },
+    "tap.driftMarginMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Drift mode multiplier on the tap radius"
+    },
+    "drift.speed": {
+      "type": "number",
+      "minimum": 0,
+      "description": "field units per second, before per-tile variation"
+    },
+    "drift.speedVariation": {
+      "type": "number",
+      "minimum": 0,
+      "description": "fraction of drift.speed each tile varies by"
+    },
+    "spawner.decoys": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "decoys on the board in round 1"
+    },
+    "spawner.frontShare": {
+      "type": "number",
+      "minimum": 0,
+      "description": "share of catchable tiles that start on the front plane"
+    },
+    "spawner.wordsPerLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "words per round"
+    },
+    "oxygen.max": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Pressure: full oxygen"
+    },
+    "oxygen.drainPerSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Pressure: oxygen lost per second"
+    },
+    "oxygen.wrongCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Pressure: oxygen lost per wrong catch"
+    },
+    "oxygen.restoreBase": {
+      "type": "number",
+      "minimum": 0,
+      "description": "oxygen regained per restored word"
+    },
+    "oxygen.restorePerLetter": {
+      "type": "number",
+      "minimum": 0,
+      "description": "extra oxygen per letter of the restored word"
+    },
+    "score.letterValue": {
+      "type": "number",
+      "minimum": 0,
+      "description": "points per letter"
+    },
+    "score.lengthStep": {
+      "type": "number",
+      "minimum": 0,
+      "description": "bonus per letter beyond 3"
+    },
+    "combo.step": {
+      "type": "number",
+      "minimum": 0,
+      "description": "combo gain per catch"
+    },
+    "combo.max": {
+      "type": "number",
+      "minimum": 0,
+      "description": "combo cap"
+    },
+    "score.oxygenBonus": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Pressure win: points per remaining oxygen"
+    },
+    "ramp.driftStep": {
+      "type": "number",
+      "minimum": 0,
+      "description": "drift speed gain per round after the first"
+    },
+    "ramp.decoyStep": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "extra decoys per round after the first"
+    },
+    "ramp.decoyMax": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "decoy cap"
+    },
+    "ramp.drainStep": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Pressure drain gain per round after the first"
+    },
+    "babel.showSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds a Babel line stays on screen"
+    },
+    "babel.minLineLetters": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "shortest Babel line in letters"
+    },
+    "sim.stepSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "fixed simulation step in seconds"
+    },
+    "field.height": {
+      "type": "number",
+      "minimum": 0,
+      "description": "field height in field units (width is 1.0)"
+    },
+    "field.topMargin": {
+      "type": "number",
+      "minimum": 0,
+      "description": "field units reserved at the top for the HUD"
+    },
+    "tile.size": {
+      "type": "number",
+      "minimum": 0,
+      "description": "tile edge in field units on the front plane"
+    },
+    "plane.frontScale": {
+      "type": "number",
+      "minimum": 0,
+      "description": "draw and hit scale of the front plane"
+    },
+    "plane.midScale": {
+      "type": "number",
+      "minimum": 0,
+      "description": "draw and hit scale of the mid plane"
+    },
+    "plane.backScale": {
+      "type": "number",
+      "minimum": 0,
+      "description": "draw scale of the decorative back plane"
+    },
+    "plane.backTiles": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "decorative back-plane tiles (not catchable)"
+    },
+    "tile.maxTiltDeg": {
+      "type": "number",
+      "minimum": 0,
+      "description": "2.5D tile: maximum perspective tilt"
+    },
+    "tile.swayDeg": {
+      "type": "number",
+      "minimum": 0,
+      "description": "2.5D tile: idle sway amplitude"
+    },
+    "tile.swaySpeed": {
+      "type": "number",
+      "minimum": 0,
+      "description": "2.5D tile: sway cycles per second"
+    },
+    "tile.shadowOffset": {
+      "type": "number",
+      "minimum": 0,
+      "description": "screen px drop-shadow offset on the front plane"
+    },
+    "fx.flyToSlotSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds for a caught tile to fly to its slot"
+    },
+    "fx.dissolveSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds for a surplus tile to dissolve"
+    },
+    "autoplay.tapInterval": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds between autoplay taps (smoke tests)"
+    }
+  }
+}

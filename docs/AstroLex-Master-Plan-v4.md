@@ -592,7 +592,7 @@ The Draft 3 pillar "catching floating 3D letters" becomes **catching floating le
 | Language | GDScript | No C#: Godot cannot export C# projects to the web |
 | Renderer | Compatibility | §8.2 |
 | Rules | `game/rules/`: pure GDScript `RefCounted` classes, no `Node` | Drift, tether, catch taxonomy, oxygen, scoring, spawner, Babel composer. Seeded and fixed-step, tested headlessly |
-| Tests | gdUnit4 headless, in CI and in cloud sessions | Plus Python `pytest` for `tools/` |
+| Tests | Headless runner `game/tests/run_tests.gd` (no plugin), run by `scripts/godot/test.sh` in CI and in cloud sessions; gdUnit4 only if the runner falls short | Plus Python `pytest` for `tools/` |
 | Services | `game/services/`: one GDScript interface each, plus a fake | Game Center and Play Games, cloud save, telemetry, remote tunables, store |
 | iOS | Godot exports an Xcode project on the owner's Mac; `xcodebuild` archives and uploads it to TestFlight | WP-3.0's ship script, adapted: export first, then archive |
 | Android | Exported headlessly on Linux in CI to the Play internal and closed tracks | After iOS is stable (owner: iOS first) |

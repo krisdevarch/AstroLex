@@ -25,11 +25,24 @@ python -m astrolex_tools.words.build            # builds data/words/words.sqlite
 python -m astrolex_tools.words.scan --boards 20000 --out reports/ci/scan.md      # blocklist board scan
 python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
 python -m astrolex_tools.export_toy_data        # regenerates web/toy/data.js (never edit that file by hand)
+python -m astrolex_tools.export_game_data       # regenerates game/data/*.json (never edit by hand)
 ```
 
 CI (`.github/workflows/pr.yml`) runs exactly these steps on every PR and push to main and uploads `reports/ci/` as the `evidence` artifact. `reports/ci/` is gitignored; the tracked evidence files (`reports/WP-1.2/scan.md`, `reports/WP-1.5/feasibility.md`) are the CLIs' *default* outputs, so pass `--out` when you only want a check, or you will overwrite them. `--out` accepts an absolute path, a path under `reports/`, or a name relative to `reports/`.
 
 The browser toy (`web/toy/index.html`) is a static page with no build step: open it in a browser or serve the folder. Three.js is vendored under `web/toy/vendor/`.
+
+Godot game (`game/`, Godot 4.7.2 pinned in `scripts/godot/VERSION`). The scripts download Godot into `~/.local/godot` on first use and work in cloud sessions:
+
+```bash
+scripts/godot/test.sh                    # import the project, run every game/tests/**/test_*.gd headlessly
+scripts/godot/export.sh web              # web export to build/web/ (single-threaded, Compatibility renderer)
+cd scripts/godot/web-smoke && npm install && npx playwright install chromium && node smoke.cjs ../../../build/web   # boot it in headless Chromium
+```
+
+CI `.github/workflows/godot.yml` runs the tests, then exports the web build, boots it in Chromium and uploads it as the `astrolex-web` artifact. It runs on PRs that touch `game/` or `scripts/godot/`. Tests extend `res://tests/test_case.gd` and define `test_*` methods. GDScript cannot catch runtime errors, so `test.sh` also fails on any `SCRIPT ERROR` in the log. Web is the only export target for now.
+
+Merges to main deploy the web build to https://krisdevarch.github.io/AstroLex/ (job `deploy-pages`).
 
 ## Architecture
 
@@ -39,7 +52,7 @@ The browser toy (`web/toy/index.html`) is a static page with no build step: open
 - `tools/astrolex_tools/words/` builds the word database from ENABLE + WordNet + wordfreq (`build.py`), exposes it via `WordDB` (`db.py`), and screens boards against `data/words/blocklist.txt` with rejection-sampled decoys (`decoys.py`, `scan.py`). `acts.py` loads the four act word lists in `data/words/acts/`.
 - `tools/astrolex_tools/babel/` is Babel's voice: `lexicon.py` (about 500 tagged words), `compose.py` (fills templates from `data/babel/templates.json` using only letters in a pool, with multiplicity), `validate.py` (rejects any line whose letters, blocked tokens or non-words break the rule), `feasibility.py` (counts candidate lines per sampled level and writes the CONT-000 report). Babel is deterministic; no language model runs anywhere in `tools/`.
 - `web/toy/` is the Phase 2 prototype. It cannot fetch, so `export_toy_data.py` bakes act words, lexicon, templates, precomputed anagrams and toy tunables into `data.js` as `window.ASTROLEX_DATA`. The JS composer mirrors `compose.py`; if you change the Python composer or templates, re-export and keep the two in step.
-- `game/` (Godot 4.7, GDScript, Compatibility renderer) starts in Phase 3 and does not exist yet; plan Part 8 (Amendment A2) is its spec. The world is 2D: painted parallax backdrops, a `Line2D` tether and `Control`-node HUD. The letters are 2.5D tiles: a sprite with a bevel, a font-rendered glyph that always faces the player, a perspective tilt shader, a normal-mapped light and a drop shadow, with depth planes drawn as scale. Every look number (tilt, sway, plane scales, tap margins) is a tunable. Rules code lives in `game/rules/` (pure GDScript, no Node dependencies) and must pass the conformance vectors in `data/conformance/` alongside Python and the toy. Every external service sits behind a one-file interface in `game/services/` with a fake that passes the same tests. Godot runs headless on Linux, so cloud sessions can build and test the game; only the iOS export and the TestFlight upload need the owner's Mac.
+- `game/` (Godot 4.7, GDScript, Compatibility renderer, portrait 1080×1920) follows plan Part 8 (Amendment A2). It is a walking skeleton for now: `scenes/main.tscn` shows the title tiles, `rules/letter_pool.gd` holds the shared letter-multiset rule, and `tests/` has the headless runner. The world is 2D: painted parallax backdrops, a `Line2D` tether and `Control`-node HUD. The letters are 2.5D tiles: a sprite with a bevel, a font-rendered glyph that always faces the player, a perspective tilt shader, a normal-mapped light and a drop shadow, with depth planes drawn as scale. Every look number (tilt, sway, plane scales, tap margins) is a tunable. Rules code lives in `game/rules/` (pure GDScript, no Node dependencies) and must pass the conformance vectors in `data/conformance/` alongside Python and the toy. Every external service sits behind a one-file interface in `game/services/` with a fake that passes the same tests. Godot runs headless on Linux, so cloud sessions can build and test the game; only the iOS export and the TestFlight upload need the owner's Mac.
 
 ## How work is done here
 
@@ -51,4 +64,23 @@ The browser toy (`web/toy/index.html`) is a static page with no build step: open
 
 ## Agents
 
-Six project subagents live in `.claude/agents/`: `builder` (implements a WP end to end), `content-curator` (word data, blocklist, Babel templates, feasibility numbers), `story-writer` (drafts in character voice), `verify-runner` (runs checks, writes evidence, never judges feel), `lens-evaluator` (reviews a document against the 100 game design lenses), `market-analyst` (comparables, store drafts, business model; every number sourced or flagged). Hand `builder` a WP id; hand `lens-evaluator` a document path and a lens range.
+Ten project agents live in `.claude/agents/`. Only the orchestrator runs on Opus; the workers run on Sonnet 5.5 with a capped effort level, a turn limit (`maxTurns`) and a tool allowlist, to save tokens.
+
+| Agent | Model / effort | Does |
+|---|---|---|
+| `orchestrator` | Opus 5.5 / high | Runs the build loop from `wps/MILESTONE-*.md`: briefs workers, checks results, loops on failures, updates `wps/_index.md`. Start it as the main session with `claude --agent orchestrator`. |
+| `rules-engineer` | Sonnet 5.5 / medium | Pure GDScript rules in `game/rules/`, conformance with the Python reference, headless tests |
+| `godot-dev` | Sonnet 5.5 / medium | Godot scenes, UI, shaders and the 2.5D look in `game/` |
+| `builder` | Sonnet 5.5 / medium | `tools/`, `web/`, CI and scripts |
+| `verify-runner` | Sonnet 5.5 / low | Runs checks, writes `reports/WP-*/evidence.md`, never edits code |
+| `reviewer` | Sonnet 5.5 / medium | Read-only diff review, at most 10 findings |
+| `content-curator` | Sonnet 5.5 / medium | Word data, blocklist, Babel lexicon and templates |
+| `story-writer` | Sonnet 5.5 / medium | Character-voice drafts; the owner approves every line |
+| `lens-evaluator` | Sonnet 5.5 / medium | Reviews a document against the 100 game design lenses |
+| `market-analyst` | Sonnet 5.5 / medium | Comparables, store drafts, business model; every number sourced or flagged |
+
+Every worker follows the same token budget:
+- Work from the brief.
+- Read only the named files.
+- Run the narrowest check first.
+- Reply in 12 lines or fewer, never pasting files or logs.

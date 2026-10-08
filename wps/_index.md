@@ -35,7 +35,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 |---|---|---|---|---|
 | WP-0.1 | Goal paragraph and essential experience | Owner | done (29 Sep 2026): proof of concept first, iOS first, money later | plan §1.1 |
 | WP-0.2 | Repo scaffold and CI | builder | done | `reports/WP-0.2/evidence.md` |
-| WP-0.3 | Agent definitions | builder | done; `market-analyst` added 30 Sep 2026 (plan §3.1 roster now complete: builder, content-curator, story-writer, verify-runner, lens-evaluator, market-analyst) | `reports/WP-0.2/evidence.md` |
+| WP-0.3 | Agent definitions | builder | done; roster v2 (8 Oct 2026): `orchestrator` on Opus 5.5 plus nine workers on Sonnet 5.5 (`rules-engineer`, `godot-dev`, `builder`, `verify-runner`, `reviewer`, `content-curator`, `story-writer`, `lens-evaluator`, `market-analyst`), each with effort, turn and tool caps | `CLAUDE.md` § Agents |
 | WP-0.4 | Decisions recorded | Owner | defaults recorded above | – |
 | WP-0.5 | Reference phones | Owner | owner's iPhone is the first reference device; a mid-range Android is needed before the Android build (Phase 3) | – |
 | WP-1.1 | Word database v0 | content-curator | done | `reports/WP-1.1/evidence.md` |
@@ -47,6 +47,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
+| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | built; D1–D6 pass, D7 waits on CI for the PR; owner checks pending (feel, readability, tile treatment O-22) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md` |
 
 ## Review queue (cap 4)
 
@@ -59,6 +60,8 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 
 - PR #8 (Swift skeleton plus TestFlight loop) predates Amendment A2. Rework it as WP-3.0 for a Godot iOS export, keeping the ship script, `asc.py`, the skill and the owner setup guide (plan §8.7); waiting on the owner's go-ahead.
 
+- First-draft look constants (tether width and colour, particles, flash and toast timings, back-plane dim, tilt multipliers, glyph size, bevel and lamp values in `game/scenes/` and `tile.gdshader`) are placeholders. Move them to `data/tunables/game.json` with the WP-4.2 art bible.
+- Keep `main.gd` the only wall-clock seed source when the Daily Signal date seed lands (review of the first draft).
 - SCOWL import for UK spelling variants (CONT-001 US/UK rule).
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.
 - Babel template set v2 once the owner has read v1 candidates; more glue words widen feasibility.
