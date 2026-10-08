@@ -28,6 +28,10 @@ const BAND_Y := 372.0
 const BAND_H := 120.0
 
 signal round_finished(summary: Dictionary)
+## Every rules event, as the field applies it (for telemetry and other listeners).
+signal game_event(e: Dictionary)
+## A tap that fired nothing; nearest_px is the distance to the nearest catchable tile, or -1.
+signal tap_missed(nearest_px: float)
 
 var autoplay: bool = false
 var print_ready: bool = true
@@ -116,50 +120,21 @@ func tap(screen_pos: Vector2) -> int:
 		margin *= _n("tap.driftMarginMul")
 	var best_id := -1
 	var best_d := INF
+	var nearest := INF
 	for t in game_round.tiles:
 		if not t.alive or t.plane >= 2:
 			continue
 		var d := to_screen(t.pos).distance_to(screen_pos)
+		nearest = minf(nearest, d)
 		if d <= radius_px(t) + margin and d < best_d:
 			best_d = d
 			best_id = t.id
 	if best_id < 0:
-		_maybe_out_of_reach(screen_pos)
+		tap_missed.emit(-1.0 if nearest == INF else nearest)
 		return -1
 	if not game_round.fire(best_id):
 		return -1
 	return best_id
-
-
-## A tap on a back tile and on no catchable tile: a faint ring, nothing else.
-func _maybe_out_of_reach(screen_pos: Vector2) -> void:
-	if settings.reduced_motion:
-		return
-	for t in game_round.tiles:
-		if t.alive and t.plane >= 2 and to_screen(t.pos).distance_to(screen_pos) <= radius_px(t) + _n("tap.marginPx"):
-			var r := Ripple.new()
-			r.name = "Ripple"
-			r.position = screen_pos
-			r.max_radius = _n("tap.rippleRadiusPx")
-			r.dur = _n("tap.rippleSec")
-			_fx_layer.add_child(r)
-			_fx.append([r, r.dur])
-			return
-
-
-class Ripple extends Node2D:
-	var max_radius: float = 70.0
-	var dur: float = 0.3
-	var _t: float = 0.0
-
-	func _process(delta: float) -> void:
-		_t += delta
-		queue_redraw()
-
-	func _draw() -> void:
-		var u := clampf(_t / maxf(dur, 0.01), 0.0, 1.0)
-		var e := 1.0 - (1.0 - u) * (1.0 - u)
-		draw_arc(Vector2.ZERO, maxf(2.0, max_radius * e), 0.0, TAU, 40, Color(0.75, 0.9, 1.0, 0.35 * (1.0 - u)), 3.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -285,7 +260,7 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.z_index = 2 - t.plane
 	v.name = "Tile_%d" % t.id
 	if t.plane == 2:
-		v.set_back(_n("plane.backAlpha"), _n("plane.backGlyphAlpha"), _n("plane.backDesaturate"))
+		v.set_back(_n("plane.backAlpha"), _n("plane.backDesaturate"))
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
@@ -351,6 +326,7 @@ func _update_tether(delta: float) -> void:
 func _apply_events() -> void:
 	for e in game_round.drain_events():
 		var type: String = e["type"]
+		game_event.emit(e)
 		match type:
 			"spawn":
 				var t := game_round.find_tile(int(e["tile_id"]))

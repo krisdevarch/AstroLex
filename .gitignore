@@ -10,3 +10,4 @@ game/.godot/
 build/
 scripts/godot/web-smoke/node_modules/
 scripts/godot/web-smoke/package-lock.json
+game/data/build.json

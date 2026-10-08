@@ -6,6 +6,7 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 const StartScreen := preload("res://scenes/start_screen.gd")
 const SettingsScreen := preload("res://scenes/settings_screen.gd")
 const EndScreen := preload("res://scenes/end_screen.gd")
+const Telemetry := preload("res://services/telemetry.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
 const AUTOPLAY_SEED := 20261008
@@ -15,6 +16,7 @@ var mode: String = "drift"
 var round_no: int = 1
 var autoplay: bool = false
 var screen: Node
+var telemetry: RefCounted
 var _ready_printed: bool = false
 
 
@@ -28,12 +30,20 @@ static func autoplay_requested() -> bool:
 
 
 func _ready() -> void:
+	telemetry = Telemetry.new()
 	settings.load_from()
+	telemetry.set_settings(settings.treatment, settings.reduced_motion)
 	autoplay = autoplay_requested()
 	if autoplay:
 		_start_round("drift", 1)
 	else:
 		_show_start()
+	telemetry.mark_ready()
+
+
+func _process(delta: float) -> void:
+	if telemetry != null and telemetry.playing:
+		telemetry.sample_frame(delta)
 
 
 func _swap(node: Node) -> void:
@@ -81,6 +91,8 @@ func _start_round(m: String, n: int) -> void:
 	f.round_finished.connect(_show_end)
 	_swap(f)
 	var seed_value := AUTOPLAY_SEED if autoplay else int(Time.get_unix_time_from_system()) ^ Time.get_ticks_usec()
+	telemetry.set_settings(settings.treatment, settings.reduced_motion)
+	telemetry.begin_round(f, m, n, seed_value)
 	f.begin(m, n, seed_value)
 
 
@@ -88,6 +100,7 @@ func _show_end(summary: Dictionary) -> void:
 	var s: Control = EndScreen.new()
 	s.name = "EndScreen"
 	s.summary = summary
+	s.telemetry = telemetry
 	s.play_again.connect(func() -> void: _start_round(mode, round_no + 1))
 	s.switch_mode.connect(func() -> void: _start_round("pressure" if mode == "drift" else "drift", 1))
 	_swap(s)

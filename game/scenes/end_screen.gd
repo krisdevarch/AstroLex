@@ -7,6 +7,9 @@ signal play_again
 signal switch_mode
 
 var summary: Dictionary = {}
+var telemetry: RefCounted  # optional; the send and copy buttons show only when set
+var _toast: Label
+var _toast_t: float = 0.0
 
 
 func _ready() -> void:
@@ -47,3 +50,33 @@ func _ready() -> void:
 	sw.name = "ModeSwitchButton"
 	sw.pressed.connect(func() -> void: switch_mode.emit())
 	box.add_child(sw)
+	if telemetry != null:
+		var row := HBoxContainer.new()
+		row.name = "ResultsRow"
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 20)
+		box.add_child(row)
+		var send := Ui.button("Send results", 40, Vector2(380, 100))
+		send.name = "SendResultsButton"
+		send.pressed.connect(func() -> void: telemetry.send_results())
+		row.add_child(send)
+		var copy := Ui.button("Copy results", 40, Vector2(380, 100))
+		copy.name = "CopyResultsButton"
+		copy.pressed.connect(_on_copy)
+		row.add_child(copy)
+	_toast = Ui.label("", 44, Ui.ACCENT)
+	_toast.name = "CopyToast"
+	_toast.modulate.a = 0.0
+	box.add_child(_toast)
+
+
+func _on_copy() -> void:
+	telemetry.copy_results()
+	_toast.text = "Copied"
+	_toast_t = 1.4
+
+
+func _process(delta: float) -> void:
+	if _toast_t > 0.0:
+		_toast_t -= delta
+		_toast.modulate.a = clampf(_toast_t / 0.4, 0.0, 1.0)

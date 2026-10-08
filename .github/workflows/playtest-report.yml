@@ -1,0 +1,45 @@
+name: playtest-report
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * *"
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: playtest-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: github.event_name != 'issues' || startsWith(github.event.issue.title, '[playtest]')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ./tools
+      - name: Fetch issues
+        run: gh api --paginate "repos/${REPO}/issues?state=all&per_page=100" > issues.json
+      - name: Build report
+        run: python -m astrolex_tools.playtest_report --issues issues.json --out "$RUNNER_TEMP/dashboard.md"
+      - name: Step summary
+        run: cat "$RUNNER_TEMP/dashboard.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Create or update dashboard issue
+        run: |
+          num=$(gh issue list --repo "$REPO" --state all --search 'in:title "Playtest dashboard"' \
+            --json number,title --jq '[.[] | select(.title == "Playtest dashboard")][0].number // empty')
+          if [ -n "$num" ]; then
+            gh issue edit "$num" --repo "$REPO" --body-file "$RUNNER_TEMP/dashboard.md"
+          else
+            gh issue create --repo "$REPO" --title "Playtest dashboard" --body-file "$RUNNER_TEMP/dashboard.md"
+          fi

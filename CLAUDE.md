@@ -26,6 +26,7 @@ python -m astrolex_tools.words.scan --boards 20000 --out reports/ci/scan.md     
 python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
 python -m astrolex_tools.export_toy_data        # regenerates web/toy/data.js (never edit that file by hand)
 python -m astrolex_tools.export_game_data       # regenerates game/data/*.json (never edit by hand)
+python -m astrolex_tools.playtest_report --issues issues.json --out /tmp/dashboard.md   # playtest dashboard; issues.json from `gh api --paginate "repos/krisdevarch/AstroLex/issues?state=all&per_page=100"`
 ```
 
 CI (`.github/workflows/pr.yml`) runs exactly these steps on every PR and push to main and uploads `reports/ci/` as the `evidence` artifact. `reports/ci/` is gitignored; the tracked evidence files (`reports/WP-1.2/scan.md`, `reports/WP-1.5/feasibility.md`) are the CLIs' *default* outputs, so pass `--out` when you only want a check, or you will overwrite them. `--out` accepts an absolute path, a path under `reports/`, or a name relative to `reports/`.
@@ -41,6 +42,8 @@ cd scripts/godot/web-smoke && npm install && npx playwright install chromium && 
 ```
 
 CI `.github/workflows/godot.yml` runs the tests, then exports the web build, boots it in Chromium and uploads it as the `astrolex-web` artifact. It runs on PRs that touch `game/` or `scripts/godot/`. Tests extend `res://tests/test_case.gd` and define `test_*` methods. GDScript cannot catch runtime errors, so `test.sh` also fails on any `SCRIPT ERROR` in the log. Web is the only export target for now.
+
+Playtest results (contract `docs/playtest-telemetry.md`) arrive as `[playtest]` GitHub issues or JSON files in `playtests/results/`; `.github/workflows/playtest-report.yml` rebuilds the "Playtest dashboard" issue from them daily and on issue events.
 
 Merges to main deploy the web build to https://krisdevarch.github.io/AstroLex/ (job `deploy-pages`).
 
