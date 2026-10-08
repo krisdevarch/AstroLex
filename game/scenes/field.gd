@@ -28,6 +28,10 @@ const BAND_Y := 372.0
 const BAND_H := 120.0
 
 signal round_finished(summary: Dictionary)
+## Every rules event, as the field applies it (for telemetry and other listeners).
+signal game_event(e: Dictionary)
+## A tap that fired nothing; nearest_px is the distance to the nearest catchable tile, or -1.
+signal tap_missed(nearest_px: float)
 
 var autoplay: bool = false
 var print_ready: bool = true
@@ -116,14 +120,17 @@ func tap(screen_pos: Vector2) -> int:
 		margin *= _n("tap.driftMarginMul")
 	var best_id := -1
 	var best_d := INF
+	var nearest := INF
 	for t in game_round.tiles:
 		if not t.alive or t.plane >= 2:
 			continue
 		var d := to_screen(t.pos).distance_to(screen_pos)
+		nearest = minf(nearest, d)
 		if d <= radius_px(t) + margin and d < best_d:
 			best_d = d
 			best_id = t.id
 	if best_id < 0:
+		tap_missed.emit(-1.0 if nearest == INF else nearest)
 		return -1
 	if not game_round.fire(best_id):
 		return -1
@@ -319,6 +326,7 @@ func _update_tether(delta: float) -> void:
 func _apply_events() -> void:
 	for e in game_round.drain_events():
 		var type: String = e["type"]
+		game_event.emit(e)
 		match type:
 			"spawn":
 				var t := game_round.find_tile(int(e["tile_id"]))
