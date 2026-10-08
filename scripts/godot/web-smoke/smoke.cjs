@@ -47,7 +47,10 @@ const server = http.createServer((req, res) => {
   const errors = [];
   const lines = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => { lines.push(m.text()); if (m.type() === 'error') errors.push(m.text()); });
+  // WebKit logs this for Godot's Compatibility renderer on every frame; it is a warning, not a failure.
+  const BENIGN = /WebGL: INVALID_OPERATION: glBlitFramebuffer: Read and write color attachments cannot be the same image/;
+  let benign = 0;
+  page.on('console', (m) => { lines.push(m.text()); if (BENIGN.test(m.text())) { benign++; return; } if (m.type() === 'error') errors.push(m.text()); });
 
   const t0 = Date.now();
   await page.goto(url);
@@ -63,6 +66,7 @@ const server = http.createServer((req, res) => {
   server.close();
 
   console.log(lines.filter((l) => /Godot Engine|OpenGL API|Build configuration|AstroLex/.test(l)).join('\n'));
+  if (benign) console.log(`note: ${benign} known WebKit WebGL blit warnings ignored`);
   if (!ready || (AUTOPLAY && !won) || errors.length) console.error('--- last console lines ---\n' + lines.slice(-30).join('\n'));
   if (!ready) { console.error(`FAIL: no "AstroLex ready" line within ${TIMEOUT_MS / 1000} s`); process.exit(1); }
   if (AUTOPLAY && !won) { console.error(`FAIL: no "AstroLex round won" line within ${WON_TIMEOUT_MS / 1000} s`); process.exit(1); }
