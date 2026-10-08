@@ -1,6 +1,8 @@
 {
   "$schema": "./game.schema.json",
   "tether.travelTime": 0.2,
+  "tether.travelMinMul": 0.7,
+  "tether.travelDistMul": 0.3,
   "tether.hitTolerance": 0.06,
   "tether.driftToleranceMul": 1.6,
   "tap.marginPx": 18,
@@ -8,6 +10,7 @@
   "drift.speed": 0.1,
   "drift.speedVariation": 0.35,
   "spawner.decoys": 4,
+  "spawner.frontShare": 0.62,
   "spawner.wordsPerLevel": 4,
   "oxygen.max": 100,
   "oxygen.drainPerSec": 1.0,

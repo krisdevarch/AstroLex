@@ -5,6 +5,8 @@
   "additionalProperties": false,
   "required": [
     "tether.travelTime",
+    "tether.travelMinMul",
+    "tether.travelDistMul",
     "tether.hitTolerance",
     "tether.driftToleranceMul",
     "tap.marginPx",
@@ -12,6 +14,7 @@
     "drift.speed",
     "drift.speedVariation",
     "spawner.decoys",
+    "spawner.frontShare",
     "spawner.wordsPerLevel",
     "oxygen.max",
     "oxygen.drainPerSec",
@@ -54,6 +57,16 @@
       "minimum": 0,
       "description": "seconds for the tether to reach a tile at mid range"
     },
+    "tether.travelMinMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "travel time multiplier at zero distance"
+    },
+    "tether.travelDistMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "extra travel time multiplier at a full field height of distance"
+    },
     "tether.hitTolerance": {
       "type": "number",
       "minimum": 0,
@@ -88,6 +101,11 @@
       "type": "integer",
       "minimum": 0,
       "description": "decoys on the board in round 1"
+    },
+    "spawner.frontShare": {
+      "type": "number",
+      "minimum": 0,
+      "description": "share of catchable tiles that start on the front plane"
     },
     "spawner.wordsPerLevel": {
       "type": "integer",

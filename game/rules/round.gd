@@ -16,9 +16,8 @@ const Babel := preload("res://rules/babel.gd")
 const LetterPool := preload("res://rules/letter_pool.gd")
 const Self := preload("res://rules/round.gd")
 
-## Share of catchable tiles that start on the front plane (toy: 0.62). Not a tunable yet.
-const FRONT_SHARE := 0.62
-## Letter weights for decoys and back tiles (English frequency, as the toy).
+const BABEL_SEED_XOR := 0x5BAB31
+## Letter weights for decoys and back tiles: English frequency is language data, not a feel number.
 const FREQ := {"e": 127, "t": 91, "a": 82, "o": 75, "i": 70, "n": 67, "s": 63, "h": 61, "r": 60, "d": 43, "l": 40, "c": 28, "u": 28, "m": 24, "w": 24, "f": 22, "g": 20, "y": 20, "p": 19, "b": 15, "v": 10, "k": 8, "j": 2, "x": 2, "q": 1, "z": 1}
 const EPS := 1e-6
 
@@ -43,6 +42,7 @@ var seed_value: int = 0
 var _t: Dictionary = {}
 var _content: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
+var _babel_rng := RandomNumberGenerator.new()
 var _events: Array[Dictionary] = []
 var _by_id: Dictionary = {}
 var _next_id: int = 0
@@ -60,6 +60,7 @@ static func create(tunables: Dictionary, content: Dictionary, act_key: String, m
 	r.seed_value = seed_value_in
 	r.round_no = round_number
 	r._rng.seed = seed_value_in
+	r._babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
 	r.oxygen = r._num("oxygen.max")
 	r.stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_oxygen": r.oxygen}
 	r._pick_words()
@@ -222,7 +223,7 @@ func _needed_counts() -> Dictionary:
 
 
 func _pick_plane() -> int:
-	return 0 if _rng.randf() < FRONT_SHARE else 1
+	return 0 if _rng.randf() < _num("spawner.frontShare") else 1
 
 
 ## After every catch and word change: missing needed letters, then surplus, then decoys.
@@ -322,7 +323,7 @@ func _drift(t: Tile, h: float) -> void:
 func _start_shot(tile: Tile) -> void:
 	var from := origin()
 	var dist := from.distance_to(tile.pos)
-	var dur := _num("tether.travelTime") * (0.7 + 0.3 * dist / _num("field.height"))
+	var dur := _num("tether.travelTime") * (_num("tether.travelMinMul") + _num("tether.travelDistMul") * dist / _num("field.height"))
 	shot = {"tile_id": tile.id, "from": from, "to": tile.pos, "elapsed": 0.0, "dur": dur}
 	_emit({"type": "fire", "tile_id": tile.id})
 
@@ -409,10 +410,11 @@ func _restore_words() -> void:
 		for c: String in counts:
 			_pool[c] = int(_pool.get(c, 0)) + int(counts[c])
 		_emit({"type": "restore", "word": w, "score": gained})
-		var lines := Babel.compose(_pool, restored_words, _content, int(_num("babel.minLineLetters")), _rng)
-		var text := Babel.pick(lines, _shown, _rng)
+		var lines := Babel.compose(_pool, restored_words, _content, int(_num("babel.minLineLetters")), _babel_rng)
+		var text := Babel.pick(lines, _shown, _babel_rng)
 		if text != "":
 			_shown[text] = true
+			# One babel event per restored word in a chain; the view shows only the latest.
 			_emit({"type": "babel", "text": text})
 		word_index += 1
 		if word_index >= words.size():

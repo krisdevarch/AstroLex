@@ -465,15 +465,43 @@ func test_same_seed_same_event_stream() -> void:
 	assert_true(c != Bot.play(_make(77), 0.0166667, 600.0))
 
 
+func _run_schedule(seed_value: int, dt: float) -> Dictionary:
+	var r := _make(seed_value)
+	var events: Array[Dictionary] = []
+	var steps_per_half := int(round(0.5 / dt))
+	for k in 12:
+		for tile in r.tiles:
+			if tile.alive and not tile.decoy and tile.plane < 2:
+				r.fire(tile.id)
+				break
+		for _i in steps_per_half:
+			r.step(dt)
+		events.append_array(r.drain_events())
+	return {"r": r, "events": events}
+
+
 func test_step_size_does_not_change_the_outcome_of_the_sim() -> void:
-	var a := _make(5)
-	var b := _make(5)
-	for _i in 120:
-		a.step(1.0 / 60.0)
-	b.step(2.0)
-	assert_true(absf(float(a.stats["secs"]) - float(b.stats["secs"])) < 0.02, "%f %f" % [a.stats["secs"], b.stats["secs"]])
-	for i in a.tiles.size():
-		assert_true(a.tiles[i].pos.distance_to(b.tiles[i].pos) < 0.01)
+	var ref := _run_schedule(5, 1.0 / 120.0)
+	assert_true(ref["events"].size() > 3, "schedule produces events")
+	for dt in [1.0 / 30.0, 1.0 / 60.0]:
+		var o := _run_schedule(5, dt)
+		assert_eq(o["events"], ref["events"], "events dt %f" % dt)
+		var a: Round = o["r"]
+		var b: Round = ref["r"]
+		assert_eq(a.tiles.size(), b.tiles.size())
+		for i in a.tiles.size():
+			assert_true(a.tiles[i].pos.distance_to(b.tiles[i].pos) < 1e-4, "tile %d dt %f" % [i, dt])
+
+
+func test_babel_calls_do_not_shift_tile_spawns() -> void:
+	var wa := _make(31)
+	var wb := _make(31)
+	# Heavy Babel use on one round must leave the spawn stream untouched.
+	for _i in 25:
+		wa._babel_rng.randi()
+	for i in wa.tiles.size():
+		assert_eq(wa.tiles[i].pos, wb.tiles[i].pos)
+	assert_eq(wa._rng.randi(), wb._rng.randi())
 
 
 func test_thousand_seeded_rounds_are_solvable_in_drift() -> void:
