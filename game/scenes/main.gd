@@ -1,52 +1,93 @@
-extends Node2D
-## Walking skeleton: proves the project imports, runs and exports on every platform in CI.
-## WP-3.2 replaces it with the 2.5D field (plan §8.2).
+extends Node
+## App root: Start screen, Play (the field), End screen, Settings.
+## Autoplay (--autoplay, or ?autoplay=1 on the web) skips Start and plays a Drift round.
 
-const WORD := "ASTROLEX"
-const TILE_SIZE := 104.0
-const TILE_GAP := 18.0
+const AppSettings := preload("res://scenes/app_settings.gd")
+const StartScreen := preload("res://scenes/start_screen.gd")
+const SettingsScreen := preload("res://scenes/settings_screen.gd")
+const EndScreen := preload("res://scenes/end_screen.gd")
+const FieldScene: PackedScene = preload("res://scenes/field.tscn")
+
+const AUTOPLAY_SEED := 20261008
+
+var settings: AppSettings = AppSettings.new()
+var mode: String = "drift"
+var round_no: int = 1
+var autoplay: bool = false
+var screen: Node
+var _ready_printed: bool = false
+
+
+static func autoplay_requested() -> bool:
+	if OS.get_cmdline_user_args().has("--autoplay"):
+		return true
+	if OS.has_feature("web"):
+		var q: Variant = JavaScriptBridge.eval("window.location.search")
+		return str(q).contains("autoplay=1")
+	return false
+
 
 func _ready() -> void:
-	var view := get_viewport_rect().size
-	var total := WORD.length() * TILE_SIZE + (WORD.length() - 1) * TILE_GAP
-	var x0 := (view.x - total) / 2.0
-	for i in WORD.length():
-		var tile := _make_tile(WORD[i])
-		var lift := 12.0 if i % 2 == 0 else -12.0
-		tile.position = Vector2(x0 + i * (TILE_SIZE + TILE_GAP), view.y * 0.42 + lift)
-		tile.rotation = deg_to_rad(float(i % 3 - 1) * 4.0)
-		add_child(tile)
-
-	var build := Label.new()
-	build.name = "BuildLabel"
-	build.text = "v%s" % ProjectSettings.get_setting("application/config/version", "0")
-	build.add_theme_font_size_override("font_size", 28)
-	build.modulate = Color(1, 1, 1, 0.5)
-	build.position = Vector2(view.x / 2.0 - 60.0, view.y - 120.0)
-	add_child(build)
-	# The web smoke test in CI waits for this line to prove the scene ran in a browser.
-	print("AstroLex ready: %d tiles" % WORD.length())
+	settings.load_from()
+	autoplay = autoplay_requested()
+	if autoplay:
+		_start_round("drift", 1)
+	else:
+		_show_start()
 
 
-func _make_tile(letter: String) -> Panel:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.96, 0.96, 0.93)
-	style.set_corner_radius_all(18)
-	style.shadow_color = Color(0, 0, 0, 0.45)
-	style.shadow_size = 10
-	style.shadow_offset = Vector2(6, 10)
-	var tile := Panel.new()
-	tile.name = "Tile_%s" % letter
-	tile.size = Vector2(TILE_SIZE, TILE_SIZE)
-	tile.pivot_offset = tile.size / 2.0
-	tile.add_theme_stylebox_override("panel", style)
+func _swap(node: Node) -> void:
+	if screen != null:
+		remove_child(screen)
+		screen.queue_free()
+	screen = node
+	add_child(node)
 
-	var glyph := Label.new()
-	glyph.text = letter
-	glyph.size = tile.size
-	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	glyph.add_theme_font_size_override("font_size", 64)
-	glyph.add_theme_color_override("font_color", Color(0.05, 0.07, 0.16))
-	tile.add_child(glyph)
-	return tile
+
+func _show_start() -> void:
+	var s: Control = StartScreen.new()
+	s.name = "StartScreen"
+	s.settings = settings
+	s.mode = mode
+	s.start_pressed.connect(func(m: String) -> void:
+		mode = m
+		round_no = 1
+		_start_round(m, 1))
+	s.settings_pressed.connect(_show_settings)
+	_swap(s)
+	if not _ready_printed:
+		_ready_printed = true
+		print("AstroLex ready: %d tiles" % s.tile_count)
+
+
+func _show_settings() -> void:
+	var s: Control = SettingsScreen.new()
+	s.name = "SettingsScreen"
+	s.settings = settings
+	s.closed.connect(_show_start)
+	_swap(s)
+
+
+func _start_round(m: String, n: int) -> void:
+	mode = m
+	round_no = n
+	var f: Node2D = FieldScene.instantiate()
+	f.name = "Field"
+	f.settings = settings
+	f.autoplay = autoplay
+	f.view_size = get_viewport().get_visible_rect().size
+	f.print_ready = not _ready_printed
+	_ready_printed = true
+	f.round_finished.connect(_show_end)
+	_swap(f)
+	var seed_value := AUTOPLAY_SEED if autoplay else int(Time.get_unix_time_from_system()) ^ Time.get_ticks_usec()
+	f.begin(m, n, seed_value)
+
+
+func _show_end(summary: Dictionary) -> void:
+	var s: Control = EndScreen.new()
+	s.name = "EndScreen"
+	s.summary = summary
+	s.play_again.connect(func() -> void: _start_round(mode, round_no + 1))
+	s.switch_mode.connect(func() -> void: _start_round("pressure" if mode == "drift" else "drift", 1))
+	_swap(s)
