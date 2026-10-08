@@ -43,7 +43,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-1.3 | Act word lists v0 | content-curator + Owner | drafted, awaiting owner approval | `data/words/acts/*.txt` |
 | WP-1.4 | Babel voice algorithm and validator | content-curator | done | `reports/WP-1.5/feasibility.md` |
 | WP-1.5 | CONT-000 feasibility report | content-curator | done | `reports/WP-1.5/feasibility.md` |
-| WP-2.1 (+2.2, 2.3, 2.6) | Browser toy v1.2: field, tether, modes, Babel, feedback, tuning, telemetry | builder | done; owner smoke runs 1–3 on iPhone passed (run 2 found three defects, fixed in v1.2) | `reports/WP-2.1/evidence.md`, `playtests/P2/loop-1.md` |
+| WP-2.1 (+2.2, 2.3, 2.6) | Browser toy v1.3: field, tether, modes, Babel, feedback, tuning, telemetry | builder | done; owner smoke runs 1–4 on iPhone (run 2 found three defects, fixed in v1.2; run 4 found surplus decoys, fixed in v1.3) | `reports/WP-2.1/evidence.md`, `playtests/P2/loop-1.md` |
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |

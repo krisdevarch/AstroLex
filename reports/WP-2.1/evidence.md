@@ -26,3 +26,16 @@ Console: one expected network error (Google Fonts blocked in the sandbox; system
 - `navigator.vibrate` is not available in iOS Safari, so haptics are audio-only there.
 
 Tunables introduced: see `wps/WP-2.1.md`. Owner check pending: play three rounds on the iPhone; answer the three questions in `playtests/P2/protocol.md`.
+
+## v1.3 (8 Oct 2026, from owner run 4)
+Owner run 4 (`playtests/P2/results/loop-1/owner-04.json`) had 2 wrong catches, both decoy S tiles left after STONE's S was filled.
+
+| Change | Check | Result |
+|---|---|---|
+| Decoys never spawn with a letter of the active or preview word | Scripted Pressure round, run 5 times: after every catch, no live tile of a word letter exceeds the count still needed | pass 5/5 (a first version that only avoided *needed* letters failed this check once: a decoy L spawned after the word's L was already filled) |
+| Surplus decoys of word letters dissolve (`dissolve` with `decoy: true`) and decoys are topped up | same run | pass |
+| `tap_miss` logs `near`, `nearD`, `nearR`, `nearPlane`, `onFading` | Empty tap at (20, 200): `{"near":"b","nearD":98,"nearR":36,"nearPlane":"mid"}` | pass |
+| End-screen Babel line logged | `{"type":"babel_line","text":"TOP OR BAD?","at":"end"}` | pass |
+| v1.2 behaviour unchanged | v1.2 smoke: preview carry-over, queued second tap, 26 px edge tap | pass |
+
+No console errors. Screenshot: `v1.3-play.png`.
