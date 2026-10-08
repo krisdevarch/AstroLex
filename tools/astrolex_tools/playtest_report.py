@@ -115,6 +115,18 @@ def _nums(items, key) -> list[float]:
     return out
 
 
+def _device_name(d: dict) -> str:
+    """Model if the client knew it, else the device family from the user agent (browsers hide the model)."""
+    model = str(d.get("model") or "")
+    if model and model != "GenericDevice":
+        return model
+    ua = str(d.get("ua") or "")
+    for family, name in (("iPhone", "iPhone"), ("iPad", "iPad"), ("Android", "Android"), ("Macintosh", "Mac"), ("Windows", "Windows")):
+        if family in ua:
+            return name
+    return model
+
+
 def _dict(v) -> dict:
     return v if isinstance(v, dict) else {}
 
@@ -167,10 +179,16 @@ def build_report(sessions: list[dict], skipped: int) -> str:
         n = len(rs)
         wins = sum(1 for r in rs if r.get("won") is True)
         per = lambda k: f"{sum(_nums(rs, k)) / n:.2f}"  # noqa: E731
+
+        def per_known(k):  # rounds from builds before this key existed don't count as zero
+            known = [r for r in rs if k in r]
+            return f"{sum(_nums(known, k)) / len(known):.2f}" if known else "n/a"
+
         rows.append([m, n, f"{100 * wins / n:.0f}%", med(_nums(rs, "first_catch_s")), med(_nums(rs, "secs")),
-                     per("wrong"), per("escapes"), per("tap_misses"), med(_nums(rs, "near_miss_px_p50"), "{:.0f}")])
+                     per("wrong"), per_known("wrong_surplus"), per_known("wrong_unneeded"), per("escapes"),
+                     per("tap_misses"), med(_nums(rs, "near_miss_px_p50"), "{:.0f}")])
     L += table(["mode", "rounds", "win rate", "median first catch s", "median secs", "wrong/round",
-                "escapes/round", "tap misses/round", "median near-miss px"], rows)
+                "surplus/round", "unneeded/round", "escapes/round", "tap misses/round", "median near-miss px"], rows)
 
     perfs = [_dict(s.get("perf")) for s in sessions]
     loads = [_dict(s.get("load")) for s in sessions]
@@ -189,7 +207,7 @@ def build_report(sessions: list[dict], skipped: int) -> str:
     devs = Counter()
     for s in sessions:
         d = _dict(s.get("device"))
-        devs[f"{d.get('os') or 'unknown'} {d.get('model') or ''}".strip()] += 1
+        devs[f"{d.get('os') or 'unknown'} {_device_name(d)}".strip()] += 1
     L += ["## Devices", ""] + table(["device", "sessions"], [[d, c] for d, c in devs.most_common()])
     L += ["## Builds", ""] + table(["commit", "rounds"], [[c, n] for c, n in builds.most_common()])
 
