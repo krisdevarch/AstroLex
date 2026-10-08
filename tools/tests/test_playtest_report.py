@@ -62,3 +62,10 @@ def test_files_and_unknown_schema(tmp_path):
     bad.write_text(json.dumps({"schema": "other"}))
     sessions, skipped = pr.collect(None, [str(good), str(bad)])
     assert len(sessions) == 1 and skipped == 1
+
+
+def test_wrong_kinds_and_device_family():
+    from astrolex_tools.playtest_report import _device_name
+    assert _device_name({"model": "GenericDevice", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X)"}) == "iPhone"
+    assert _device_name({"model": "Pixel 9", "ua": "Android"}) == "Pixel 9"
+    assert _device_name({"model": "", "ua": "curl"}) == ""

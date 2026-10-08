@@ -101,10 +101,19 @@ func _read_device() -> Dictionary:
 			d["ua"] = str(j[0])
 			d["screen"] = [int(j[1]), int(j[2])]
 			d["dpr"] = snappedf(float(j[3]), 0.01)
+			d["model"] = device_from_ua(d["ua"], str(d["model"]))
 	else:
 		var sz := DisplayServer.screen_get_size()
 		d["screen"] = [sz.x, sz.y]
 	return d
+
+
+# Browsers hide the model; the user agent at least names the device family.
+static func device_from_ua(ua: String, fallback: String) -> String:
+	for family in ["iPhone", "iPad", "Android", "Macintosh", "Windows", "Linux"]:
+		if ua.contains(family):
+			return "Mac" if family == "Macintosh" else family
+	return fallback
 
 
 func _js_json(code: String) -> Variant:
@@ -138,7 +147,7 @@ func begin_round(field: Object, mode: String, round_no: int, seed_value: int) ->
 	_field = field
 	_round = {
 		"round": round_no, "mode": mode, "act": str(field.get("ACT")), "seed": seed_value,
-		"first_catch_s": null, "tap_misses": 0, "near": [], "babel_lines": [],
+		"first_catch_s": null, "tap_misses": 0, "near": [], "babel_lines": [], "wrong_surplus": 0, "wrong_unneeded": 0,
 	}
 	playing = true
 	field.connect("game_event", _on_game_event)
@@ -164,7 +173,11 @@ func _on_game_event(e: Dictionary) -> void:
 				_round["first_catch_s"] = snappedf(float(gr.stats["secs"]), 0.1)
 			_add_event("catch", {"ch": str(e.get("ch", ""))})
 		"wrong":
-			_add_event("wrong", {"ch": str(e.get("ch", ""))})
+			# surplus: a letter of the word whose slot is already filled; unneeded: not in the word at all
+			var kind := str(e.get("kind", ""))
+			if kind == "surplus" or kind == "unneeded":
+				_round["wrong_" + kind] = int(_round["wrong_" + kind]) + 1
+			_add_event("wrong", {"ch": str(e.get("ch", "")), "kind": kind})
 		"escape":
 			_add_event("escape")
 		"restore":
@@ -196,6 +209,7 @@ func _finish_round(won: bool) -> void:
 		"won": won, "words": gr.restored_words.size(), "total": gr.words.size(),
 		"score": int(round(gr.score)), "secs": snappedf(float(st["secs"]), 0.1),
 		"catches": int(st["catches"]), "wrong": int(st["wrong"]), "escapes": int(st["escapes"]),
+		"wrong_surplus": _round["wrong_surplus"], "wrong_unneeded": _round["wrong_unneeded"],
 		"first_catch_s": _round["first_catch_s"], "min_oxygen": int(round(float(st["min_oxygen"]))),
 		"tap_misses": _round["tap_misses"],
 		"near_miss_px_p50": null if near.is_empty() else int(round(percentile(near, 0.5))),
@@ -296,9 +310,9 @@ func _summary_md(res: Dictionary) -> String:
 	var lines := PackedStringArray()
 	lines.append("**Playtest** build `%s` (%s) · session `%s` · %d round(s) · %d error(s)" % [build["commit"], build["platform"], session, rounds.size(), errors.size()])
 	for r in rounds:
-		lines.append("- round %d %s: %s, score %d, words %d/%d, %.0f s, %d catches, %d wrong, %d missed taps" % [
+		lines.append("- round %d %s: %s, score %d, words %d/%d, %.0f s, %d catches, %d wrong (%d surplus, %d unneeded), %d missed taps" % [
 			int(r["round"]), str(r["mode"]), "won" if bool(r["won"]) else "lost", int(r["score"]),
-			int(r["words"]), int(r["total"]), float(r["secs"]), int(r["catches"]), int(r["wrong"]), int(r["tap_misses"])])
+			int(r["words"]), int(r["total"]), float(r["secs"]), int(r["catches"]), int(r["wrong"]), int(r.get("wrong_surplus", 0)), int(r.get("wrong_unneeded", 0)), int(r["tap_misses"])])
 	lines.append("- fps avg %.1f, frame p50 %.1f ms, p95 %.1f ms" % [float(p["fps_avg"]), float(p["frame_ms_p50"]), float(p["frame_ms_p95"])])
 	return "\n".join(lines)
 

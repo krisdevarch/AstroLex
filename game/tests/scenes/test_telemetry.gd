@@ -52,7 +52,11 @@ func test_summary_json_matches_the_contract() -> void:
 	assert_eq(res.keys(), KEYS)
 	assert_eq(res["schema"], "astrolex.playtest.v1")
 	assert_eq((res["build"] as Dictionary).keys(), ["version", "commit", "platform"])
-	assert_eq(res["build"]["commit"], "dev")
+	# "dev" unless an export has written res://data/build.json (gitignored, present after a local export)
+	var expected_commit := "dev"
+	if FileAccess.file_exists("res://data/build.json"):
+		expected_commit = str(JSON.parse_string(FileAccess.get_file_as_string("res://data/build.json")).get("commit", "dev"))
+	assert_eq(res["build"]["commit"], expected_commit)
 	assert_eq(str(res["session"]).length(), 6)
 	assert_eq((res["device"] as Dictionary).keys(), ["os", "model", "ua", "screen", "dpr"])
 	assert_eq((res["load"] as Dictionary).keys(), ["boot_ms", "ready_ms"])
@@ -124,3 +128,10 @@ func test_end_screen_buttons_send_and_copy_with_a_toast() -> void:
 	assert_true(t.clipboard_text.contains("astrolex.playtest.v1"))
 	assert_eq((end.find_child("CopyToast", true, false) as Label).text, "Copied")
 	end.free()
+
+
+func test_device_family_comes_from_the_user_agent() -> void:
+	var T := preload("res://services/telemetry.gd")
+	assert_eq(T.device_from_ua("Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X)", "GenericDevice"), "iPhone")
+	assert_eq(T.device_from_ua("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)", "GenericDevice"), "Mac")
+	assert_eq(T.device_from_ua("curl/8", "GenericDevice"), "GenericDevice")
