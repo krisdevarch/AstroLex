@@ -139,7 +139,8 @@ func test_tether_visible_only_while_a_shot_is_in_flight() -> void:
 
 func _first_view(f: Node2D) -> Node:
 	for id in f._views.keys():
-		return f._views[id]
+		if not f._views[id].is_back:
+			return f._views[id]
 	return null
 
 
@@ -175,3 +176,59 @@ func test_treatments_differ_and_reduced_motion_stops_tilt_and_sway() -> void:
 				assert_eq(v.current_tilt, Vector2.ZERO, "reduced motion keeps tilt at 0")
 				assert_eq(v._mat.get_shader_parameter("tilt_deg"), Vector2.ZERO, "shader tilt_deg is 0")
 	f.free()
+
+
+func test_back_tiles_are_dim_flat_and_untilted() -> void:
+	var f := _make(false)
+	var cap: float = f._n("plane.backAlpha")
+	var n := 0
+	for t in f.game_round.tiles:
+		if t.plane >= 2:
+			n += 1
+			var v = f._views[t.id]
+			assert_true(v.modulate.a <= cap + 0.0001, "back alpha <= backAlpha")
+			assert_true(v.glyph.modulate.a <= 1.0 and not v.shadow.visible, "no shadow")
+			assert_true(v.body.light_mask == 2, "no lamp light")
+	assert_true(n > 0, "back tiles exist")
+	for _i in 30:
+		f.advance(DT)
+	for t in f.game_round.tiles:
+		if t.plane >= 2:
+			assert_eq(f._views[t.id].current_tilt, Vector2.ZERO)
+	f.free()
+
+
+func _back_tap_point(f: Node2D) -> Vector2:
+	for t in f.game_round.tiles:
+		if t.plane >= 2:
+			return f.to_screen(t.pos)
+	return Vector2.ZERO
+
+
+func test_back_plane_tap_shows_ripple_and_does_not_fire() -> void:
+	var f := _make(false)
+	# clear catchable tiles from the tap point so only a back tile is under it
+	var p := _back_tap_point(f)
+	for t in f.game_round.tiles:
+		if t.plane < 2:
+			t.pos = Vector2(-5.0, -5.0)
+	var air_before: float = f.game_round.oxygen
+	var wrong_before: int = int(f.game_round.stats["wrong"])
+	assert_eq(f.tap(p), -1)
+	assert_true(f.game_round.shot.is_empty(), "no fire")
+	var ripples := 0
+	for c in f._fx_layer.get_children():
+		if c.name.begins_with("Ripple") or c.name.begins_with("@Node2D"):
+			ripples += 1
+	assert_eq(ripples, 1, "one ripple")
+	assert_eq(f.game_round.oxygen, air_before, "no air cost")
+	assert_eq(int(f.game_round.stats["wrong"]), wrong_before)
+	f.free()
+	var g := _make(false, 12345, "tilt", true)
+	var q := _back_tap_point(g)
+	for t in g.game_round.tiles:
+		if t.plane < 2:
+			t.pos = Vector2(-5.0, -5.0)
+	g.tap(q)
+	assert_eq(g._fx.size(), 0, "no ripple with reduced motion")
+	g.free()

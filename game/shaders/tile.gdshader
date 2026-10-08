@@ -6,6 +6,7 @@ shader_type canvas_item;
 uniform vec2 tilt_deg = vec2(0.0);       // x: tip about the horizontal axis, y: about the vertical axis
 uniform float depth_px = 380.0;          // perspective distance in texture pixels
 uniform vec3 unlit_gain = vec3(1.0);
+uniform float desaturate : hint_range(0.0, 1.0) = 0.0;
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
 uniform vec3 flash_color : source_color = vec3(0.95, 0.15, 0.1);
 
@@ -24,6 +25,7 @@ void vertex() {
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
 	c.rgb *= unlit_gain;
+	c.rgb = mix(c.rgb, vec3(dot(c.rgb, vec3(0.299, 0.587, 0.114))), desaturate);
 	c.rgb = mix(c.rgb, flash_color, flash * 0.75);
 	COLOR = c;
 }

@@ -39,6 +39,12 @@
     "plane.frontScale",
     "plane.midScale",
     "plane.backScale",
+    "plane.backAlpha",
+    "plane.backGlyphAlpha",
+    "plane.backSpeedMul",
+    "plane.backDesaturate",
+    "tap.rippleRadiusPx",
+    "tap.rippleSec",
     "plane.backTiles",
     "tile.maxTiltDeg",
     "tile.swayDeg",
@@ -225,7 +231,37 @@
     "plane.backScale": {
       "type": "number",
       "minimum": 0,
-      "description": "draw scale of the decorative back plane"
+      "description": "draw scale of the back plane (background, not catchable)"
+    },
+    "plane.backAlpha": {
+      "type": "number",
+      "minimum": 0,
+      "description": "whole-tile opacity of back-plane tiles"
+    },
+    "plane.backGlyphAlpha": {
+      "type": "number",
+      "minimum": 0,
+      "description": "glyph opacity on back-plane tiles, multiplied into the tile opacity"
+    },
+    "plane.backSpeedMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "drift speed multiplier for back-plane tiles (parallax)"
+    },
+    "plane.backDesaturate": {
+      "type": "number",
+      "minimum": 0,
+      "description": "0..1 colour removal on back-plane tiles"
+    },
+    "tap.rippleRadiusPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "final radius of the out-of-reach ripple in screen px"
+    },
+    "tap.rippleSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "duration of the out-of-reach ripple"
     },
     "plane.backTiles": {
       "type": "integer",

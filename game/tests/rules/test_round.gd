@@ -121,7 +121,7 @@ func test_back_tiles_are_decorative_and_not_catchable() -> void:
 		if t.plane == 2:
 			found += 1
 			assert_false(r.fire(t.id))
-			assert_true(absf(t.radius - 0.12 * 0.65 / 2.0) < 1e-6)
+			assert_true(absf(t.radius - 0.12 * 0.45 / 2.0) < 1e-6)
 	assert_eq(found, 6)
 	assert_false(r.fire(99999))
 	assert_true(r.shot.is_empty())
@@ -142,6 +142,8 @@ func test_drift_speed_is_within_the_variation_band_and_ramps() -> void:
 		var r := _make(5, "drift", round_no)
 		var base: float = 0.1 * (1.0 + 0.08 * (round_no - 1))
 		for t in r.tiles:
+			if t.plane >= 2:
+				continue
 			var s: float = t.vel.length()
 			assert_true(s >= base * 0.65 - 1e-6 and s <= base * 1.35 + 1e-6, "speed %f base %f" % [s, base])
 
@@ -532,3 +534,24 @@ func test_thousand_seeded_rounds_are_solvable_in_drift() -> void:
 				shown[e["text"]] = true
 	assert_eq(wins, 1000)
 	assert_true(worst < 600.0)
+
+
+func test_back_tiles_drift_slower_than_catchable_tiles() -> void:
+	var r := _make(77)
+	var back := 0.0
+	var front := 0.0
+	var nb := 0
+	var nf := 0
+	for t in r.tiles:
+		if t.plane >= 2:
+			back += t.vel.length()
+			nb += 1
+		else:
+			front += t.vel.length()
+			nf += 1
+	assert_true(nb > 0 and nf > 0, "both kinds exist")
+	assert_true(back / nb < front / nf * 0.6, "back mean speed well below catchable mean")
+	var cap: float = float(_tun["drift.speed"]) * float(r.ramp()["drift"]) * (1.0 + float(_tun["drift.speedVariation"])) * float(_tun["plane.backSpeedMul"])
+	for t in r.tiles:
+		if t.plane >= 2:
+			assert_true(t.vel.length() <= cap + 0.0001, "back speed capped by backSpeedMul")
