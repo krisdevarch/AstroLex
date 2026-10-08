@@ -25,6 +25,7 @@ python -m astrolex_tools.words.build            # builds data/words/words.sqlite
 python -m astrolex_tools.words.scan --boards 20000 --out reports/ci/scan.md      # blocklist board scan
 python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
 python -m astrolex_tools.export_toy_data        # regenerates web/toy/data.js (never edit that file by hand)
+python -m astrolex_tools.export_game_data       # regenerates game/data/*.json (never edit by hand)
 ```
 
 CI (`.github/workflows/pr.yml`) runs exactly these steps on every PR and push to main and uploads `reports/ci/` as the `evidence` artifact. `reports/ci/` is gitignored; the tracked evidence files (`reports/WP-1.2/scan.md`, `reports/WP-1.5/feasibility.md`) are the CLIs' *default* outputs, so pass `--out` when you only want a check, or you will overwrite them. `--out` accepts an absolute path, a path under `reports/`, or a name relative to `reports/`.
