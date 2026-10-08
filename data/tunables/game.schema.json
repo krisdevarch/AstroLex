@@ -49,6 +49,7 @@
     "tile.shadowOffset",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
+    "hud.hintAlpha",
     "autoplay.tapInterval"
   ],
   "properties": {
@@ -269,6 +270,12 @@
       "type": "number",
       "minimum": 0,
       "description": "screen px drop-shadow offset on the front plane"
+    },
+    "hud.hintAlpha": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "alpha of the ghost letter shown in an unfilled word slot by the Hint setting"
     },
     "fx.flyToSlotSec": {
       "type": "number",

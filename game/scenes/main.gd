@@ -32,7 +32,7 @@ static func autoplay_requested() -> bool:
 func _ready() -> void:
 	telemetry = Telemetry.new()
 	settings.load_from()
-	telemetry.set_settings(settings.treatment, settings.reduced_motion)
+	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	autoplay = autoplay_requested()
 	if autoplay:
 		_start_round("drift", 1)
@@ -91,7 +91,7 @@ func _start_round(m: String, n: int) -> void:
 	f.round_finished.connect(_show_end)
 	_swap(f)
 	var seed_value := AUTOPLAY_SEED if autoplay else int(Time.get_unix_time_from_system()) ^ Time.get_ticks_usec()
-	telemetry.set_settings(settings.treatment, settings.reduced_motion)
+	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	telemetry.begin_round(f, m, n, seed_value)
 	f.begin(m, n, seed_value)
 

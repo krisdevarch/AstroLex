@@ -60,7 +60,7 @@ func test_summary_json_matches_the_contract() -> void:
 	assert_eq(str(res["session"]).length(), 6)
 	assert_eq((res["device"] as Dictionary).keys(), ["os", "model", "ua", "screen", "dpr"])
 	assert_eq((res["load"] as Dictionary).keys(), ["boot_ms", "ready_ms"])
-	assert_eq((res["settings"] as Dictionary).keys(), ["treatment", "reduced_motion"])
+	assert_eq((res["settings"] as Dictionary).keys(), ["treatment", "reduced_motion", "hint"])
 	assert_eq((res["perf"] as Dictionary).keys(), ["fps_avg", "frame_ms_p50", "frame_ms_p95", "frames"])
 	assert_eq(res["rounds"].size(), 1)
 	var r: Dictionary = res["rounds"][0]

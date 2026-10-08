@@ -45,5 +45,6 @@
   "tile.shadowOffset": 14,
   "fx.flyToSlotSec": 0.32,
   "fx.dissolveSec": 0.42,
+  "hud.hintAlpha": 0.35,
   "autoplay.tapInterval": 0.45
 }
