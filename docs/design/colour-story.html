@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AstroLex Colour Story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=Figtree:wght@400;500;700&family=Lexend:wght@600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one dark column; each act is a full-bleed painted scene with glass letter tiles floating over it. Single dark theme by choice (it is space). */
+:root{
+  --void:#070617; --panel:#100e26; --line:#2a2652;
+  --fg:#ecebf7; --muted:#a2a0c2;
+  --tether:#00DDFF; --rim:#F8BC04; --babel:#7070FF;
+  --display:"Syne",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,sans-serif;
+  --glyph:"Lexend",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--void);color:var(--fg)}
+body{font-family:var(--body);font-size:16px;line-height:1.55;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:880px;margin:0 auto;display:grid;gap:56px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2rem,6.5vw,3.3rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.7rem;font-weight:800}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0;max-width:65ch}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.stack{display:grid;gap:14px}
+.muted{color:var(--muted)}
+a{color:var(--tether)}
+a:focus-visible{outline:2px solid var(--tether);outline-offset:2px}
+
+/* scenes */
+.field{position:relative;overflow:hidden;isolation:isolate}
+.field > svg.scene{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block}
+.field > svg.tetherline{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+
+/* glass tile */
+.t{position:absolute;z-index:2;width:58px;height:66px;border-radius:17px;display:grid;place-items:center;
+   background:linear-gradient(150deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.10) 42%,rgba(255,255,255,.05) 60%,rgba(255,255,255,.20) 100%);
+   -webkit-backdrop-filter:blur(7px) saturate(180%) brightness(1.12);backdrop-filter:blur(7px) saturate(180%) brightness(1.12);
+   border:1px solid rgba(255,255,255,.5);
+   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9), inset 0 -10px 18px var(--tint,rgba(255,255,255,.10)), inset 2px 0 0 rgba(255,255,255,.18),
+              0 14px 26px rgba(0,0,0,.45), 0 0 26px var(--glow,rgba(255,255,255,.12));
+   transform:perspective(320px) rotateX(var(--rx,8deg)) rotateY(var(--ry,-10deg)) scale(var(--s,1))}
+.t::before{content:"";position:absolute;left:10%;top:6%;width:62%;height:34%;border-radius:50%;
+   background:radial-gradient(ellipse at 40% 40%,rgba(255,255,255,.85),rgba(255,255,255,0) 70%);opacity:.55;filter:blur(1px)}
+.t::after{content:"";position:absolute;inset:22% 20%;border-radius:12px;background:rgba(20,14,50,.20);filter:blur(6px)} /* frost core behind glyph */
+.t b{position:relative;z-index:1;font-family:var(--glyph);font-weight:600;font-size:1.75rem;color:#fff;
+   text-shadow:0 1px 1px rgba(8,6,30,.9),0 0 10px rgba(8,6,30,.55)}
+.t.dim{opacity:.55;--glow:transparent}
+.t.dim b{opacity:0}
+.t.shard{width:30px;height:34px;border-radius:9px;--s:1;opacity:.55}
+.t.shard b{display:none}
+.t.fake{animation:flick 1.3s steps(2) infinite}
+.t.fake b{text-shadow:2px 0 0 rgba(112,112,255,.9),-2px 0 0 rgba(0,221,255,.6),0 0 10px rgba(8,6,30,.6)}
+@keyframes flick{50%{border-color:#7070FF;box-shadow:inset 0 1.5px 0 #fff,0 14px 26px rgba(0,0,0,.45),0 0 30px rgba(112,112,255,.95)}}
+@keyframes bob{50%{translate:0 -5px}}
+.t:not(.fake){animation:bob 5s ease-in-out infinite}
+.t:nth-of-type(2n){animation-duration:6.4s}
+@media (prefers-reduced-motion:reduce){.t,.t.fake{animation:none}}
+
+/* hero */
+.hero{display:grid;gap:22px;padding-block:28px 0}
+.hero .field{height:min(78vw,440px);border-radius:22px;margin-inline:-4px}
+.thesis{font-size:1.2rem;max-width:44ch}
+
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:10px;min-width:0;align-content:start}
+.card ul,.card ol{margin:0;padding-left:18px;display:grid;gap:6px}
+
+.rules{counter-reset:r;display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.rules li{counter-increment:r;display:grid;grid-template-columns:2.2rem 1fr;gap:10px;align-items:baseline}
+.rules li::before{content:counter(r);font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--rim)}
+
+/* glass anatomy */
+.anatomy{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:20px;align-items:center}
+.anatomy .field{height:220px;border-radius:18px}
+.anatomy .t{left:50%;top:50%;margin:-50px 0 0 -44px;width:88px;height:100px;border-radius:24px}
+.anatomy .t b{font-size:2.8rem}
+.layers{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.layers li{display:grid;grid-template-columns:7.5rem 1fr;gap:12px}
+.layers b{font-family:var(--mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tether);font-weight:500;padding-top:3px}
+@media (max-width:560px){.anatomy{grid-template-columns:1fr}.layers li{grid-template-columns:1fr;gap:2px}}
+
+/* compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.compare .field{height:150px;border-radius:14px}
+.flat{position:absolute;z-index:2;width:52px;height:58px;border-radius:8px;background:#f3eee2;color:#222;display:grid;place-items:center;font-family:var(--glyph);font-weight:600;font-size:1.5rem;box-shadow:0 3px 0 #c8bfa9}
+.cap{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:6px}
+
+/* acts */
+.act{border-radius:18px;overflow:hidden;border:1px solid var(--line);display:grid}
+.act .field{height:230px}
+.act .body{background:var(--panel);padding:20px;display:grid;gap:12px}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sw{display:grid;gap:4px;min-width:0}
+.sw i{display:block;height:34px;border-radius:8px;border:1px solid #ffffff18}
+.sw span{font-family:var(--mono);font-size:.64rem;color:var(--muted);overflow-wrap:anywhere}
+.tag{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+
+.cast{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.who{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.dot{width:44px;height:44px;border-radius:50%;box-shadow:0 0 18px var(--c);background:var(--c)}
+.who b{font-family:var(--display);font-weight:600}
+.who p{font-size:.9rem;color:var(--muted)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">AstroLex · design direction · draft 2 for Kris</div>
+  <h1>Silence is grey. Every word you restore brings a colour back.</h1>
+  <div class="field" data-scene="signal" data-tiles='[["W",14,30],["A",33,48],["T",52,26],["E",70,46,"dim"],["R",84,22,"dim"],["",26,12,"shard"],["",62,64,"shard"]]' data-tether="52,26"></div>
+  <p class="thesis muted">The letters are glass, and the backgrounds are painted skies, like the reference you sent. The glass picks up each act's colours, so every act looks different, and the letter inside stays crisp white so it always reads.</p>
+</header>
+
+<section class="stack">
+  <div class="eyebrow">The two references</div>
+  <h2>What we take from Ori and from Hades</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Ori and the Blind Forest: heart and light</h3>
+      <ul>
+        <li>The player cares before they learn. Open with a wordless prologue, and make <em>water</em> the first word on screen.</li>
+        <li>You restore rather than destroy, and the world visibly heals behind you.</li>
+        <li>Light carries meaning: the dark lifts as you catch letters.</li>
+        <li>The villain is grieving. Babel chooses to listen.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Hades: character, colour and memorability</h3>
+      <ul>
+        <li>Every character has one signature colour, used everywhere they appear.</li>
+        <li>Bold, saturated accents on a dark base read in motion and stand out in a feed.</li>
+        <li>Losing still moves the story on.</li>
+        <li>The game notices what you did. Babel's lines are built from your letters.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="stack">
+  <div class="eyebrow">Why glass</div>
+  <h2>Letters nobody else has</h2>
+  <p class="muted">Most word games use a flat cream tile with a dark letter, as on the left. A glass tile, like Apple's Liquid Glass, bends and blurs the sky behind it. The letters then look like part of space, not stickers on top of it, and they change with every scene.</p>
+  <div class="compare">
+    <div>
+      <div class="field" data-scene="act1" data-flat='[["W",14,30],["O",42,42],["R",70,26]]'></div>
+      <div class="cap">Typical word-game tile</div>
+    </div>
+    <div>
+      <div class="field" data-scene="act1" data-tiles='[["W",14,30],["O",42,42],["R",70,26]]'></div>
+      <div class="cap">AstroLex glass tile</div>
+    </div>
+  </div>
+</section>
+
+<section class="stack">
+  <div class="eyebrow">How a glass tile is built</div>
+  <h2>Five layers</h2>
+  <div class="anatomy">
+    <div class="field" data-scene="act2" data-tiles='[["A",0,0]]'></div>
+    <ol class="layers">
+      <li><b>Refraction</b><span>The sky behind the tile is blurred, brightened and slightly warped by the tile's shape. This is what makes it glass.</span></li>
+      <li><b>Frost core</b><span>A soft dark frost sits behind the letter, so the glyph has a calm patch whatever the sky does.</span></li>
+      <li><b>Glyph</b><span>A white glyph with a thin ink halo. It always faces the player and never changes colour.</span></li>
+      <li><b>Specular</b><span>A highlight from the visor lamp slides across as the tile tilts. This is the Ori light.</span></li>
+      <li><b>Edge tint</b><span>The rim and the bottom of the glass pick up the act's accent colour. When the tile is caught, the glass fills with that light.</span></li>
+    </ol>
+  </div>
+  <p class="muted">In Godot this is one <code>canvas_item</code> shader that reads the screen behind the tile (one back-buffer copy per frame for all tiles), uses the tile's normal map to warp it, and samples a lower mip level for the blur. It runs on the Compatibility renderer and on the web. The first test is the frame rate on your iPhone with 20 glass tiles on screen.</p>
+</section>
+
+<section class="stack">
+  <div class="eyebrow">Five colour rules</div>
+  <h2>The system</h2>
+  <ol class="rules">
+    <li><p><b>The glyph never changes colour.</b> White with an ink halo on frosted glass, in every act. The glass around it takes on the act's colour.</p></li>
+    <li><p><b>Each act owns a palette and a scene.</b> A painted sky, one landmark (Earth, a nebula, the Tower, Babel's core) and layered silhouettes, in at most four parallax layers.</p></li>
+    <li><p><b>Each character owns one colour.</b> It shows on their chat bubble, portrait rim, name and leitmotif.</p></li>
+    <li><p><b>Colour is the reward.</b> Each caught letter brightens the sky a step, and a finished word relights a district of the Silent City.</p></li>
+    <li><p><b>60 · 30 · 10.</b> 60% deep sky, 30% glowing mid-tones (the band of stars, the landmark), 10% light: glass, tether and character accents.</p></li>
+  </ol>
+</section>
+
+<section class="stack">
+  <div class="eyebrow">The story in colour</div>
+  <h2>One scene per act</h2>
+  <p class="muted">The style follows your reference: smooth gradient skies, a glowing band of stars, one big landmark and layered horizons fading into haze. Palettes come from the <a href="https://www.designyourway.net/blog/space-color-palettes/">space palettes page</a>.</p>
+  <div id="acts" class="stack"></div>
+</section>
+
+<section class="stack">
+  <div class="eyebrow">Signature colours</div>
+  <h2>The cast</h2>
+  <div class="cast">
+    <div class="who" style="--c:#00DDFF"><div class="dot"></div><div><b>The Catcher</b><p>Cyan tether, the line of light. The player can restyle it.</p></div></div>
+    <div class="who" style="--c:#F8BC04"><div class="dot"></div><div><b>Rhee Vashti</b><p>Amber, her archive lamp. It is also the colour of the tile's specular light. It turns up in Babel's machinery in Act III.</p></div></div>
+    <div class="who" style="--c:#FF6B35"><div class="dot"></div><div><b>Tomas</b><p>Coral, the colour of Earth's warmth. His messages fill in with coral.</p></div></div>
+    <div class="who" style="--c:#7070FF"><div class="dot"></div><div><b>Babel</b><p>Cold periwinkle. Its lines and its forged tiles carry it.</p></div></div>
+    <div class="who" style="--c:#88FFEE"><div class="dot"></div><div><b>Ade</b><p>Seafoam. Light crew banter.</p></div></div>
+    <div class="who" style="--c:#FF88CC"><div class="dot"></div><div><b>Kit</b><p>Pink. Ade's opposite.</p></div></div>
+    <div class="who" style="--c:#C9374C"><div class="dot"></div><div><b>VANTA</b><p>Crimson, softening to rose as respect grows.</p></div></div>
+  </div>
+</section>
+
+<section class="stack">
+  <div class="eyebrow">What colour means in play</div>
+  <h2>Signals</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Moment</th><th>Look</th><th>Shape or motion twin (for colour-blind players)</th></tr></thead>
+      <tbody>
+        <tr><td>Tile you can catch</td><td>Clear glass, white glyph, act-tinted edge</td><td>Full size on the front or mid plane</td></tr>
+        <tr><td>Back plane shard</td><td>Small frosted glass, no glyph</td><td>Smaller, blank, out of reach (O-23)</td></tr>
+        <tr><td>Catch</td><td>The glass fills with the act's light, then the sky brightens a step</td><td>Pulse, reel and a soft haptic</td></tr>
+        <tr><td>Hint (Rhee's Ping)</td><td>Amber specular light sweeps across a needed tile</td><td>Slow breathing scale</td></tr>
+        <tr><td>Counterfeit (Babel's forgery)</td><td>Periwinkle edge flicker and a split glyph</td><td>Glitch jitter; real glass never jitters</td></tr>
+        <tr><td>Stroop jamming (Act III)</td><td>Babel tints the glass to lie</td><td>Shape and pattern stay honest</td></tr>
+        <tr><td>Low air (Pressure)</td><td>The glass frosts over from the edges</td><td>Heartbeat pulse in the HUD</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="two">
+  <div class="card">
+    <h3>Readability guardrails</h3>
+    <ul>
+      <li>Glass is pretty but can hurt reading, a criticism Apple's Liquid Glass also got. The frost core and the ink halo keep the glyph at 4.5:1 contrast or better against the worst patch of every sky. Check this with a script, not by eye.</li>
+      <li>Frost amount, blur and edge tint are tunables. The reduced-transparency setting turns the glass frosted and opaque.</li>
+      <li>The sky behind the play area stays calm. The busy parts (the landmark, the band of stars) sit above and below where tiles drift.</li>
+      <li>No signal relies on colour alone.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Decisions for you</h3>
+    <ol>
+      <li>Use <b>glass tiles</b> with a white glyph? <span class="muted">(recommended: yes, after an iPhone frame-rate test)</span></li>
+      <li>Use <b>painted-sky scenes</b>, one landmark per act? <span class="muted">(recommended: yes)</span></li>
+      <li>Give each <b>character a signature colour</b>? <span class="muted">(recommended: yes)</span></li>
+    </ol>
+    <p class="muted">The reference image is for mood only. Shipped backdrops are drawn by a human artist (O-14). Your layout sketches will decide where the slots, comms and HUD sit.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+const SCENES={
+  prologue:{sky:["#000000","#0D0D0D","#36454F"],band:"#4B0082",bandO:.25,land:"planet",planet:["#5a6470","#1b2026"],rim:"#9aa4b0",ridges:["#22282e","#15191d","#0a0c0e"],glow:"rgba(255,255,255,.08)",tint:"rgba(255,255,255,.06)"},
+  act1:{sky:["#031a29","#054569","#5591A9"],band:"#9CCDDC",bandO:.35,land:"limb",planet:["#2f7fb0","#062C43"],rim:"#9CCDDC",lights:"#FF6B35",ridges:[],glow:"rgba(255,107,53,.30)",tint:"rgba(255,107,53,.22)"},
+  act2:{sky:["#210535","#430D4B","#C874B2"],band:"#F5D5E0",bandO:.45,land:"nebula",planet:["#7B337D","#210535"],rim:"#F5D5E0",neb:["#C874B2","#39977F","#7B337D"],ridges:["#5a2160","#3b0f47","#22062f"],glow:"rgba(200,116,178,.40)",tint:"rgba(200,116,178,.28)"},
+  act3:{sky:["#000000","#051427","#A44322"],band:"#F8BC04",bandO:.18,land:"tower",planet:["#A44322","#530F1E"],rim:"#F8BC04",ridges:["#3a0d16","#240810","#120408"],glow:"rgba(248,188,4,.35)",tint:"rgba(248,188,4,.24)"},
+  act4:{sky:["#020208","#0C0A20","#1E1860"],band:"#7070FF",bandO:.35,land:"core",planet:["#4848D0","#0C0A20"],rim:"#7070FF",ridges:["#1a1650","#110e38","#08061e"],glow:"rgba(112,112,255,.40)",tint:"rgba(112,112,255,.28)"},
+  signal:{sky:["#120a3a","#4B0082","#D946EF"],band:"#e9c8ff",bandO:.5,land:"planet",planet:["#9d7fe0","#2a1466"],rim:"#f3d9ff",ridges:["#3f6fa8","#2b3f86","#1a1a55"],ridgeTop:"#5fd0e0",glow:"rgba(217,70,239,.35)",tint:"rgba(253,224,71,.20)"}
+};
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let uid=0;
+function scene(key,seed=7){
+  const s=SCENES[key],r=rng(seed),id="s"+(uid++),W=400,H=300;
+  let g=`<defs><linearGradient id="${id}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.sky[0]}"/><stop offset=".55" stop-color="${s.sky[1]}"/><stop offset="1" stop-color="${s.sky[2]}"/></linearGradient>
+  <radialGradient id="${id}pl" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${s.planet[0]}"/><stop offset="1" stop-color="${s.planet[1]}"/></radialGradient>
+  <filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+  <filter id="${id}b2"><feGaussianBlur stdDeviation="3"/></filter></defs>
+  <rect width="${W}" height="${H}" fill="url(#${id}sky)"/>
+  <ellipse cx="230" cy="70" rx="260" ry="34" transform="rotate(-28 230 70)" fill="${s.band}" opacity="${s.bandO}" filter="url(#${id}b)"/>`;
+  for(let i=0;i<70;i++){const x=r()*W,y=r()*H*.75,a=.3+r()*.7,rad=r()<.1?1.4:.7;g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad}" fill="#fff" opacity="${a.toFixed(2)}"/>`}
+  if(s.land==="planet"){g+=`<circle cx="210" cy="118" r="70" fill="${s.rim}" opacity=".25" filter="url(#${id}b)"/><circle cx="210" cy="118" r="58" fill="url(#${id}pl)"/><path d="M168 96 Q210 88 252 102" stroke="#fff" stroke-opacity=".12" stroke-width="6" fill="none"/><path d="M160 128 Q210 120 262 134" stroke="#000" stroke-opacity=".12" stroke-width="8" fill="none"/>`}
+  if(s.land==="limb"){g+=`<ellipse cx="200" cy="520" rx="420" ry="300" fill="${s.rim}" opacity=".35" filter="url(#${id}b)"/><ellipse cx="200" cy="525" rx="400" ry="290" fill="url(#${id}pl)"/>`;
+    for(let i=0;i<40;i++){const x=r()*W,y=250+r()*45;g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r()*1.4+.4).toFixed(1)}" fill="${s.lights}" opacity="${(.4+r()*.6).toFixed(2)}"/>`}}
+  if(s.land==="nebula"){s.neb.forEach((c,i)=>{g+=`<ellipse cx="${80+i*130}" cy="${90+i*25}" rx="${120-i*15}" ry="${55+i*8}" fill="${c}" opacity=".55" filter="url(#${id}b)"/>`});g+=`<circle cx="300" cy="80" r="26" fill="url(#${id}pl)"/><circle cx="300" cy="80" r="26" fill="none" stroke="${s.rim}" stroke-opacity=".5"/>`}
+  if(s.land==="tower"){g+=`<circle cx="200" cy="190" r="110" fill="${s.planet[0]}" opacity=".5" filter="url(#${id}b)"/><path d="M182 260 L186 70 L194 70 L196 40 L204 40 L206 70 L214 70 L218 260 Z" fill="#12040a"/><rect x="170" y="120" width="60" height="8" fill="#12040a"/>`;
+    for(let i=0;i<9;i++)g+=`<rect x="${190+(i%3)*6}" y="${90+Math.floor(i/3)*40}" width="3" height="5" fill="${s.rim}" opacity=".9"/>`}
+  if(s.land==="core"){g+=`<circle cx="200" cy="125" r="80" fill="${s.rim}" opacity=".35" filter="url(#${id}b)"/>`;for(let i=0;i<4;i++)g+=`<ellipse cx="200" cy="125" rx="${90-i*14}" ry="${22+i*10}" fill="none" stroke="${s.rim}" stroke-opacity="${.25+i*.12}" stroke-width="1.5" transform="rotate(${-20+i*14} 200 125)"/>`;g+=`<circle cx="200" cy="125" r="34" fill="url(#${id}pl)"/><circle cx="200" cy="125" r="12" fill="#fff" opacity=".85" filter="url(#${id}b2)"/>`}
+  s.ridges.forEach((c,i)=>{const base=205+i*30;let d=`M0 ${H} L0 ${base}`;const n=8;for(let k=0;k<=n;k++){const x=k*W/n,y=base-(r()*40+8)*(1-i*.2);d+=` L${x.toFixed(0)} ${y.toFixed(0)}`}d+=` L${W} ${H} Z`;
+    g+=`<path d="${d}" fill="${c}"/>`;if(i===0&&s.ridgeTop)g+=`<path d="${d}" fill="none" stroke="${s.ridgeTop}" stroke-opacity=".5" stroke-width="1.2"/>`;
+    g+=`<rect x="0" y="${base-10}" width="${W}" height="60" fill="${s.sky[2]}" opacity="${.18-i*.05}" filter="url(#${id}b)"/>`});
+  return `<svg class="scene" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${g}</svg>`;
+}
+function tiles(list,s){return list.map(([ch,x,y,cls],i)=>{const rx=((i*37)%17)-8,ry=((i*53)%23)-11;
+  return `<div class="t ${cls||""}" style="left:${x}%;top:${y}%;--rx:${rx}deg;--ry:${ry}deg;--glow:${s.glow};--tint:${s.tint}"><b>${ch}</b></div>`}).join("")}
+function fill(el,i){const k=el.dataset.scene,s=SCENES[k];let h=scene(k,11+i);
+  if(el.dataset.tether){const [x,y]=el.dataset.tether.split(",").map(Number);h+=`<svg class="tetherline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M50 100 Q${(x+50)/2} ${y+40} ${x+7} ${y+10}" stroke="#00DDFF" stroke-width=".6" fill="none" opacity=".9" vector-effect="non-scaling-stroke" style="stroke-width:2px;filter:drop-shadow(0 0 4px #00DDFF)"/></svg>`}
+  if(el.dataset.tiles)h+=tiles(JSON.parse(el.dataset.tiles),s);
+  if(el.dataset.flat)h+=JSON.parse(el.dataset.flat).map(([c,x,y])=>`<div class="flat" style="left:${x}%;top:${y}%">${c}</div>`).join("");
+  el.innerHTML=h}
+const ACTS=[
+ {k:"prologue",tag:"Prologue · Scriptorium airlock · Void & Stars",h:"Almost no colour. A grey Earth that has gone quiet.",p:"The Catcher has lost their name and Earth has lost its words. Charcoal sky, a dim planet, and glass that reflects almost nothing, until the first letter is caught.",sw:["#000000","#0D0D0D","#36454F","#4B0082","#FFFFFF"],t:[["W",18,30],["",56,40,"dim"],["",80,18,"shard"]]},
+ {k:"act1",tag:"Act I · Low Orbit · Deep Space Blue + coral",h:"Earth's night side below you, with its city lights going out.",p:"Everyday nouns like bread, home and door drift above the curve of the planet. The coral city lights are Tomas's colour. They come back on as words are restored, and the glass edges warm with them.",sw:["#062C43","#054569","#5591A9","#9CCDDC","#FF6B35"],t:[["B",10,24],["R",40,40],["E",68,20],["",84,52,"shard"]]},
+ {k:"act2",tag:"Act II · The Nebula · Purple Haze Nebula + seafoam",h:"The most colourful act, because it holds the feelings.",p:"Emotions like hope, grief and trust pool in rose and seafoam gas. The glass catches every colour, so this is the act that gets screenshotted. The flickering tile is one of Babel's forgeries.",sw:["#210535","#430D4B","#7B337D","#C874B2","#39977F"],t:[["H",14,28],["O",44,16],["P",70,44,"fake"],["",34,60,"shard"]]},
+ {k:"act3",tag:"Act III · The Tower · Eclipsed",h:"The station where Babel was built, against a burning sky.",p:"Burgundy and rust, with amber windows in the Tower. Amber is Rhee's colour. Seeing it here, in Babel's birthplace, hints at the twist before anyone says it.",sw:["#000000","#051427","#530F1E","#A44322","#F8BC04"],t:[["T",8,40],["R",30,22],["U",66,30],["E",84,52]]},
+ {k:"act4",tag:"Act IV · Babel Core · Cosmic Night",h:"Inside Babel: cold periwinkle rings around a white core.",p:"Everything is Babel's colour. When the player restores LISTEN and then their own name, every earlier act's colour floods back into the glass at once. That is the visual ending.",sw:["#020208","#0C0A20","#1E1860","#4848D0","#7070FF"],t:[["L",6,40],["I",28,58],["S",64,48],["T",84,30]]},
+ {k:"signal",tag:"Daily Signal and share card · Galaxy Grape, in the style of your reference",h:"The front door, built to stand out in a group chat.",p:"Violet sky, a lilac moon, teal ridges and a magenta horizon. It is the loudest palette, because the Daily Signal is what people share.",sw:["#1A0633","#4B0082","#6A0DAD","#D946EF","#5fd0e0"],t:[["S",12,28],["I",40,44],["G",70,24]]}
+];
+document.getElementById("acts").innerHTML=ACTS.map(a=>`<article class="act"><div class="field" data-scene="${a.k}" data-tiles='${JSON.stringify(a.t)}'></div><div class="body"><div class="tag">${a.tag}</div><h3>${a.h}</h3><p class="muted">${a.p}</p><div class="swatches">${a.sw.map(c=>`<div class="sw"><i style="background:${c}"></i><span>${c}</span></div>`).join("")}</div></div></article>`).join("");
+document.querySelectorAll(".field[data-scene]").forEach(fill);
+</script>
+</body>
+</html>
