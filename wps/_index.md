@@ -22,11 +22,12 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-14 | AI-content policy | Agents draft; shipped art, audio and voice human-made; Babel deterministic; licensed word data | default |
 | O-15 | Funding | Self-funded through Phase 5 | default |
 | O-16 | Phase 10 split | Replaced by the Phase 7 trigger table | default |
-| O-17 | Engine | **Native iOS: Swift 6, SwiftUI, RealityKit, minimum iOS 18** (plan Part 7, Amendment A1). Three.js toy for Phase 2 testing; Python for tools; TypeScript telemetry endpoint. Android after the Phase 5 gate | answered by owner (30 Sep 2026): smoothest iOS, native Swift accepted |
+| O-17 | Engine | **Godot 4.7, GDScript, Compatibility renderer; 2D world with 2.5D letter tiles** (plan Part 8, Amendment A2). iOS first (TestFlight), then Android, plus a web build of the Daily Signal from the same project. Supersedes A1 (native Swift) | answered by owner (8 Oct 2026): Godot, letters 2.5D, everything else 2D |
 | O-18 | Default mode | Decided by the Phase 2 gate | pending Phase 2 |
 | O-19 | v1 cuts | Accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store, rewarded ads, clues above 300 | default |
 | O-20 | Owner load cap | 6 hours a week; review queue cap 4 | default |
 | O-21 | Success paragraph | Plan §1.1: proof of concept first; 12-month goal only if Phases 1–3 hold | answered by owner (29 Sep 2026) |
+| O-22 | Letter tile treatment | Default: tilt with light. Owner picks in WP-3.2 from flat with shadow, tilt with light, or tilt with light and bevel | pending WP-3.2 |
 
 ## Work packages
 
@@ -56,7 +57,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 
 ## Backlog (found while building, not in scope of any current WP)
 
-- After PR #6 merges: update `CLAUDE.md` and `.claude/agents/builder.md`, which still describe the Phase 3 client as Godot and GDScript (Amendment A1).
+- PR #8 (Swift skeleton plus TestFlight loop) predates Amendment A2. Rework it as WP-3.0 for a Godot iOS export, keeping the ship script, `asc.py`, the skill and the owner setup guide (plan §8.7); waiting on the owner's go-ahead.
 
 - SCOWL import for UK spelling variants (CONT-001 US/UK rule).
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.

@@ -5,7 +5,7 @@
 > **What changed from Draft 3.** Draft 3 was a design plan organised by story act. Draft 4 is an **execution plan organised by evidence**, written so that Claude Code agents can build it and one owner can steer it in a few hours a week. It follows `docs/analysis/AstroLex-Repo-Analysis-and-Path-to-Success.md`:
 > - **Evidence before content.** The anagram feasibility spike and a browser prototype come first. Nothing else starts until they pass.
 > - **Daily Signal first, campaign second.** A free daily puzzle with a share card ships at week 12. Act I and the paid campaign follow only if the daily loop grows.
-> - **Engine: native iOS (Swift, SwiftUI, RealityKit)** for the shipping client since Amendment A1 (30 September 2026, Part 7); Godot was the original choice. The browser toy stays as the Phase 2 test tool. Python stays for all content tooling.
+> - **Engine: Godot 4.7, a 2D world with 2.5D letter tiles** (Amendment A2, 8 October 2026, Part 8). A2 replaces Amendment A1's native Swift client (Part 7). The browser toy stays as the Phase 2 test tool. Python stays for all content tooling.
 > - **v1 scope cut.** No accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store or rewarded ads at launch. One meta system (Codex and Silent City). Enigma clues in the low hundreds, not 1,500.
 > - **Audience widened** to adults 30–55 who play a daily word puzzle, with 18–29s who share puzzles as the secondary group.
 > - **Owner load capped** at about 6 hours a week, enforced by the operating model in Part 3.
@@ -135,10 +135,9 @@ data/
   babel/                 templates, approved lines
   clues/                 clue batches with status
   levels/                one JSON per level
-web/                     Phase 2 prototype and the web Daily Signal (Three.js, plain JS or TypeScript)
-ios/                     Xcode project (Swift, SwiftUI, RealityKit), from Phase 3 (Amendment A1; replaces game/)
-packages/AstroLexCore/   Swift package: rules engine, Foundation only, tested on Linux and macOS (Amendment A1)
-data/conformance/        golden test vectors every rules implementation must pass (Amendment A1)
+web/                     Phase 2 prototype (Three.js)
+data/conformance/        golden test vectors every rules implementation must pass (Amendments A1 and A2)
+game/                    Godot 4.7 project: 2D world, 2.5D letter tiles, Compatibility renderer (Amendment A2)
   rules/                 pure GDScript rules, no Node dependencies, tested headlessly
   services/              thin interfaces for store, ads, analytics, save, leaderboards
 .github/workflows/       CI
@@ -235,6 +234,8 @@ Durations assume agents implement and the owner reviews within the 6-hour budget
 ---
 
 ## Phase 3: Daily Signal (weeks 5–12)
+
+> Amendment A2 (Part 8, §8.6) revises the work packages below: Compatibility renderer instead of Mobile, the 2.5D field in WP-3.2, the web build from the same Godot project, the App Clip dropped.
 
 **Goal.** Ship the smallest product that can form a habit and be measured: one free puzzle a day, the same for everyone, with a share card, on the web and in a lightweight mobile build.
 
@@ -370,11 +371,12 @@ Defaults apply unless the owner overrides. Recorded in `wps/_index.md`.
 | O-14 | AI-content policy | Agents draft code, specs, text and placeholders. Shipped art, audio and voice are human-made. **Babel is a deterministic algorithm; no runtime language model.** Licensed word data only. Disclosure text where a store requires it. |
 | O-15 | Funding | Self-funded through Phase 5. The Phase 4 slice is kept pitch-ready. |
 | O-16 | Phase 10 split | Replaced by the Phase 7 trigger table |
-| **O-17** | **Engine** | **Superseded by Amendment A1 (Part 7): native iOS with Swift 6, SwiftUI and RealityKit, minimum iOS 18.** The Three.js toy stays as the Phase 2 test tool; Python stays for tools; the telemetry endpoint is TypeScript. Android is deferred to after the Phase 5 gate. The original row (Godot 4.7) is kept in git history. |
+| **O-17** | **Engine** | **Amendment A2 (Part 8): Godot 4.7, GDScript, Compatibility renderer; a 2D world with 2.5D letter tiles.** iOS first through TestFlight, then Android, plus a web build of the Daily Signal from the same project. A2 supersedes A1 (native Swift, Part 7); the conformance vectors and the TestFlight loop carry over. The Three.js toy stays as the Phase 2 test tool; Python stays for tools. |
 | **O-18** | **Default mode** | **Decided by the Phase 2 gate.** The owner commits now to following the result. |
 | **O-19** | **v1 cuts** | Accounts, friends, ghosts, duels, both currencies, upgrade trees, season pass, cosmetics store, rewarded ads, and clue volume above 300 are all out of v1. Each has a trigger in Phase 7. |
 | **O-20** | **Owner load cap** | 6 hours a week; review queue cap of 4 |
 | **O-21** | **Success paragraph** | §1.1, answered by the owner on 29 September 2026: proof of concept first; the 12-month goal applies only if Phases 1–3 hold. |
+| **O-22** | **Letter tile treatment** | Picked by the owner in WP-3.2 from three treatments switchable in settings: flat with shadow, tilt with light, or tilt with light and bevel (Amendment A2 §8.2). Default: tilt with light. |
 
 ---
 
@@ -454,6 +456,8 @@ Solutions-document items not listed above (A1–H8) remain proposals. The ones D
 
 # Part 7: Amendment A1 (30 September 2026): native iOS
 
+> **Superseded by Amendment A2 (Part 8).** The engine is Godot again. Three parts of A1 carry over: the conformance vectors (§7.3), the TestFlight dev loop and the TypeScript telemetry endpoint. A1 is kept here as a record.
+
 ## 7.1 Decision
 
 The owner asked for the smoothest, most professional iOS experience and accepted native Swift development. O-17 changes accordingly. Everything else in Draft 4 stands: the phases, the gates, the evidence rules and the owner-load cap.
@@ -524,3 +528,128 @@ WP-3.7 (story bible), 3.8 (community seed) and 3.9 (business model v0) are uncha
 4. Keep sending the web toy to testers; it still answers the Drift or Pressure question while the app is built.
 
 Sources: [Bring your SceneKit project to RealityKit, WWDC25](https://developer.apple.com/videos/play/wwdc2025/288/) · [Displaying 3D objects with RealityView on iOS](https://www.createwithswift.com/displaying-3d-objects-with-realityview-on-ios-ipados-and-macos/) · [Xcode Cloud](https://developer.apple.com/xcode-cloud/) · [WWDC23: What's new in App Clips](https://developer.apple.com/videos/play/wwdc2023/10178) · [WebKit Features in Safari 26.0](https://webkit.org/blog/17333/webkit-features-in-safari-26-0/)
+
+---
+
+# Part 8: Amendment A2 (8 October 2026): Godot, 2D world, 2.5D letters
+
+**Status:** Amendment A2 supersedes Amendment A1 (Part 7) as the engine decision. From A1 it keeps three things: the conformance vectors (§7.3), the TestFlight dev loop (WP-3.0) and the TypeScript telemetry endpoint. Everything else in Draft 4 stands: the phases, gates, evidence rules and owner-load cap. Draft 4's original Godot rows (WP-3.1 to 3.5, CI §3.5, WP-4.8, WP-5.4) apply again, as revised in §8.6.
+
+## 8.1 Decision
+
+The owner decided (8 October 2026): **the game is built in Godot. The letters are 2.5D and the rest of the graphics are 2D, which suits this kind of game better.**
+
+**Review: why this is the better fit.**
+
+| Reason | Evidence or argument |
+|---|---|
+| **Readability is the game** | A word game is only as good as the speed at which a letter is read. In full 3D a tumbling glyph turns edge-on and becomes unreadable. The toy already had to limit the tumble to "a gentle wobble to keep glyphs readable" (`reports/WP-2.1/evidence.md`). A 2.5D tile only tilts, so the glyph always faces the player. |
+| **Tapping becomes exact** | Owner run 2 lost air to taps on tile edges that missed, and the toy needed a projected-radius fix in v1.2. In 2D, a tile's hit area is a circle in screen space with a known radius per depth plane. The rule is the toy's v1.2 rule without the projection step. |
+| **Art is cheaper and easier to hire** | Painted 2D backdrops and one tile sprite set cost less than modelled scenes, and 2D illustrators are easier to find than 3D artists. The Phase 4 style test becomes 2D (§8.6). This fits O-11 (no money spent before Phase 4) and O-14 (shipped art is human-made). |
+| **One codebase for iOS, Android and web** | Godot exports the same project to iOS, Android and the web. The owner asked for iOS first and then Android; Android goes back to the Phase 3 closed track instead of A1's "after Phase 5". The web Daily Signal can be the same game rather than a second code base. |
+| **Agents work without the Mac** | The Godot editor runs headless on Linux, and a cloud session downloaded Godot 4.7.2 on 8 October 2026. Agents can therefore run GDScript rules, scenes and tests, the web export and the Android export in cloud sessions and GitHub Actions. The owner's Mac is needed only to export and upload iOS builds. Under A1, all app work needed the Mac. |
+| **Text-based project files** | Scenes (`.tscn`), resources and GDScript are plain text, so agents can read, diff and review them. |
+
+**What A2 gives up compared with A1, stated plainly:**
+- **Rich haptics.** Godot's `Input.vibrate_handheld` gives single pulses. Patterned Core Haptics (a rising catch "thwip", a heartbeat at low air) needs a small iOS plugin, which WP-3.11 scopes.
+- **120 Hz is not guaranteed.** The `CADisableMinimumFrameDurationOnPhone` key goes into the export's Info.plist, but the engine may also need to request the higher rate. The gate returns to Draft 4's **60 fps**; 120 Hz on ProMotion is measured in WP-3.2 as a stretch goal.
+- **Widget and App Clip.** Both are native-only.
+  - The home-screen widget becomes optional in Phase 5, as a Swift extension added to the exported Xcode project.
+  - The App Clip is dropped. A shared Daily Signal link opens the web build of the same puzzle instead.
+- **Platform services come through plugins.** Game Center, iCloud and StoreKit use Godot iOS plugins, pinned by version. Each sits behind a one-file GDScript interface with a fake (Draft 4 rule 2, §3.5), so swapping a plugin touches one file.
+
+## 8.2 Visual direction: a 2D world with 2.5D letters
+
+**The world is 2D.**
+- Painted backdrops in at most 4 `Parallax2D` layers (the WP-4.2 cap).
+- The tether is a `Line2D` with a width curve and a glow.
+- Particles are `CPUParticles2D`, which behave the same in the web export.
+- The HUD and chat comms are Godot `Control` nodes.
+
+**Each letter is a 2.5D tile:** a flat sprite that reads as a solid object. Five layers make it work:
+
+| Layer | How it is built | Why |
+|---|---|---|
+| Tile body | Drawn tile with a visible bevelled edge (the side face), as a sprite | Gives thickness without 3D |
+| Glyph | A separate layer rendered from a font (MSDF), always facing the player | Crisp at every size and plane; the font can switch to a dyslexia-friendly one (WP-3.3 settings) |
+| Tilt | A `canvas_item` shader that tilts the tile with perspective, up to `tile.maxTiltDeg` (start at 20°), with slow sway | Sells depth while the glyph stays readable; reduced motion sets it to 0 |
+| Light | A normal map on the tile (`CanvasTexture`) lit by one `PointLight2D` (the visor lamp), plus a rim highlight | Tilted tiles catch the light; a caught tile flares |
+| Shadow and depth | A soft drop shadow offset by depth plane. Planes as scale (front 1.0, mid 0.8, back 0.65), with the back plane slightly desaturated | Keeps the two reachable planes plus the decorative back plane (CORE-001) |
+
+The Draft 3 pillar "catching floating 3D letters" becomes **catching floating letter tiles on depth planes**. Zero-G drift, the two reachable planes and the decorative back plane are unchanged.
+
+**Renderer:** Compatibility (OpenGL ES 3.0, WebGL 2). It runs on the widest range of phones and is the one Godot uses for web export, and a 2D game gains nothing from the Mobile renderer.
+
+**Screen:** portrait, base viewport 1080×1920, stretch mode `canvas_items`, aspect `expand`.
+
+**Every look number is a tunable** in `data/tunables/`: tilt, sway, plane scales, shadow offsets, and the tap margin per plane.
+
+## 8.3 Stack
+
+| Layer | Choice | Notes |
+|---|---|---|
+| Engine | Godot 4.7.x, exact patch pinned in WP-3.2 | 4.7.2 is current as of 8 October 2026; upgrade only between phases |
+| Language | GDScript | No C#: Godot cannot export C# projects to the web |
+| Renderer | Compatibility | §8.2 |
+| Rules | `game/rules/`: pure GDScript `RefCounted` classes, no `Node` | Drift, tether, catch taxonomy, oxygen, scoring, spawner, Babel composer. Seeded and fixed-step, tested headlessly |
+| Tests | gdUnit4 headless, in CI and in cloud sessions | Plus Python `pytest` for `tools/` |
+| Services | `game/services/`: one GDScript interface each, plus a fake | Game Center and Play Games, cloud save, telemetry, remote tunables, store |
+| iOS | Godot exports an Xcode project on the owner's Mac; `xcodebuild` archives and uploads it to TestFlight | WP-3.0's ship script, adapted: export first, then archive |
+| Android | Exported headlessly on Linux in CI to the Play internal and closed tracks | After iOS is stable (owner: iOS first) |
+| Web | Single-threaded web export (no cross-origin isolation headers needed) for the Daily Signal web link | First load is measured; if it is slow on 4G (see WP-3.3), a light 2D canvas page is built in Phase 4 |
+| Telemetry | Small TypeScript endpoint on a serverless host (from A1) | Anonymous events only |
+| Prototype | The Three.js toy stays for the Phase 2 questions (mode, tether feel) | Its 3D look is not the shipping look; WP-3.2 tests the 2.5D look |
+
+## 8.4 One set of rules, three languages
+
+§7.3 carries over with GDScript in place of Swift. `data/conformance/*.json` holds golden vectors generated by Python: a seed, tunables and an input stream, with the expected board, catches, score and Babel candidate set. Python (`tools/`), GDScript (`game/rules/`) and the JavaScript toy each run the vectors in CI, and a mismatch fails the build.
+
+**Repository layout:** `game/` (Godot project) replaces A1's `ios/` and `packages/AstroLexCore/`. `game/rules/` and `game/services/` are as in §3.4, `data/conformance/` stays, and the generated iOS export goes to `build/` (gitignored).
+
+## 8.5 How agents build it
+
+| Work | Where it runs |
+|---|---|
+| Rules, scenes, shaders, UI, tests, web export, Android export, Python tools, data | Cloud sessions and GitHub Actions on Linux, with Godot headless |
+| iOS export, TestFlight upload, on-device checks (frame time, haptics, Game Center) | Claude Code on the owner's Mac, steered from the Claude mobile app (WP-3.0) |
+
+## 8.6 Phase 3 to 5 work packages, revised (replaces §7.5)
+
+| WP | Now |
+|---|---|
+| 3.0 | iOS dev loop: Godot iOS export → `xcodebuild` archive → TestFlight, tag `tf/<build>`, What to Test from commits, external "Friends" group. Reworked from PR #8, without the Swift skeleton or XcodeGen. |
+| 3.1 | Rules core: Python reference in `tools/rules/` plus a GDScript port in `game/rules/`, both passing the conformance vectors. 10,000 seeded boards all solvable. |
+| 3.2 | **Godot project, 2.5D field and CI.**<br>• `game/` on Godot 4.7.x, Compatibility renderer, portrait.<br>• The field from §8.2 (tiles, tilt shader, normal-mapped light, shadows, depth planes, `Line2D` tether), driven by `game/rules/`.<br>• **Three tile treatments switchable in settings** (flat with shadow, tilt with light, tilt with light and bevel); the owner picks one in one sitting (O-22).<br>• gdUnit4 and the web export run in CI; iOS goes through WP-3.0.<br>• **Acceptance:**<br>&nbsp;&nbsp;– p95 frame time 16.7 ms or less over 15 minutes on the owner's iPhone, with no thermal throttling.<br>&nbsp;&nbsp;– 120 Hz is measured but is not a gate.<br>&nbsp;&nbsp;– Every glyph is readable at maximum tilt: the confusable-pairs check passes (O/Q, I/L, M/W, N/Z, C/G).<br>&nbsp;&nbsp;– Hit-test parity with toy v1.3 on a recorded tap set. |
+| 3.3 | Daily Signal in the Godot client, on iOS and in the web export from the same project.<br>• Date seed, winning mode as default, Babel's line of the day, results screen, share card through the share sheet with a link to the web build.<br>• Streak with two freezes a week; Prologue as the tutorial.<br>• Settings: text size, dyslexia-friendly font, reduced motion (tilt and sway off), colour-blind palette, haptics.<br>• Web first load measured on a throttled 4G profile; the target is first playable in under 5 s. |
+| 3.4 | Android closed track once iOS is stable. Same build, headless export in CI. |
+| 3.5 | Platform services behind GDScript interfaces with fakes: Game Center and Play Games leaderboards, iCloud key-value and Play saved games, the TypeScript telemetry endpoint, remote tunables as static JSON. |
+| 3.6 | Store set-up unchanged. The Apple account is needed in week 1; the Google account is needed before WP-3.4. |
+| 3.10 | **Dropped.** The App Clip is replaced by the web build link (§8.1). |
+| 3.11 | Haptics and audio pass.<br>• `AudioStreamPlayer` with letter-as-note catch sounds.<br>• `Input.vibrate_handheld` pulses per feedback-matrix event.<br>• A small iOS Core Haptics plugin only if the pulses fail the owner check "does a catch feel snappy?" |
+| 4.1 | The style test becomes 2D: one Low Orbit backdrop as layered parallax art, and five letter tiles (A E R S W) as 2.5D sprites (tile, normal map, bevel). The glyph comes from the chosen font. |
+| 4.2 | The art bible adds maximum tilt, sway, shadow offsets and plane scales, all as data. The CI readability check samples frames at maximum tilt. |
+| 5.x | Optional home-screen widget as a Swift WidgetKit extension in the exported Xcode project, only if a featuring nomination asks for it. StoreKit 2 through a Godot plugin, as in WP-5.4. |
+
+**Gate changes from A1:** 60 fps at p95 on the owner's iPhone, and later on the reference Android, replaces "120 fps p95". "First TestFlight build installed by week 2" stays.
+
+## 8.7 What happens to A1's work
+
+| Item | Fate |
+|---|---|
+| PR #8 (Swift skeleton and TestFlight loop) | Keep the TestFlight half: `ship-testflight.sh`, `asc.py` and its tests, the `ship-testflight` skill, `.claude/settings.json` and the owner setup in `docs/ios/DEV-LOOP.md` (Apple account, API key, TestFlight groups, Remote Control). Replace the Swift app, XcodeGen and the simulator job with a Godot iOS export step. Recommended: rework PR #8 on its branch as WP-3.0 rather than merge it as it is. |
+| `packages/AstroLexCore` | Never built; dropped. |
+| Toy v1.3 (PR #9) | Unchanged. Still the Phase 2 test tool. |
+
+## 8.8 Owner actions
+
+1. **Join the Apple Developer Program** ($99 a year). Only the iOS export needs Xcode on the Mac.
+2. **Optional: install Godot 4.7.x** on the Mac to open the project yourself. Agents do not need it there, but the iOS export does need Godot's export templates on the Mac.
+3. **Pick the tile treatment** in WP-3.2, from the three switchable in settings (O-22).
+4. **Say whether PR #8 should be reworked for Godot** (recommended) or closed.
+
+Sources:
+- [Godot 4.6 release, January 2026](https://godotengine.org/blog/release)
+- [Godot 4.6.3 release candidate, gamedev.net](https://gamedev.net/news/3212-release-candidate-godot-463-rc-1/)
+- [Godot 4.7.2 stable listing, August 2026](https://www.apkmirror.com/?p=13908654)
+- [ProMotion needs `CADisableMinimumFrameDurationOnPhone` plus a runtime frame-rate request (Rive runtime FAQ)](https://rive.app/docs/runtimes/apple/faq)
+- [Apple Developer Forums: CADisplayLink capped below 120 Hz](https://developer.apple.com/forums/thread/761616)
