@@ -14,6 +14,7 @@ const GLYPH_COLOR := Color(0.06, 0.08, 0.18)
 
 var ch: String = ""
 var plane: int = 0
+var is_back: bool = false
 var treatment: String = "tilt"
 var reduced_motion: bool = false
 var size_px: float = 100.0
@@ -62,8 +63,15 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.add_theme_color_override("font_color", GLYPH_COLOR)
 
 
-func set_dim(v: float) -> void:
-	modulate = Color(v, v, v * 1.05, 1.0)
+## Back plane: distant debris. Dim, desaturated, unlit, shadowless, never tilted.
+func set_back(alpha: float, glyph_alpha: float, desaturate: float) -> void:
+	is_back = true
+	modulate = Color(1.0, 1.0, 1.0, alpha)
+	glyph.modulate.a = glyph_alpha
+	shadow.visible = false
+	body.light_mask = 2
+	_mat.set_shader_parameter("unlit_gain", FLAT_GAIN)
+	_mat.set_shader_parameter("desaturate", desaturate)
 
 
 ## Places the tile and tilts it toward the lamp, plus a slow sway. nx is the tile's x in 0..1.
@@ -72,7 +80,7 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		return
 	position = screen_pos
 	var tilt := Vector2.ZERO
-	if treatment != "flat" and not reduced_motion:
+	if treatment != "flat" and not reduced_motion and not is_back:
 		var maxd: float = _tun["tile.maxTiltDeg"]
 		var sway_deg: float = _tun["tile.swayDeg"]
 		var w := TAU * float(_tun["tile.swaySpeed"])

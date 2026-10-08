@@ -27,7 +27,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-19 | v1 cuts | Accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store, rewarded ads, clues above 300 | default |
 | O-20 | Owner load cap | 6 hours a week; review queue cap 4 | default |
 | O-21 | Success paragraph | Plan §1.1: proof of concept first; 12-month goal only if Phases 1–3 hold | answered by owner (29 Sep 2026) |
-| O-22 | Letter tile treatment | Default: tilt with light. Owner picks in WP-3.2 from flat with shadow, tilt with light, or tilt with light and bevel | pending WP-3.2 |
+| O-22 | Letter tile treatment | Default: tilt with light. Owner will send a drawing of the look (8 Oct 2026); decide from it | pending owner drawing |
 
 ## Work packages
 
@@ -47,7 +47,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
-| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | built; D1–D6 pass, D7 waits on CI for the PR; owner checks pending (feel, readability, tile treatment O-22) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md` |
+| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026). Owner play: back letters looked catchable but were not (fixing: back plane reads as background); tiles readable, polish later; look waits on owner drawing (O-22) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md` |
 
 ## Review queue (cap 4)
 

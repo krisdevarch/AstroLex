@@ -177,6 +177,8 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	var angle := _rng.randf() * TAU
 	var var_frac := _num("drift.speedVariation")
 	var speed := _num("drift.speed") * float(ramp()["drift"]) * (1.0 + _rng.randf_range(-var_frac, var_frac))
+	if plane >= 2:
+		speed *= _num("plane.backSpeedMul")
 	tile.vel = Vector2(cos(angle), sin(angle)) * speed
 	tiles.append(tile)
 	_by_id[tile.id] = tile
