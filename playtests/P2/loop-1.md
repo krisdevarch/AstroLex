@@ -11,6 +11,7 @@
 | owner-01 | owner (iPhone, iOS 18.7, 440×894, in the Claude app) | 5.8 | 1 | Pressure | – | – |
 | owner-02 | owner, same phone, build v1.1 | 1.9 | 1 | Drift | (second session) | – |
 | owner-03 | owner, same phone, build v1.2 | 4.6 | 1 | Drift | (third session) | – |
+| owner-04 | owner, same phone, build v1.2 | 4.0 | 1 | Pressure | (fourth session) | – |
 
 **Owner run, 29 Sep 2026** (`results/loop-1/owner-01.json`): won, 4 words in 27.5 s, 16 fires and 16 catches, 0 wrong, 0 escapes, combo at the 2.0 cap from word 3. Babel: `LAST.` after *salt*, `LAST.` again after *chair*, `ART IS ACT.` after *cat*. Oxygen never went below about 85: with drain 1.0/s and +12 +2/letter per word, a clean run gains air.
 
@@ -32,6 +33,22 @@
 - Wrong catches are now logged with `kind: surplus | unneeded`.
 
 **Owner run 3, v1.2, Drift** (`results/loop-1/owner-03.json`): won, 4 words in 45.4 s, 22 fires, 22 catches, **0 wrong, 0 escapes, 0 empty taps**. Two `dissolve` events confirm the surplus fix on the device (a decoy I filled BRIDGE's slot and a decoy O filled DOOR's; the spare copies dissolved). Babel: `BIG ORDER.` then `ORDER OR GOD?`, no repeat. The owner's three smoke runs are complete; the build is ready for outside testers. Note for the owner's Babel review later: the lexicon includes ordinary words such as *god* that some players may not want in Babel's mouth; the toy composes freely, the shipped game will use owner-approved lines only.
+
+**Owner run 4, v1.2, Pressure, 8 Oct 2026** (`results/loop-1/owner-04.json`): won, PEN DOG KNIFE STONE in 28 s, 18 fires, 16 catches, **2 wrong, 0 escapes, 9 empty taps**, oxygen never below 78. Three findings:
+
+1. **Both wrong catches were decoy S tiles after STONE's S was filled** (`kind: surplus`, `decoy: true`, −4 air each). A decoy S had filled the slot at 24.4 s; the other S decoys stayed on the board, looking exactly like the letter just used. This is the run-2 surplus defect again, for decoys: v1.2 dissolved only surplus *real* copies.
+2. **Eight empty taps in 1.3 s while only F was left** (29.8–31.1 s, sweeping left to right across the middle of the screen, no tether in flight). The log cannot say whether these were near-misses on a moving tile or a search for the F, because `tap_miss` did not record where the nearest tile was. In the same moment a caught E was flying to its slot and a surplus E was dissolving, and taps on fading tiles count as empty.
+3. **Babel never spoke during play.** PEN and PEN+DOG give zero lines (checked against `compose.py`: 0, 0, then 7 after KNIFE), and STONE was already complete in the preview when KNIFE finished, so the round ended at once. The only line was on the end screen, which was not logged. This is the known short-first-word limit; it matters because Babel is the hook.
+
+Pressure still does not press in round 1 (lowest air 78), as in run 1.
+
+**Fixed in v1.3** (verified by a scripted Pressure round run five times, with a check after every catch that no live tile of a word letter exceeds what the words still need; the v1.2 checks still pass):
+- Decoys never use a letter of the active or preview word when spawned.
+- Surplus decoys of a word letter dissolve like real copies (logged as `dissolve` with `decoy: true`); the board is topped up with fresh decoys.
+- `tap_miss` now logs the nearest live tile (`near`, `nearD` px, `nearR` hit radius, `nearPlane`) and `onFading: caught | dissolving` when the finger was on a fading tile.
+- The end-screen Babel line is logged (`babel_line` with `at: "end"`); every result carries `build: "toy-1.3"`.
+
+**Not changed (owner decision later):** Babel's silence after short opening words. Options: put the longest word first in each level, let Babel speak after a two-word pool only from a lower `babel.minLineLetters`, or accept silence until word 3. Recommendation: longest word first, decided after outside testers say whether they noticed Babel at all.
 
 **Changes shipped as v1.1 before the first outside testers:** Babel never repeats a line within a round; per-round ramp (drift +8% per round, +1 decoy per round up to 8, Pressure drain +10% per round); round number logged in every summary.
 

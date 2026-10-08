@@ -168,7 +168,7 @@
   let roundStart = 0;
   function ev(type, data) { log.events.push(Object.assign({ t: +(performance.now() / 1000).toFixed(2), type }, data || {})); }
   function persist() { try { const all = JSON.parse(localStorage.getItem('astrolex_toy') || '[]'); all.push(summary()); localStorage.setItem('astrolex_toy', JSON.stringify(all.slice(-30))); } catch (e) {} }
-  function summary() { return { session: log.session, tester: log.tester, ua: navigator.userAgent, screen: [innerWidth, innerHeight], tunables: T, rounds: log.rounds, events: log.events.slice(-600) }; }
+  function summary() { return { build: 'toy-1.3', session: log.session, tester: log.tester, ua: navigator.userAgent, screen: [innerWidth, innerHeight], tunables: T, rounds: log.rounds, events: log.events.slice(-600) }; }
 
   // ---------- audio ----------
   let AC = null, soundOn = true;
@@ -302,12 +302,15 @@
     renderWords();
   }
   // 2. once the record has enough of a letter, surplus copies dissolve instead of lurking as wrong catches
+  // v1.3: decoys of a letter in the active or preview word count too (real copies first), so a decoy S
+  // never lurks as a wrong catch after STONE's S is filled; decoys of letters in neither word stay.
   function trimSurplus() {
     const need = neededCounts(); const seen = {};
-    for (const L of letters.slice()) {
-      if (L.decoy || L.fly || L.dissolve) continue;
+    const inWords = (words[wi] || '') + (words[wi + 1] || '');
+    const live = letters.filter(L => !L.fly && !L.dissolve);
+    for (const L of live.filter(L => !L.decoy).concat(live.filter(L => L.decoy && inWords.includes(L.ch)))) {
       seen[L.ch] = (seen[L.ch] || 0) + 1;
-      if (seen[L.ch] > (need[L.ch] || 0)) { L.alive = false; L.dissolve = { t0: performance.now(), dur: reduceMotion ? 1 : 420 }; ev('dissolve', { ch: L.ch }); }
+      if (seen[L.ch] > (need[L.ch] || 0)) { L.alive = false; L.dissolve = { t0: performance.now(), dur: reduceMotion ? 1 : 420 }; ev('dissolve', { ch: L.ch, decoy: L.decoy }); }
     }
   }
   function neededCounts() {
@@ -323,7 +326,11 @@
   }
   const FREQ = { e: 127, t: 91, a: 82, o: 75, i: 70, n: 67, s: 63, h: 61, r: 60, d: 43, l: 40, c: 28, u: 28, m: 24, w: 24, f: 22, g: 20, y: 20, p: 19, b: 15, v: 10, k: 8, j: 2, x: 2, q: 1, z: 1 };
   function weightedLetter() { let tot = 0; for (const c in FREQ) tot += FREQ[c]; let r = Math.random() * tot; for (const c in FREQ) { r -= FREQ[c]; if (r <= 0) return c; } return 'e'; }
-  function ensureDecoys() { let n = letters.filter(L => L.decoy).length; while (n < ramp().decoys) { spawnLetter(weightedLetter(), true); n++; } }
+  // new decoys avoid every letter of the active and preview words, so a decoy is never a twin of a word letter
+  function ensureDecoys() {
+    const inWords = (words[wi] || '') + (words[wi + 1] || ''); let n = letters.filter(L => L.decoy && L.alive).length;
+    while (n < ramp().decoys) { let ch = weightedLetter(); for (let k = 0; k < 30 && inWords.includes(ch); k++) ch = weightedLetter(); spawnLetter(ch, true); n++; }
+  }
 
   // ---------- HUD ----------
   function renderWords() {
@@ -405,10 +412,22 @@
     for (const L of letters) { if (!L.alive || L.fly || L.dissolve) continue; const p = screenPos(L.mesh); const d = Math.hypot(p.x - x, p.y - y); const r = Math.max(base, tileRadiusPx(L) + 6); if (d < r && d < bd2) { best = L; bd2 = d; } }
     return best;
   }
+  // v1.3 telemetry for empty taps: nearest live tile (letter, distance, hit radius) and whether a fading tile was under the finger
+  function nearestTile(x, y) {
+    let near = null, nd = Infinity, fading = null;
+    for (const L of letters) {
+      const p = screenPos(L.mesh); const d = Math.hypot(p.x - x, p.y - y); const r = tileRadiusPx(L) + 6;
+      if (L.fly || L.dissolve) { if (d < r) fading = L.fly ? 'caught' : 'dissolving'; continue; }
+      if (L.alive && d < nd) { near = L; nd = d; }
+    }
+    const out = {}; if (near) { out.near = near.ch; out.nearD = Math.round(nd); out.nearR = Math.round(Math.max(T['tap.radiusPx'] * (mode === 'drift' ? T['tap.radiusDriftMul'] : 1), tileRadiusPx(near) + 6)); out.nearPlane = near.plane.name; }
+    if (fading) out.onFading = fading;
+    return out;
+  }
   canvas.addEventListener('pointerdown', (e) => {
     if (state !== 'play') return; audio();
     const best = hitTest(e.clientX, e.clientY);
-    if (!best) { ev('tap_miss', { x: e.clientX | 0, y: e.clientY | 0, inFlight: !!shot }); tone(300, 0.05, 'sine', 0.02); return; }
+    if (!best) { ev('tap_miss', Object.assign({ x: e.clientX | 0, y: e.clientY | 0, inFlight: !!shot }, nearestTile(e.clientX, e.clientY))); tone(300, 0.05, 'sine', 0.02); return; }
     if (shot) { if (best !== shot.L) { pending = best; best.queued = true; tone(900, 0.04, 'triangle', 0.02); ev('queue', { ch: best.ch }); } return; }
     fire(best);
   });
@@ -439,7 +458,7 @@
     ev('catch', { ch: L.ch, where, combo: +combo.toFixed(1), queued: !!L.queued });
     renderWords(); if (where === 'active') flashSlot(idx, 'flash');
     if (slots.every(s => s.filled)) wordRestored();
-    else { spawnForWords(); trimSurplus(); }
+    else { spawnForWords(); trimSurplus(); ensureDecoys(); }
     renderHud();
   }
   function flyToSlot(L, where, idx) {
@@ -476,7 +495,7 @@
     const secs = (performance.now() - roundStart) / 1000;
     const r = { round: roundNo, ramp: ramp(), mode, act: actKey, won, words: restoredWords.length, total: words.length, score: Math.round(score), secs: +secs.toFixed(1), catches, wrong, escapes, firstCatch: firstCatchAt === null ? null : +firstCatchAt.toFixed(1), minOxygen: +minOxygen.toFixed(0) };
     log.rounds.push(r); ev('round_end', r); persist();
-    const q = babelLine();
+    const q = babelLine(); ev('babel_line', { text: q || '', at: 'end' });
     $('endTitle').textContent = won ? 'Sector cleared' : 'Out of air';
     $('endQuote').textContent = q ? 'BABEL: ' + q : (won ? 'Babel says nothing. Yet.' : 'Babel waits for you to try again.');
     $('sScore').textContent = r.score; $('sWords').textContent = `${r.words}/${r.total}`; $('sTime').textContent = r.secs + 's'; $('sCatch').textContent = catches; $('sWrong').textContent = wrong; $('sEscape').textContent = escapes;
@@ -543,7 +562,7 @@
   $('applyBtn').addEventListener('click', () => { for (const k of sliders) T[k] = parseFloat(document.getElementById('t_' + k).value); actKey = actSel.value; ev('tunables', Object.assign({ act: actKey }, T)); $('debug').hidden = true; $('end').hidden = true; if (state !== 'idle') startRound(); });
 
   // test hook (read-only view for the smoke test; not used by the game)
-  window.__toy = { get letters() { return letters; }, screenPos, get state() { return state; }, get shot() { return shot; }, compose, count, get stats() { return { catches, wrong, escapes, score, oxygen, wi, words: words.slice(), slots: slots.map(s => s.filled), preview: previewSlots.map(s => s.filled) }; }, T, get mode() { return mode; } };
+  window.__toy = { get letters() { return letters; }, screenPos, summary, get state() { return state; }, get shot() { return shot; }, compose, count, get stats() { return { catches, wrong, escapes, score, oxygen, wi, words: words.slice(), slots: slots.map(s => s.filled), preview: previewSlots.map(s => s.filled) }; }, T, get mode() { return mode; } };
   // boot
   resize(); requestAnimationFrame(frame);
   // idle attract: a few letters drifting behind the start card
