@@ -26,3 +26,21 @@ func test_settings_ignore_an_unknown_treatment() -> void:
 	a.load_from(PATH)
 	assert_eq(a.treatment, "tilt", "falls back to the default")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
+
+
+func test_hint_defaults_to_edges_and_round_trips() -> void:
+	var a := AppSettings.new()
+	assert_eq(a.hint, "edges", "default hint")
+	for h in AppSettings.HINTS:
+		a.hint = h
+		a.save_to(PATH)
+		var b := AppSettings.new()
+		b.load_from(PATH)
+		assert_eq(b.hint, h, "hint %s survives save" % h)
+	var cf := ConfigFile.new()
+	cf.set_value("look", "hint", "bogus")
+	cf.save(PATH)
+	var c := AppSettings.new()
+	c.load_from(PATH)
+	assert_eq(c.hint, "edges", "unknown hint falls back")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))

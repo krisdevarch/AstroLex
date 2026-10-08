@@ -16,7 +16,7 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
   "session": "k3x9qa",
   "device": {"os": "iOS", "model": "", "ua": "Mozilla/5.0 (...)", "screen": [390, 844], "dpr": 3},
   "load": {"boot_ms": 4100, "ready_ms": 5200},
-  "settings": {"treatment": "tilt", "reduced_motion": false},
+  "settings": {"treatment": "tilt", "reduced_motion": false, "hint": "edges"},
   "rounds": [{
     "round": 1, "mode": "drift", "act": "act1_low_orbit", "seed": 123, "won": true,
     "words": 4, "total": 4, "score": 358, "secs": 41.2,
@@ -28,6 +28,8 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
   "events": []
 }
 ```
+
+`settings.hint` is the Hint level (`full`, `edges` or `none`): which unfilled word-slot letters are shown as faint ghosts.
 
 Rules:
 - The **issue body** holds a short markdown summary plus one fenced `json` block with everything except `events`, so the URL stays under 6,000 characters. Drop `babel_lines`, then trim `errors` to the last 5, if needed.

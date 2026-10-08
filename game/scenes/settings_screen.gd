@@ -43,6 +43,18 @@ func _ready() -> void:
 	rm.toggled.connect(_set_reduced)
 	box.add_child(rm)
 	box.add_child(Ui.label("Tilt, sway and particles turn off.", 30, Ui.DIM))
+	box.add_child(Ui.label("Hint", 40, Ui.DIM))
+	var hrow := VBoxContainer.new()
+	hrow.add_theme_constant_override("separation", 12)
+	box.add_child(hrow)
+	var hgroup := ButtonGroup.new()
+	for h in AppSettings.HINTS:
+		var hb := Ui.button(str(AppSettings.HINT_LABELS[h]), 40, Vector2(760, 100), true)
+		hb.name = "Hint_%s" % h
+		hb.button_group = hgroup
+		hb.button_pressed = settings.hint == h
+		hb.pressed.connect(_set_hint.bind(h))
+		hrow.add_child(hb)
 	var back := Ui.button("Back", 48, Vector2(460, 120))
 	back.name = "BackButton"
 	back.pressed.connect(func() -> void: closed.emit())
@@ -51,6 +63,11 @@ func _ready() -> void:
 
 func _set_treatment(t: String) -> void:
 	settings.treatment = t
+	settings.save_to(save_path)
+
+
+func _set_hint(h: String) -> void:
+	settings.hint = h
 	settings.save_to(save_path)
 
 

@@ -524,11 +524,25 @@ func _update_hud() -> void:
 	_fill_row(_preview_row, "preview", game_round.preview)
 
 
+## True when the Hint setting reveals the ghost letter of slot idx in a word of n letters.
+func hint_shown(idx: int, n: int) -> bool:
+	match settings.hint:
+		"full":
+			return true
+		"edges":
+			return n <= 2 or idx == 0 or idx == n - 1
+	return false
+
+
 func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 	for i in mini(slots.size(), row.get_child_count()):
 		var p := row.get_child(i) as Panel
 		var filled := _slot_text_filled(where, i, bool(slots[i]["filled"]))
-		(p.get_node("Glyph") as Label).text = str(slots[i]["ch"]).to_upper() if filled else ""
+		var g := p.get_node("Glyph") as Label
+		var ch := str(slots[i]["ch"]).to_upper()
+		g.text = ch if filled or hint_shown(i, slots.size()) else ""
+		g.modulate.a = 1.0 if filled else _n("hud.hintAlpha")
+		g.add_theme_color_override("font_color", Color(0.05, 0.07, 0.16) if filled else Color(0.8, 0.92, 1.0))
 		_style_slot(p, filled, where)
 
 
