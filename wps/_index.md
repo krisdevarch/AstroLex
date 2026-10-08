@@ -35,7 +35,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 |---|---|---|---|---|
 | WP-0.1 | Goal paragraph and essential experience | Owner | done (29 Sep 2026): proof of concept first, iOS first, money later | plan §1.1 |
 | WP-0.2 | Repo scaffold and CI | builder | done | `reports/WP-0.2/evidence.md` |
-| WP-0.3 | Agent definitions | builder | done; `market-analyst` added 30 Sep 2026 (plan §3.1 roster now complete: builder, content-curator, story-writer, verify-runner, lens-evaluator, market-analyst) | `reports/WP-0.2/evidence.md` |
+| WP-0.3 | Agent definitions | builder | done; roster v2 (8 Oct 2026): `orchestrator` on Opus 5.5 plus nine workers on Sonnet 5.5 (`rules-engineer`, `godot-dev`, `builder`, `verify-runner`, `reviewer`, `content-curator`, `story-writer`, `lens-evaluator`, `market-analyst`), each with effort, turn and tool caps | `CLAUDE.md` § Agents |
 | WP-0.4 | Decisions recorded | Owner | defaults recorded above | – |
 | WP-0.5 | Reference phones | Owner | owner's iPhone is the first reference device; a mid-range Android is needed before the Android build (Phase 3) | – |
 | WP-1.1 | Word database v0 | content-curator | done | `reports/WP-1.1/evidence.md` |
@@ -47,6 +47,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.5 | Playtest kit | verify-runner + Owner | drafted | `playtests/P2/protocol.md`, `loop-1.md` |
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
+| M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | in progress | `wps/MILESTONE-first-draft.md` |
 
 ## Review queue (cap 4)
 

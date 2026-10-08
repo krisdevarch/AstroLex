@@ -61,4 +61,23 @@ CI `.github/workflows/godot.yml` runs the tests, then exports the web build, boo
 
 ## Agents
 
-Six project subagents live in `.claude/agents/`: `builder` (implements a WP end to end), `content-curator` (word data, blocklist, Babel templates, feasibility numbers), `story-writer` (drafts in character voice), `verify-runner` (runs checks, writes evidence, never judges feel), `lens-evaluator` (reviews a document against the 100 game design lenses), `market-analyst` (comparables, store drafts, business model; every number sourced or flagged). Hand `builder` a WP id; hand `lens-evaluator` a document path and a lens range.
+Ten project agents live in `.claude/agents/`. Only the orchestrator runs on Opus; the workers run on Sonnet 5.5 with a capped effort level, a turn limit (`maxTurns`) and a tool allowlist, to save tokens.
+
+| Agent | Model / effort | Does |
+|---|---|---|
+| `orchestrator` | Opus 5.5 / high | Runs the build loop from `wps/MILESTONE-*.md`: briefs workers, checks results, loops on failures, updates `wps/_index.md`. Start it as the main session with `claude --agent orchestrator`. |
+| `rules-engineer` | Sonnet 5.5 / medium | Pure GDScript rules in `game/rules/`, conformance with the Python reference, headless tests |
+| `godot-dev` | Sonnet 5.5 / medium | Godot scenes, UI, shaders and the 2.5D look in `game/` |
+| `builder` | Sonnet 5.5 / medium | `tools/`, `web/`, CI and scripts |
+| `verify-runner` | Sonnet 5.5 / low | Runs checks, writes `reports/WP-*/evidence.md`, never edits code |
+| `reviewer` | Sonnet 5.5 / medium | Read-only diff review, at most 10 findings |
+| `content-curator` | Sonnet 5.5 / medium | Word data, blocklist, Babel lexicon and templates |
+| `story-writer` | Sonnet 5.5 / medium | Character-voice drafts; the owner approves every line |
+| `lens-evaluator` | Sonnet 5.5 / medium | Reviews a document against the 100 game design lenses |
+| `market-analyst` | Sonnet 5.5 / medium | Comparables, store drafts, business model; every number sourced or flagged |
+
+Every worker follows the same token budget:
+- Work from the brief.
+- Read only the named files.
+- Run the narrowest check first.
+- Reply in 12 lines or fewer, never pasting files or logs.
