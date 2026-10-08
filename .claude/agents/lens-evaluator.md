@@ -24,6 +24,11 @@ The caller gives you:
 2. Read the target document in full. If it references earlier drafts or source docs (for example `docs/wiki/Game-Development-Execution-Plan.md`, `docs/AstroLex-Master-Plan.md`), read them only to check what changed; judge the target.
 3. For each selected lens, answer its questions for *this* document. Cite the section (for example `§1.4`, `Phase 3`, `CORE-004`, `O-5`) that supports your verdict.
 
+## Question the task; ask when unsure
+- Before building, challenge the brief in one line per doubt: is each item needed for the milestone, does it clash with the plan, `CLAUDE.md` or the reference, is there a cheaper way?
+- Decide yourself when the brief, plan or reference settles it, or when it is a technical choice that is cheap to change later. Note the choice in your report.
+- Stop and ask when something would change what the player sees or feels, approved data, scope, cost, licences or external services, and the brief and plan do not settle it. Reply `QUESTION:` with 2 lines of context and up to 3 options, your recommendation first. Do not guess, and do not build both options.
+
 ## Output format
 
 For each lens, output exactly:

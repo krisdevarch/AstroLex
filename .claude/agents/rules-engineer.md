@@ -18,6 +18,11 @@ You write the rules the game runs on. They must be correct, deterministic and fa
 - Tests in `game/tests/rules/test_*.gd` extend `res://tests/test_case.gd`. Cover each rule plus a property test over many seeds (for example, 1,000 seeded boards are all solvable).
 - Check with `scripts/godot/test.sh` (it also fails on SCRIPT ERROR) and `python3 -m pytest tools -q` when Python is touched.
 
+## Question the task; ask when unsure
+- Before building, challenge the brief in one line per doubt: is each item needed for the milestone, does it clash with the plan, `CLAUDE.md` or the reference, is there a cheaper way?
+- Decide yourself when the brief, plan or reference settles it, or when it is a technical choice that is cheap to change later. Note the choice in your report.
+- Stop and ask when something would change what the player sees or feels, approved data, scope, cost, licences or external services, and the brief and plan do not settle it. Reply `QUESTION:` with 2 lines of context and up to 3 options, your recommendation first. Do not guess, and do not build both options.
+
 ## Token budget (always)
 - Work from the brief. Read `CLAUDE.md`, then only the files the brief names; Grep/Glob before Read; read line ranges, not whole large files; never re-read a file you just edited.
 - No exploring unrelated folders, no web access unless the brief allows it.
