@@ -41,6 +41,54 @@ static func shard() -> Texture2D:
 	return tex
 
 
+## White rounded-square mask for the glass shader (it computes its own bevel from the UV).
+static func glass_mask() -> Texture2D:
+	if _cache.has("glass_mask"):
+		return _cache["glass_mask"]
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	for y in SIZE:
+		for x in SIZE:
+			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF, CORNER)
+			img.set_pixel(x, y, Color(1, 1, 1, clampf(0.5 - d, 0.0, 1.0)))
+	var tex := ImageTexture.create_from_image(img)
+	_cache["glass_mask"] = tex
+	return tex
+
+
+## Pre-baked placeholder sky for the backdrop: navy to violet/teal gradient with soft nebula blobs.
+## One small texture, stretched over the screen by a single sprite. Generated once.
+static func sky() -> Texture2D:
+	if _cache.has("sky"):
+		return _cache["sky"]
+	var w := 108
+	var h := 192
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var top := Color(0.03, 0.06, 0.20)
+	var mid := Color(0.16, 0.10, 0.36)
+	var low := Color(0.06, 0.26, 0.34)
+	# [centre uv, radius (uv of width), colour, strength]
+	var blobs := [
+		[Vector2(0.25, 0.22), 0.34, Color(0.75, 0.30, 0.85), 0.55],
+		[Vector2(0.78, 0.50), 0.40, Color(0.15, 0.75, 0.85), 0.5],
+		[Vector2(0.35, 0.82), 0.36, Color(0.95, 0.55, 0.45), 0.4],
+	]
+	for y in h:
+		var v := float(y) / float(h - 1)
+		var base: Color = top.lerp(mid, clampf(v * 2.0, 0.0, 1.0)) if v < 0.5 else mid.lerp(low, (v - 0.5) * 2.0)
+		for x in w:
+			var u := float(x) / float(w - 1)
+			var c := Vector3(base.r, base.g, base.b)
+			for b in blobs:
+				var dd := (Vector2(u, v * 1.78) - Vector2(b[0].x, b[0].y * 1.78)).length() / float(b[1])
+				var a := exp(-dd * dd * 2.2) * float(b[3])
+				var bc: Color = b[2]
+				c += Vector3(bc.r, bc.g, bc.b) * a
+			img.set_pixel(x, y, Color(minf(c.x, 1.0), minf(c.y, 1.0), minf(c.z, 1.0), 1.0))
+	var tex := ImageTexture.create_from_image(img)
+	_cache["sky"] = tex
+	return tex
+
+
 static func shadow() -> Texture2D:
 	if _cache.has("shadow"):
 		return _cache["shadow"]

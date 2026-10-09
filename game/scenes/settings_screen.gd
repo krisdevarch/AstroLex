@@ -1,10 +1,12 @@
 extends Control
-## Settings: tile treatment (flat / tilt / bevel) and reduced motion. Saves on every change.
+## Settings: tile treatment (flat / tilt / bevel / glass) and reduced motion. Saves on every change.
 
 const Ui := preload("res://scenes/ui.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 
 signal closed
+## The player asked for the frame-rate bench.
+signal bench_pressed
 
 var settings: AppSettings = AppSettings.new()
 var save_path: String = AppSettings.PATH
@@ -16,7 +18,7 @@ func _ready() -> void:
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(centre)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 30)
+	box.add_theme_constant_override("separation", 22)
 	centre.add_child(box)
 	var title := Ui.label("Settings", 96)
 	title.name = "SettingsTitle"
@@ -24,11 +26,11 @@ func _ready() -> void:
 	box.add_child(Ui.label("Tile look", 40, Ui.DIM))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 10)
 	box.add_child(row)
 	var group := ButtonGroup.new()
 	for t in AppSettings.TREATMENTS:
-		var b := Ui.button(t.capitalize(), 42, Vector2(250, 110), true)
+		var b := Ui.button(t.capitalize(), 36, Vector2(190, 110), true)
 		b.name = "Treatment_%s" % t
 		b.button_group = group
 		b.button_pressed = settings.treatment == t
@@ -55,6 +57,18 @@ func _ready() -> void:
 		hb.button_pressed = settings.hint == h
 		hb.pressed.connect(_set_hint.bind(h))
 		hrow.add_child(hb)
+	var fps := CheckButton.new()
+	fps.name = "ShowFps"
+	fps.text = "Show frame rate"
+	fps.add_theme_font_size_override("font_size", 44)
+	fps.button_pressed = settings.show_fps
+	fps.custom_minimum_size = Vector2(760, 110)
+	fps.toggled.connect(_set_fps)
+	box.add_child(fps)
+	var bench := Ui.button("Frame-rate test", 42, Vector2(760, 100))
+	bench.name = "BenchButton"
+	bench.pressed.connect(func() -> void: bench_pressed.emit())
+	box.add_child(bench)
 	var back := Ui.button("Back", 48, Vector2(460, 120))
 	back.name = "BackButton"
 	back.pressed.connect(func() -> void: closed.emit())
@@ -68,6 +82,11 @@ func _set_treatment(t: String) -> void:
 
 func _set_hint(h: String) -> void:
 	settings.hint = h
+	settings.save_to(save_path)
+
+
+func _set_fps(on: bool) -> void:
+	settings.show_fps = on
 	settings.save_to(save_path)
 
 

@@ -51,6 +51,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.4 | Toy telemetry | builder | done (in-page log + Copy results) | `reports/WP-2.1/evidence.md` |
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
 | M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026); follow-ups merged: AstroLex loading screen (#13), blank back plane (#14, #15), playtest monitoring and dashboard (#15, #18), word hints (#21) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md`, `docs/PROJECT-BRIEF.md` |
+| WP-3.G | Glass-tile spike: glass as a fourth tile look, frame-rate readout and a 20-tile bench (O-22 gate) | godot-dev | built on `claude/glass-tiles-tny1fk`; waiting on the owner's phone frame-rate test | `reports/WP-3.G/evidence.md` |
 
 ## Review queue (cap 4)
 
