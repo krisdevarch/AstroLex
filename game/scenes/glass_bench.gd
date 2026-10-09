@@ -15,7 +15,7 @@ const Ui := preload("res://scenes/ui.gd")
 signal closed
 
 const COUNTS: Array[int] = [20, 30, 40]
-const LOOKS: Array[String] = ["glass", "bubble", "tilt", "flat"]
+const LOOKS: Array[String] = ["bubble", "glass"]
 const TEST_SEC := 10.0
 const WARMUP_SEC := 1.0
 const PASS_FPS := 58.0
@@ -26,7 +26,7 @@ const LETTERS := "etaoinshrdlucmfwypvbgk"
 
 var view_size: Vector2 = Vector2(1080, 1920)
 var auto: bool = false
-var treatment: String = "glass"
+var treatment: String = "bubble"
 var count: int = 20
 var result_line: String = ""
 

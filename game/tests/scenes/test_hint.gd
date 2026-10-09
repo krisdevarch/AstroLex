@@ -46,7 +46,7 @@ func test_none_shows_nothing() -> void:
 
 func test_telemetry_settings_include_hint() -> void:
 	var t: RefCounted = Telemetry.fake()
-	t.set_settings("tilt", false, "full")
+	t.set_settings("glass", false, "full")
 	assert_eq(t.settings["hint"], "full")
 
 

@@ -3,6 +3,7 @@ extends Control
 
 const Ui := preload("res://scenes/ui.gd")
 const LightRig := preload("res://scenes/light_rig.gd")
+const Starfield := preload("res://scenes/starfield.gd")
 const TileViewScene: PackedScene = preload("res://scenes/tile_view.tscn")
 const GameData := preload("res://rules/game_data.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
@@ -77,6 +78,14 @@ func _pick(m: String) -> void:
 
 
 func _build_tiles(view: Vector2) -> void:
+	# The glass samples the baked sky, so the title shows the same sky behind it.
+	var backdrop := CanvasLayer.new()
+	backdrop.name = "TitleBackdrop"
+	backdrop.layer = -2
+	add_child(backdrop)
+	var stars: Node2D = Starfield.new()
+	stars.view_size = view
+	backdrop.add_child(stars)
 	var layer := CanvasLayer.new()
 	layer.name = "TitleWorld"
 	layer.layer = -1
@@ -85,12 +94,14 @@ func _build_tiles(view: Vector2) -> void:
 	layer.add_child(rig)
 	rig.configure(Vector2(view.x * 0.5, TILE_Y - 120.0), 900.0, layer.layer)
 	var tun := GameData.load_tunables()
+	# A bubble is drawn bigger than its tile, so shrink the tile to keep the title row from overlapping.
+	var px := TILE_PX / float(tun["glass.bubbleScale"]) if settings.treatment == "bubble" else TILE_PX
 	var total := TITLE.length() * TILE_PX + (TITLE.length() - 1) * TILE_GAP
 	var x0 := (view.x - total) * 0.5 + TILE_PX * 0.5
 	for i in TITLE.length():
 		var v: Node2D = TileViewScene.instantiate()
 		v.name = "TitleTile_%d" % i
 		layer.add_child(v)
-		v.setup(TITLE[i].to_lower(), TILE_PX, TILE_PX / (float(tun["tile.size"]) * view.x), 0, settings.treatment, settings.reduced_motion, tun, float(i) * 1.1)
+		v.setup(TITLE[i].to_lower(), px, px / (float(tun["tile.size"]) * view.x), 0, settings.treatment, settings.reduced_motion, tun, float(i) * 1.1)
 		v.place(Vector2(x0 + i * (TILE_PX + TILE_GAP), TILE_Y + (8.0 if i % 2 == 0 else -8.0)), 0.0, float(i) / 7.0)
 		tile_count += 1
