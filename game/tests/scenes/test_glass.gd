@@ -57,6 +57,8 @@ func test_tile_view_bubble_is_round_and_untilted() -> void:
 	assert_true(bool(mat.get_shader_parameter("bubble")), "bubble mode on")
 	assert_eq(float(mat.get_shader_parameter("corner")), 61.0, "corner = half width, a circle")
 	assert_eq(v.current_tilt, Vector2.ZERO, "a bubble does not tilt")
+	assert_true(v.body.scale.x > 130.0 / 128.0 * 1.1, "the ball is bigger than a tile")
+	assert_eq(v.glyph.get_theme_font_size("font_size"), int(130.0 * 0.62), "the letter keeps its size")
 	assert_eq(v.glyph.get_theme_color("font_color"), Color.WHITE, "glyph is white")
 	v.free()
 

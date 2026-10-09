@@ -42,3 +42,4 @@ The owner asked whether bubbles would look cooler. Added `bubble` as a fifth loo
 |---|---|---|
 | `scripts/godot/test.sh` | 73 passed, 0 failed (new `test_tile_view_bubble_is_round_and_untilted`) | – |
 | `smoke.cjs --bench --look=bubble` (software GL) | `avg=33.1 fps p50=29.3 ms p95=33.3 ms` | `bubbles.png` |
+| Bigger bubbles, same letters (owner, 9 Oct): `glass.bubbleScale` 1.25; visual only, the catch radius is unchanged | 73 passed; bench `avg=30.9 fps p95=40.0 ms` (software GL) | `bubbles-big.png` |

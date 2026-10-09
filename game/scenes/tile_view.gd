@@ -47,6 +47,8 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_tun = tun
 	_phase = p_phase
 	var k := size_px / float(TileTextures.SIZE)
+	if p_treatment == "bubble":
+		k *= float(tun["glass.bubbleScale"])  # bigger ball, same letter size
 	body.scale = Vector2(k, k)
 	_body_scale = body.scale
 	_mat = ShaderMaterial.new()

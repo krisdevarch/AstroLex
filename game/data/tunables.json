@@ -12,6 +12,7 @@
   "fx.dissolveSec": 0.42,
   "fx.flyToSlotSec": 0.32,
   "glass.blur": 0.05,
+  "glass.bubbleScale": 1.25,
   "glass.chroma": 0.25,
   "glass.edgeTint": 0.15,
   "glass.frost": 0,
