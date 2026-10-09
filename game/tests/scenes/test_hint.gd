@@ -3,6 +3,7 @@ extends "res://tests/test_case.gd"
 
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 const Telemetry := preload("res://services/telemetry.gd")
+const AppSettings := preload("res://scenes/app_settings.gd")
 
 
 func _make(hint: String) -> Node2D:
@@ -41,6 +42,15 @@ func test_edges_shows_first_and_last_only() -> void:
 	_check("edges", func(i: int, n: int) -> bool: return n <= 2 or i == 0 or i == n - 1)
 
 
+func test_one_shows_first_letter_only() -> void:
+	_check("one", func(i: int, _n: int) -> bool: return i == 0)
+
+
+func test_default_hint_is_one_letter() -> void:
+	assert_eq(AppSettings.DEFAULT_HINT, "one")
+	assert_eq(AppSettings.new().hint, "one")
+
+
 func test_none_shows_nothing() -> void:
 	_check("none", func(_i: int, _n: int) -> bool: return false)
 
@@ -52,7 +62,7 @@ func test_telemetry_settings_include_hint() -> void:
 
 
 func test_autoplay_still_wins_with_each_hint() -> void:
-	for h in ["full", "edges", "none"]:
+	for h in ["full", "edges", "one", "none"]:
 		var f := _make(h)
 		f.autoplay = true
 		var steps := 0

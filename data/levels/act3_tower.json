@@ -2,6 +2,7 @@
   "$schema": "./levels.schema.json",
   "status": "draft",
   "act": "act3_tower",
+  "tuning": {"burst.seconds": 45},
   "levels": [
     {
       "id": "3-01", "order": 1, "title": "Tower Door", "beat": "Opening: Rhee goes quiet; Kit notes the door code matches her handwriting.",

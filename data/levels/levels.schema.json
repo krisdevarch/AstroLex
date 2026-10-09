@@ -8,9 +8,25 @@
     "$schema": {"type": "string"},
     "status": {"enum": ["draft", "approved"]},
     "act": {"type": "string"},
+    "tuning": {"$ref": "#/$defs/tuning", "description": "act defaults under every level's own tuning (level keys win); baked into each level on export"},
     "levels": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/level"}}
   },
   "$defs": {
+    "tuning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spawner.decoys": {"type": "integer", "minimum": 0},
+        "drift.speed": {"type": "number"},
+        "oxygen.drainPerSec": {"type": "number"},
+        "burst.seconds": {"type": "number", "minimum": 1},
+        "thief.interval": {"type": "number"},
+        "thief.firstAt": {"type": "number"},
+        "thief.speed": {"type": "number"},
+        "thief.max": {"type": "integer", "minimum": 0},
+        "plane.backTiles": {"type": "integer", "minimum": 0}
+      }
+    },
     "comm": {
       "type": "object",
       "required": ["who", "text"],
@@ -33,21 +49,7 @@
         "words": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[a-z]+$"}},
         "seed": {"type": "integer"},
         "babel": {"type": "boolean"},
-        "tuning": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "spawner.decoys": {"type": "integer", "minimum": 0},
-            "drift.speed": {"type": "number"},
-            "oxygen.drainPerSec": {"type": "number"},
-            "burst.seconds": {"type": "number"},
-            "thief.interval": {"type": "number"},
-            "thief.firstAt": {"type": "number"},
-            "thief.speed": {"type": "number"},
-            "thief.max": {"type": "integer", "minimum": 0},
-            "plane.backTiles": {"type": "integer", "minimum": 0}
-          }
-        },
+        "tuning": {"$ref": "#/$defs/tuning"},
         "commsBefore": {"type": "array", "items": {"$ref": "#/$defs/comm"}},
         "commsAfter": {"type": "array", "items": {"$ref": "#/$defs/comm"}}
       }

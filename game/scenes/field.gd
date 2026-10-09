@@ -793,6 +793,7 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 func _update_hud() -> void:
 	_score_label.text = "%d" % int(round(game_round.score))
 	_combo_label.text = "×%.1f" % game_round.combo
+	_time_bar.max_value = game_round.burst_seconds
 	_time_bar.value = game_round.time_left
 	_clock_label.text = "%d" % int(ceil(game_round.time_left))
 	var low: bool = game_round.time_left < LOW_TIME
@@ -824,6 +825,8 @@ func hint_shown(idx: int, n: int) -> bool:
 			return true
 		"edges":
 			return n <= 2 or idx == 0 or idx == n - 1
+		"one":
+			return idx == 0
 	return false
 
 

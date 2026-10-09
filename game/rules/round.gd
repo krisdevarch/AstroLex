@@ -38,6 +38,8 @@ var active: Array[Dictionary] = []
 var preview: Array[Dictionary] = []
 var tiles: Array = []
 var time_left: float = 0.0
+## The clock this round started with (burst.seconds after level tuning and mods); stars scale with it.
+var burst_seconds: float = 0.0
 var thieves: Array = []
 var score: float = 0.0
 var combo: float = 1.0
@@ -120,7 +122,8 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	_rng.seed = seed_value_in
 	_babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
 	_thief_rng.seed = seed_value_in ^ THIEF_SEED_XOR
-	time_left = _num("burst.seconds")
+	burst_seconds = _num("burst.seconds")
+	time_left = burst_seconds
 	_next_thief_at = _num("thief.firstAt") if _num("thief.interval") > 0.0 else INF
 	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0}
 	if fixed_words.is_empty():
@@ -195,15 +198,21 @@ func find_thief(thief_id: int) -> Thief:
 	return _thief_by_id.get(thief_id)
 
 
-## 0 unless won; 3 / 2 / 1 by seconds left.
+## 0 unless won; 3 / 2 / 1 by the share of the starting clock left, so a 60 s burst
+## needs 20 s left for three stars where a 30 s burst needs 10 s.
 func stars() -> int:
 	if state != "won":
 		return 0
-	if time_left >= _num("stars.three"):
+	if time_left >= _star_line("stars.threeShare"):
 		return 3
-	if time_left >= _num("stars.two"):
+	if time_left >= _star_line("stars.twoShare"):
 		return 2
 	return 1
+
+
+## Seconds left needed for a star tier, rounded to 0.1 s so 1/3 of 30 s is exactly 10 s.
+func _star_line(key: String) -> float:
+	return snappedf(burst_seconds * _num(key), 0.1) - 1e-3
 
 
 # --- setup -------------------------------------------------------------------------------

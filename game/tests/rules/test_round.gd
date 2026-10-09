@@ -431,6 +431,15 @@ func test_stars_thresholds() -> void:
 		assert_eq(r.stars(), pair[1], str(pair[0]))
 
 
+func test_stars_scale_with_a_longer_burst() -> void:
+	var r := Round.create_level(_tun, _content, "act1_low_orbit", {"id": "x", "seed": 1, "words": ["moon", "star"], "tuning": {"burst.seconds": 60}})
+	assert_eq(r.burst_seconds, 60.0)
+	r.state = "won"
+	for pair in [[60.0, 3], [20.0, 3], [19.9, 2], [10.0, 2], [9.9, 1], [0.1, 1]]:
+		r.time_left = pair[0]
+		assert_eq(r.stars(), pair[1], "60 s burst, %s left" % str(pair[0]))
+
+
 func test_mods_apply_set_then_mul_then_add_in_order() -> void:
 	var mods := [
 		{"set": {"burst.seconds": 20}, "mul": {"burst.seconds": 2.0}, "add": {"burst.seconds": 5}},

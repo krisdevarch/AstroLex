@@ -63,11 +63,14 @@ def load_schema() -> dict:
 
 
 def load_levels(act: str) -> list[dict]:
-    """Level dicts of one act, as written in the file, in file order. Empty if no file."""
+    """Level dicts of one act in file order, each with the act's `tuning` merged under its own
+    (level keys win). Empty if no file."""
     path = levels_dir() / f"{act}.json"
     if not path.exists():
         return []
-    return json.loads(path.read_text())["levels"]
+    doc = json.loads(path.read_text())
+    act_tuning = doc.get("tuning", {})
+    return [{**lv, "tuning": {**act_tuning, **lv["tuning"]}} for lv in doc["levels"]]
 
 
 def schema_errors(doc: dict) -> list[str]:

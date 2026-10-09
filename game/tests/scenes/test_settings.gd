@@ -39,9 +39,9 @@ func test_settings_ignore_an_unknown_treatment() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 
 
-func test_hint_defaults_to_none_and_round_trips() -> void:
+func test_hint_defaults_to_one_and_round_trips() -> void:
 	var a := AppSettings.new()
-	assert_eq(a.hint, "none", "default hint")
+	assert_eq(a.hint, "one", "default hint")
 	for h in AppSettings.HINTS:
 		a.hint = h
 		a.save_to(PATH)
@@ -53,11 +53,12 @@ func test_hint_defaults_to_none_and_round_trips() -> void:
 	cf.save(PATH)
 	var c := AppSettings.new()
 	c.load_from(PATH)
-	assert_eq(c.hint, "none", "unknown hint falls back")
+	assert_eq(c.hint, "one", "unknown hint falls back")
 	var old := ConfigFile.new()
 	old.set_value("look", "hint", "edges")
+	old.set_value("look", "hint_v2", "none")
 	old.save(PATH)
 	var d := AppSettings.new()
 	d.load_from(PATH)
-	assert_eq(d.hint, "none", "a hint saved by an older build is ignored")
+	assert_eq(d.hint, "one", "a hint saved by an older build is ignored")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
