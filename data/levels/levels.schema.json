@@ -40,6 +40,11 @@
             "spawner.decoys": {"type": "integer", "minimum": 0},
             "drift.speed": {"type": "number"},
             "oxygen.drainPerSec": {"type": "number"},
+            "burst.seconds": {"type": "number"},
+            "thief.interval": {"type": "number"},
+            "thief.firstAt": {"type": "number"},
+            "thief.speed": {"type": "number"},
+            "thief.max": {"type": "integer", "minimum": 0},
             "plane.backTiles": {"type": "integer", "minimum": 0}
           }
         },

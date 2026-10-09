@@ -12,6 +12,35 @@ from jsonschema import Draft202012Validator
 from astrolex_tools import data_dir
 
 
+def check_mods(doc: dict, game_keys: set[str], name: str) -> list[str]:
+    """Every key in every ``mod`` of a characters/difficulty doc must be a game.json key."""
+    errors: list[str] = []
+    entries = doc.get("characters") or doc.get("levels") or []
+    for entry in entries:
+        for op, keys in (entry.get("mod") or {}).items():
+            for key in keys:
+                if key not in game_keys:
+                    errors.append(f"{name}: {entry.get('id')}: mod.{op} key '{key}' is not in game.json")
+    return errors
+
+
+def validate_mod_files(root=None) -> list[str]:
+    root = root or data_dir()
+    game = json.loads((root / "tunables" / "game.json").read_text())
+    game_keys = {k for k in game if k != "$schema"}
+    errors: list[str] = []
+    for rel in ("characters.json", "tunables/difficulty.json"):
+        path = root / rel
+        schema = json.loads(path.with_name(path.stem + ".schema.json").read_text())
+        doc = json.loads(path.read_text())
+        errors += [f"{rel}: {e.message}" for e in Draft202012Validator(schema).iter_errors(doc)]
+        errors += check_mods(doc, game_keys, rel)
+    diff = json.loads((root / "tunables" / "difficulty.json").read_text())
+    if diff.get("default") not in [lv.get("id") for lv in diff.get("levels", [])]:
+        errors.append("tunables/difficulty.json: default is not a level id")
+    return errors
+
+
 def validate_all() -> list[str]:
     errors: list[str] = []
     tunables = data_dir() / "tunables"
@@ -32,6 +61,7 @@ def validate_all() -> list[str]:
         schema = json.loads(schema_path.read_text())
         for err in Draft202012Validator(schema).iter_errors(json.loads(path.read_text())):
             errors.append(f"babel/{name}: {err.message}")
+    errors += validate_mod_files()
     from astrolex_tools.levels import check_all
 
     errors += [f"levels/{e}" for e in check_all()]

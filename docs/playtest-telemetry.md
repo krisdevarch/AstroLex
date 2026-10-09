@@ -18,9 +18,9 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
   "load": {"boot_ms": 4100, "ready_ms": 5200},
   "settings": {"treatment": "tilt", "reduced_motion": false, "hint": "edges"},
   "rounds": [{
-    "round": 1, "mode": "drift", "act": "act1_low_orbit", "seed": 123, "won": true,
+    "round": 1, "mode": "burst", "act": "act1_low_orbit", "character": "wren", "difficulty": "normal", "seed": 123, "won": true,
     "words": 4, "total": 4, "score": 358, "secs": 41.2,
-    "catches": 18, "wrong": 1, "wrong_surplus": 1, "wrong_unneeded": 0, "escapes": 0, "first_catch_s": 3.1, "min_oxygen": 100,
+    "catches": 18, "wrong": 1, "wrong_surplus": 1, "wrong_unneeded": 0, "escapes": 0, "first_catch_s": 3.1, "min_time": 12.4, "stolen": 0, "thieves_down": 0,
     "tap_misses": 3, "near_miss_px_p50": 52, "babel_lines": ["NO SO."]
   }],
   "perf": {"fps_avg": 59.6, "frame_ms_p50": 16.6, "frame_ms_p95": 18.9, "frames": 2400},
@@ -28,6 +28,8 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
   "events": []
 }
 ```
+
+`rounds[].act` is the act key, `character` the chosen suit id (`wren`, `juno`, `ash`, `pip`) and `difficulty` the chosen level id (`easy`, `normal`, `hard`); both are empty strings in autoplay.
 
 `settings.hint` is the Hint level (`full`, `edges` or `none`): which unfilled word-slot letters are shown as faint ghosts.
 

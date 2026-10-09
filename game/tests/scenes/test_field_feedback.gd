@@ -14,7 +14,7 @@ func _make(autoplay: bool, seed_value: int = 12345, treatment: String = "bubble"
 	f.settings.treatment = treatment
 	f.settings.reduced_motion = reduced
 	tree.root.add_child(f)
-	f.begin("drift", 1, seed_value)
+	f.begin(1, seed_value)
 	f.skip_intro()
 	return f
 
@@ -61,7 +61,7 @@ func test_wrong_catch_flashes_the_tile_and_shows_the_toast() -> void:
 		f.advance(DT)
 		steps += 1
 	assert_eq(int(f.game_round.stats["wrong"]), 1, "the catch was wrong")
-	assert_eq(f._toast.text, "Not in the record", "toast text")
+	assert_eq(f._toast.text, "Not in the record   −1 s", "toast text")
 	assert_true(f._toast.modulate.a > 0.0, "toast visible")
 	assert_true(view._flash_t > 0.0, "tile view is flashing")
 	assert_true(f._views.has(target.id), "wrong tile stays in play")
@@ -210,13 +210,13 @@ func test_back_plane_tap_does_nothing() -> void:
 	for t in f.game_round.tiles:
 		if t.plane < 2:
 			t.pos = Vector2(-5.0, -5.0)
-	var air_before: float = f.game_round.oxygen
+	var air_before: float = f.game_round.time_left
 	var wrong_before: int = int(f.game_round.stats["wrong"])
 	var fx_before: int = f._fx_layer.get_child_count()
 	assert_eq(f.tap(p), -1)
 	assert_true(f.game_round.shot.is_empty(), "no fire")
 	assert_eq(f._fx_layer.get_child_count(), fx_before, "no effect")
-	assert_eq(f.game_round.oxygen, air_before, "no air cost")
+	assert_eq(f.game_round.time_left, air_before, "no time cost")
 	assert_eq(int(f.game_round.stats["wrong"]), wrong_before)
 	f.free()
 

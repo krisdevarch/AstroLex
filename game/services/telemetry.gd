@@ -143,10 +143,11 @@ func set_settings(treatment: String, reduced_motion: bool, hint: String = "edges
 # --- recording -------------------------------------------------------------------------
 
 ## Starts listening to a field. Call before field.begin().
-func begin_round(field: Object, mode: String, round_no: int, seed_value: int, level_id: String = "") -> void:
+func begin_round(field: Object, round_no: int, seed_value: int, level_id: String = "", act: String = "", character: String = "", difficulty: String = "") -> void:
 	_field = field
 	_round = {
-		"round": round_no, "mode": mode, "act": str(field.get("ACT")), "seed": seed_value, "level": level_id,
+		"round": round_no, "mode": "burst", "act": act if act != "" else str(field.get("ACT")), "character": character, "difficulty": difficulty,
+		"seed": seed_value, "level": level_id,
 		"first_catch_s": null, "tap_misses": 0, "near": [], "babel_lines": [], "wrong_surplus": 0, "wrong_unneeded": 0,
 	}
 	playing = true
@@ -205,12 +206,12 @@ func _finish_round(won: bool) -> void:
 	var st: Dictionary = gr.stats
 	var near: Array = _round["near"]
 	var r := {
-		"round": _round["round"], "mode": _round["mode"], "act": _round["act"], "seed": _round["seed"],
+		"round": _round["round"], "mode": _round["mode"], "act": _round["act"], "character": _round["character"], "difficulty": _round["difficulty"], "seed": _round["seed"],
 		"won": won, "words": gr.restored_words.size(), "total": gr.words.size(),
 		"score": int(round(gr.score)), "secs": snappedf(float(st["secs"]), 0.1),
 		"catches": int(st["catches"]), "wrong": int(st["wrong"]), "escapes": int(st["escapes"]),
 		"wrong_surplus": _round["wrong_surplus"], "wrong_unneeded": _round["wrong_unneeded"],
-		"first_catch_s": _round["first_catch_s"], "min_oxygen": int(round(float(st["min_oxygen"]))),
+		"first_catch_s": _round["first_catch_s"], "min_time": snappedf(float(st["min_time"]), 0.1), "stolen": int(st.get("stolen", 0)), "thieves_down": int(st.get("thieves_down", 0)),
 		"tap_misses": _round["tap_misses"],
 		"near_miss_px_p50": null if near.is_empty() else int(round(percentile(near, 0.5))),
 		"babel_lines": _round["babel_lines"],

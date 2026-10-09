@@ -16,20 +16,13 @@
     "spawner.decoys",
     "spawner.frontShare",
     "spawner.wordsPerLevel",
-    "oxygen.max",
-    "oxygen.drainPerSec",
-    "oxygen.wrongCost",
-    "oxygen.restoreBase",
-    "oxygen.restorePerLetter",
     "score.letterValue",
     "score.lengthStep",
     "combo.step",
     "combo.max",
-    "score.oxygenBonus",
     "ramp.driftStep",
     "ramp.decoyStep",
     "ramp.decoyMax",
-    "ramp.drainStep",
     "babel.showSeconds",
     "babel.minLineLetters",
     "babel.throwOriginX",
@@ -65,7 +58,21 @@
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
-    "autoplay.tapInterval"
+    "autoplay.tapInterval",
+    "burst.seconds",
+    "burst.wrongCost",
+    "burst.restoreBonus",
+    "score.timeBonus",
+    "stars.three",
+    "stars.two",
+    "thief.firstAt",
+    "thief.interval",
+    "thief.max",
+    "thief.speed",
+    "thief.fleeSpeed",
+    "thief.radius",
+    "thief.stealCost",
+    "thief.respawnDelay"
   ],
   "properties": {
     "$schema": {
@@ -131,31 +138,6 @@
       "minimum": 0,
       "description": "words per round"
     },
-    "oxygen.max": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Pressure: full oxygen"
-    },
-    "oxygen.drainPerSec": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Pressure: oxygen lost per second"
-    },
-    "oxygen.wrongCost": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Pressure: oxygen lost per wrong catch"
-    },
-    "oxygen.restoreBase": {
-      "type": "number",
-      "minimum": 0,
-      "description": "oxygen regained per restored word"
-    },
-    "oxygen.restorePerLetter": {
-      "type": "number",
-      "minimum": 0,
-      "description": "extra oxygen per letter of the restored word"
-    },
     "score.letterValue": {
       "type": "number",
       "minimum": 0,
@@ -176,11 +158,6 @@
       "minimum": 0,
       "description": "combo cap"
     },
-    "score.oxygenBonus": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Pressure win: points per remaining oxygen"
-    },
     "ramp.driftStep": {
       "type": "number",
       "minimum": 0,
@@ -195,11 +172,6 @@
       "type": "integer",
       "minimum": 0,
       "description": "decoy cap"
-    },
-    "ramp.drainStep": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Pressure drain gain per round after the first"
     },
     "babel.showSeconds": {
       "type": "number",
@@ -390,6 +362,76 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds between autoplay taps (smoke tests)"
+    },
+    "burst.seconds": {
+      "type": "number",
+      "minimum": 1,
+      "description": "burst length in seconds"
+    },
+    "burst.wrongCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds lost per wrong catch"
+    },
+    "burst.restoreBonus": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds gained per restored word"
+    },
+    "score.timeBonus": {
+      "type": "number",
+      "minimum": 0,
+      "description": "win: points per second left"
+    },
+    "stars.three": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds left for three stars"
+    },
+    "stars.two": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds left for two stars"
+    },
+    "thief.firstAt": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds until the first Babel thief"
+    },
+    "thief.interval": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds between thief spawns; 0 = no thieves"
+    },
+    "thief.max": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "thieves alive at once"
+    },
+    "thief.speed": {
+      "type": "number",
+      "minimum": 0,
+      "description": "thief seek speed, field units per second"
+    },
+    "thief.fleeSpeed": {
+      "type": "number",
+      "minimum": 0,
+      "description": "speed of a thief carrying a letter, flying up"
+    },
+    "thief.radius": {
+      "type": "number",
+      "minimum": 0,
+      "description": "thief grab/hit radius, field units"
+    },
+    "thief.stealCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds lost when a thief escapes with a letter"
+    },
+    "thief.respawnDelay": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds before a stolen letter respawns"
     }
   }
 }

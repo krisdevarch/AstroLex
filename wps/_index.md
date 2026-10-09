@@ -23,7 +23,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-15 | Funding | Self-funded through Phase 5 | default |
 | O-16 | Phase 10 split | Replaced by the Phase 7 trigger table | default |
 | O-17 | Engine | **Godot 4.7, GDScript, Compatibility renderer; 2D world with 2.5D letter tiles** (plan Part 8, Amendment A2). iOS first (TestFlight), then Android, plus a web build of the Daily Signal from the same project. Supersedes A1 (native Swift) | answered by owner (8 Oct 2026): Godot, letters 2.5D, everything else 2D |
-| O-18 | Default mode | Decided by the Phase 2 gate | pending Phase 2 |
+| O-18 | Default mode | **Time-only 30-second bursts** replace Drift and Pressure (oxygen removed). Wrong catch −1 s, stolen letter −2 s, 1–3 stars from time left | answered by owner (9 Oct 2026, beta ask) |
 | O-19 | v1 cuts | Accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store, rewarded ads, clues above 300 | default |
 | O-20 | Owner load cap | 6 hours a week; review queue cap 4 | default |
 | O-21 | Success paragraph | Plan §1.1: proof of concept first; 12-month goal only if Phases 1–3 hold | answered by owner (29 Sep 2026) |
@@ -59,6 +59,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-3.T | Babel throws the round's letters from a rift at round start (owner ask, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.T/evidence.md` |
 | WP-4.5a | Level format and Act I's 12 levels: schema and checks, export, levels played in order with comms, Next and Retry (owner pulled forward, 9 Oct 2026) | story-writer, builder, rules-engineer, godot-dev | done, awaiting owner playtest; level file `status: draft` | `reports/WP-4.5a/evidence.md` |
 | WP-3.5a | Browser save: progress kept in the browser, versioned and sync-ready (anonymous id); Continue, Play Act I again, Reset progress (owner, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.5a/evidence.md` |
+| M-beta (WP-B.1 to B.8) | Playable beta end to end: 30 s bursts, Babel thief drones, character (suit, perk, pronouns) and difficulty pick, level map with stars for Acts I–IV (II–IV draft levels, no comms yet), pause, act and beta complete, save v2, dictionary loader with a remote source behind a switch | orchestrator + workers | done, awaiting owner playtest; suit names and perks, difficulty presets and Acts II–IV levels are `status: draft` | `wps/MILESTONE-beta.md`, `reports/WP-B/evidence.md` |
 
 ## Review queue (cap 4)
 

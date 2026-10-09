@@ -15,7 +15,7 @@ func _level(extra := {}) -> Dictionary:
 
 
 func _make(lv: Dictionary) -> Round:
-	return Round.create_level(_tun, _content, "act1_low_orbit", lv, "drift")
+	return Round.create_level(_tun, _content, "act1_low_orbit", lv)
 
 
 func test_words_in_given_order() -> void:
@@ -80,9 +80,18 @@ func test_babel_off() -> void:
 	assert_eq(restores, 4, "words still restored")
 
 
-func test_winnable_in_drift() -> void:
+func test_winnable_in_a_burst() -> void:
 	for sd in [1, 2, 3, 4, 5]:
 		var r := _make(_level({"seed": sd}))
-		Bot.play(r, 1.0 / 60.0, 900.0)
+		Bot.play(r, 1.0 / 60.0, 60.0)
 		assert_eq(r.state, "won", "won seed %d" % sd)
 		assert_eq(r.restored_words.size(), 4, "all words")
+
+
+func test_bot_wins_with_thieves_within_a_burst() -> void:
+	for sd in [1, 2, 3, 4, 5]:
+		var r := _make(_level({"seed": sd, "tuning": {"thief.interval": 4.0}}))
+		var ev := Bot.play(r, 1.0 / 60.0, 60.0)
+		assert_eq(r.state, "won", "won seed %d" % sd)
+		assert_true(float(r.stats["secs"]) < 30.0, "within 30 s")
+		assert_true(r.stars() >= 1)

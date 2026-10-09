@@ -1,0 +1,91 @@
+{
+  "$schema": "./levels.schema.json",
+  "status": "draft",
+  "act": "act3_tower",
+  "levels": [
+    {
+      "id": "3-01", "order": 1, "title": "Tower Door", "beat": "Opening: Rhee goes quiet; Kit notes the door code matches her handwriting.",
+      "pacing": "teach", "words": ["law", "vow", "oath"], "seed": 3101, "babel": true,
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.1, "plane.backTiles": 6, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-02", "order": 2, "title": "Ledger", "beat": "Teach: small abstract words.",
+      "pacing": "core", "words": ["debt", "fate", "duty"], "seed": 3102, "babel": true,
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.102, "plane.backTiles": 6, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-03", "order": 3, "title": "Fair Play", "beat": "Core: right and wrong.",
+      "pacing": "core", "words": ["right", "wrong", "blame"], "seed": 3103, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.104, "plane.backTiles": 6, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-04", "order": 4, "title": "Burden", "beat": "Core: proof and logic.",
+      "pacing": "core", "words": ["proof", "logic", "faith"], "seed": 3104, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.105, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-05", "order": 5, "title": "Plain Words", "beat": "Core: honest words.",
+      "pacing": "core", "words": ["truth", "honor", "power"], "seed": 3105, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.107, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-06", "order": 6, "title": "The Hall", "beat": "Rest and mid: justice, truce, promise; Babel argues through the pool; wordless Loud Wars flashback.",
+      "pacing": "rest", "words": ["justice", "truce", "promise"], "seed": 3106, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.109, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-07", "order": 7, "title": "Fine Print", "beat": "Core: first four-word level; Stroop jamming starts.",
+      "pacing": "core", "words": ["order", "value", "chance", "choice"], "seed": 3107, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.111, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-08", "order": 8, "title": "The Turn", "beat": "Twist: the Act III twist lands; the Catcher is alone with the choice.",
+      "pacing": "twist", "words": ["secret", "belief", "custom", "ritual"], "seed": 3108, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.113, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-09", "order": 9, "title": "Signing Room", "beat": "Core: agreements and mercy.",
+      "pacing": "core", "words": ["treaty", "accord", "pardon", "virtue"], "seed": 3109, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.115, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-10", "order": 10, "title": "Archive", "beat": "Core: memory and silence.",
+      "pacing": "core", "words": ["reason", "memory", "silence", "wisdom"], "seed": 3110, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.116, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-11", "order": 11, "title": "Open Window", "beat": "Late: Babel states what it believes in the Catcher letters.",
+      "pacing": "core", "words": ["dignity", "liberty", "consent", "purpose"], "seed": 3111, "babel": true,
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.118, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "3-12", "order": 12, "title": "The Choice", "beat": "Encounter: keep going or stop. Tomas: you kept your promise.",
+      "pacing": "encounter", "words": ["freedom", "meaning"], "seed": 3112, "babel": true,
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.12, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    }
+  ]
+}

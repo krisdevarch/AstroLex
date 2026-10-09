@@ -24,3 +24,4 @@ Owner feedback: the comms before a level named the words to catch, so the level 
 | Title and commsBefore name none of the level's or later levels' words; commsAfter names no later level's word | pass | `python -m astrolex_tools.levels` (new `spoiler_problems`, plural-aware); the old file fails with 31 hits | `data/levels/act1_low_orbit.json` (10 lines, 3 titles rewritten) |
 | Check is tested | pass | `pytest tools/tests/test_levels.py` (2 new tests); `pytest tools` 43 passed | `tools/tests/test_levels.py` |
 | Game data re-exported, game still runs | pass | `export_game_data`; `scripts/godot/test.sh` 101 passed; web smoke autoplay won | `game/data/content.json` |
+| After merging the 48-level beta: Acts II-IV pass the same check | pass | `python -m astrolex_tools.levels` ok after renaming 8 titles (2-09, 3-09, 4-02, 4-04, 4-06, 4-08, 4-10, 4-12); Godot tests 130 passed; web smoke won | `data/levels/act{2,3,4}_*.json` |
