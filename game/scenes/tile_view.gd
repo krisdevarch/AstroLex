@@ -1,16 +1,16 @@
 extends Node2D
-## One 2.5D letter tile (plan 8.2): bevelled body (lit, tilted by the tile shader), a glyph that
-## always faces the player, and a drop shadow. Plane depth is scale only.
+## One 2.5D letter tile (plan 8.2), in one of the two glass looks (O-22): "glass" (a clear rounded
+## square that tilts) or "bubble" (a clear ball that wobbles). A glyph that always faces the player
+## and a faint drop shadow. Plane depth is scale only. The opaque looks (flat, tilt, bevel) were
+## dropped on 9 Oct 2026: the owner found them too much like every other word game.
 
 const TileTextures := preload("res://scenes/tile_textures.gd")
-const TILE_SHADER: Shader = preload("res://shaders/tile.gdshader")
-## The flat treatment skips the lamp, so it needs the ambient dimming undone.
-const FLAT_GAIN := Vector3(1.6, 1.6, 1.4)
 const GLASS_SHADER: Shader = preload("res://shaders/glass.gdshader")
 ## The ambient CanvasModulate dims anything it tints; glass is off the lamp, so undo it.
 const GLASS_GAIN := Vector3(1.55, 1.52, 1.28)
 const GLASS_ACCENT := Color(0.35, 0.85, 1.0)
-const GLYPH_COLOR := Color(0.06, 0.08, 0.18)
+const LOOKS: Array[String] = ["glass", "bubble"]
+const DEFAULT_LOOK := "bubble"
 
 @onready var shadow: Sprite2D = $Shadow
 @onready var body: Sprite2D = $Body
@@ -19,7 +19,7 @@ const GLYPH_COLOR := Color(0.06, 0.08, 0.18)
 var ch: String = ""
 var plane: int = 0
 var is_back: bool = false
-var treatment: String = "tilt"
+var treatment: String = DEFAULT_LOOK
 var reduced_motion: bool = false
 var size_px: float = 100.0
 var anim: String = ""  # "", "fly" or "dissolve"
@@ -42,91 +42,73 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	ch = p_ch
 	size_px = p_size_px
 	plane = p_plane
-	treatment = p_treatment
+	treatment = p_treatment if LOOKS.has(p_treatment) else DEFAULT_LOOK
 	reduced_motion = p_reduced
 	_tun = tun
 	_phase = p_phase
 	var k := size_px / float(TileTextures.SIZE)
-	if p_treatment == "bubble":
+	if treatment == "bubble":
 		k *= float(tun["glass.bubbleScale"])  # bigger ball, same letter size
 	body.scale = Vector2(k, k)
 	_body_scale = body.scale
 	_mat = ShaderMaterial.new()
-	if is_glass():
-		var round_shape := treatment == "bubble"
-		body.texture = TileTextures.glass_mask(TileTextures.HALF if round_shape else TileTextures.GLASS_CORNER)
-		_mat.set_shader_parameter("corner", TileTextures.HALF if round_shape else TileTextures.GLASS_CORNER)
-		_mat.set_shader_parameter("lens_width", TileTextures.HALF * 0.75 if round_shape else 26.0)
-		_mat.set_shader_parameter("bubble", round_shape)
-		_mat.shader = GLASS_SHADER
-		_mat.set_shader_parameter("unlit_gain", GLASS_GAIN)
-		_mat.set_shader_parameter("accent", GLASS_ACCENT)
-		_mat.set_shader_parameter("blur", float(_tun["glass.blur"]))
-		_mat.set_shader_parameter("refract_px", float(_tun["glass.refractPx"]))
-		_mat.set_shader_parameter("frost", float(_tun["glass.frost"]))
-		_mat.set_shader_parameter("specular", float(_tun["glass.specular"]))
-		_mat.set_shader_parameter("edge_tint", float(_tun["glass.edgeTint"]))
-		_mat.set_shader_parameter("chroma", float(_tun["glass.chroma"]))
-		_mat.set_shader_parameter("grain", float(_tun["glass.grain"]))
-		_mat.set_shader_parameter("sky_tex", TileTextures.sky())
-		_mat.set_shader_parameter("stars_tex", TileTextures.stars())
-		_mat.set_shader_parameter("milk", float(_tun["glass.milk"]))
-		shadow.modulate.a = 0.45  # clear glass casts a faint shadow
-		_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
-		body.light_mask = 2
-	else:
-		body.texture = TileTextures.body("bevel" if treatment == "bevel" else "tilt")
-		_mat.shader = TILE_SHADER
+	_mat.shader = GLASS_SHADER
+	var round_shape := treatment == "bubble"
+	body.texture = TileTextures.glass_mask(TileTextures.HALF if round_shape else TileTextures.GLASS_CORNER)
+	_mat.set_shader_parameter("corner", TileTextures.HALF if round_shape else TileTextures.GLASS_CORNER)
+	_mat.set_shader_parameter("lens_width", TileTextures.HALF * 0.75 if round_shape else 26.0)
+	_mat.set_shader_parameter("bubble", round_shape)
+	_mat.set_shader_parameter("unlit_gain", GLASS_GAIN)
+	_mat.set_shader_parameter("accent", GLASS_ACCENT)
+	_mat.set_shader_parameter("blur", float(_tun["glass.blur"]))
+	_mat.set_shader_parameter("refract_px", float(_tun["glass.refractPx"]))
+	_mat.set_shader_parameter("frost", float(_tun["glass.frost"]))
+	_mat.set_shader_parameter("specular", float(_tun["glass.specular"]))
+	_mat.set_shader_parameter("edge_tint", float(_tun["glass.edgeTint"]))
+	_mat.set_shader_parameter("chroma", float(_tun["glass.chroma"]))
+	_mat.set_shader_parameter("grain", float(_tun["glass.grain"]))
+	_mat.set_shader_parameter("sky_tex", TileTextures.sky())
+	_mat.set_shader_parameter("stars_tex", TileTextures.stars())
+	_mat.set_shader_parameter("milk", float(_tun["glass.milk"]))
+	shadow.modulate.a = 0.45  # clear glass casts a faint shadow
+	_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
+	body.light_mask = 2
 	body.material = _mat
 	shadow.texture = TileTextures.shadow(_shadow_corner())
 	shadow.scale = body.scale
 	shadow.position = Vector2(0.4, 1.0) * float(_tun["tile.shadowOffset"]) * plane_scale
 	shadow.light_mask = 2
 	glyph.light_mask = 2
-	if treatment == "flat":
-		body.light_mask = 2
-		_mat.set_shader_parameter("unlit_gain", FLAT_GAIN)
 	glyph.text = ch.to_upper()
 	glyph.size = Vector2(size_px, size_px)
 	glyph.position = -glyph.size * 0.5
 	glyph.pivot_offset = glyph.size * 0.5
 	glyph.add_theme_font_size_override("font_size", int(size_px * 0.62))
-	if is_glass():
-		# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
-		glyph.add_theme_color_override("font_color", Color.WHITE)
-		glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
-		glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
-		glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
-	else:
-		glyph.add_theme_color_override("font_color", GLYPH_COLOR)
-
-
-func is_glass() -> bool:
-	return treatment == "glass" or treatment == "bubble"
+	# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
+	glyph.add_theme_color_override("font_color", Color.WHITE)
+	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
+	glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
+	glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
 
 
 func _shadow_corner() -> float:
 	if treatment == "bubble":
 		return TileTextures.HALF - 8.0  # the shadow is inset by 8 px, so this makes it a circle
-	return TileTextures.GLASS_CORNER if treatment == "glass" else TileTextures.CORNER
+	return TileTextures.GLASS_CORNER
 
 
-## Back plane: blank debris (a shard, no letter). Dim, desaturated, unlit, shadowless, never tilted.
-func set_back(alpha: float, desaturate: float) -> void:
+## Back plane: blank debris (a small frosted glass shard, no letter). Dim, shadowless, never tilted.
+## The desaturate argument is unused since the opaque looks went; kept so callers need no change.
+func set_back(alpha: float, _desaturate: float = 0.0) -> void:
 	is_back = true
 	modulate = Color(1.0, 1.0, 1.0, alpha)
 	glyph.visible = false
 	body.rotation = fposmod(_phase, TAU)
 	shadow.visible = false
 	body.light_mask = 2
-	if is_glass():
-		body.texture = TileTextures.shard()
-		_mat.set_shader_parameter("shard", true)
-		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
-		return
 	body.texture = TileTextures.shard()
-	_mat.set_shader_parameter("unlit_gain", FLAT_GAIN)
-	_mat.set_shader_parameter("desaturate", desaturate)
+	_mat.set_shader_parameter("shard", true)
+	_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 
 
 ## Places the tile and tilts it toward the lamp, plus a slow sway. nx is the tile's x in 0..1.
@@ -144,7 +126,7 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		current_tilt = Vector2.ZERO
 		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 		return
-	if treatment != "flat" and not reduced_motion and not is_back:
+	if not reduced_motion and not is_back:
 		var maxd: float = _tun["tile.maxTiltDeg"]
 		var sway_deg: float = _tun["tile.swayDeg"]
 		var w := TAU * float(_tun["tile.swaySpeed"])

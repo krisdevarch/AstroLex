@@ -7,7 +7,7 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 const DT := 1.0 / 60.0
 
 
-func _make(autoplay: bool, seed_value: int = 12345, treatment: String = "tilt", reduced: bool = false) -> Node2D:
+func _make(autoplay: bool, seed_value: int = 12345, treatment: String = "bubble", reduced: bool = false) -> Node2D:
 	var f: Node2D = FieldScene.instantiate()
 	f.autoplay = autoplay
 	f.print_ready = false
@@ -158,18 +158,14 @@ func test_treatments_differ_and_reduced_motion_stops_tilt_and_sway() -> void:
 			"tilt": v.current_tilt,
 		}
 		f.free()
-	assert_true(seen["flat"]["gain"] != null, "flat sets unlit_gain")
-	assert_eq(seen["flat"]["light_mask"], 2, "flat body is unlit by the lamp")
-	assert_eq(seen["flat"]["tilt"], Vector2.ZERO, "flat does not tilt")
-	assert_true(seen["tilt"]["tilt"] != Vector2.ZERO, "tilt treatment tilts")
-	assert_true(seen["bevel"]["tilt"] != Vector2.ZERO, "bevel treatment tilts")
+	assert_eq(AppSettings.TREATMENTS.size(), 2, "glass looks only")
 	assert_true(seen["glass"]["tilt"] != Vector2.ZERO, "glass treatment tilts")
+	assert_eq(seen["bubble"]["tilt"], Vector2.ZERO, "a bubble does not tilt")
 	assert_eq(seen["glass"]["light_mask"], 2, "glass body is unlit by the lamp")
-	assert_true(seen["flat"]["gain"] != seen["tilt"]["gain"], "flat vs tilt shader params differ")
-	assert_true(seen["bevel"]["tex"] != seen["tilt"]["tex"], "bevel uses a different body texture")
-	assert_true(seen["flat"]["light_mask"] != seen["tilt"]["light_mask"], "flat vs tilt light mask differs")
+	assert_eq(seen["bubble"]["light_mask"], 2, "bubble body is unlit by the lamp")
+	assert_true(seen["bubble"]["tex"] != seen["glass"]["tex"], "bubble uses the round mask")
 	# Reduced motion: no tilt or sway, at several times.
-	var f := _make(false, 12345, "tilt", true)
+	var f := _make(false, 12345, "glass", true)
 	for _i in 120:
 		f.advance(DT)
 		for id in f._views.keys():

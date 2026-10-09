@@ -12,7 +12,7 @@ const PATH := "user://test_glass_settings.cfg"
 func test_settings_round_trip_with_glass_and_show_fps() -> void:
 	assert_true(AppSettings.TREATMENTS.has("glass"), "glass is a treatment")
 	var a := AppSettings.new()
-	assert_eq(a.treatment, "tilt", "default stays tilt")
+	assert_eq(a.treatment, "bubble", "default is bubble")
 	assert_false(a.show_fps, "fps hidden by default")
 	a.treatment = "glass"
 	a.show_fps = true
@@ -75,12 +75,12 @@ func test_bench_builds_tiles_and_cycles() -> void:
 	var b: Node = GlassBench.new()
 	tree.root.add_child(b)
 	assert_eq(b.tile_count(), 20, "20 tiles by default")
-	assert_eq(b.treatment, "glass", "glass first")
+	assert_eq(b.treatment, "bubble", "bubble first")
 	assert_true(b.find_child("RunButton", true, false) != null, "run button")
 	b.cycle_count()
 	assert_eq(b.tile_count(), 30, "cycles to 30")
 	b.cycle_look()
-	assert_eq(b.treatment, "bubble", "look cycles")
+	assert_eq(b.treatment, "glass", "look cycles")
 	b._process(1.0 / 60.0)
 	b.free()
 
@@ -113,15 +113,15 @@ func test_fps_meter_line() -> void:
 	assert_eq(FpsMeter.format_line(f, 20), "60 fps · p95 17 ms · 20 tiles")
 
 
-func test_settings_screen_has_five_treatments_fps_and_bench() -> void:
+func test_settings_screen_has_two_glass_looks_fps_and_bench() -> void:
 	var s: Control = load("res://scenes/settings_screen.gd").new()
 	tree.root.add_child(s)
 	for t in AppSettings.TREATMENTS:
 		var b := s.find_child("Treatment_%s" % t, true, false) as Button
 		assert_true(b != null, "button for %s" % t)
 		if b:
-			assert_true(b.custom_minimum_size.x <= 1080.0 / 5.0, "fits the row")
-	assert_eq(AppSettings.TREATMENTS.size(), 5, "five treatments")
+			assert_true(b.custom_minimum_size.x <= 1080.0 / 2.0, "fits the row")
+	assert_eq(AppSettings.TREATMENTS.size(), 2, "two glass looks")
 	assert_true(s.find_child("ShowFps", true, false) is CheckButton, "show frame rate toggle")
 	var bench := s.find_child("BenchButton", true, false) as Button
 	assert_true(bench != null, "bench button")

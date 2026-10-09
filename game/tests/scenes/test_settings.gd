@@ -6,15 +6,26 @@ const PATH := "user://test_settings.cfg"
 
 func test_settings_round_trip() -> void:
 	var a := AppSettings.new()
-	assert_eq(a.treatment, "tilt", "default treatment is tilt (O-22)")
+	assert_eq(a.treatment, "bubble", "default look is bubble (O-22, 9 Oct 2026)")
 	assert_false(a.reduced_motion, "motion on by default")
-	a.treatment = "bevel"
+	a.treatment = "glass"
 	a.reduced_motion = true
 	assert_eq(a.save_to(PATH), OK, "saved")
 	var b := AppSettings.new()
 	b.load_from(PATH)
-	assert_eq(b.treatment, "bevel")
+	assert_eq(b.treatment, "glass")
 	assert_true(b.reduced_motion, "reduced motion restored")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
+
+
+func test_a_saved_opaque_look_falls_back_to_bubble() -> void:
+	for old in ["flat", "tilt", "bevel"]:
+		var cf := ConfigFile.new()
+		cf.set_value("look", "treatment", old)
+		cf.save(PATH)
+		var a := AppSettings.new()
+		a.load_from(PATH)
+		assert_eq(a.treatment, "bubble", "%s is gone, so bubble" % old)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 
 
@@ -24,7 +35,7 @@ func test_settings_ignore_an_unknown_treatment() -> void:
 	cf.save(PATH)
 	var a := AppSettings.new()
 	a.load_from(PATH)
-	assert_eq(a.treatment, "tilt", "falls back to the default")
+	assert_eq(a.treatment, "bubble", "falls back to the default")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 
 

@@ -49,3 +49,12 @@ The owner asked whether bubbles would look cooler. Added `bubble` as a fifth loo
 - With Low Power Mode on, every look (bubble and tilt alike) ran at a locked 30 fps (p50 = p95 = 33.3 ms): iOS caps web pages at 30 fps in that mode, so the glass cost nothing extra under the cap.
 - With Low Power Mode off: **bubble, 40 tiles, avg 59.7 fps, p50 16.7 ms, p95 16.7 ms, PASS** (`phone-bubble-40.png`). The gate asked for 20 glass tiles at 60 fps; it holds at 40.
 - Follow-ups for the backlog: playtests should note Low Power Mode, since it halves the frame rate for every look.
+
+## Round 6 (9 Oct 2026): glass looks only
+
+The owner: "keep the glass only, tiles look very common". Flat, Tilt and Bevel are removed (with `tile.gdshader` and the procedural bevel textures). Settings offers **Bubble** (default) and **Glass**; a saved flat/tilt/bevel setting falls back to Bubble. The back plane is a frosted glass shard in both looks. The start screen now draws the same sky behind the title, and its title bubbles shrink so the row does not overlap.
+
+| Check | Result | Artefact |
+|---|---|---|
+| `scripts/godot/test.sh` | 74 passed, 0 failed (new `test_a_saved_opaque_look_falls_back_to_bubble`) | – |
+| `smoke.cjs` and `smoke.cjs --autoplay` | ok; autoplay round won (score 358) | `glass-only.png` (start screen, round) |
