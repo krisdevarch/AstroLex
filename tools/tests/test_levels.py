@@ -101,3 +101,19 @@ def test_export_includes_levels(doc, tmp_path, monkeypatch):
 def test_export_levels_empty_without_files(tmp_path, monkeypatch):
     monkeypatch.setattr(L, "levels_dir", lambda: tmp_path)
     assert build_content()["levels"] == {}
+
+
+def test_comms_before_and_title_may_not_give_away_words(doc, words):
+    first, later = words[0], words[2]
+    doc["levels"][0]["commsBefore"] = [{"who": "rhee", "text": f"Catch the {first.upper()}s first."}]
+    doc["levels"][0]["title"] = f"A {later} ahead"
+    problems = check(doc, words)
+    assert f"1-01: commsBefore gives away '{first}' before it is caught" in problems
+    assert f"1-01: title gives away '{later}' before it is caught" in problems
+
+
+def test_comms_after_may_name_caught_words_but_not_later_ones(doc, words):
+    doc["levels"][0]["commsAfter"] = [{"who": "ade", "text": f"{words[0]} and {words[1]}, done."}]
+    assert check(doc, words) == []
+    doc["levels"][0]["commsAfter"] = [{"who": "ade", "text": f"Next up, {words[3]}."}]
+    assert check(doc, words) == [f"1-01: commsAfter gives away '{words[3]}' before it is caught"]

@@ -60,7 +60,7 @@
       "commsAfter": []
     },
     {
-      "id": "3-09", "order": 9, "title": "Treaty Room", "beat": "Core: agreements and mercy.",
+      "id": "3-09", "order": 9, "title": "Signing Room", "beat": "Core: agreements and mercy.",
       "pacing": "core", "words": ["treaty", "accord", "pardon", "virtue"], "seed": 3109, "babel": true,
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.115, "plane.backTiles": 7, "thief.interval": 6},
       "commsBefore": [],

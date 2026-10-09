@@ -5,6 +5,7 @@ Usage: ``python -m astrolex_tools.levels`` checks every ``data/levels/*.json`` (
 from __future__ import annotations
 
 import json
+import re
 import sys
 
 from jsonschema import Draft202012Validator
@@ -15,6 +16,37 @@ from astrolex_tools.words.blocklist import Blocklist
 from astrolex_tools.words.db import WordDB
 
 MAX_COMMS_WORDS = 60
+
+
+def _tokens(text: str) -> set[str]:
+    """Lower-case words of a line, each with a plain plural form folded too (cups -> cup)."""
+    out = set()
+    for t in re.findall(r"[a-z]+", text.lower()):
+        out.add(t)
+        if len(t) > 3 and t.endswith("s"):
+            out.add(t[:-1])
+            if t.endswith("es"):
+                out.add(t[:-2])
+    return out
+
+
+def spoiler_problems(levels: list[dict]) -> list[str]:
+    """Text shown before or between rounds must not give away a word still to be caught.
+
+    The title and commsBefore of a level may not name its own words or a later level's;
+    commsAfter may name the words just restored but not a later level's.
+    """
+    problems = []
+    for i, lv in enumerate(levels):
+        ahead = {w for later in levels[i + 1:] for w in later["words"]}
+        here = set(lv["words"]) | ahead
+        shown = [("title", lv["title"], here)]
+        shown += [("commsBefore", c["text"], here) for c in lv["commsBefore"]]
+        shown += [("commsAfter", c["text"], ahead) for c in lv["commsAfter"]]
+        for key, text, banned in shown:
+            for w in sorted(_tokens(text) & banned):
+                problems.append(f"{lv['id']}: {key} gives away '{w}' before it is caught")
+    return problems
 
 
 def levels_dir():
@@ -75,6 +107,7 @@ def check_levels(doc: dict, act_words, blocklist: Blocklist, db: WordDB | None =
             n = sum(len(c["text"].split()) for c in lv[key])
             if n > MAX_COMMS_WORDS:
                 problems.append(f"{lid}: {key} has {n} words (max {MAX_COMMS_WORDS})")
+    problems += spoiler_problems(doc["levels"])
     return problems
 
 

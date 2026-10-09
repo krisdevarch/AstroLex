@@ -31,7 +31,7 @@ var web: bool = false
 var build: Dictionary = {}
 var device: Dictionary = {}
 var load_ms: Dictionary = {"boot_ms": null, "ready_ms": null}
-var settings: Dictionary = {"treatment": "bubble", "reduced_motion": false, "hint": "edges"}
+var settings: Dictionary = {"treatment": "bubble", "reduced_motion": false, "hint": "none"}
 var rounds: Array = []
 var errors: Array = []
 var events: Array = []
@@ -136,7 +136,7 @@ func mark_ready() -> void:
 		load_ms["ready_ms"] = int(round(float(ms)))
 
 
-func set_settings(treatment: String, reduced_motion: bool, hint: String = "edges") -> void:
+func set_settings(treatment: String, reduced_motion: bool, hint: String = "none") -> void:
 	settings = {"treatment": treatment, "reduced_motion": reduced_motion, "hint": hint}
 
 

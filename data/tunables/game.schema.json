@@ -14,6 +14,7 @@
     "drift.speed",
     "drift.speedVariation",
     "spawner.decoys",
+    "spawner.decoyRatio",
     "spawner.frontShare",
     "spawner.wordsPerLevel",
     "score.letterValue",
@@ -127,6 +128,11 @@
       "type": "integer",
       "minimum": 0,
       "description": "decoys on the board in round 1"
+    },
+    "spawner.decoyRatio": {
+      "type": "number",
+      "minimum": 0,
+      "description": "decoys kept per real catchable letter on the board; the floor is spawner.decoys"
     },
     "spawner.frontShare": {
       "type": "number",

@@ -3,9 +3,9 @@
   "default": "normal",
   "levels": [
     {"id": "easy", "label": "Easy", "blurb": "Slower letters, fewer decoys, rare drones",
-     "mod": {"mul": {"drift.speed": 0.8, "thief.interval": 1.6, "thief.speed": 0.8}, "add": {"spawner.decoys": -1}, "set": {"burst.wrongCost": 0.5}}},
+     "mod": {"mul": {"spawner.decoyRatio": 0.6, "drift.speed": 0.8, "thief.interval": 1.6, "thief.speed": 0.8}, "add": {"spawner.decoys": -1}, "set": {"burst.wrongCost": 0.5}}},
     {"id": "normal", "label": "Normal", "blurb": "The game as designed", "mod": {}},
     {"id": "hard", "label": "Hard", "blurb": "Faster letters, more decoys, more drones",
-     "mod": {"mul": {"drift.speed": 1.25, "thief.interval": 0.7, "thief.speed": 1.2}, "add": {"spawner.decoys": 1}, "set": {"burst.wrongCost": 2}}}
+     "mod": {"mul": {"spawner.decoyRatio": 1.4, "drift.speed": 1.25, "thief.interval": 0.7, "thief.speed": 1.2}, "add": {"spawner.decoys": 1}, "set": {"burst.wrongCost": 2}}}
   ]
 }

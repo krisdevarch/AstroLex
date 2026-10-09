@@ -69,7 +69,7 @@ Signature colours are from design direction section 9. Each shows on the bubble,
 - **Want:** a world where no one is hurt by words again.
 - **Fear:** that it was wrong, and that the silence it made is a new kind of hurt.
 - **Voice sheet:** Short lines, often two to five words, because the pool is small. Dry, never cruel. It teases the player's play, not the player. It loves a neat swap (SILENT and LISTEN). It never swears, never insults looks, family or name, never threatens a person, never says it is sorry before Act IV. It cannot say a word the player has not earned.
-- **Arc:** Dormant in the Prologue. Unaware in Act I. Notices you in Act II and starts to speak. Argues in Act III. Confronts in Act IV. Chooses to listen. In Act V it is an ally.
+- **Arc:** Dormant in the Prologue. Speaks from Act I on, in short lines built from the letters restored so far, teasing the Catcher's play without yet taking them seriously. Notices you properly in Act II. Argues in Act III. Confronts in Act IV. Chooses to listen. In Act V it is an ally.
 
 ### Ade
 - **Colour:** seafoam #88FFEE.
@@ -121,7 +121,7 @@ Each act: opening comms beat, mid beat, closing beat, Tomas's message state at a
 - **Mid:** The player restores *bread*, *home*, *door*. Kit asks how Rhee knows what each looks like. Rhee: "I wrote them down. Many times."
 - **Closing:** Counterfeits appear late. Rhee warns, short. Ade, nervous joke.
 - **Tomas at end:** His first complete message in months: *water*. "Water. I can say water." (Full line, one word restored.)
-- **Babel:** Unaware. It does not speak. The Catcher is not on its map.
+- **Babel:** Amused. It speaks after each catch in short lines built from the restored letters, teasing the play. It has not yet decided the Catcher matters.
 
 ### Act II. The Nebula (emotions)
 - **Opening:** Kit: "The gas is pink. Is that normal?" Ade, "Do not touch the pink." VANTA's first message: a time and a challenge.
@@ -196,6 +196,7 @@ The principle: silence is not peace, and listening is. The tone is hopeful. It l
 4. **Babel's one sincere line in Act IV:** yes.
 5. **Rhee's "handwriting" hints in Act I–II comms:** fine for now; can change later.
 6. **New (owner):** Babel throws the letters into the field at the start of each round (rule 4).
+7. **New (owner):** Babel speaks in Act I too; it is never silent for a whole act.
 
 The bible as a whole stays `status: draft` until the owner flips it to `approved`.
 

@@ -60,7 +60,7 @@
       "commsAfter": []
     },
     {
-      "id": "2-09", "order": 9, "title": "Lonely Drift", "beat": "Core: quiet, aching words.",
+      "id": "2-09", "order": 9, "title": "Aching Drift", "beat": "Core: quiet, aching words.",
       "pacing": "core", "words": ["lonely", "regret", "wonder", "mercy"], "seed": 2109, "babel": true,
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.095, "plane.backTiles": 6, "thief.interval": 7},
       "commsBefore": [],
