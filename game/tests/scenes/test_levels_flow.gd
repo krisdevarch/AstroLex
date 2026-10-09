@@ -113,7 +113,7 @@ func test_begin_level_uses_the_level_words_in_order() -> void:
 	var lv := _level(0)
 	var f: Node2D = FieldScene.instantiate()
 	tree.root.add_child(f)
-	f.begin_level("drift", lv)
+	f.begin_level(lv)
 	var words: Array = lv["words"]
 	assert_eq(Array(f.game_round.words), words, "words in level order")
 	assert_eq(f.game_round.level_id, "1-01", "level id")

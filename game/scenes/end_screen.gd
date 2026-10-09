@@ -4,7 +4,6 @@ extends Control
 const Ui := preload("res://scenes/ui.gd")
 
 signal play_again
-signal switch_mode
 
 var summary: Dictionary = {}
 var telemetry: RefCounted  # optional; the send and copy buttons show only when set
@@ -55,12 +54,6 @@ func _ready() -> void:
 	again.name = "PlayAgainButton"
 	again.pressed.connect(func() -> void: play_again.emit())
 	box.add_child(again)
-	var other := "Pressure" if summary.get("mode", "drift") == "drift" else "Drift"
-	var sw := Ui.button("Switch to %s" % other, 42, Vector2(560, 110))
-	sw.name = "ModeSwitchButton"
-	sw.pressed.connect(func() -> void: switch_mode.emit())
-	sw.visible = not complete
-	box.add_child(sw)
 	if telemetry != null:
 		var row := HBoxContainer.new()
 		row.name = "ResultsRow"

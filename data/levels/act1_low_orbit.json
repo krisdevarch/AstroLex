@@ -41,7 +41,7 @@
     {
       "id": "1-04", "order": 4, "title": "Get Dressed", "beat": "Rhee hums while she works (foreshadowing 1).",
       "pacing": "core", "words": ["hat", "coat", "shoe"], "seed": 1104, "babel": true,
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.08, "oxygen.drainPerSec": 0.8, "plane.backTiles": 5},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.08, "oxygen.drainPerSec": 0.8, "plane.backTiles": 5, "thief.interval": 12},
       "commsBefore": [
         {"who": "ade", "text": "Hat, coat, shoe. Somebody's wardrobe exploded. Please do not wear anything we catch."}
       ],
@@ -53,7 +53,7 @@
     {
       "id": "1-05", "order": 5, "title": "Night Shift", "beat": "Soft words, a gentle ramp.",
       "pacing": "core", "words": ["bed", "pillow", "blanket"], "seed": 1105, "babel": true,
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.08, "oxygen.drainPerSec": 0.9, "plane.backTiles": 5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.08, "oxygen.drainPerSec": 0.9, "plane.backTiles": 5, "thief.interval": 11},
       "commsBefore": [
         {"who": "rhee", "text": "A blanket is a soft cover for sleeping. Longer word, same rule. Shape first."}
       ],
@@ -64,7 +64,7 @@
     {
       "id": "1-06", "order": 6, "title": "Quiet Corner", "beat": "Rest: a breather with small animals.",
       "pacing": "rest", "words": ["cat", "dog", "bird"], "seed": 1106, "babel": true,
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.07, "oxygen.drainPerSec": 0.7, "plane.backTiles": 5},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.07, "oxygen.drainPerSec": 0.7, "plane.backTiles": 5, "thief.interval": 11},
       "commsBefore": [
         {"who": "kit", "text": "Cat, dog, bird. A list of three, and none of them bite. I like this one."}
       ],
@@ -75,7 +75,7 @@
     {
       "id": "1-07", "order": 7, "title": "Desk Drawer", "beat": "Mid: Tomas's first half-empty message.",
       "pacing": "core", "words": ["pen", "book", "paper"], "seed": 1107, "babel": true,
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.09, "oxygen.drainPerSec": 0.9, "plane.backTiles": 6},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.09, "oxygen.drainPerSec": 0.9, "plane.backTiles": 6, "thief.interval": 10},
       "commsBefore": [
         {"who": "rhee", "text": "Pen, book, paper. These I know best. Careful, the decoys look a lot alike."}
       ],
@@ -86,7 +86,7 @@
     {
       "id": "1-08", "order": 8, "title": "Set the Table", "beat": "Core: first four-word level.",
       "pacing": "core", "words": ["table", "chair", "plate", "knife"], "seed": 1108, "babel": true,
-      "tuning": {"spawner.decoys": 4, "drift.speed": 0.1, "oxygen.drainPerSec": 1.0, "plane.backTiles": 6},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.1, "oxygen.drainPerSec": 1.0, "plane.backTiles": 6, "thief.interval": 10},
       "commsBefore": [
         {"who": "ade", "text": "Table, chair, plate, knife. Dinner is served, and it is travelling at speed."}
       ],
@@ -97,7 +97,7 @@
     {
       "id": "1-09", "order": 9, "title": "Hallway", "beat": "Core: faster drift, everyday objects.",
       "pacing": "core", "words": ["window", "mirror", "clock"], "seed": 1109, "babel": true,
-      "tuning": {"spawner.decoys": 5, "drift.speed": 0.11, "oxygen.drainPerSec": 1.1, "plane.backTiles": 7},
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.11, "oxygen.drainPerSec": 1.1, "plane.backTiles": 7, "thief.interval": 9},
       "commsBefore": [
         {"who": "rhee", "text": "Window, mirror, clock. Longer words now. Do not rush them, the clock will not."}
       ],
@@ -108,7 +108,7 @@
     {
       "id": "1-10", "order": 10, "title": "Garden Gate", "beat": "Rest: green, calm, a breath before the end.",
       "pacing": "rest", "words": ["garden", "tree", "apple"], "seed": 1110, "babel": true,
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.08, "oxygen.drainPerSec": 0.8, "plane.backTiles": 6},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.08, "oxygen.drainPerSec": 0.8, "plane.backTiles": 6, "thief.interval": 8},
       "commsBefore": [
         {"who": "kit", "text": "Garden, tree, apple. Three for the price of one orchard. Take your time."}
       ],
@@ -119,7 +119,7 @@
     {
       "id": "1-11", "order": 11, "title": "Lost and Found", "beat": "Late: counterfeits appear; Rhee warns, short.",
       "pacing": "core", "words": ["key", "letter", "phone", "sign"], "seed": 1111, "babel": true,
-      "tuning": {"spawner.decoys": 6, "drift.speed": 0.12, "oxygen.drainPerSec": 1.2, "plane.backTiles": 7},
+      "tuning": {"spawner.decoys": 6, "drift.speed": 0.12, "oxygen.drainPerSec": 1.2, "plane.backTiles": 7, "thief.interval": 8},
       "commsBefore": [
         {"who": "kit", "text": "Key, letter, phone, sign. Every one of them is for somebody. Let us find who."}
       ],
@@ -130,7 +130,7 @@
     {
       "id": "1-12", "order": 12, "title": "The Crossing", "beat": "Encounter: counterfeits close in. Closing: Tomas says water.",
       "pacing": "encounter", "words": ["road", "bridge", "river", "stone"], "seed": 1112, "babel": true,
-      "tuning": {"spawner.decoys": 7, "drift.speed": 0.14, "oxygen.drainPerSec": 1.4, "plane.backTiles": 8},
+      "tuning": {"spawner.decoys": 7, "drift.speed": 0.14, "oxygen.drainPerSec": 1.4, "plane.backTiles": 8, "thief.interval": 7},
       "commsBefore": [
         {"who": "ade", "text": "Counterfeits. Great. Ok ok ok, I am fine, I am a very calm person holding a very loud snack."}
       ],

@@ -37,6 +37,8 @@ def build_tunables() -> dict:
 
 
 def build_content() -> dict:
+    chars = json.loads((repo_root() / "data" / "characters.json").read_text())["characters"]
+    diff = json.loads((repo_root() / "data" / "tunables" / "difficulty.json").read_text())
     acts = load_acts()
     level_acts = {p.stem for p in level_files()}
     return {
@@ -46,6 +48,8 @@ def build_content() -> dict:
         "templates": [{"id": tp.id, "pattern": tp.pattern} for tp in load_templates()],
         "anagrams": {w: anagrams_of(w) for words in acts.values() for w in words},
         "levels": {a: load_levels(a) for a in acts if a in level_acts},
+        "characters": chars,
+        "difficulty": {"default": diff["default"], "levels": diff["levels"]},
     }
 
 

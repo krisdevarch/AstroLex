@@ -3,11 +3,11 @@ extends "res://tests/test_case.gd"
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
 
-func _make_field(autoplay: bool, mode: String = "drift") -> Node2D:
+func _make_field(autoplay: bool) -> Node2D:
 	var f: Node2D = FieldScene.instantiate()
 	f.autoplay = autoplay
 	tree.root.add_child(f)
-	f.begin(mode, 1, 12345)
+	f.begin(1, 12345)
 	f.skip_intro()
 	return f
 

@@ -7,7 +7,7 @@ func _make(reduced: bool = false) -> Node2D:
 	var f: Node2D = FieldScene.instantiate()
 	f.settings.reduced_motion = reduced
 	tree.root.add_child(f)
-	f.begin("drift", 1, 12345)
+	f.begin(1, 12345)
 	return f
 
 

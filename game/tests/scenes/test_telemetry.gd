@@ -4,7 +4,7 @@ const Telemetry := preload("res://services/telemetry.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
 const KEYS := ["schema", "build", "session", "device", "load", "settings", "rounds", "perf", "errors", "events"]
-const ROUND_KEYS := ["round", "mode", "act", "seed", "won", "words", "total", "score", "secs", "catches", "wrong", "escapes", "first_catch_s", "min_oxygen", "tap_misses", "near_miss_px_p50", "babel_lines"]
+const ROUND_KEYS := ["round", "mode", "act", "seed", "won", "words", "total", "score", "secs", "catches", "wrong", "escapes", "first_catch_s", "min_time", "stolen", "thieves_down", "tap_misses", "near_miss_px_p50", "babel_lines"]
 
 
 ## Plays one autoplay round on a fresh field with the telemetry listening.
@@ -13,8 +13,8 @@ func _play(tel: RefCounted, round_no: int) -> Node2D:
 	f.autoplay = true
 	f.print_ready = false
 	tree.root.add_child(f)
-	tel.begin_round(f, "drift", round_no, 12345)
-	f.begin("drift", round_no, 12345)
+	tel.begin_round(f, round_no, 12345)
+	f.begin(round_no, 12345)
 	f.skip_intro()
 	var steps := 0
 	while f.game_round.state == "play" and steps < 300 * 60:
@@ -84,8 +84,8 @@ func test_missed_taps_are_counted_with_nearest_distance() -> void:
 	var f: Node2D = FieldScene.instantiate()
 	f.print_ready = false
 	tree.root.add_child(f)
-	t.begin_round(f, "drift", 1, 1)
-	f.begin("drift", 1, 1)
+	t.begin_round(f, 1, 1)
+	f.begin(1, 1)
 	f.skip_intro()
 	assert_eq(f.tap(Vector2(-5000, -5000)), -1)
 	assert_eq(f.tap(Vector2(-5000, -5000)), -1)
@@ -108,7 +108,7 @@ func test_issue_url_stays_under_6000_for_a_long_session() -> void:
 	assert_true(url.length() < 6000, "url length %d" % url.length())
 	assert_true(url.begins_with("https://github.com/krisdevarch/AstroLex/issues/new?title="))
 	assert_true(url.contains("&body="))
-	assert_true(str(out["title"]).begins_with("[playtest] drift won "))
+	assert_true(str(out["title"]).begins_with("[playtest] burst won "))
 	assert_true(str(out["body"]).contains("```json"))
 	t.send_results()
 	assert_eq(t.opened_urls.size(), 1)

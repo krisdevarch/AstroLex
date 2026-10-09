@@ -11,3 +11,4 @@ var vel: Vector2 = Vector2.ZERO
 var alive: bool = true
 ## Draw radius in field units (tile.size * plane scale / 2); also the bounce inset.
 var radius: float = 0.0
+var carried_by: int = -1

@@ -24,40 +24,40 @@ func _each(check: Callable) -> void:
 func test_record_moves_next_on_and_loss_counts_a_play_only() -> void:
 	_each(func(s: RefCounted) -> void:
 		assert_eq(s.next_level(A), 0)
-		s.record_level(A, "1-01", 0, "drift", false, 50)
+		s.record_level(A, "1-01", 0, false, 50)
 		assert_eq(s.next_level(A), 0, "loss does not advance")
 		var l: Dictionary = s.data()["progress"][A]["levels"]["1-01"]
 		assert_eq(int(l["plays"]), 1)
 		assert_eq(int(l["best_score"]), 0, "loss records no score")
-		assert_true(not l["won"]["drift"], "not won")
-		s.record_level(A, "1-01", 0, "drift", true, 300)
+		assert_true(not l["won"]["burst"], "not won")
+		s.record_level(A, "1-01", 0, true, 300)
 		assert_eq(s.next_level(A), 1)
-		s.record_level(A, "1-01", 0, "pressure", true, 200)
+		s.record_level(A, "1-01", 0, true, 200)
 		assert_eq(s.next_level(A), 1, "replaying an earlier level never moves next back")
 		l = s.data()["progress"][A]["levels"]["1-01"]
 		assert_eq(int(l["best_score"]), 300, "best score keeps the max")
-		assert_true(l["won"]["drift"] and l["won"]["pressure"], "both modes won")
+		assert_true(l["won"]["burst"], "won")
 		assert_eq(int(l["plays"]), 3))
 
 
 func test_act_complete_and_restart_keeps_scores() -> void:
 	_each(func(s: RefCounted) -> void:
-		s.record_level(A, "1-01", 0, "drift", true, 10)
-		s.record_level(A, "1-02", 1, "drift", true, 20)
+		s.record_level(A, "1-01", 0, true, 10)
+		s.record_level(A, "1-02", 1, true, 20)
 		assert_true(not s.act_complete(A, 3))
 		assert_true(s.act_complete(A, 2))
 		s.restart_act(A)
 		assert_eq(s.next_level(A), 0)
 		assert_true(not s.act_complete(A, 2))
 		assert_eq(int(s.data()["progress"][A]["levels"]["1-02"]["best_score"]), 20)
-		assert_true(s.data()["progress"][A]["levels"]["1-01"]["won"]["drift"]))
+		assert_true(s.data()["progress"][A]["levels"]["1-01"]["won"]["burst"]))
 
 
 func test_reset_keeps_player_id() -> void:
 	_each(func(s: RefCounted) -> void:
 		var id: String = s.player_id()
 		assert_eq(id.length(), 16)
-		s.record_level(A, "1-01", 0, "drift", true, 10)
+		s.record_level(A, "1-01", 0, true, 10)
 		s.reset()
 		assert_eq(s.next_level(A), 0)
 		assert_true((s.data()["progress"] as Dictionary).is_empty())
@@ -67,7 +67,7 @@ func test_reset_keeps_player_id() -> void:
 func test_round_trip_survives_a_new_instance() -> void:
 	_clean()
 	var s: RefCounted = Save.real("user://test_save_a.json")
-	s.record_level(A, "1-01", 0, "drift", true, 77)
+	s.record_level(A, "1-01", 0, true, 77)
 	var again: RefCounted = Save.real("user://test_save_a.json")
 	assert_eq(again.next_level(A), 1)
 	assert_eq(again.player_id(), s.player_id())
@@ -103,7 +103,7 @@ func test_version_1_file_loads() -> void:
 func test_main_continues_from_the_saved_level() -> void:
 	var s: RefCounted = Save.fake()
 	for i in 4:
-		s.record_level(A, "1-0%d" % (i + 1), i, "drift", true, 10)
+		s.record_level(A, "1-0%d" % (i + 1), i, true, 10)
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	tree.root.add_child(main)
@@ -122,7 +122,7 @@ func test_main_continues_from_the_saved_level() -> void:
 func test_main_offers_replay_after_act_one_and_settings_resets() -> void:
 	var s: RefCounted = Save.fake()
 	for i in 12:
-		s.record_level(A, "1-%02d" % (i + 1), i, "drift", true, 10 + i)
+		s.record_level(A, "1-%02d" % (i + 1), i, true, 10 + i)
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	tree.root.add_child(main)
@@ -151,8 +151,8 @@ func test_malformed_acts_and_levels_are_repaired() -> void:
 	var s: RefCounted = Save.real("user://test_save_a.json")
 	assert_eq(s.next_level(A), 0)
 	assert_eq(s.next_level("x"), 2)
-	s.record_level("x", "1-01", 0, "drift", true, 9)
-	s.record_level("x", "1-02", 1, "pressure", false, 9)
+	s.record_level("x", "1-01", 0, true, 9)
+	s.record_level("x", "1-02", 1, false, 9)
 	assert_eq(int(s.data()["progress"]["x"]["levels"]["1-01"]["best_score"]), 9)
 	assert_eq(int(s.data()["progress"]["x"]["levels"]["1-02"]["plays"]), 1)
 	_clean()
@@ -166,7 +166,7 @@ func test_stale_tmp_is_used_when_main_file_is_bad_and_removed_after_write() -> v
 	f.close()
 	var s: RefCounted = Save.real("user://test_save_a.json")
 	assert_eq(s.next_level(A), 3)
-	s.record_level(A, "1-04", 3, "drift", true, 1)
+	s.record_level(A, "1-04", 3, true, 1)
 	assert_true(not FileAccess.file_exists("user://test_save_a.json.tmp"), "tmp removed")
 	assert_eq(Save.real("user://test_save_a.json").next_level(A), 4)
 	_clean()
@@ -175,7 +175,7 @@ func test_stale_tmp_is_used_when_main_file_is_bad_and_removed_after_write() -> v
 func test_reset_in_settings_makes_start_begin_at_1_01() -> void:
 	var s: RefCounted = Save.fake()
 	for i in 4:
-		s.record_level(A, "1-0%d" % (i + 1), i, "drift", true, 10)
+		s.record_level(A, "1-0%d" % (i + 1), i, true, 10)
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	tree.root.add_child(main)

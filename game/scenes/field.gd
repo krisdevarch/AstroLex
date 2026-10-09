@@ -2,6 +2,7 @@ extends Node2D
 ## The play field: owns one Round, maps field units to the screen, animates its events and
 ## shows the HUD. All rules live in res://rules/; this file only draws and forwards taps.
 
+const Targeting := preload("res://rules/targeting.gd")
 const RoundScript := preload("res://rules/round.gd")
 const GameData := preload("res://rules/game_data.gd")
 const TileViewScript := preload("res://scenes/tile_view.gd")
@@ -107,18 +108,18 @@ func _n(key: String) -> float:
 
 
 ## Starts a round. Call after the field is in the tree.
-func begin(mode: String, round_no: int, seed_value: int) -> void:
+func begin(round_no: int, seed_value: int) -> void:
 	_tun = GameData.load_tunables()
 	_content = GameData.load_content()
-	game_round = RoundScript.create(_tun, _content, ACT, mode, seed_value, round_no)
+	game_round = RoundScript.create(_tun, _content, ACT, seed_value, round_no)
 	_start(seed_value)
 
 
 ## Starts an authored level (its words in order, its tuning and seed). Call after the field is in the tree.
-func begin_level(mode: String, level: Dictionary) -> void:
+func begin_level(level: Dictionary) -> void:
 	_tun = GameData.load_tunables()
 	_content = GameData.load_content()
-	game_round = RoundScript.create_level(_tun, _content, ACT, level, mode)
+	game_round = RoundScript.create_level(_tun, _content, ACT, level)
 	_level_title = "%s  %s" % [str(level.get("id", "")), str(level.get("title", ""))]
 	_level_t = LEVEL_TITLE_SEC
 	_start(int(level["seed"]))
@@ -154,8 +155,7 @@ func tap(screen_pos: Vector2) -> int:
 	if game_round == null or game_round.state != "play":
 		return -1
 	var margin := _n("tap.marginPx")
-	if game_round.mode == "drift":
-		margin *= _n("tap.driftMarginMul")
+	margin *= _n("tap.driftMarginMul")
 	var best_id := -1
 	var best_d := INF
 	var nearest := INF
@@ -351,20 +351,9 @@ func _autoplay_tick(delta: float) -> void:
 	if game_round.state != "play" or not game_round.shot.is_empty():
 		return
 	_ap_timer = 0.0
-	var need: Dictionary = {}
-	for s in game_round.active:
-		if not s["filled"]:
-			need[s["ch"]] = true
-	var best_id := -1
-	var best_d := INF
-	for t in game_round.tiles:
-		if t.alive and t.plane < 2 and need.has(t.ch):
-			var d: float = t.pos.distance_to(game_round.origin())
-			if d < best_d:
-				best_d = d
-				best_id = t.id
-	if best_id >= 0:
-		game_round.fire(best_id)
+	var id := Targeting.target(game_round)
+	if id >= 0:
+		game_round.fire(id)
 
 
 # --- world -----------------------------------------------------------------------------
@@ -510,9 +499,7 @@ func _apply_events() -> void:
 				var wv: TileViewScript = _views.get(int(e["tile_id"]))
 				if wv != null:
 					wv.flash(0.45)
-				var msg := "Not in the record"
-				if game_round.mode == "pressure":
-					msg += "   −%d air" % int(_n("oxygen.wrongCost"))
+				var msg := "Not in the record   −%d s" % int(_n("burst.wrongCost"))
 				_show_toast(msg, Color(1.0, 0.5, 0.45))
 			"escape":
 				_show_toast("It drifted off", Ui.DIM)
@@ -611,10 +598,9 @@ func _build_hud() -> void:
 	_oxygen_bar.size = Vector2(view_size.x - 2.0 * SIDE_PAD, 22)
 	_oxygen_bar.show_percentage = false
 	_oxygen_bar.min_value = 0.0
-	_oxygen_bar.max_value = _n("oxygen.max")
+	_oxygen_bar.max_value = _n("burst.seconds")
 	_oxygen_bar.add_theme_stylebox_override("background", Ui.box(Color(0.1, 0.13, 0.25), 11))
 	_oxygen_bar.add_theme_stylebox_override("fill", Ui.box(Color(0.35, 0.85, 0.95), 11))
-	_oxygen_bar.visible = game_round.mode == "pressure"
 	_hud.add_child(_oxygen_bar)
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"
@@ -683,7 +669,7 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 func _update_hud() -> void:
 	_score_label.text = "%d" % int(round(game_round.score))
 	_combo_label.text = "×%.1f" % game_round.combo
-	_oxygen_bar.value = game_round.oxygen
+	_oxygen_bar.value = game_round.time_left
 	var akey := "%d:%s" % [game_round.word_index, "".join(game_round.active.map(func(s: Dictionary) -> String: return s["ch"]))]
 	if akey != _active_key:
 		_active_key = akey

@@ -1,6 +1,6 @@
 extends Node
 ## App root: Start screen, Play (the field), End screen, Settings.
-## Autoplay (--autoplay, or ?autoplay=1 on the web) skips Start and plays a Drift round.
+## Autoplay (--autoplay, or ?autoplay=1 on the web) skips Start and plays a burst.
 
 const AppSettings := preload("res://scenes/app_settings.gd")
 const StartScreen := preload("res://scenes/start_screen.gd")
@@ -23,7 +23,6 @@ var levels: Array = []
 var level_index: int = 0
 
 var settings: AppSettings = AppSettings.new()
-var mode: String = "drift"
 var round_no: int = 1
 var autoplay: bool = false
 var screen: Node
@@ -60,7 +59,6 @@ func _ready() -> void:
 	if GlassBench.bench_requested():
 		_show_bench(GlassBench.auto_requested())
 	elif autoplay:
-		mode = "drift"
 		_start_level()
 	else:
 		_show_start()
@@ -84,7 +82,7 @@ func _save_debug_hook() -> void:
 	if q == "" or autoplay or levels.is_empty():
 		return
 	if q.contains("win=1"):
-		save.record_level(ACT, str((levels[0] as Dictionary)["id"]), 0, "drift", true, 100)
+		save.record_level(ACT, str((levels[0] as Dictionary)["id"]), 0, true, 100)
 		_sync_level_index()
 	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
 
@@ -111,13 +109,11 @@ func _show_start() -> void:
 	var s: Control = StartScreen.new()
 	s.name = "StartScreen"
 	s.settings = settings
-	s.mode = mode
 	if _act_done():
 		s.start_label = "Play Act I again"
 	elif not levels.is_empty() and save.has_progress(ACT):
 		s.start_label = "Continue  %s" % str((levels[level_index] as Dictionary)["id"])
-	s.start_pressed.connect(func(m: String) -> void:
-		mode = m
+	s.start_pressed.connect(func() -> void:
 		round_no = 1
 		if _act_done():
 			save.restart_act(ACT)
@@ -179,7 +175,7 @@ func _begin_level_with_comms() -> void:
 func _start_level() -> void:
 	if levels.is_empty():
 		push_error("main: no levels in content.json; playing a free round")
-		_start_round(mode, 1)
+		_start_round(1)
 		return
 	var level: Dictionary = levels[level_index]
 	var f: Node2D = FieldScene.instantiate()
@@ -192,14 +188,14 @@ func _start_level() -> void:
 	f.round_finished.connect(_on_level_finished.bind(level))
 	_swap(f)
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
-	telemetry.begin_round(f, mode, level_index + 1, int(level["seed"]), str(level["id"]))
-	f.begin_level(mode, level)
+	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]))
+	f.begin_level(level)
 
 
 func _on_level_finished(summary: Dictionary, level: Dictionary) -> void:
 	summary["level"] = str(level["id"])
 	var won: bool = summary.get("won", false)
-	save.record_level(ACT, str(level["id"]), level_index, str(summary.get("mode", mode)), won, int(summary.get("score", 0)))
+	save.record_level(ACT, str(level["id"]), level_index, won, int(summary.get("score", 0)))
 	if summary.get("won", false):
 		if level_index >= levels.size() - 1:
 			summary["act_complete"] = true
@@ -225,8 +221,7 @@ func _continue_from(summary: Dictionary) -> void:
 		_start_level()
 
 
-func _start_round(m: String, n: int) -> void:
-	mode = m
+func _start_round(n: int) -> void:
 	round_no = n
 	var f: Node2D = FieldScene.instantiate()
 	f.name = "Field"
@@ -239,8 +234,8 @@ func _start_round(m: String, n: int) -> void:
 	_swap(f)
 	var seed_value := AUTOPLAY_SEED if autoplay else int(Time.get_unix_time_from_system()) ^ Time.get_ticks_usec()
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
-	telemetry.begin_round(f, m, n, seed_value)
-	f.begin(m, n, seed_value)
+	telemetry.begin_round(f, n, seed_value)
+	f.begin(n, seed_value)
 
 
 func _show_end(summary: Dictionary) -> void:
@@ -252,11 +247,5 @@ func _show_end(summary: Dictionary) -> void:
 		if str(summary.get("level", "")) != "":
 			_continue_from(summary)
 		else:
-			_start_round(mode, round_no + 1))
-	s.switch_mode.connect(func() -> void:
-		mode = "pressure" if mode == "drift" else "drift"
-		if str(summary.get("level", "")) != "":
-			_continue_from(summary)
-		else:
-			_start_round(mode, 1))
+			_start_round(round_no + 1))
 	_swap(s)

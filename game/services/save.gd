@@ -1,11 +1,12 @@
 extends RefCounted
 ## Progress save (WP-3.5a). The only code that reads or writes the save file.
-## Format: {version, player_id, updated_at, progress: {act: {next, levels: {id: {best_score, won{mode}, plays}}}}}.
+## Format: {version, player_id, updated_at, progress: {act: {next, levels: {id: {best_score, won{burst}, plays}}}}}.
 ## On the web Godot keeps user:// in the browser's IndexedDB. Save.fake() is in-memory and touches no disk.
 
 const VERSION := 1
 const DEFAULT_PATH := "user://save.json"
-const MODES := ["drift", "pressure"]
+## Older saves recorded a win per mode (drift/pressure); any of them counts as a burst win.
+const LEGACY_MODES := ["drift", "pressure", "burst"]
 
 var path: String = ""
 var _d: Dictionary = {}
@@ -72,7 +73,7 @@ func has_progress(act: String) -> bool:
 	return next_level(act) > 0
 
 
-func record_level(act: String, level_id: String, index: int, mode: String, won: bool, score: int) -> void:
+func record_level(act: String, level_id: String, index: int, won: bool, score: int) -> void:
 	var a := _act(act, true)
 	var levels: Dictionary = a["levels"]
 	levels[level_id] = _level(levels.get(level_id))
@@ -80,7 +81,7 @@ func record_level(act: String, level_id: String, index: int, mode: String, won: 
 	l["plays"] = int(l.get("plays", 0)) + 1
 	if won:
 		l["best_score"] = maxi(int(l.get("best_score", 0)), score)
-		(l["won"] as Dictionary)[mode] = true
+		(l["won"] as Dictionary)["burst"] = true
 		a["next"] = maxi(int(a.get("next", 0)), index + 1)
 	_write()
 
@@ -90,8 +91,10 @@ static func _level(v: Variant) -> Dictionary:
 	var src: Dictionary = v if v is Dictionary else {}
 	var won: Dictionary = {}
 	var sw: Dictionary = src["won"] if src.get("won") is Dictionary else {}
-	for m in MODES:
-		won[m] = sw.get(m, false) == true
+	won["burst"] = false
+	for m in LEGACY_MODES:
+		if sw.get(m, false) == true:
+			won["burst"] = true
 	return {"best_score": _int(src.get("best_score")), "won": won, "plays": _int(src.get("plays"))}
 
 

@@ -1,0 +1,91 @@
+{
+  "$schema": "./levels.schema.json",
+  "status": "draft",
+  "act": "act4_core",
+  "levels": [
+    {
+      "id": "4-01", "order": 1, "title": "Channel Open", "beat": "Opening: the crew gather, even VANTA; no jokes for one beat, then Ade makes one.",
+      "pacing": "teach", "words": ["war", "verb", "noun"], "seed": 4101, "babel": true,
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.11, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-02", "order": 2, "title": "Small Signals", "beat": "Teach: short words return.",
+      "pacing": "teach", "words": ["mind", "song", "star"], "seed": 4102, "babel": true,
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.112, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-03", "order": 3, "title": "First Colour", "beat": "Core: a colour from Act I comes back.",
+      "pacing": "core", "words": ["word", "echo", "mouth"], "seed": 4103, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.114, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-04", "order": 4, "title": "Night Side", "beat": "Core: combined hazards begin.",
+      "pacing": "core", "words": ["night", "dream", "earth"], "seed": 4104, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.115, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-05", "order": 5, "title": "Hearth", "beat": "Core: heart and quiet.",
+      "pacing": "core", "words": ["child", "heart", "quiet"], "seed": 4105, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.117, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-06", "order": 6, "title": "Held Breath", "beat": "Rest: a pause before Babel confronts.",
+      "pacing": "rest", "words": ["sound", "noise", "breath"], "seed": 4106, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.119, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-07", "order": 7, "title": "Say It", "beat": "Core: first four-word level; Babel confronts.",
+      "pacing": "core", "words": ["voice", "speak", "story", "reply"], "seed": 4107, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.121, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-08", "order": 8, "title": "Far Orbit", "beat": "Core: colours of Act II return.",
+      "pacing": "core", "words": ["shout", "orbit", "ocean", "sorry"], "seed": 4108, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.123, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-09", "order": 9, "title": "Kin", "beat": "Core: people words.",
+      "pacing": "core", "words": ["tongue", "friend", "mother", "murmur"], "seed": 4109, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.125, "plane.backTiles": 8, "thief.interval": 5},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-10", "order": 10, "title": "Call and Answer", "beat": "Core: signals cross.",
+      "pacing": "core", "words": ["answer", "signal", "thought", "whisper"], "seed": 4110, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.126, "plane.backTiles": 9, "thief.interval": 4},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-11", "order": 11, "title": "The Hush", "beat": "Late: silent, and a sentence for Babel.",
+      "pacing": "core", "words": ["silent", "morning", "sentence", "question"], "seed": 4111, "babel": true,
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.128, "plane.backTiles": 9, "thief.interval": 4},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "4-12", "order": 12, "title": "Listen", "beat": "Encounter: the last words are the Catcher name, then LISTEN; Babel chooses; every colour floods back.",
+      "pacing": "encounter", "words": ["name", "listen"], "seed": 4112, "babel": true,
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.13, "plane.backTiles": 9, "thief.interval": 4},
+      "commsBefore": [],
+      "commsAfter": []
+    }
+  ]
+}
