@@ -351,11 +351,15 @@ func _trim_surplus() -> void:
 
 
 func _ensure_decoys() -> void:
-	var want := int(ramp()["decoys"])
 	var n := 0
+	var real := 0
 	for t: Tile in tiles:
-		if t.plane < 2 and t.decoy:
-			n += 1
+		if t.plane < 2:
+			if t.decoy:
+				n += 1
+			elif t.alive:
+				real += 1
+	var want := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
 	var excluded := _word_letters()
 	while n < want:
 		_spawn(_weighted_letter(excluded), true, _pick_plane())

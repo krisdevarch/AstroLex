@@ -25,3 +25,5 @@ Owner feedback: the comms before a level named the words to catch, so the level 
 | Check is tested | pass | `pytest tools/tests/test_levels.py` (2 new tests); `pytest tools` 43 passed | `tools/tests/test_levels.py` |
 | Game data re-exported, game still runs | pass | `export_game_data`; `scripts/godot/test.sh` 101 passed; web smoke autoplay won | `game/data/content.json` |
 | After merging the 48-level beta: Acts II-IV pass the same check | pass | `python -m astrolex_tools.levels` ok after renaming 8 titles (2-09, 3-09, 4-02, 4-04, 4-06, 4-08, 4-10, 4-12); Godot tests 130 passed; web smoke won | `data/levels/act{2,3,4}_*.json` |
+| Normal mode: at least one decoy per real catchable letter (`spawner.decoyRatio` 1.0, cap `ramp.decoyMax` 14; Easy x0.6, Hard x1.4) | pass | `test_decoy_ratio_keeps_decoys_level_with_real_letters` (50 seeds, all acts); Godot tests 131 passed; web smoke won | `game/rules/round.gd`, `data/tunables/game.json` |
+| Ghost-letter hint defaults to none; a hint saved by an older build is ignored | pass | `test_hint_defaults_to_none_and_round_trips` | `game/scenes/app_settings.gd` |

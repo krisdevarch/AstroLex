@@ -5,6 +5,8 @@ const Bot := preload("res://tests/rules/bot.gd")
 const GameData := preload("res://rules/game_data.gd")
 const LetterPool := preload("res://rules/letter_pool.gd")
 
+const NO_RATIO := {"set": {"spawner.decoyRatio": 0}}
+
 var _tun: Dictionary = GameData.load_tunables()
 var _content: Dictionary = GameData.load_content()
 
@@ -74,7 +76,7 @@ func test_create_picks_distinct_words_and_slots() -> void:
 
 
 func test_spawns_exactly_the_needed_letters_plus_decoys_and_back_tiles() -> void:
-	var r := _make(4)
+	var r := _make(4, 1, "act1_low_orbit", [NO_RATIO])
 	var need := LetterPool.count(r.words[0] + r.words[1])
 	var real := {}
 	var decoys := 0
@@ -150,18 +152,35 @@ func test_drift_speed_is_within_the_variation_band_and_ramps() -> void:
 
 
 func test_ramp_numbers() -> void:
-	var r1 := _make(1, 1).ramp()
+	var r1 := _make(1, 1, "act1_low_orbit", [NO_RATIO]).ramp()
 	assert_eq(r1["decoys"], 4)
 	assert_true(absf(r1["drift"] - 1.0) < 1e-9)
-	var r3 := _make(1, 3).ramp()
+	var r3 := _make(1, 3, "act1_low_orbit", [NO_RATIO]).ramp()
 	assert_eq(r3["decoys"], 6)
 	assert_true(absf(r3["drift"] - 1.16) < 1e-9, "drift")
-	assert_eq(_make(1, 20).ramp()["decoys"], 8)
+	assert_eq(_make(1, 20, "act1_low_orbit", [NO_RATIO]).ramp()["decoys"], 14)
 	var decoys := 0
-	for t in _make(1, 20).tiles:
+	for t in _make(1, 20, "act1_low_orbit", [NO_RATIO]).tiles:
 		if t.plane < 2 and t.decoy:
 			decoys += 1
-	assert_eq(decoys, 8)
+	assert_eq(decoys, 14)
+
+
+func test_decoy_ratio_keeps_decoys_level_with_real_letters() -> void:
+	for seed_value in 50:
+		var r := _make(seed_value, 1 + seed_value % 5, ["act1_low_orbit", "act2_nebula", "act3_tower", "act4_core"][seed_value % 4])
+		var real := 0
+		var decoys := 0
+		for t in r.tiles:
+			if t.plane < 2:
+				if t.decoy:
+					decoys += 1
+				else:
+					real += 1
+		var cap := int(_tun["ramp.decoyMax"])
+		assert_eq(decoys, maxi(r.ramp()["decoys"], mini(cap, ceili(float(_tun["spawner.decoyRatio"]) * real))), "decoys seed %d" % seed_value)
+		assert_true(decoys >= mini(cap, real), "decoys >= real (capped)")
+		_assert_no_word_letter_decoys(r)
 
 
 func test_catch_active_slot() -> void:
@@ -258,7 +277,7 @@ func test_surplus_real_copy_and_word_letter_decoy_dissolve_after_next_catch() ->
 	var first := ""
 	var other := ""
 	for seed_value in range(15, 80):
-		r = _make(seed_value)
+		r = _make(seed_value, 1, "act1_low_orbit", [NO_RATIO])
 		first = r.words[0][0]
 		other = ""
 		for s in r.active:
@@ -420,7 +439,7 @@ func test_mods_apply_set_then_mul_then_add_in_order() -> void:
 	var r := _make(1, 1, "act1_low_orbit", mods)
 	assert_eq(r.time_left, 22.5, "((20*2)+5)*0.5")
 	assert_eq(float(_tun["burst.seconds"]), 30.0, "base untouched")
-	var d := _make(1, 1, "act1_low_orbit", [{"add": {"spawner.decoys": -10}}])
+	var d := _make(1, 1, "act1_low_orbit", [{"add": {"spawner.decoys": -10}, "set": {"spawner.decoyRatio": 0}}])
 	var n := 0
 	for t in d.tiles:
 		if t.plane < 2 and t.decoy:

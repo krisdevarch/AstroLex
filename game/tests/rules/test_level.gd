@@ -40,8 +40,8 @@ func _spawn_stats(r: Round, events: Array[Dictionary]) -> Dictionary:
 
 
 func test_tuning_overrides() -> void:
-	var base := _make(_level())
-	var tuned := _make(_level({"tuning": {"spawner.decoys": 7, "drift.speed": 0.3}}))
+	var base := _make(_level({"tuning": {"spawner.decoyRatio": 0}}))
+	var tuned := _make(_level({"tuning": {"spawner.decoys": 7, "spawner.decoyRatio": 0, "drift.speed": 0.3}}))
 	assert_eq(_spawn_stats(base, base.drain_events())["decoys"], int(_tun["spawner.decoys"]), "base decoys")
 	assert_eq(_spawn_stats(tuned, tuned.drain_events())["decoys"], 7, "tuned decoys")
 	assert_eq(float(_tun["drift.speed"]), 0.1, "base tunables untouched")
