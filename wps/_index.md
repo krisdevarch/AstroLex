@@ -56,6 +56,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026); follow-ups merged: AstroLex loading screen (#13), blank back plane (#14, #15), playtest monitoring and dashboard (#15, #18), word hints (#21) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md`, `docs/PROJECT-BRIEF.md` |
 | WP-3.G | Glass-tile spike: glass as a fourth tile look, frame-rate readout and a 20-tile bench (O-22 gate) | godot-dev | done (9 Oct 2026): glass and bubble looks merged (#25 to #27); **frame-rate gate passed** on the owner's iPhone, bubble with 40 tiles at 59.7 fps (p95 16.7 ms). Opaque looks removed; Bubble is the default, Glass the other choice | `reports/WP-3.G/evidence.md` |
 | WP-3.7 | Story bible v1: world rules, characters, act beats, twist, ending; wordless Prologue; Babel and comms samples | story-writer | drafted (9 Oct 2026), awaiting owner approval | `reports/WP-3.7/evidence.md` |
+| WP-3.T | Babel throws the round's letters from a rift at round start (owner ask, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.T/evidence.md` |
 
 ## Review queue (cap 4)
 

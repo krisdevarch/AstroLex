@@ -11,6 +11,7 @@ func _make(hint: String) -> Node2D:
 	f.settings.hint = hint
 	tree.root.add_child(f)
 	f.begin("drift", 1, 12345)
+	f.skip_intro()
 	f.advance(1.0 / 60.0)
 	return f
 

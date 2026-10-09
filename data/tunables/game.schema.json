@@ -32,6 +32,12 @@
     "ramp.drainStep",
     "babel.showSeconds",
     "babel.minLineLetters",
+    "babel.throwOriginX",
+    "babel.throwOriginY",
+    "babel.throwSec",
+    "babel.throwStagger",
+    "babel.throwOvershoot",
+    "babel.riftRadius",
     "sim.stepSec",
     "field.height",
     "field.topMargin",
@@ -199,6 +205,36 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds a Babel line stays on screen"
+    },
+    "babel.throwOriginX": {
+      "type": "number",
+      "minimum": 0,
+      "description": "rift x in field units (1 = field width)"
+    },
+    "babel.throwOriginY": {
+      "type": "number",
+      "minimum": 0,
+      "description": "rift y in field units"
+    },
+    "babel.throwSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds one thrown tile takes to land (also the reduced-motion fade)"
+    },
+    "babel.throwStagger": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds between consecutive tile launches"
+    },
+    "babel.throwOvershoot": {
+      "type": "number",
+      "minimum": 0,
+      "description": "back-ease overshoot of a thrown tile"
+    },
+    "babel.riftRadius": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Babel rift core radius in field units"
     },
     "babel.minLineLetters": {
       "type": "integer",
