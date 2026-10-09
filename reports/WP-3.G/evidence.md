@@ -23,3 +23,23 @@ Owner's iPhone (Safari), bench at 20 glass tiles: the tiles drew **black** and t
 | `scripts/godot/test.sh` | 72 passed, 0 failed | – |
 | `smoke.cjs --bench` (software GL) | `avg=35.6 fps p50=27.2 ms p95=36.2 ms` (was 29.5 fps on the same machine) | `glass-bench-sky.png` |
 | Owner phone re-test | pending | – |
+
+## Round 3 (9 Oct 2026): clear glass from the owner's reference
+
+The owner sent an Apple Liquid Glass reference (a clear sphere over a grid) and asked for the letters to match it. Changes: no frost (`glass.frost` 0), almost no blur (`glass.blur` 0.05), a lens zone at the rim that samples from further in so the sky and stars bend (`glass.refractPx` 24), a thin bright rim (cool on the left, warm on the right), a faint milky lift (`glass.milk` 0.08), a soft glow inside the top edge, accent edge cut to 0.15 and a lighter shadow. Stars are now baked into a texture (`tile_textures.stars()`) that both the backdrop and the glass sample, so stars bend at a tile's rim. The glyph stays white with a softer halo: a black glyph, as in the reference, would vanish on the dark sky.
+
+| Check | Result | Artefact |
+|---|---|---|
+| `scripts/godot/test.sh` | 72 passed, 0 failed | – |
+| `smoke.cjs --bench` (software GL) | `avg=36.0 fps p50=27.3 ms p95=31.3 ms` | `glass-clear.png` |
+| Rounder corners (owner, 9 Oct): glass corner radius 24 → 38 of 61 px half-width | 72 passed; bench `avg=35.7 fps` | `glass-round.png` |
+
+## Round 4 (9 Oct 2026): bubble look
+
+The owner asked whether bubbles would look cooler. Added `bubble` as a fifth look (Settings and bench): the same glass shader with a circular shape (`corner` = half width), a lens across most of the ball, a thin-film rainbow rim that drifts slowly, a bright highlight spot up and to the left, and a gentle wobble instead of tilt (a sphere looks the same from any angle). The bench takes `?look=bubble` (and `smoke.cjs --look=bubble`).
+
+| Check | Result | Artefact |
+|---|---|---|
+| `scripts/godot/test.sh` | 73 passed, 0 failed (new `test_tile_view_bubble_is_round_and_untilted`) | – |
+| `smoke.cjs --bench --look=bubble` (software GL) | `avg=33.1 fps p50=29.3 ms p95=33.3 ms` | `bubbles.png` |
+| Bigger bubbles, same letters (owner, 9 Oct): `glass.bubbleScale` 1.25; visual only, the catch radius is unchanged | 73 passed; bench `avg=30.9 fps p95=40.0 ms` (software GL) | `bubbles-big.png` |

@@ -15,7 +15,7 @@ const Ui := preload("res://scenes/ui.gd")
 signal closed
 
 const COUNTS: Array[int] = [20, 30, 40]
-const LOOKS: Array[String] = ["glass", "tilt", "flat"]
+const LOOKS: Array[String] = ["glass", "bubble", "tilt", "flat"]
 const TEST_SEC := 10.0
 const WARMUP_SEC := 1.0
 const PASS_FPS := 58.0
@@ -62,6 +62,20 @@ static func auto_requested() -> bool:
 	return false
 
 
+## Starting look from ?look=<name> (web) or --look=<name>; empty when absent or unknown.
+static func look_requested() -> String:
+	var src := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--look="):
+			src = a.substr(7)
+	if src == "" and OS.has_feature("web"):
+		var q := str(JavaScriptBridge.eval("window.location.search"))
+		var i := q.find("look=")
+		if i >= 0:
+			src = q.substr(i + 5).get_slice("&", 0)
+	return src if LOOKS.has(src) else ""
+
+
 ## Pure: summary of a list of frame times (seconds). Pass needs avg >= 58 fps and p95 <= 20 ms.
 static func compute_result(frames: Array, p_treatment: String, tiles: int) -> Dictionary:
 	var total := 0.0
@@ -98,6 +112,9 @@ func _ready() -> void:
 	world.add_child(_tiles_root)
 	_meter = FpsMeter.new()
 	add_child(_meter)
+	var asked := look_requested()
+	if asked != "":
+		treatment = asked
 	_build_ui()
 	_rebuild_tiles()
 	if auto:

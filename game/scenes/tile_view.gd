@@ -35,6 +35,7 @@ var _anim_dur: float = 1.0
 var _from: Vector2 = Vector2.ZERO
 var _to: Vector2 = Vector2.ZERO
 var _to_scale: float = 1.0
+var _body_scale: Vector2 = Vector2.ONE
 
 
 func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_treatment: String, p_reduced: bool, tun: Dictionary, p_phase: float) -> void:
@@ -46,10 +47,17 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_tun = tun
 	_phase = p_phase
 	var k := size_px / float(TileTextures.SIZE)
+	if p_treatment == "bubble":
+		k *= float(tun["glass.bubbleScale"])  # bigger ball, same letter size
 	body.scale = Vector2(k, k)
+	_body_scale = body.scale
 	_mat = ShaderMaterial.new()
-	if treatment == "glass":
-		body.texture = TileTextures.glass_mask()
+	if is_glass():
+		var round_shape := treatment == "bubble"
+		body.texture = TileTextures.glass_mask(TileTextures.HALF if round_shape else TileTextures.GLASS_CORNER)
+		_mat.set_shader_parameter("corner", TileTextures.HALF if round_shape else TileTextures.GLASS_CORNER)
+		_mat.set_shader_parameter("lens_width", TileTextures.HALF * 0.75 if round_shape else 26.0)
+		_mat.set_shader_parameter("bubble", round_shape)
 		_mat.shader = GLASS_SHADER
 		_mat.set_shader_parameter("unlit_gain", GLASS_GAIN)
 		_mat.set_shader_parameter("accent", GLASS_ACCENT)
@@ -61,13 +69,16 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 		_mat.set_shader_parameter("chroma", float(_tun["glass.chroma"]))
 		_mat.set_shader_parameter("grain", float(_tun["glass.grain"]))
 		_mat.set_shader_parameter("sky_tex", TileTextures.sky())
+		_mat.set_shader_parameter("stars_tex", TileTextures.stars())
+		_mat.set_shader_parameter("milk", float(_tun["glass.milk"]))
+		shadow.modulate.a = 0.45  # clear glass casts a faint shadow
 		_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
 		body.light_mask = 2
 	else:
 		body.texture = TileTextures.body("bevel" if treatment == "bevel" else "tilt")
 		_mat.shader = TILE_SHADER
 	body.material = _mat
-	shadow.texture = TileTextures.shadow()
+	shadow.texture = TileTextures.shadow(_shadow_corner())
 	shadow.scale = body.scale
 	shadow.position = Vector2(0.4, 1.0) * float(_tun["tile.shadowOffset"]) * plane_scale
 	shadow.light_mask = 2
@@ -80,14 +91,24 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.position = -glyph.size * 0.5
 	glyph.pivot_offset = glyph.size * 0.5
 	glyph.add_theme_font_size_override("font_size", int(size_px * 0.62))
-	if treatment == "glass":
+	if is_glass():
 		# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 		glyph.add_theme_color_override("font_color", Color.WHITE)
-		glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.95))
-		glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.055)))
+		glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
+		glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
 		glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
 	else:
 		glyph.add_theme_color_override("font_color", GLYPH_COLOR)
+
+
+func is_glass() -> bool:
+	return treatment == "glass" or treatment == "bubble"
+
+
+func _shadow_corner() -> float:
+	if treatment == "bubble":
+		return TileTextures.HALF - 8.0  # the shadow is inset by 8 px, so this makes it a circle
+	return TileTextures.GLASS_CORNER if treatment == "glass" else TileTextures.CORNER
 
 
 ## Back plane: blank debris (a shard, no letter). Dim, desaturated, unlit, shadowless, never tilted.
@@ -98,7 +119,7 @@ func set_back(alpha: float, desaturate: float) -> void:
 	body.rotation = fposmod(_phase, TAU)
 	shadow.visible = false
 	body.light_mask = 2
-	if treatment == "glass":
+	if is_glass():
 		body.texture = TileTextures.shard()
 		_mat.set_shader_parameter("shard", true)
 		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
@@ -114,6 +135,15 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		return
 	position = screen_pos
 	var tilt := Vector2.ZERO
+	if treatment == "bubble":
+		# A sphere looks the same from any angle, so no tilt: the bubble wobbles instead.
+		if not reduced_motion and not is_back:
+			var wob := 0.03 * sin(time * 2.3 + _phase * 2.0)
+			body.scale = _body_scale * Vector2(1.0 + wob, 1.0 - wob)
+			_mat.set_shader_parameter("bubble_time", time + _phase)
+		current_tilt = Vector2.ZERO
+		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
+		return
 	if treatment != "flat" and not reduced_motion and not is_back:
 		var maxd: float = _tun["tile.maxTiltDeg"]
 		var sway_deg: float = _tun["tile.swayDeg"]

@@ -13,6 +13,8 @@ const args = process.argv.slice(2);
 const AUTOPLAY = args.includes('--autoplay');
 // --bench loads ?bench=1&auto=1, waits for the "AstroLex bench:" result line and screenshots the bench.
 const BENCH = args.includes('--bench');
+// --look=<glass|bubble|tilt|flat> picks the bench's starting look.
+const LOOK = (args.find((a) => a.startsWith('--look=')) || '').slice('--look='.length);
 // --browser=webkit runs Safari's engine with an iPhone profile; --url=<https://...> tests a deployed build.
 const BROWSER = (args.find((a) => a.startsWith('--browser=')) || '--browser=chromium').split('=')[1];
 const REMOTE = (args.find((a) => a.startsWith('--url=')) || '').slice('--url='.length);
@@ -35,7 +37,7 @@ const server = http.createServer((req, res) => {
 (async () => {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = REMOTE || `http://127.0.0.1:${server.address().port}/index.html`;
-  const url = base + (BENCH ? (base.includes('?') ? '&' : '?') + 'bench=1&auto=1' : AUTOPLAY ? (base.includes('?') ? '&' : '?') + 'autoplay=1' : '');
+  const url = base + (BENCH ? (base.includes('?') ? '&' : '?') + 'bench=1&auto=1' + (LOOK ? '&look=' + LOOK : '') : AUTOPLAY ? (base.includes('?') ? '&' : '?') + 'autoplay=1' : '');
   const browser = BROWSER === 'webkit'
     ? await webkit.launch()
     : await chromium.launch({

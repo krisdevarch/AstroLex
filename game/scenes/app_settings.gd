@@ -2,7 +2,7 @@ extends RefCounted
 ## Player settings saved in user://settings.cfg (ConfigFile). Tile treatment per O-22.
 
 const PATH := "user://settings.cfg"
-const TREATMENTS: Array[String] = ["flat", "tilt", "bevel", "glass"]
+const TREATMENTS: Array[String] = ["flat", "tilt", "bevel", "glass", "bubble"]
 const HINTS: Array[String] = ["full", "edges", "none"]
 const HINT_LABELS: Dictionary = {"full": "All letters", "edges": "First and last letter", "none": "No letters"}
 

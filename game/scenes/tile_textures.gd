@@ -5,6 +5,8 @@ extends RefCounted
 const SIZE := 128
 const HALF := 61.0
 const CORNER := 24.0
+## Glass tiles are rounder (owner, 9 Oct). Keep in step with GLASS_CORNER in glass.gdshader.
+const GLASS_CORNER := 38.0
 const BASE := Color(0.94, 0.92, 0.84)
 
 static var _cache: Dictionary = {}
@@ -42,16 +44,18 @@ static func shard() -> Texture2D:
 
 
 ## White rounded-square mask for the glass shader (it computes its own bevel from the UV).
-static func glass_mask() -> Texture2D:
-	if _cache.has("glass_mask"):
-		return _cache["glass_mask"]
+## corner = HALF gives a circle (the bubble look).
+static func glass_mask(corner: float = GLASS_CORNER) -> Texture2D:
+	var key := "glass_mask_%d" % int(corner)
+	if _cache.has(key):
+		return _cache[key]
 	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
 	for y in SIZE:
 		for x in SIZE:
-			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF, CORNER)
+			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF, corner)
 			img.set_pixel(x, y, Color(1, 1, 1, clampf(0.5 - d, 0.0, 1.0)))
 	var tex := ImageTexture.create_from_image(img)
-	_cache["glass_mask"] = tex
+	_cache[key] = tex
 	return tex
 
 
@@ -90,17 +94,45 @@ static func sky() -> Texture2D:
 	return tex
 
 
-static func shadow() -> Texture2D:
-	if _cache.has("shadow"):
-		return _cache["shadow"]
+## Baked stars (transparent, 540x960, mipmapped). The backdrop draws it full screen and the glass
+## samples it, so stars bend at a glass tile's rim.
+static func stars() -> Texture2D:
+	if _cache.has("stars"):
+		return _cache["stars"]
+	var w := 540
+	var h := 960
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 424242
+	for i in 110:
+		var c := Vector2(rng.randf() * w, rng.randf() * h)
+		var b := rng.randf_range(0.25, 0.9)
+		var r := rng.randf_range(0.6, 1.6)
+		for y in range(int(c.y - r - 1.0), int(c.y + r + 2.0)):
+			for x in range(int(c.x - r - 1.0), int(c.x + r + 2.0)):
+				if x < 0 or y < 0 or x >= w or y >= h:
+					continue
+				var a := clampf(r + 0.5 - Vector2(x + 0.5, y + 0.5).distance_to(c), 0.0, 1.0)
+				if a > 0.0:
+					img.set_pixel(x, y, Color(0.7 * b, 0.8 * b, b, a))
+	img.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(img)
+	_cache["stars"] = tex
+	return tex
+
+
+static func shadow(corner: float = CORNER) -> Texture2D:
+	var key := "shadow_%d" % int(corner)
+	if _cache.has(key):
+		return _cache[key]
 	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
 	for y in SIZE:
 		for x in SIZE:
-			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF - 8.0, CORNER)
+			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF - 8.0, corner)
 			var a := clampf(0.5 - d / 16.0, 0.0, 1.0)
 			img.set_pixel(x, y, Color(0, 0, 0, a * a * 0.6))
 	var tex := ImageTexture.create_from_image(img)
-	_cache["shadow"] = tex
+	_cache[key] = tex
 	return tex
 
 

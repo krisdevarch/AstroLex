@@ -54,6 +54,8 @@
     "glass.edgeTint",
     "glass.chroma",
     "glass.grain",
+    "glass.milk",
+    "glass.bubbleScale",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -307,6 +309,18 @@
       "minimum": 0,
       "maximum": 1,
       "description": "glass tile: colour fringe at the bevel (red and blue split)"
+    },
+    "glass.bubbleScale": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 2,
+      "description": "bubble look: ball size relative to the tile (the letter keeps its size; visual only, the catch radius is unchanged)"
+    },
+    "glass.milk": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: faint milky lift of the clear glass"
     },
     "glass.grain": {
       "type": "number",
