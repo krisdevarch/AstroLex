@@ -32,3 +32,4 @@ The owner sent an Apple Liquid Glass reference (a clear sphere over a grid) and 
 |---|---|---|
 | `scripts/godot/test.sh` | 72 passed, 0 failed | – |
 | `smoke.cjs --bench` (software GL) | `avg=36.0 fps p50=27.3 ms p95=31.3 ms` | `glass-clear.png` |
+| Rounder corners (owner, 9 Oct): glass corner radius 24 → 38 of 61 px half-width | 72 passed; bench `avg=35.7 fps` | `glass-round.png` |

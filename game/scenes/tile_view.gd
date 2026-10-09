@@ -70,7 +70,7 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 		body.texture = TileTextures.body("bevel" if treatment == "bevel" else "tilt")
 		_mat.shader = TILE_SHADER
 	body.material = _mat
-	shadow.texture = TileTextures.shadow()
+	shadow.texture = TileTextures.shadow(TileTextures.GLASS_CORNER if treatment == "glass" else TileTextures.CORNER)
 	shadow.scale = body.scale
 	shadow.position = Vector2(0.4, 1.0) * float(_tun["tile.shadowOffset"]) * plane_scale
 	shadow.light_mask = 2

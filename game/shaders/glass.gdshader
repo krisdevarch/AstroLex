@@ -31,7 +31,7 @@ uniform float max_lod = 3.0;  // the sky is 108x192, so three mip levels is alre
 uniform bool shard = false;               // back plane: small frosted shard, no glyph
 
 const float HALF = 61.0;
-const float CORNER = 24.0;
+const float CORNER = 38.0;  // rounder than the opaque tiles; matches TileTextures.GLASS_CORNER
 const float BEVEL = 26.0;  // width of the lens zone at the rim, in texture px
 
 void vertex() {

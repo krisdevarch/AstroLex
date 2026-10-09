@@ -5,6 +5,8 @@ extends RefCounted
 const SIZE := 128
 const HALF := 61.0
 const CORNER := 24.0
+## Glass tiles are rounder (owner, 9 Oct). Keep in step with GLASS_CORNER in glass.gdshader.
+const GLASS_CORNER := 38.0
 const BASE := Color(0.94, 0.92, 0.84)
 
 static var _cache: Dictionary = {}
@@ -48,7 +50,7 @@ static func glass_mask() -> Texture2D:
 	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
 	for y in SIZE:
 		for x in SIZE:
-			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF, CORNER)
+			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF, GLASS_CORNER)
 			img.set_pixel(x, y, Color(1, 1, 1, clampf(0.5 - d, 0.0, 1.0)))
 	var tex := ImageTexture.create_from_image(img)
 	_cache["glass_mask"] = tex
@@ -117,17 +119,18 @@ static func stars() -> Texture2D:
 	return tex
 
 
-static func shadow() -> Texture2D:
-	if _cache.has("shadow"):
-		return _cache["shadow"]
+static func shadow(corner: float = CORNER) -> Texture2D:
+	var key := "shadow_%d" % int(corner)
+	if _cache.has(key):
+		return _cache[key]
 	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
 	for y in SIZE:
 		for x in SIZE:
-			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF - 8.0, CORNER)
+			var d := _sdf(Vector2(x + 0.5, y + 0.5) - Vector2(SIZE, SIZE) * 0.5, HALF - 8.0, corner)
 			var a := clampf(0.5 - d / 16.0, 0.0, 1.0)
 			img.set_pixel(x, y, Color(0, 0, 0, a * a * 0.6))
 	var tex := ImageTexture.create_from_image(img)
-	_cache["shadow"] = tex
+	_cache[key] = tex
 	return tex
 
 
