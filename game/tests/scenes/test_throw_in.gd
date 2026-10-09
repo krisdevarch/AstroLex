@@ -63,3 +63,15 @@ func test_reduced_motion_has_no_travel() -> void:
 	var t = f.game_round.tiles[0]
 	assert_true((f._views[t.id] as Node2D).modulate.a < 1.0, "tiles are still fading in")
 	f.free()
+
+
+func test_rift_freed_and_autoplay_waits_for_the_throw() -> void:
+	var f := _make()
+	f.autoplay = true
+	for _i in 30:
+		f.advance(1.0 / 60.0)
+	assert_eq(int(f.game_round.stats["catches"]), 0, "autoplay fires nothing during the throw")
+	assert_true(f._rift != null, "rift shown during the throw")
+	_run_intro(f)
+	assert_true(f._rift == null, "rift freed when the throw ends")
+	f.free()

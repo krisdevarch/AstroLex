@@ -27,6 +27,12 @@ const PREVIEW_SIZE := 52.0
 const SIDE_PAD := 40.0
 const BAND_Y := 372.0
 const BAND_H := 120.0
+# Babel's throw: look of a single flight (timing and origin are tunables under babel.*).
+const THROW_START_SCALE := 0.15
+const THROW_WOBBLE := 0.12
+const THROW_WOBBLE_HZ := 40.0
+const THROW_FLARE_SEC := 0.12
+const THROW_TAIL := 0.25  # rift fade after the last landing, as a share of babel.throwSec
 
 signal round_finished(summary: Dictionary)
 ## Every rules event, as the field applies it (for telemetry and other listeners).
@@ -206,6 +212,10 @@ func intro_active() -> bool:
 func _start_intro(seed_value: int) -> void:
 	if not intro_enabled:
 		return
+	if _rift != null:
+		_rift.queue_free()
+		_rift = null
+	_intro_order.clear()
 	var ids: Array = []
 	for t in game_round.tiles:
 		ids.append(t.id)
@@ -249,7 +259,7 @@ func skip_intro() -> void:
 
 func _tick_intro(delta: float) -> void:
 	_intro_t += delta
-	if _intro_t >= _intro_dur + _n("babel.throwSec") * 0.25:
+	if _intro_t >= _intro_dur + _n("babel.throwSec") * THROW_TAIL:
 		skip_intro()
 		return
 	_sync_views()
@@ -282,13 +292,13 @@ func _pose_intro() -> void:
 		var e := 1.0 + (s + 1.0) * w * w * w + s * w * w  # back ease-out
 		v.position = origin.lerp(real, e)
 		var grow := clampf(u * 2.0, 0.0, 1.0)
-		var wobble := 0.12 * sin(PI * clampf((u - 0.7) / 0.3, 0.0, 1.0)) * sin(u * 40.0)
-		v.scale = Vector2.ONE * lerpf(0.15, 1.0, grow) * (1.0 + wobble)
+		var wobble := THROW_WOBBLE * sin(PI * clampf((u - 0.7) / 0.3, 0.0, 1.0)) * sin(u * THROW_WOBBLE_HZ)
+		v.scale = Vector2.ONE * lerpf(THROW_START_SCALE, 1.0, grow) * (1.0 + wobble)
 		v.modulate.a = base_a * clampf(u * 4.0, 0.0, 1.0)
-		if _intro_t - start < 0.12:
+		if _intro_t - start < THROW_FLARE_SEC:
 			flare = 1.0
 	if _rift != null:
-		var rest := clampf((_intro_dur + throw_sec * 0.25 - _intro_t) / (throw_sec * 0.25), 0.0, 1.0)
+		var rest := clampf((_intro_dur + throw_sec * THROW_TAIL - _intro_t) / (throw_sec * THROW_TAIL), 0.0, 1.0)
 		_rift.flare = flare
 		_rift.fade = minf(1.0, rest) if not settings.reduced_motion else 1.0
 		_rift.t = _time
