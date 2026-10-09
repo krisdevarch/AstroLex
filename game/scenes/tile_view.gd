@@ -61,6 +61,9 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 		_mat.set_shader_parameter("chroma", float(_tun["glass.chroma"]))
 		_mat.set_shader_parameter("grain", float(_tun["glass.grain"]))
 		_mat.set_shader_parameter("sky_tex", TileTextures.sky())
+		_mat.set_shader_parameter("stars_tex", TileTextures.stars())
+		_mat.set_shader_parameter("milk", float(_tun["glass.milk"]))
+		shadow.modulate.a = 0.45  # clear glass casts a faint shadow
 		_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
 		body.light_mask = 2
 	else:
@@ -83,8 +86,8 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	if treatment == "glass":
 		# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 		glyph.add_theme_color_override("font_color", Color.WHITE)
-		glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.95))
-		glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.055)))
+		glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
+		glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
 		glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
 	else:
 		glyph.add_theme_color_override("font_color", GLYPH_COLOR)

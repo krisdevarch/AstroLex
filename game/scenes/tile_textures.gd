@@ -90,6 +90,33 @@ static func sky() -> Texture2D:
 	return tex
 
 
+## Baked stars (transparent, 540x960, mipmapped). The backdrop draws it full screen and the glass
+## samples it, so stars bend at a glass tile's rim.
+static func stars() -> Texture2D:
+	if _cache.has("stars"):
+		return _cache["stars"]
+	var w := 540
+	var h := 960
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 424242
+	for i in 110:
+		var c := Vector2(rng.randf() * w, rng.randf() * h)
+		var b := rng.randf_range(0.25, 0.9)
+		var r := rng.randf_range(0.6, 1.6)
+		for y in range(int(c.y - r - 1.0), int(c.y + r + 2.0)):
+			for x in range(int(c.x - r - 1.0), int(c.x + r + 2.0)):
+				if x < 0 or y < 0 or x >= w or y >= h:
+					continue
+				var a := clampf(r + 0.5 - Vector2(x + 0.5, y + 0.5).distance_to(c), 0.0, 1.0)
+				if a > 0.0:
+					img.set_pixel(x, y, Color(0.7 * b, 0.8 * b, b, a))
+	img.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(img)
+	_cache["stars"] = tex
+	return tex
+
+
 static func shadow() -> Texture2D:
 	if _cache.has("shadow"):
 		return _cache["shadow"]

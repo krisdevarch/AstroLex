@@ -11,6 +11,8 @@ shader_type canvas_item;
 uniform sampler2D sky_tex : filter_linear_mipmap, repeat_disable;
 uniform float chroma : hint_range(0.0, 1.0) = 0.35;  // colour fringe at the bevel
 uniform float grain : hint_range(0.0, 1.0) = 0.05;
+uniform sampler2D stars_tex : filter_linear_mipmap, repeat_disable;  // baked stars, same layout as the backdrop
+uniform float milk : hint_range(0.0, 1.0) = 0.08;   // faint milky lift of the clear glass
 
 uniform vec2 tilt_deg = vec2(0.0);
 uniform float depth_px = 380.0;
@@ -30,7 +32,7 @@ uniform bool shard = false;               // back plane: small frosted shard, no
 
 const float HALF = 61.0;
 const float CORNER = 24.0;
-const float BEVEL = 20.0;
+const float BEVEL = 26.0;  // width of the lens zone at the rim, in texture px
 
 void vertex() {
 	vec2 p = VERTEX;
@@ -45,18 +47,18 @@ void vertex() {
 }
 
 void fragment() {
+	// Clear "Liquid Glass" (owner reference, 9 Oct): the middle shows the sky almost untouched, the rim
+	// acts as a lens that bends what is behind it, a thin bright rim with a colour fringe outlines it.
 	vec4 body = texture(TEXTURE, UV);
 	vec2 p = (UV - vec2(0.5)) * 128.0;
 	vec2 g;
 	float d;
-	float bevel_s;
-	float core;
+	float lens;
 	if (shard) {
 		g = normalize(p + vec2(0.001));
 		float r = length(p) / HALF;
-		bevel_s = smoothstep(0.35, 1.0, r);
+		lens = smoothstep(0.35, 1.0, r);
 		d = -(1.0 - r) * 30.0;
-		core = 0.0;
 	} else {
 		vec2 q = abs(p) - vec2(HALF - CORNER);
 		vec2 qm = max(q, vec2(0.0));
@@ -70,35 +72,35 @@ void fragment() {
 		}
 		g *= sign(p + vec2(0.0001));
 		float t = clamp(-d / BEVEL, 0.0, 1.0);
-		bevel_s = (1.0 - t) * (1.0 - t);
-		core = smoothstep(1.05, 0.15, length(p) / HALF);
+		lens = pow(1.0 - t, 2.5);
 	}
-	// 1 refraction: sample the sky through the bevel, blurred by mip level.
-	vec2 shift = g * bevel_s * refract_px * SCREEN_PIXEL_SIZE;
+	// 1 refraction: near the rim the glass samples from further in, so the sky and stars bend.
+	vec2 shift = -g * lens * refract_px * SCREEN_PIXEL_SIZE;
 	vec2 uv = SCREEN_UV + shift;
 	float lod = blur * max_lod + (shard ? 1.0 : 0.0);
-	vec2 fringe = shift * chroma * 1.5;
-	vec3 col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv - fringe, lod).gb);
-	col = col * 1.2 + vec3(0.05, 0.07, 0.1);
+	vec2 fringe = shift * chroma;
+	vec3 col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv, lod).g, textureLod(sky_tex, uv - fringe, lod).b);
+	vec4 st = textureLod(stars_tex, uv, lod * 0.5);
+	col += st.rgb * st.a;
+	col = mix(col, vec3(0.86, 0.9, 0.98), milk + 0.12 * lens);
 	float n = fract(sin(dot(floor(FRAGCOORD.xy), vec2(9.82131, 58.234))) * 45312.1324);
 	col *= 1.0 + (n * 2.0 - 1.0) * grain;
-	// 2 frost core.
+	// 2 frost core (0 by default: the glass is clear).
+	float core = shard ? 0.0 : smoothstep(1.05, 0.15, length(p) / HALF);
 	col = mix(col, vec3(0.03, 0.06, 0.15), clamp(frost * 1.7 * core, 0.0, 0.85));
-	if (shard) {
-		col = mix(col, vec3(0.5, 0.65, 0.85), 0.25);
-	}
-	// 4 specular: a rim highlight toward the top-left plus a diagonal sheen that slides with tilt.
-	vec2 L = normalize(vec2(-0.5, -0.8));
-	float rim_spec = pow(clamp(dot(g, L), 0.0, 1.0), 3.0) * bevel_s;
+	// 4 specular: a soft glow inside the top edge plus a faint sheen that slides with tilt.
+	float top_glow = smoothstep(0.0, -HALF, p.y) * smoothstep(-HALF, -HALF * 0.35, p.y) * (1.0 - lens);
 	float u = dot(UV - vec2(0.5), vec2(0.7071, -0.7071));
 	float pos = clamp(tilt_deg.y / max_tilt_deg, -1.0, 1.0) * 0.32 + clamp(tilt_deg.x / max_tilt_deg, -1.0, 1.0) * 0.1 - 0.12;
-	float sheen = exp(-pow((u - pos) / 0.07, 2.0)) * (1.0 - bevel_s);
-	col += vec3(1.0) * (rim_spec * 0.8 + sheen * 0.3) * specular;
-	// 5 edge tint: accent on the rim, stronger toward the bottom.
-	float bottom = clamp(g.y, 0.0, 1.0);
-	col += accent * edge_tint * bevel_s * (0.5 + 0.7 * bottom);
-	float ring = smoothstep(3.0, 0.0, -d);
-	col += vec3(0.7, 0.9, 1.0) * ring * 0.3;
+	float sheen = exp(-pow((u - pos) / 0.09, 2.0)) * (1.0 - lens);
+	col += vec3(1.0) * (top_glow * 0.10 + sheen * 0.04) * specular;
+	// 5 rim: a thin bright line, strongest top-left and bottom-right, cool on the left, warm on the right.
+	float ring = smoothstep(2.4, 0.0, -d);
+	float ring_soft = smoothstep(7.0, 0.0, -d);
+	float diag = abs(dot(g, normalize(vec2(-1.0, -1.0))));
+	vec3 rim_col = mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.86, 0.7), clamp(g.x * 0.5 + 0.5, 0.0, 1.0));
+	col += rim_col * (ring * (0.35 + 0.55 * diag) + ring_soft * 0.12) * (0.5 + specular * 0.7);
+	col += accent * edge_tint * lens * 0.5;
 	col = mix(col, flash_color, flash * 0.75);
 	COLOR = vec4(col * unlit_gain, body.a);
 }

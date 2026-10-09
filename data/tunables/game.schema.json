@@ -54,6 +54,7 @@
     "glass.edgeTint",
     "glass.chroma",
     "glass.grain",
+    "glass.milk",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -307,6 +308,12 @@
       "minimum": 0,
       "maximum": 1,
       "description": "glass tile: colour fringe at the bevel (red and blue split)"
+    },
+    "glass.milk": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: faint milky lift of the clear glass"
     },
     "glass.grain": {
       "type": "number",

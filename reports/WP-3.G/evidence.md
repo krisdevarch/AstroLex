@@ -23,3 +23,12 @@ Owner's iPhone (Safari), bench at 20 glass tiles: the tiles drew **black** and t
 | `scripts/godot/test.sh` | 72 passed, 0 failed | – |
 | `smoke.cjs --bench` (software GL) | `avg=35.6 fps p50=27.2 ms p95=36.2 ms` (was 29.5 fps on the same machine) | `glass-bench-sky.png` |
 | Owner phone re-test | pending | – |
+
+## Round 3 (9 Oct 2026): clear glass from the owner's reference
+
+The owner sent an Apple Liquid Glass reference (a clear sphere over a grid) and asked for the letters to match it. Changes: no frost (`glass.frost` 0), almost no blur (`glass.blur` 0.05), a lens zone at the rim that samples from further in so the sky and stars bend (`glass.refractPx` 24), a thin bright rim (cool on the left, warm on the right), a faint milky lift (`glass.milk` 0.08), a soft glow inside the top edge, accent edge cut to 0.15 and a lighter shadow. Stars are now baked into a texture (`tile_textures.stars()`) that both the backdrop and the glass sample, so stars bend at a tile's rim. The glyph stays white with a softer halo: a black glyph, as in the reference, would vanish on the dark sky.
+
+| Check | Result | Artefact |
+|---|---|---|
+| `scripts/godot/test.sh` | 72 passed, 0 failed | – |
+| `smoke.cjs --bench` (software GL) | `avg=36.0 fps p50=27.3 ms p95=31.3 ms` | `glass-clear.png` |
