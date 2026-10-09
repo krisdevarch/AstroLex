@@ -656,3 +656,35 @@ func test_back_tiles_drift_slower_than_catchable_tiles() -> void:
 	for t in r.tiles:
 		if t.plane >= 2:
 			assert_true(t.vel.length() <= cap + 0.0001, "back speed capped by backSpeedMul")
+
+
+func test_thief_cannot_grab_tile_under_an_inflight_shot() -> void:
+	var r := _thief_round(5)
+	var th = null
+	while r.state == "play" and float(r.stats["secs"]) < 25.0:
+		r.step(1.0 / 60.0)
+		if not r.thieves.is_empty() and r.thieves[0].target_id >= 0:
+			th = r.thieves[0]
+			break
+	assert_true(th != null, "a thief is chasing")
+	r.drain_events()
+	var tile_id: int = th.target_id
+	assert_true(r.fire(tile_id), "chased tile shootable")
+	r.step(1.0 / 60.0)
+	assert_true(th.target_id != tile_id, "thief dropped the shot tile")
+	while not r.shot.is_empty() and r.state == "play":
+		r.step(1.0 / 60.0)
+	for g in _of_type(r.drain_events(), "thief_grab"):
+		assert_true(g["tile_id"] != tile_id, "no grab of the shot tile")
+
+
+func test_thief_schedule_advances_when_spawn_skipped_at_max() -> void:
+	var r := _thief_round(5, {"thief.interval": 5.0, "thief.firstAt": 1.0, "thief.max": 1})
+	while r.state == "play" and float(r.stats["secs"]) < 6.05:
+		r.step(1.0 / 60.0)
+	assert_eq(r.thieves.size(), 1, "still one thief at the skipped attempt")
+	r.thieves.clear()
+	r.drain_events()
+	while r.state == "play" and float(r.stats["secs"]) < 9.0:
+		r.step(1.0 / 60.0)
+	assert_eq(_of_type(r.drain_events(), "thief_spawn").size(), 0, "no replacement before next interval")
