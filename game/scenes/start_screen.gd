@@ -22,6 +22,8 @@ signal settings_pressed
 
 var mode: String = "drift"
 var settings: AppSettings = AppSettings.new()
+## Start button text; main sets "Continue  1-05" or "Play Act I again" when a save says so.
+var start_label: String = "Start"
 var tile_count: int = 0
 var _hint: Label
 
@@ -62,7 +64,7 @@ func _ready() -> void:
 	_hint.custom_minimum_size = Vector2(840, 90)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_hint)
-	var start := Ui.button("Start", 60, Vector2(560, 140))
+	var start := Ui.button(start_label, 60 if start_label.length() < 12 else 48, Vector2(560, 140))
 	start.name = "StartButton"
 	start.pressed.connect(func() -> void: start_pressed.emit(mode))
 	box.add_child(start)

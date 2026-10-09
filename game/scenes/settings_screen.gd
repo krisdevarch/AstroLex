@@ -10,6 +10,10 @@ signal bench_pressed
 
 var settings: AppSettings = AppSettings.new()
 var save_path: String = AppSettings.PATH
+## Progress save (services/save.gd); null hides Reset progress.
+var save: RefCounted
+var _confirm: HBoxContainer
+var _reset_btn: Button
 
 
 func _ready() -> void:
@@ -69,6 +73,28 @@ func _ready() -> void:
 	bench.name = "BenchButton"
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
 	box.add_child(bench)
+	if save != null:
+		_reset_btn = Ui.button("Reset progress", 42, Vector2(760, 100))
+		_reset_btn.name = "ResetButton"
+		_reset_btn.pressed.connect(_ask_reset)
+		box.add_child(_reset_btn)
+		_confirm = HBoxContainer.new()
+		_confirm.name = "ResetConfirm"
+		_confirm.alignment = BoxContainer.ALIGNMENT_CENTER
+		_confirm.add_theme_constant_override("separation", 16)
+		_confirm.visible = false
+		var q := Ui.label("Reset all progress?", 40)
+		q.name = "ResetQuestion"
+		_confirm.add_child(q)
+		var yes := Ui.button("Yes", 42, Vector2(180, 100))
+		yes.name = "ResetYes"
+		yes.pressed.connect(_do_reset)
+		_confirm.add_child(yes)
+		var no := Ui.button("No", 42, Vector2(180, 100))
+		no.name = "ResetNo"
+		no.pressed.connect(_cancel_reset)
+		_confirm.add_child(no)
+		box.add_child(_confirm)
 	var back := Ui.button("Back", 48, Vector2(460, 120))
 	back.name = "BackButton"
 	back.pressed.connect(func() -> void: closed.emit())
@@ -93,3 +119,19 @@ func _set_fps(on: bool) -> void:
 func _set_reduced(on: bool) -> void:
 	settings.reduced_motion = on
 	settings.save_to(save_path)
+
+
+func _ask_reset() -> void:
+	_reset_btn.visible = false
+	_confirm.visible = true
+
+
+func _cancel_reset() -> void:
+	_reset_btn.visible = true
+	_confirm.visible = false
+
+
+func _do_reset() -> void:
+	save.reset()
+	_reset_btn.text = "Progress reset"
+	_cancel_reset()
