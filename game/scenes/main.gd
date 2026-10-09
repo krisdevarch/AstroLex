@@ -325,8 +325,6 @@ func _on_level_finished(summary: Dictionary, level: Dictionary) -> void:
 		_show_end(summary)
 	elif autoplay:
 		_show_end(summary)
-	elif _is_final_level():
-		_show_comms(level.get("commsAfter", []), _show_complete.bind(true))
 	else:
 		_show_comms(level.get("commsAfter", []), func() -> void: _show_end(summary))
 
@@ -342,9 +340,12 @@ func _show_end(summary: Dictionary) -> void:
 	_swap(s)
 
 
-## Next after a win: the next level, or the act-complete screen after the last level of an act.
+## Next after a win: the next level, or the act-complete screen after the last level of an act
+## (the beta-complete screen after the very last level).
 func _go_next() -> void:
-	if level_index < levels.size() - 1:
+	if _is_final_level():
+		_show_complete(true)
+	elif level_index < levels.size() - 1:
 		level_index += 1
 		_begin_level_with_comms()
 	else:

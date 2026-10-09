@@ -1,11 +1,20 @@
 extends "res://tests/test_case.gd"
 
+const GameData := preload("res://rules/game_data.gd")
 const Dict := preload("res://services/dictionary.gd")
 const CACHE := "user://test_dictionary_cache.json"
 
 
 func _doc(version: Variant) -> Dictionary:
-	return {"version": version, "acts": {"a": ["x"]}, "levels": {"act1_low_orbit": [{"id": "1-01"}]}, "lexicon": {}, "templates": []}
+	return {
+		"version": version,
+		"acts": {"a": {"words": ["x"]}},
+		"levels": {"act1_low_orbit": [{"id": "1-01", "seed": 7, "words": ["x"]}]},
+		"lexicon": [["able", "A"]],
+		"templates": [],
+		"characters": [{"id": "w", "name": "W", "colour": "#fff", "mod": {}}],
+		"difficulty": {"default": "normal", "levels": []},
+	}
 
 
 func _clean() -> void:
@@ -44,6 +53,45 @@ func test_remote_validation_rejects_bad_shapes() -> void:
 	assert_false(d.accept(bad_levels), "levels must be arrays")
 	assert_eq(d.source_name(), "bundled", "bundled kept")
 	assert_eq(d.levels("act2_nebula").size(), 12)
+
+
+func test_real_content_is_valid() -> void:
+	var c: Dictionary = GameData.load_content()
+	assert_true(c.has("version"))
+	assert_true(Dict.valid(c), "bundled content.json passes the shape check")
+
+
+func test_valid_checks_what_the_game_dereferences() -> void:
+	var no_seed := _doc(2)
+	no_seed["levels"]["act1_low_orbit"][0].erase("seed")
+	assert_false(Dict.valid(no_seed), "missing seed")
+	var no_chars := _doc(2)
+	no_chars.erase("characters")
+	assert_false(Dict.valid(no_chars), "missing characters")
+	var empty_chars := _doc(2)
+	empty_chars["characters"] = []
+	assert_false(Dict.valid(empty_chars), "empty characters")
+	var no_diff := _doc(2)
+	no_diff["difficulty"] = {"default": "normal"}
+	assert_false(Dict.valid(no_diff), "difficulty without levels")
+	var no_words := _doc(2)
+	no_words["acts"]["a"] = {}
+	assert_false(Dict.valid(no_words), "act without words")
+	var empty_words := _doc(2)
+	empty_words["levels"]["act1_low_orbit"][0]["words"] = []
+	assert_false(Dict.valid(empty_words), "level with no words")
+	assert_true(Dict.valid(_doc(2)))
+
+
+func test_remote_document_never_swaps_running_content_or_writes_cache_without_url() -> void:
+	_clean()
+	var d: RefCounted = Dict.bundled(false, CACHE)
+	var b: int = d.version()
+	assert_true(d.handle_remote(_doc(b + 1)), "valid newer document is acceptable for next start")
+	assert_eq(d.version(), b, "running content unchanged")
+	assert_eq(d.source_name(), "bundled")
+	assert_false(FileAccess.file_exists(CACHE), "no cache write when REMOTE_URL is empty")
+	assert_false(d.handle_remote(_doc(b - 1)), "older rejected")
 
 
 func test_remote_accepts_a_valid_newer_document_and_ignores_older() -> void:
