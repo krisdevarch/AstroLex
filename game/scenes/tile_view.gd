@@ -58,6 +58,9 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 		_mat.set_shader_parameter("frost", float(_tun["glass.frost"]))
 		_mat.set_shader_parameter("specular", float(_tun["glass.specular"]))
 		_mat.set_shader_parameter("edge_tint", float(_tun["glass.edgeTint"]))
+		_mat.set_shader_parameter("chroma", float(_tun["glass.chroma"]))
+		_mat.set_shader_parameter("grain", float(_tun["glass.grain"]))
+		_mat.set_shader_parameter("sky_tex", TileTextures.sky())
 		_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
 		body.light_mask = 2
 	else:
