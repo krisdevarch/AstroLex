@@ -27,10 +27,13 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-19 | v1 cuts | Accounts, friends, ghosts, duels, currencies, upgrade trees, season pass, cosmetics store, rewarded ads, clues above 300 | default |
 | O-20 | Owner load cap | 6 hours a week; review queue cap 4 | default |
 | O-21 | Success paragraph | Plan §1.1: proof of concept first; 12-month goal only if Phases 1–3 hold | answered by owner (29 Sep 2026) |
-| O-22 | Letter tile treatment | Default: tilt with light. Owner will send a drawing of the look (8 Oct 2026); decide from it | pending owner drawing |
+| O-22 | Letter tile treatment | **Glass tiles** (in the style of Apple's Liquid Glass): the tile refracts and blurs the sky behind it, with a frost core, a white glyph with an ink halo, a specular light and an act-tinted edge (`docs/design/AstroLex-Design-Direction.md` §10). It replaces the opaque tile body in plan §8.2; tilt, light and shadow stay. Built only after a frame-rate test of the web build in a phone browser with 20 glass tiles at 60 fps | answered by owner (9 Oct 2026); layout sketches still to come |
 | O-23 | Back plane | Decorative blank star shards with no letters, never catchable. Owner (8 Oct 2026): faint letters still looked tappable | answered by owner (8 Oct 2026) |
 | O-24 | Playtest results and monitoring | GitHub, no server: **Send results** opens a `[playtest]` issue, **Copy results** gives the JSON; the `playtest-report` workflow keeps the "Playtest dashboard" issue up to date. Anonymous (public repo). Contract: `docs/playtest-telemetry.md` | answered by owner (8 Oct 2026) |
 | O-25 | Word hints in the slots | Setting with three levels (all letters, first and last letter, none); **default first and last**, which matches the Decryption visor. The owner worried full letters make it too easy; playtests #19 and #20 showed that blank slots mean guessing (34 wrong catches, all unneeded). Results log the level, so the levels can be compared | answered by owner (8 Oct 2026) |
+| O-26 | Backgrounds | **A painted-sky scene per act**: gradient sky, a glowing band of stars, one landmark (grey Earth, Earth's night side, nebula, the Tower, Babel's core) and layered horizons, within the four `Parallax2D` layers. One palette per act; the Daily Signal follows the owner's reference image. The core rule is that silence is grey and each restored word brings a colour back (design doc §9, §11) | answered by owner (9 Oct 2026) |
+| O-27 | Character colours | **One signature colour per character** (from Hades): Catcher cyan, Rhee amber, Tomas coral, Babel periwinkle, Ade seafoam, Kit pink, VANTA crimson; used on bubbles, names, portrait rims and leitmotifs (design doc §9) | answered by owner (9 Oct 2026) |
+| O-28 | Prologue | **Wordless Prologue** (from Ori): painted stills with no text, and *water* is the first word on screen in the game. Built first as a cheap animatic in WP-3.4; story-writer drafts the beats, and the owner approves them (design doc §3) | answered by owner (9 Oct 2026) |
 
 ## Work packages
 
@@ -57,9 +60,11 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 1. WP-1.3 act word lists: skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
 2. WP-1.5 feasibility report: O-13 `level` scope applies by default; say so if you disagree.
 3. Phase 2 loop 1: share the toy link with the first 5–7 outside testers per `playtests/P2/protocol.md`; paste each tester's Copy results output into `playtests/P2/results/loop-1/`.
-4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the tile drawing for O-22.
+4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the layout sketches (where the slots, comms and HUD sit), so the colours and glass tiles can be mapped onto them.
 
 ## Backlog (found while building, not in scope of any current WP)
+
+- Design direction (O-22, O-26 to O-28; `docs/design/AstroLex-Design-Direction.md`): first, a glass-tile spike measuring the frame rate of the web build in a phone browser; then palettes, frost, blur and edge tint as tunables, and a script that checks glyph contrast (4.5:1 or better) against every act sky. These become Phase 3 or 4 WPs after the layout sketches.
 
 - PR #8 (Swift skeleton plus TestFlight loop) predates Amendment A2. Rework it as WP-3.0 for a Godot iOS export, keeping the ship script, `asc.py`, the skill and the owner setup guide (plan §8.7); waiting on the owner's go-ahead.
 

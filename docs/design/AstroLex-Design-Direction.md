@@ -1,6 +1,6 @@
 # AstroLex in the spirit of Ori and the Blind Forest, and Hades
 
-Design direction, draft 2, 8 October 2026. Design only; no game code changes yet. The visual companion page is `docs/design/colour-story.html` (open it in a browser). Sources in the repo: plan v4 §1.2 (essential experience), §1.3 (player), Part 2 and Part 8 (2D world, 2.5D tiles); plan v3 Part 1 (story bible draft: world, characters, acts, tone). Ori details are from general knowledge of the game, not re-checked.
+Design direction, approved by the owner on 9 October 2026. Design only; no game code changes yet. The visual companion page is `docs/design/colour-story.html` (open it in a browser). Sources in the repo: plan v4 §1.2 (essential experience), §1.3 (player), Part 2 and Part 8 (2D world, 2.5D tiles); plan v3 Part 1 (story bible draft: world, characters, acts, tone). Ori details are from general knowledge of the game, not re-checked.
 
 ## 1. What Ori's philosophy actually is
 
@@ -117,11 +117,13 @@ Signals on glass: back plane shards are small frosted glass with no glyph (O-23 
 
 Backgrounds follow the owner's reference image: smooth gradient skies, a glowing diagonal band of stars, one big landmark per act, and layered horizon silhouettes fading into haze. That fits the four-layer `Parallax2D` cap (sky and stars, landmark, far ridge, near ridge). The sky behind the play area stays calm; the busy parts sit above and below where tiles drift, so the glass has something to refract without hurting reading. The reference image is for mood only: shipped backdrops are drawn by a human artist (O-14), and placeholder skies can be built from gradients and shapes in the meantime.
 
-## 12. Decisions for the owner (updated)
+## 12. Owner decisions
 
-1. Glass tiles with a white glyph (recommended: yes, after a frame-rate test of the web build in a phone browser).
-2. Painted-sky scenes with one landmark per act (recommended: yes).
-3. A signature colour per character (recommended: yes).
-4. A wordless Prologue with *water* as the first word (recommended: yes, as a cheap animatic first).
+The owner accepted all four recommendations on 9 October 2026. They are recorded in `wps/_index.md` as O-22 (glass tiles), O-26 (scenes), O-27 (character colours) and O-28 (wordless Prologue).
+
+1. Glass tiles with a white glyph: **yes**, after a frame-rate test of the web build in a phone browser.
+2. Painted-sky scenes with one landmark per act: **yes**.
+3. A signature colour per character: **yes**.
+4. A wordless Prologue with *water* as the first word: **yes**, as a cheap animatic first.
 
 The owner's layout sketches will decide where the slots, comms and HUD sit; the colours are then mapped onto them.

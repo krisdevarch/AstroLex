@@ -41,7 +41,7 @@ PR #8 (the Swift TestFlight loop) is still open. Its upload half gets reworked f
 
 ## Open decisions and next steps
 1. **Playtest the hints:** play one round on the default and one on "No letters", with Send results after each. The dashboard then compares wrong catches.
-2. **Tile look (O-22):** the owner will send a drawing, and the 2.5D tile is built from it.
+2. **Look (O-22, O-26 to O-28, 9 Oct):** glass letter tiles, a painted-sky scene and palette per act, a signature colour per character and a wordless Prologue. See `docs/design/AstroLex-Design-Direction.md`. The owner will send layout sketches next; glass is built after a frame-rate test of the web build in a phone browser.
 3. **Backlog:** readability polish; a smaller web build for slow connections; moving placeholder look values into tunables (WP-4.2); a custom font.
 4. **Platforms:** Android, then iOS through TestFlight, are deferred until the web build feels right. Money decisions wait for the end of the proof of concept.
 
