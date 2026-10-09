@@ -143,10 +143,11 @@ func set_settings(treatment: String, reduced_motion: bool, hint: String = "edges
 # --- recording -------------------------------------------------------------------------
 
 ## Starts listening to a field. Call before field.begin().
-func begin_round(field: Object, round_no: int, seed_value: int, level_id: String = "") -> void:
+func begin_round(field: Object, round_no: int, seed_value: int, level_id: String = "", act: String = "", character: String = "", difficulty: String = "") -> void:
 	_field = field
 	_round = {
-		"round": round_no, "mode": "burst", "act": str(field.get("ACT")), "seed": seed_value, "level": level_id,
+		"round": round_no, "mode": "burst", "act": act if act != "" else str(field.get("ACT")), "character": character, "difficulty": difficulty,
+		"seed": seed_value, "level": level_id,
 		"first_catch_s": null, "tap_misses": 0, "near": [], "babel_lines": [], "wrong_surplus": 0, "wrong_unneeded": 0,
 	}
 	playing = true
@@ -205,7 +206,7 @@ func _finish_round(won: bool) -> void:
 	var st: Dictionary = gr.stats
 	var near: Array = _round["near"]
 	var r := {
-		"round": _round["round"], "mode": _round["mode"], "act": _round["act"], "seed": _round["seed"],
+		"round": _round["round"], "mode": _round["mode"], "act": _round["act"], "character": _round["character"], "difficulty": _round["difficulty"], "seed": _round["seed"],
 		"won": won, "words": gr.restored_words.size(), "total": gr.words.size(),
 		"score": int(round(gr.score)), "secs": snappedf(float(st["secs"]), 0.1),
 		"catches": int(st["catches"]), "wrong": int(st["wrong"]), "escapes": int(st["escapes"]),

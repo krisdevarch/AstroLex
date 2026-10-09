@@ -1,15 +1,22 @@
 extends RefCounted
 ## Progress save (WP-3.5a). The only code that reads or writes the save file.
-## Format: {version, player_id, updated_at, progress: {act: {next, levels: {id: {best_score, won{burst}, plays}}}}}.
+## Format v2: {version, player_id, updated_at, profile: {character, pronouns, difficulty},
+##   progress: {act: {next, levels: {id: {best_score, best_stars, won, plays}}}}}.
+## v1 had no profile and `won` was a per-mode dictionary; it migrates on load (a win becomes 1 star).
 ## On the web Godot keeps user:// in the browser's IndexedDB. Save.fake() is in-memory and touches no disk.
 
-const VERSION := 1
+const VERSION := 2
+const ACT_ORDER := ["act1_low_orbit", "act2_nebula", "act3_tower", "act4_core"]
+const DEFAULT_ACT_SIZE := 12
 const DEFAULT_PATH := "user://save.json"
 ## Older saves recorded a win per mode (drift/pressure); any of them counts as a burst win.
 const LEGACY_MODES := ["drift", "pressure", "burst"]
 
 var path: String = ""
 var _d: Dictionary = {}
+## Act order and level counts, for unlocked(); main sets them from the dictionary.
+var act_order: Array = ACT_ORDER.duplicate()
+var act_sizes: Dictionary = {}
 
 
 static func real(p: String = DEFAULT_PATH) -> RefCounted:
@@ -73,7 +80,7 @@ func has_progress(act: String) -> bool:
 	return next_level(act) > 0
 
 
-func record_level(act: String, level_id: String, index: int, won: bool, score: int) -> void:
+func record_level(act: String, level_id: String, index: int, won: bool, score: int, stars: int = 0) -> void:
 	var a := _act(act, true)
 	var levels: Dictionary = a["levels"]
 	levels[level_id] = _level(levels.get(level_id))
@@ -81,31 +88,76 @@ func record_level(act: String, level_id: String, index: int, won: bool, score: i
 	l["plays"] = int(l.get("plays", 0)) + 1
 	if won:
 		l["best_score"] = maxi(int(l.get("best_score", 0)), score)
-		(l["won"] as Dictionary)["burst"] = true
+		l["best_stars"] = maxi(int(l.get("best_stars", 0)), clampi(stars, 1, 3))
+		l["won"] = true
 		a["next"] = maxi(int(a.get("next", 0)), index + 1)
 	_write()
 
 
 ## A level entry repaired to the full shape (missing or wrong-typed parts get defaults).
+## Accepts v1 entries, where `won` was {mode: bool}; any win counts and earns 1 star.
 static func _level(v: Variant) -> Dictionary:
 	var src: Dictionary = v if v is Dictionary else {}
-	var won: Dictionary = {}
-	var sw: Dictionary = src["won"] if src.get("won") is Dictionary else {}
-	won["burst"] = false
-	for m in LEGACY_MODES:
-		if sw.get(m, false) == true:
-			won["burst"] = true
-	return {"best_score": _int(src.get("best_score")), "won": won, "plays": _int(src.get("plays"))}
+	var won := false
+	var sw: Variant = src.get("won")
+	if sw is Dictionary:
+		for m in LEGACY_MODES:
+			if (sw as Dictionary).get(m, false) == true:
+				won = true
+	elif sw == true:
+		won = true
+	var stars := mini(_int(src.get("best_stars")), 3)
+	if won and stars == 0:
+		stars = 1
+	return {"best_score": _int(src.get("best_score")), "best_stars": stars if won else 0, "won": won, "plays": _int(src.get("plays"))}
+
+
+## True when the player may start level `index` (0-based) of `act`: levels open in order,
+## and the first level of an act opens when the previous act is finished.
+func unlocked(act: String, index: int) -> bool:
+	if index < 0 or index >= _size(act):
+		return false
+	if index > 0:
+		return index <= next_level(act)
+	var at := act_order.find(act)
+	if at <= 0:
+		return true
+	var prev: String = act_order[at - 1]
+	return act_complete(prev, _size(prev))
+
+
+func _size(act: String) -> int:
+	return int(act_sizes.get(act, DEFAULT_ACT_SIZE))
+
+
+func stars(act: String, level_id: String) -> int:
+	var l: Variant = _act(act).get("levels", {}).get(level_id)
+	return _int((l as Dictionary).get("best_stars")) if l is Dictionary else 0
+
+
+func total_stars() -> int:
+	var n := 0
+	for act in (_d["progress"] as Dictionary):
+		for id in (_d["progress"][act]["levels"] as Dictionary):
+			n += _int(_d["progress"][act]["levels"][id].get("best_stars"))
+	return n
+
+
+func has_profile() -> bool:
+	return str(profile().get("character", "")) != ""
+
+
+func profile() -> Dictionary:
+	return _d["profile"]
+
+
+func set_profile(character: String, pronouns: String, difficulty: String) -> void:
+	_d["profile"] = {"character": character, "pronouns": pronouns, "difficulty": difficulty}
+	_write()
 
 
 static func _int(v: Variant) -> int:
 	return maxi(int(v), 0) if typeof(v) in [TYPE_INT, TYPE_FLOAT] else 0
-
-
-## Play the act again from the first level; best scores and won flags stay.
-func restart_act(act: String) -> void:
-	_act(act, true)["next"] = 0
-	_write()
 
 
 ## Wipes progress, keeps the anonymous player_id.
@@ -124,7 +176,7 @@ func _act(act: String, create: bool = false) -> Dictionary:
 
 
 static func _fresh() -> Dictionary:
-	return {"version": VERSION, "player_id": _new_id(), "updated_at": 0, "progress": {}}
+	return {"version": VERSION, "player_id": _new_id(), "updated_at": 0, "profile": {"character": "", "pronouns": "they", "difficulty": ""}, "progress": {}}
 
 
 static func _new_id() -> String:
@@ -136,7 +188,7 @@ static func _new_id() -> String:
 	return s
 
 
-## Accepts version 1 only; anything else becomes a fresh save.
+## Accepts versions 1 (migrated to 2) and 2; anything else becomes a fresh save.
 static func _migrate(d: Variant) -> Dictionary:
 	if d == null:
 		return _fresh()
@@ -144,13 +196,16 @@ static func _migrate(d: Variant) -> Dictionary:
 		push_warning("save: not a dictionary; starting fresh")
 		return _fresh()
 	var dict: Dictionary = d
-	if not dict.has("version") or typeof(dict["version"]) not in [TYPE_INT, TYPE_FLOAT] or int(dict["version"]) != VERSION:
+	if not dict.has("version") or typeof(dict["version"]) not in [TYPE_INT, TYPE_FLOAT] or int(dict["version"]) not in [1, VERSION]:
 		push_warning("save: unknown version; starting fresh")
 		return _fresh()
 	if not dict.get("progress") is Dictionary or typeof(dict.get("player_id")) != TYPE_STRING or str(dict["player_id"]) == "":
-		push_warning("save: malformed v1 save; starting fresh")
+		push_warning("save: malformed save; starting fresh")
 		return _fresh()
 	dict["version"] = VERSION
+	var prof: Variant = dict.get("profile")
+	var pf: Dictionary = prof if prof is Dictionary else {}
+	dict["profile"] = {"character": str(pf.get("character", "")), "pronouns": str(pf.get("pronouns", "they")), "difficulty": str(pf.get("difficulty", ""))}
 	var clean: Dictionary = {}
 	for act in (dict["progress"] as Dictionary):
 		var a: Variant = dict["progress"][act]

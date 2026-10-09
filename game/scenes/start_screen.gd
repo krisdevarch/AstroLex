@@ -16,8 +16,8 @@ signal start_pressed
 signal settings_pressed
 
 var settings: AppSettings = AppSettings.new()
-## Start button text; main sets "Continue  1-05" or "Play Act I again" when a save says so.
-var start_label: String = "Start"
+## Start button text; main sets "Continue" when a save has a profile, else "New game".
+var start_label: String = "New game"
 var tile_count: int = 0
 
 
