@@ -3,9 +3,14 @@ shader_type canvas_item;
 // 1 refraction (blurred, brightened sky read from the screen texture, warped by the bevel normal),
 // 2 frost core behind the glyph, 3 (the glyph is a Label drawn on top), 4 specular that slides
 // with tilt_deg, 5 rim/bottom edge tint in an accent colour. Tilt vertex code is the same as tile.gdshader.
-// Blur uses the screen texture's mip chain (textureLod); one fetch per pixel keeps it cheap on phones.
+// The glass does NOT read the live screen: a screen-texture copy plus mipmaps every frame came out
+// black and slow on iPhone Safari. It samples the baked sky texture (the same one the backdrop draws,
+// full screen) at the pixel's SCREEN_UV, so it costs two plain texture fetches and works everywhere.
+// Chromatic edge fringe and fine grain follow the CC0 "Fluid Glass UI" shader by Binbun.
 
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+uniform sampler2D sky_tex : filter_linear_mipmap, repeat_disable;
+uniform float chroma : hint_range(0.0, 1.0) = 0.35;  // colour fringe at the bevel
+uniform float grain : hint_range(0.0, 1.0) = 0.05;
 
 uniform vec2 tilt_deg = vec2(0.0);
 uniform float depth_px = 380.0;
@@ -20,7 +25,7 @@ uniform float frost : hint_range(0.0, 1.0) = 0.35;
 uniform float specular : hint_range(0.0, 1.0) = 0.7;
 uniform float edge_tint : hint_range(0.0, 1.0) = 0.6;
 uniform vec3 accent : source_color = vec3(0.35, 0.85, 1.0);
-uniform float max_lod = 5.0;
+uniform float max_lod = 3.0;  // the sky is 108x192, so three mip levels is already very soft
 uniform bool shard = false;               // back plane: small frosted shard, no glyph
 
 const float HALF = 61.0;
@@ -69,10 +74,14 @@ void fragment() {
 		core = smoothstep(1.05, 0.15, length(p) / HALF);
 	}
 	// 1 refraction: sample the sky through the bevel, blurred by mip level.
-	vec2 uv = SCREEN_UV + g * bevel_s * refract_px * SCREEN_PIXEL_SIZE;
-	float lod = blur * max_lod + (shard ? 1.5 : 0.0);
-	vec3 col = textureLod(screen_texture, uv, lod).rgb;
-	col = col * 1.25 + vec3(0.04, 0.06, 0.09);
+	vec2 shift = g * bevel_s * refract_px * SCREEN_PIXEL_SIZE;
+	vec2 uv = SCREEN_UV + shift;
+	float lod = blur * max_lod + (shard ? 1.0 : 0.0);
+	vec2 fringe = shift * chroma * 1.5;
+	vec3 col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv - fringe, lod).gb);
+	col = col * 1.2 + vec3(0.05, 0.07, 0.1);
+	float n = fract(sin(dot(floor(FRAGCOORD.xy), vec2(9.82131, 58.234))) * 45312.1324);
+	col *= 1.0 + (n * 2.0 - 1.0) * grain;
 	// 2 frost core.
 	col = mix(col, vec3(0.03, 0.06, 0.15), clamp(frost * 1.7 * core, 0.0, 0.85));
 	if (shard) {

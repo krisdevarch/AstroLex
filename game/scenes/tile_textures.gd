@@ -84,6 +84,7 @@ static func sky() -> Texture2D:
 				var bc: Color = b[2]
 				c += Vector3(bc.r, bc.g, bc.b) * a
 			img.set_pixel(x, y, Color(minf(c.x, 1.0), minf(c.y, 1.0), minf(c.z, 1.0), 1.0))
+	img.generate_mipmaps()  # the glass blurs the sky by sampling a lower mip level
 	var tex := ImageTexture.create_from_image(img)
 	_cache["sky"] = tex
 	return tex

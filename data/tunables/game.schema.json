@@ -52,6 +52,8 @@
     "glass.frost",
     "glass.specular",
     "glass.edgeTint",
+    "glass.chroma",
+    "glass.grain",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -299,6 +301,18 @@
       "minimum": 0,
       "maximum": 1,
       "description": "glass tile: highlight strength"
+    },
+    "glass.chroma": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: colour fringe at the bevel (red and blue split)"
+    },
+    "glass.grain": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: fine grain on the glass"
     },
     "glass.edgeTint": {
       "type": "number",

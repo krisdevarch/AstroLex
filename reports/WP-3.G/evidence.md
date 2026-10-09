@@ -13,3 +13,13 @@ Branch `claude/glass-tiles-tny1fk`. Glass is a fourth tile treatment (default st
 | 7 | Phone frame-rate test (the O-22 gate) | owner | open `https://krisdevarch.github.io/AstroLex/?bench=1` on the phone after merge, Run 10 s test on glass and on tilt | to be pasted into the PR / `wps/_index.md` |
 
 Notes: the painted placeholder sky (one baked texture) now sits behind the stars for every treatment so the comparison is fair. Local `pytest tools` shows 3 failures that also occur on a clean `main` in this container (the local word DB was built without ENABLE); CI builds its own DB.
+
+## Round 2 (9 Oct 2026): owner phone test
+
+Owner's iPhone (Safari), bench at 20 glass tiles: the tiles drew **black** and the meter read 26 fps with p95 124 ms. Cause: the live screen-texture copy and its mipmaps do not work on WebKit's WebGL (black) and cost a full-screen copy every frame. Fix: the glass now samples the baked sky texture (the backdrop's own, with mipmaps) at `SCREEN_UV`, so there is no screen copy at all. Added from the CC0 Fluid Glass UI shader (Binbun): a colour fringe at the bevel (`glass.chroma`) and fine grain (`glass.grain`); frost lowered to 0.18 so the glass reads as clear.
+
+| Check | Result | Artefact |
+|---|---|---|
+| `scripts/godot/test.sh` | 72 passed, 0 failed | – |
+| `smoke.cjs --bench` (software GL) | `avg=35.6 fps p50=27.2 ms p95=36.2 ms` (was 29.5 fps on the same machine) | `glass-bench-sky.png` |
+| Owner phone re-test | pending | – |
