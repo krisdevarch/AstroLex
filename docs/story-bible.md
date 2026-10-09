@@ -40,6 +40,7 @@ Babel did not scatter words at random. It sorted by meaning, because it thinks i
 - It cannot use a letter you have not caught. This is the game's signature moment, and it is why Babel cannot say your name until you do.
 - It can forge fragments (counterfeits), rearrange fragments into its own counter-words (anagram traps), and jam the visor's colour channel (Stroop). It cannot change shape or pattern. Those stay honest.
 - It cannot lie in a way the player cannot catch. A forgery shimmers.
+- It opens every round by throwing that round's letters out of a periwinkle rift into the field. It is showing off, and it is also proof that it holds the words. It throws in silence: no letter is restored yet, so it has nothing to say.
 - Babel is deterministic. Its lines come from owner-approved templates and the level's letter pool, pass a blocklist and a family-safe filter, and no language model runs at runtime.
 
 ## 3. Characters
@@ -187,7 +188,18 @@ The principle: silence is not peace, and listening is. The tone is hopeful. It l
 - **Sentences.** Plain and short. No em-dashes in any line.
 - **No runtime AI** in the delivery of the fiction. Every line is written by a person or built from templates.
 
-## 8. Open questions for the owner
+## 8. Owner answers (9 October 2026)
+
+1. **Ade and Kit:** the names stay.
+2. **Oxygen rule:** approved as written in rule 2.
+3. **Rhee's confession line:** approved.
+4. **Babel's one sincere line in Act IV:** yes.
+5. **Rhee's "handwriting" hints in Act I–II comms:** fine for now; can change later.
+6. **New (owner):** Babel throws the letters into the field at the start of each round (rule 4).
+
+The bible as a whole stays `status: draft` until the owner flips it to `approved`.
+
+## 9. Open questions (answered above)
 
 1. **Ade and Kit names.** They are placeholders, kept as is. *Recommendation:* decide before Act I art is commissioned, and keep the seafoam and pink colours either way.
 2. **Why the oxygen rule.** I made the pressure line open on a complete record (rule 2). v3 says only that restoring "vents the pressure line". *Recommendation:* approve this reading. It costs nothing and explains wrong-catch leaks.

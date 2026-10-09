@@ -24,6 +24,8 @@ PY
 Output: every line returned `[]` (no problems): BREAD OR WATER?, WHO LIT A LAMP?, BOOK OR CLOCK?, SO CALM., HUMAN PRIDE., CHEAP WORRY., SO JUST., A TIGHT ACCORD., SILENT. NO. LISTEN., NO NOISE.
 
 ## Open questions for the owner (from the drafts)
+Owner answers, 9 Oct 2026: 1 keep the names, 2 yes, 3 yes, 4 yes, 5 fine for now. Recorded in `docs/story-bible.md` §8.
+
 1. Ade and Kit are placeholder names: keep or rename.
 2. Oxygen rule: the pressure line opens only on a complete record; a wrong catch makes the valve flutter (bible §2 rule 2).
 3. Rhee's confession line: "I wrote the first word. It was *quiet*." (bible §5).
