@@ -55,6 +55,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-2.7 | Iteration loop (3 weekly rounds) | builder + Owner | loop 1 open | `playtests/P2/loop-1.md` |
 | M-first-draft | First playable draft in Godot (web): rules core, 2.5D field, app flow, autoplay smoke | orchestrator + workers | done, live on Pages (8 Oct 2026); follow-ups merged: AstroLex loading screen (#13), blank back plane (#14, #15), playtest monitoring and dashboard (#15, #18), word hints (#21) | `wps/MILESTONE-first-draft.md`, `reports/WP-3.2/evidence.md`, `docs/PROJECT-BRIEF.md` |
 | WP-3.G | Glass-tile spike: glass as a fourth tile look, frame-rate readout and a 20-tile bench (O-22 gate) | godot-dev | done (9 Oct 2026): glass and bubble looks merged (#25 to #27); **frame-rate gate passed** on the owner's iPhone, bubble with 40 tiles at 59.7 fps (p95 16.7 ms). Opaque looks removed; Bubble is the default, Glass the other choice | `reports/WP-3.G/evidence.md` |
+| WP-3.7 | Story bible v1: world rules, characters, act beats, twist, ending; wordless Prologue; Babel and comms samples | story-writer | drafted (9 Oct 2026), awaiting owner approval | `reports/WP-3.7/evidence.md` |
 
 ## Review queue (cap 4)
 
@@ -62,6 +63,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 2. WP-1.5 feasibility report: O-13 `level` scope applies by default; say so if you disagree.
 3. Phase 2 loop 1: share the toy link with the first 5–7 outside testers per `playtests/P2/protocol.md`; paste each tester's Copy results output into `playtests/P2/results/loop-1/`.
 4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the layout sketches (where the slots, comms and HUD sit), so the colours and glass tiles can be mapped onto them.
+5. WP-3.7 story bible (owner asked for it on 9 Oct 2026, over the cap of 4): read `docs/story-bible.md`, `docs/story/prologue.md`, `docs/story/samples.md`; answer the open questions in `reports/WP-3.7/evidence.md`; flip `status: draft` to `approved`.
 
 ## Backlog (found while building, not in scope of any current WP)
 
