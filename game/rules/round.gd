@@ -430,8 +430,9 @@ func _tick_respawns(h: float) -> void:
 # --- thieves -----------------------------------------------------------------------------
 
 func _tick_thieves(h: float) -> void:
-	if float(stats["secs"]) + EPS >= _next_thief_at and thieves.size() < int(_num("thief.max")):
-		_spawn_thief()
+	if float(stats["secs"]) + EPS >= _next_thief_at:
+		if thieves.size() < int(_num("thief.max")):
+			_spawn_thief()
 		_next_thief_at = float(stats["secs"]) + _num("thief.interval")
 	for th: Thief in thieves.duplicate():
 		if state != "play":
@@ -479,9 +480,13 @@ func _pick_target(th: Thief) -> int:
 
 func _seek(th: Thief, h: float) -> void:
 	var tgt: Tile = _by_id.get(th.target_id)
-	if tgt == null or not tgt.alive or tgt.carried_by >= 0:
+	var shot_id := int(shot["tile_id"]) if not shot.is_empty() and shot.get("kind", "tile") == "tile" else -1
+	if tgt == null or not tgt.alive or tgt.carried_by >= 0 or tgt.id == shot_id or tgt.id == queued_id:
+		var had_target := th.target_id >= 0
 		th.target_id = _pick_target(th)
 		tgt = _by_id.get(th.target_id)
+		if tgt == null and had_target:
+			th.vel = th.vel.normalized() * _num("thief.speed") * THIEF_IDLE_MUL
 	if tgt != null:
 		var to := tgt.pos - th.pos
 		th.vel = to.normalized() * _num("thief.speed") if to.length() > EPS else Vector2.ZERO
