@@ -14,3 +14,13 @@ Notes:
 - Progress is not saved between visits yet (next WP: browser save).
 - Act I keeps Babel's lines on (`"babel": true` per level), although the bible says Babel is unaware in Act I. Owner to decide; it is one flag per level.
 - Review fixes: autoplay skips the after-level comms; an empty level list falls back to a free round; the level title sits under the slot rows.
+
+## Follow-up (9 Oct 2026): no spoilers before a round
+
+Owner feedback: the comms before a level named the words to catch, so the level was too easy. Owner also confirmed Babel speaks in Act I (bible §4 Act I and §8 item 7 updated).
+
+| AC | Result | Check | Artefact |
+|---|---|---|---|
+| Title and commsBefore name none of the level's or later levels' words; commsAfter names no later level's word | pass | `python -m astrolex_tools.levels` (new `spoiler_problems`, plural-aware); the old file fails with 31 hits | `data/levels/act1_low_orbit.json` (10 lines, 3 titles rewritten) |
+| Check is tested | pass | `pytest tools/tests/test_levels.py` (2 new tests); `pytest tools` 43 passed | `tools/tests/test_levels.py` |
+| Game data re-exported, game still runs | pass | `export_game_data`; `scripts/godot/test.sh` 101 passed; web smoke autoplay won | `game/data/content.json` |
