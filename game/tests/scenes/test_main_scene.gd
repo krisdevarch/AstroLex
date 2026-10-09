@@ -1,5 +1,7 @@
 extends "res://tests/test_case.gd"
 
+const Flow := preload("res://tests/scenes/flow.gd")
+
 
 func test_start_screen_shows_title_and_start() -> void:
 	var main: Node = load("res://scenes/main.tscn").instantiate()
@@ -13,13 +15,8 @@ func test_start_screen_shows_title_and_start() -> void:
 
 
 func test_start_leads_to_the_field_and_shows_the_time_bar() -> void:
-	var main: Node = load("res://scenes/main.tscn").instantiate()
-	tree.root.add_child(main)
-	(main.find_child("StartButton", true, false) as Button).pressed.emit()
-	var skip := main.find_child("SkipButton", true, false) as Button
-	if skip:
-		skip.pressed.emit()
-	var field := main.find_child("Field", true, false)
+	var main: Node = Flow.returning(tree)
+	var field := Flow.to_field(main)
 	assert_true(field != null, "field is up after Start")
 	if field:
 		var bar := field.find_child("TimeBar", true, false) as Control
@@ -30,11 +27,13 @@ func test_start_leads_to_the_field_and_shows_the_time_bar() -> void:
 
 func test_end_screen_lists_the_numbers() -> void:
 	var end: Control = load("res://scenes/end_screen.gd").new()
-	end.summary = {"won": true, "mode": "drift", "score": 812, "words_done": 4, "words_total": 4, "secs": 75.0, "catches": 20, "wrong": 1, "babel": "you are not that"}
+	end.summary = {"won": true, "mode": "drift", "score": 812, "words_done": 4, "words_total": 4, "secs": 75.0, "time_left": 8.2, "stars": 2, "catches": 20, "wrong": 1, "babel": "you are not that"}
 	tree.root.add_child(end)
 	assert_eq((end.find_child("EndTitle", true, false) as Label).text, "Sector cleared")
 	assert_eq((end.find_child("ScoreStat", true, false) as Label).text, "Score  812")
 	assert_eq((end.find_child("WordsStat", true, false) as Label).text, "Words  4/4")
-	assert_eq((end.find_child("TimeStat", true, false) as Label).text, "Time  1:15")
-	assert_true(end.find_child("PlayAgainButton", true, false) != null, "play again")
+	assert_eq((end.find_child("TimeStat", true, false) as Label).text, "Time left  9s")
+	assert_eq((end.find_child("StarsStat", true, false) as Label).text, "Stars  **-")
+	assert_true(end.find_child("NextButton", true, false) != null, "next after a win")
+	assert_true(end.find_child("RetryButton", true, false) != null and end.find_child("MapButton", true, false) != null, "retry and map")
 	end.free()

@@ -1,9 +1,11 @@
 extends Control
-## End of a round: Sector cleared or Out of air, the numbers, the last Babel line.
+## End of a round: Sector cleared or Out of time, the numbers, the last Babel line.
 
 const Ui := preload("res://scenes/ui.gd")
 
-signal play_again
+signal next
+signal retry
+signal map
 
 var summary: Dictionary = {}
 var telemetry: RefCounted  # optional; the send and copy buttons show only when set
@@ -20,19 +22,20 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 22)
 	centre.add_child(box)
-	var in_level: bool = str(summary.get("level", "")) != ""
-	var complete: bool = summary.get("act_complete", false)
-	var title_text := "Sector cleared" if won else "Out of air"
-	if complete:
-		title_text = "Act I complete"
+	var title_text := "Sector cleared" if won else "Out of time"
 	var title := Ui.label(title_text, 100, Ui.ACCENT if won else Color(1.0, 0.55, 0.5))
 	title.name = "EndTitle"
 	box.add_child(title)
 	var secs: float = summary.get("secs", 0.0)
+	var stars := clampi(int(summary.get("stars", 1 if won else 0)), 0, 3)
+	var st := Ui.label("Stars  " + "*".repeat(stars) + "-".repeat(3 - stars), 70, Ui.ACCENT)
+	st.name = "StarsStat"
+	box.add_child(st)
 	var rows := [
 		["ScoreStat", "Score  %d" % int(summary.get("score", 0))],
 		["WordsStat", "Words  %d/%d" % [int(summary.get("words_done", 0)), int(summary.get("words_total", 0))]],
-		["TimeStat", "Time  %d:%02d" % [int(secs) / 60, int(secs) % 60]],
+		["TimeStat", "Time left  %ds" % int(ceil(float(summary.get("time_left", 0.0))))],
+		["SecsStat", "Played  %d:%02d" % [int(secs) / 60, int(secs) % 60]],
 		["CatchesStat", "Catches  %d" % int(summary.get("catches", 0))],
 		["WrongStat", "Wrong  %d" % int(summary.get("wrong", 0))],
 	]
@@ -45,15 +48,19 @@ func _ready() -> void:
 	line.custom_minimum_size = Vector2(880, 150)
 	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(line)
-	var again_text := "Play again"
-	if complete:
-		again_text = "Play again from 1-01"
-	elif in_level:
-		again_text = "Next level" if won else "Retry"
-	var again := Ui.button(again_text, 56, Vector2(700 if complete else 560, 140))
-	again.name = "PlayAgainButton"
-	again.pressed.connect(func() -> void: play_again.emit())
-	box.add_child(again)
+	if won:
+		var nx := Ui.button("Next", 56, Vector2(560, 140))
+		nx.name = "NextButton"
+		nx.pressed.connect(func() -> void: next.emit())
+		box.add_child(nx)
+	var rt := Ui.button("Retry", 48 if won else 56, Vector2(560, 120 if won else 140))
+	rt.name = "RetryButton"
+	rt.pressed.connect(func() -> void: retry.emit())
+	box.add_child(rt)
+	var mp := Ui.button("Map", 48, Vector2(560, 110))
+	mp.name = "MapButton"
+	mp.pressed.connect(func() -> void: map.emit())
+	box.add_child(mp)
 	if telemetry != null:
 		var row := HBoxContainer.new()
 		row.name = "ResultsRow"

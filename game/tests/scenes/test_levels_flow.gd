@@ -2,6 +2,7 @@ extends "res://tests/test_case.gd"
 
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 const GameData := preload("res://rules/game_data.gd")
+const Flow := preload("res://tests/scenes/flow.gd")
 
 
 func _level(i: int) -> Dictionary:
@@ -15,19 +16,13 @@ func _press(main: Node, node_name: String) -> void:
 		b.pressed.emit()
 
 
-func _to_field(main: Node) -> Node:
-	_press(main, "StartButton")
-	if main.find_child("CommsScreen", true, false) != null:
-		_press(main, "SkipButton")
-	return main.find_child("Field", true, false)
-
-
-func test_start_shows_comms_then_level_1_01() -> void:
-	var main: Node = load("res://scenes/main.tscn").instantiate()
-	tree.root.add_child(main)
-	_press(main, "StartButton")
-	assert_true(main.find_child("CommsScreen", true, false) != null, "comms before level")
-	_press(main, "SkipButton")
+func test_map_leads_through_comms_to_level_1_01() -> void:
+	var main: Node = Flow.returning(tree)
+	Flow.press(main, "StartButton")
+	assert_true(Flow.has(main, "LevelMap"), "map after Continue")
+	Flow.press(main, "Level_1-01")
+	assert_true(Flow.has(main, "CommsScreen"), "comms before level")
+	Flow.press(main, "SkipButton")
 	var f := main.find_child("Field", true, false)
 	assert_true(f != null, "field after skip")
 	if f:
@@ -38,10 +33,9 @@ func test_start_shows_comms_then_level_1_01() -> void:
 	main.free()
 
 
-func test_win_advances_and_loss_keeps_the_index() -> void:
-	var main: Node = load("res://scenes/main.tscn").instantiate()
-	tree.root.add_child(main)
-	var f := _to_field(main)
+func test_win_offers_next_and_next_plays_the_following_level() -> void:
+	var main: Node = Flow.returning(tree)
+	var f := Flow.to_field(main)
 	f.autoplay = true
 	f.skip_intro()
 	var steps := 0
@@ -49,31 +43,29 @@ func test_win_advances_and_loss_keeps_the_index() -> void:
 		f.advance(1.0 / 60.0)
 		steps += 1
 	assert_eq(f.game_round.state, "won", "bot wins 1-01")
-	assert_eq(main.level_index, 1, "win moves to the next level")
-	# commsAfter (if any), then the End screen offers Next level.
-	if main.find_child("CommsScreen", true, false) != null:
-		_press(main, "SkipButton")
-	var again := main.find_child("PlayAgainButton", true, false) as Button
-	assert_true(again != null and again.text == "Next level", "Next level offered")
-	main.call("_on_level_finished", {"won": false}, _level(1))
-	assert_eq(main.level_index, 1, "loss keeps the index")
-	again = main.find_child("PlayAgainButton", true, false) as Button
-	assert_true(again != null and again.text == "Retry", "Retry offered")
+	assert_true(main.save.next_level(main.act) >= 1, "win saved")
+	if Flow.has(main, "CommsScreen"):
+		Flow.press(main, "SkipButton")
+	assert_true(Flow.has(main, "NextButton"), "Next offered after a win")
+	assert_true(Flow.has(main, "RetryButton") and Flow.has(main, "MapButton"), "Retry and Map")
+	assert_false(Flow.has(main, "ModeSwitchButton"), "no mode switch")
+	Flow.press(main, "NextButton")
+	if Flow.has(main, "CommsScreen"):
+		Flow.press(main, "SkipButton")
+	var f2 := main.find_child("Field", true, false)
+	assert_true(f2 != null and f2.game_round.level_id == "1-02", "next level is 1-02")
 	main.free()
 
 
-func test_last_level_won_completes_the_act() -> void:
-	var main: Node = load("res://scenes/main.tscn").instantiate()
-	tree.root.add_child(main)
-	var n: int = main.levels.size()
-	main.level_index = n - 1
-	main.call("_on_level_finished", {"won": true}, _level(n - 1))
-	if main.find_child("CommsScreen", true, false) != null:
-		_press(main, "SkipButton")
-	var t := main.find_child("EndTitle", true, false) as Label
-	assert_true(t != null and t.text == "Act I complete", "act complete title")
-	var again := main.find_child("PlayAgainButton", true, false) as Button
-	assert_true(again != null and again.text == "Play again from 1-01", "restart button")
+func test_loss_offers_retry_but_no_next_and_keeps_the_level() -> void:
+	var main: Node = Flow.returning(tree)
+	Flow.to_field(main)
+	main.call("_on_level_finished", {"won": false}, _level(0))
+	assert_false(Flow.has(main, "NextButton"), "no Next after a loss")
+	assert_eq(main.save.next_level(main.act), 0, "loss does not unlock")
+	Flow.press(main, "RetryButton")
+	var f := main.find_child("Field", true, false)
+	assert_true(f != null and f.game_round.level_id == "1-01", "retry replays 1-01")
 	main.free()
 
 
