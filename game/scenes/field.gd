@@ -27,6 +27,12 @@ const PREVIEW_SIZE := 52.0
 const SIDE_PAD := 40.0
 const BAND_Y := 372.0
 const BAND_H := 120.0
+# Babel's throw: look of a single flight (timing and origin are tunables under babel.*).
+const THROW_START_SCALE := 0.15
+const THROW_WOBBLE := 0.12
+const THROW_WOBBLE_HZ := 40.0
+const THROW_FLARE_SEC := 0.12
+const THROW_TAIL := 0.25  # rift fade after the last landing, as a share of babel.throwSec
 
 signal round_finished(summary: Dictionary)
 ## Every rules event, as the field applies it (for telemetry and other listeners).
@@ -41,6 +47,14 @@ var settings: AppSettings = AppSettings.new()
 var game_round: RoundScript
 var last_babel: String = ""
 var finished: bool = false
+## Babel throws the round's letters out of a rift before play starts (visual only).
+var intro_enabled: bool = true
+
+var _intro_on: bool = false
+var _intro_t: float = 0.0
+var _intro_dur: float = 0.0
+var _intro_order: Dictionary = {}  # tile_id -> launch index
+var _rift: Node2D
 
 var _tun: Dictionary = {}
 var _content: Dictionary = {}
@@ -100,6 +114,7 @@ func begin(mode: String, round_no: int, seed_value: int) -> void:
 	_apply_events()
 	_sync_views()
 	_update_hud()
+	_start_intro(seed_value)
 	if print_ready:
 		print("AstroLex ready: %d tiles" % game_round.tiles.size())
 
@@ -115,6 +130,9 @@ func radius_px(t: Object) -> float:
 ## Screen-space circle hit test: nearest catchable tile inside radius + margin; fires it.
 ## Returns the tile id, or -1 on a miss (a miss does nothing).
 func tap(screen_pos: Vector2) -> int:
+	if _intro_on:
+		skip_intro()
+		return -1
 	if game_round == null or game_round.state != "play":
 		return -1
 	var margin := _n("tap.marginPx")
@@ -148,6 +166,9 @@ func advance(delta: float) -> void:
 	if game_round == null:
 		return
 	_time += delta
+	if _intro_on:
+		_tick_intro(delta)
+		return
 	if autoplay:
 		_autoplay_tick(delta)
 	game_round.step(delta)
@@ -179,6 +200,128 @@ func summary() -> Dictionary:
 		"wrong": int(game_round.stats["wrong"]),
 		"babel": last_babel,
 	}
+
+
+# --- Babel throws the letters ------------------------------------------------------------
+
+## True while Babel is still throwing the letters; the rules do not step meanwhile.
+func intro_active() -> bool:
+	return _intro_on
+
+
+func _start_intro(seed_value: int) -> void:
+	if not intro_enabled:
+		return
+	if _rift != null:
+		_rift.queue_free()
+		_rift = null
+	_intro_order.clear()
+	var ids: Array = []
+	for t in game_round.tiles:
+		ids.append(t.id)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for i in range(ids.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp = ids[i]
+		ids[i] = ids[j]
+		ids[j] = tmp
+	for i in ids.size():
+		_intro_order[ids[i]] = i
+	var throw_sec := _n("babel.throwSec")
+	_intro_dur = throw_sec if settings.reduced_motion else throw_sec + _n("babel.throwStagger") * float(maxi(ids.size() - 1, 0))
+	_intro_t = 0.0
+	_intro_on = true
+	_rift = Rift.new()
+	_rift.name = "BabelRift"
+	_rift.position = to_screen(Vector2(_n("babel.throwOriginX"), _n("babel.throwOriginY")))
+	_rift.radius = _n("babel.riftRadius") * _scale
+	_rift.animated = not settings.reduced_motion
+	_fx_layer.add_child(_rift)
+	_pose_intro()
+
+
+## Ends the intro at once: every tile snaps to its place and play starts.
+func skip_intro() -> void:
+	if not _intro_on:
+		return
+	_intro_on = false
+	if _rift != null:
+		_rift.queue_free()
+		_rift = null
+	for id in _views.keys():
+		var v: TileViewScript = _views[id]
+		v.scale = Vector2.ONE
+		v.visible = true
+		v.modulate.a = _n("plane.backAlpha") if v.is_back else 1.0
+	_sync_views()
+
+
+func _tick_intro(delta: float) -> void:
+	_intro_t += delta
+	if _intro_t >= _intro_dur + _n("babel.throwSec") * THROW_TAIL:
+		skip_intro()
+		return
+	_sync_views()
+	_pose_intro()
+
+
+func _pose_intro() -> void:
+	var throw_sec := maxf(_n("babel.throwSec"), 0.01)
+	var stagger := _n("babel.throwStagger")
+	var s := _n("babel.throwOvershoot")
+	var origin := _rift.position
+	var flare := 0.0
+	for id in _views.keys():
+		var v: TileViewScript = _views[id]
+		var real := to_screen(game_round.find_tile(id).pos)
+		var base_a := _n("plane.backAlpha") if v.is_back else 1.0
+		if settings.reduced_motion:
+			var f := clampf(_intro_t / throw_sec, 0.0, 1.0)
+			v.position = real
+			v.scale = Vector2.ONE
+			v.modulate.a = base_a * f
+			continue
+		var start: float = float(_intro_order.get(id, 0)) * stagger
+		var u := clampf((_intro_t - start) / throw_sec, 0.0, 1.0)
+		if _intro_t < start:
+			v.visible = false
+			continue
+		v.visible = true
+		var w := u - 1.0
+		var e := 1.0 + (s + 1.0) * w * w * w + s * w * w  # back ease-out
+		v.position = origin.lerp(real, e)
+		var grow := clampf(u * 2.0, 0.0, 1.0)
+		var wobble := THROW_WOBBLE * sin(PI * clampf((u - 0.7) / 0.3, 0.0, 1.0)) * sin(u * THROW_WOBBLE_HZ)
+		v.scale = Vector2.ONE * lerpf(THROW_START_SCALE, 1.0, grow) * (1.0 + wobble)
+		v.modulate.a = base_a * clampf(u * 4.0, 0.0, 1.0)
+		if _intro_t - start < THROW_FLARE_SEC:
+			flare = 1.0
+	if _rift != null:
+		var rest := clampf((_intro_dur + throw_sec * THROW_TAIL - _intro_t) / (throw_sec * THROW_TAIL), 0.0, 1.0)
+		_rift.flare = flare
+		_rift.fade = minf(1.0, rest) if not settings.reduced_motion else 1.0
+		_rift.t = _time
+		_rift.queue_redraw()
+
+
+class Rift extends Node2D:
+	var radius: float = 60.0
+	var flare: float = 0.0
+	var fade: float = 1.0
+	var t: float = 0.0
+	var animated: bool = true
+
+	func _draw() -> void:
+		var c := Color(0.439, 0.439, 1.0)  # periwinkle #7070FF
+		var pulse := 1.0 + (0.12 * sin(t * 6.0) if animated else 0.0)
+		var r := radius * pulse * (1.0 + 0.35 * flare)
+		for i in 5:
+			var k := float(i) / 4.0
+			draw_circle(Vector2.ZERO, r * (2.2 - 1.6 * k), Color(c.r, c.g, c.b, 0.10 * fade * (0.6 + flare)))
+		draw_circle(Vector2.ZERO, r * 0.6, Color(0.85, 0.85, 1.0, 0.85 * fade))
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 48, Color(c.r, c.g, c.b, fade), 5.0)
+		draw_arc(Vector2.ZERO, r * 1.5, t * 0.8, t * 0.8 + TAU * 0.7, 40, Color(c.r, c.g, c.b, 0.5 * fade), 3.0)
 
 
 # --- autoplay --------------------------------------------------------------------------

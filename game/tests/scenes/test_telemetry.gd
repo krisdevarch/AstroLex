@@ -15,6 +15,7 @@ func _play(tel: RefCounted, round_no: int) -> Node2D:
 	tree.root.add_child(f)
 	tel.begin_round(f, "drift", round_no, 12345)
 	f.begin("drift", round_no, 12345)
+	f.skip_intro()
 	var steps := 0
 	while f.game_round.state == "play" and steps < 300 * 60:
 		f.advance(1.0 / 60.0)
@@ -85,6 +86,7 @@ func test_missed_taps_are_counted_with_nearest_distance() -> void:
 	tree.root.add_child(f)
 	t.begin_round(f, "drift", 1, 1)
 	f.begin("drift", 1, 1)
+	f.skip_intro()
 	assert_eq(f.tap(Vector2(-5000, -5000)), -1)
 	assert_eq(f.tap(Vector2(-5000, -5000)), -1)
 	assert_eq(t._round["tap_misses"], 2)

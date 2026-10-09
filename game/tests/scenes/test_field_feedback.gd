@@ -15,6 +15,7 @@ func _make(autoplay: bool, seed_value: int = 12345, treatment: String = "bubble"
 	f.settings.reduced_motion = reduced
 	tree.root.add_child(f)
 	f.begin("drift", 1, seed_value)
+	f.skip_intro()
 	return f
 
 

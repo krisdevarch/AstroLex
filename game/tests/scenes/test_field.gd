@@ -8,6 +8,7 @@ func _make_field(autoplay: bool, mode: String = "drift") -> Node2D:
 	f.autoplay = autoplay
 	tree.root.add_child(f)
 	f.begin(mode, 1, 12345)
+	f.skip_intro()
 	return f
 
 
