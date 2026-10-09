@@ -47,6 +47,11 @@
     "tile.swayDeg",
     "tile.swaySpeed",
     "tile.shadowOffset",
+    "glass.blur",
+    "glass.refractPx",
+    "glass.frost",
+    "glass.specular",
+    "glass.edgeTint",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -270,6 +275,36 @@
       "type": "number",
       "minimum": 0,
       "description": "screen px drop-shadow offset on the front plane"
+    },
+    "glass.blur": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: sky blur strength, 0..1 (mip level scale)"
+    },
+    "glass.refractPx": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 60,
+      "description": "glass tile: edge refraction in screen px"
+    },
+    "glass.frost": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: dark frost alpha behind the glyph"
+    },
+    "glass.specular": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: highlight strength"
+    },
+    "glass.edgeTint": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "glass tile: rim and bottom accent tint strength"
     },
     "hud.hintAlpha": {
       "type": "number",

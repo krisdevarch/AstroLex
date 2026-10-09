@@ -6,6 +6,10 @@ const TileTextures := preload("res://scenes/tile_textures.gd")
 const TILE_SHADER: Shader = preload("res://shaders/tile.gdshader")
 ## The flat treatment skips the lamp, so it needs the ambient dimming undone.
 const FLAT_GAIN := Vector3(1.6, 1.6, 1.4)
+const GLASS_SHADER: Shader = preload("res://shaders/glass.gdshader")
+## The ambient CanvasModulate dims anything it tints; glass is off the lamp, so undo it.
+const GLASS_GAIN := Vector3(1.55, 1.52, 1.28)
+const GLASS_ACCENT := Color(0.35, 0.85, 1.0)
 const GLYPH_COLOR := Color(0.06, 0.08, 0.18)
 
 @onready var shadow: Sprite2D = $Shadow
@@ -43,9 +47,22 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_phase = p_phase
 	var k := size_px / float(TileTextures.SIZE)
 	body.scale = Vector2(k, k)
-	body.texture = TileTextures.body("bevel" if treatment == "bevel" else "tilt")
 	_mat = ShaderMaterial.new()
-	_mat.shader = TILE_SHADER
+	if treatment == "glass":
+		body.texture = TileTextures.glass_mask()
+		_mat.shader = GLASS_SHADER
+		_mat.set_shader_parameter("unlit_gain", GLASS_GAIN)
+		_mat.set_shader_parameter("accent", GLASS_ACCENT)
+		_mat.set_shader_parameter("blur", float(_tun["glass.blur"]))
+		_mat.set_shader_parameter("refract_px", float(_tun["glass.refractPx"]))
+		_mat.set_shader_parameter("frost", float(_tun["glass.frost"]))
+		_mat.set_shader_parameter("specular", float(_tun["glass.specular"]))
+		_mat.set_shader_parameter("edge_tint", float(_tun["glass.edgeTint"]))
+		_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
+		body.light_mask = 2
+	else:
+		body.texture = TileTextures.body("bevel" if treatment == "bevel" else "tilt")
+		_mat.shader = TILE_SHADER
 	body.material = _mat
 	shadow.texture = TileTextures.shadow()
 	shadow.scale = body.scale
@@ -60,7 +77,14 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.position = -glyph.size * 0.5
 	glyph.pivot_offset = glyph.size * 0.5
 	glyph.add_theme_font_size_override("font_size", int(size_px * 0.62))
-	glyph.add_theme_color_override("font_color", GLYPH_COLOR)
+	if treatment == "glass":
+		# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
+		glyph.add_theme_color_override("font_color", Color.WHITE)
+		glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.95))
+		glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.055)))
+		glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
+	else:
+		glyph.add_theme_color_override("font_color", GLYPH_COLOR)
 
 
 ## Back plane: blank debris (a shard, no letter). Dim, desaturated, unlit, shadowless, never tilted.
@@ -68,10 +92,15 @@ func set_back(alpha: float, desaturate: float) -> void:
 	is_back = true
 	modulate = Color(1.0, 1.0, 1.0, alpha)
 	glyph.visible = false
-	body.texture = TileTextures.shard()
 	body.rotation = fposmod(_phase, TAU)
 	shadow.visible = false
 	body.light_mask = 2
+	if treatment == "glass":
+		body.texture = TileTextures.shard()
+		_mat.set_shader_parameter("shard", true)
+		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
+		return
+	body.texture = TileTextures.shard()
 	_mat.set_shader_parameter("unlit_gain", FLAT_GAIN)
 	_mat.set_shader_parameter("desaturate", desaturate)
 

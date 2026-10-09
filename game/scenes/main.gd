@@ -5,6 +5,7 @@ extends Node
 const AppSettings := preload("res://scenes/app_settings.gd")
 const StartScreen := preload("res://scenes/start_screen.gd")
 const SettingsScreen := preload("res://scenes/settings_screen.gd")
+const GlassBench := preload("res://scenes/glass_bench.gd")
 const EndScreen := preload("res://scenes/end_screen.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
@@ -34,7 +35,9 @@ func _ready() -> void:
 	settings.load_from()
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	autoplay = autoplay_requested()
-	if autoplay:
+	if GlassBench.bench_requested():
+		_show_bench(GlassBench.auto_requested())
+	elif autoplay:
 		_start_round("drift", 1)
 	else:
 		_show_start()
@@ -75,7 +78,20 @@ func _show_settings() -> void:
 	s.name = "SettingsScreen"
 	s.settings = settings
 	s.closed.connect(_show_start)
+	s.bench_pressed.connect(func() -> void: _show_bench(false))
 	_swap(s)
+
+
+func _show_bench(auto: bool) -> void:
+	var b: Node = GlassBench.new()
+	b.name = "GlassBench"
+	b.auto = auto
+	b.view_size = get_viewport().get_visible_rect().size
+	b.closed.connect(_show_start)
+	_swap(b)
+	if not _ready_printed:
+		_ready_printed = true
+		print("AstroLex ready: %d tiles" % b.tile_count())
 
 
 func _start_round(m: String, n: int) -> void:

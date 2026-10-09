@@ -1,5 +1,5 @@
 // Boots the Godot web export in headless Chromium and checks that the main scene ran.
-//   node smoke.cjs <build/web dir> [screenshot.png] [--autoplay]
+//   node smoke.cjs <build/web dir> [screenshot.png] [--autoplay | --bench]
 // With --autoplay it loads index.html?autoplay=1, also waits for "AstroLex round won" (180 s),
 // and writes a mid-round screenshot next to the final one (<name>-mid.png).
 // Serves the folder itself (wasm needs a real HTTP server and the application/wasm type),
@@ -11,6 +11,8 @@ const { chromium, webkit, devices } = require('playwright');
 
 const args = process.argv.slice(2);
 const AUTOPLAY = args.includes('--autoplay');
+// --bench loads ?bench=1&auto=1, waits for the "AstroLex bench:" result line and screenshots the bench.
+const BENCH = args.includes('--bench');
 // --browser=webkit runs Safari's engine with an iPhone profile; --url=<https://...> tests a deployed build.
 const BROWSER = (args.find((a) => a.startsWith('--browser=')) || '--browser=chromium').split('=')[1];
 const REMOTE = (args.find((a) => a.startsWith('--url=')) || '').slice('--url='.length);
@@ -33,7 +35,7 @@ const server = http.createServer((req, res) => {
 (async () => {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = REMOTE || `http://127.0.0.1:${server.address().port}/index.html`;
-  const url = base + (AUTOPLAY ? (base.includes('?') ? '&' : '?') + 'autoplay=1' : '');
+  const url = base + (BENCH ? (base.includes('?') ? '&' : '?') + 'bench=1&auto=1' : AUTOPLAY ? (base.includes('?') ? '&' : '?') + 'autoplay=1' : '');
   const browser = BROWSER === 'webkit'
     ? await webkit.launch()
     : await chromium.launch({
@@ -61,6 +63,11 @@ const server = http.createServer((req, res) => {
     if (shot) { await page.waitForTimeout(4000); await page.screenshot({ path: shot.replace(/(\.png)?$/, '-mid.png') }); }
     won = await page.waitForEvent('console', { predicate: (m) => WON.test(m.text()), timeout: WON_TIMEOUT_MS }).catch(() => null);
   }
+  let bench = null;
+  if (BENCH && ready) {
+    if (shot) { await page.waitForTimeout(4000); await page.screenshot({ path: shot.replace(/(\.png)?$/, '-mid.png') }); }
+    bench = await page.waitForEvent('console', { predicate: (m) => /AstroLex bench:/.test(m.text()), timeout: 120000 }).catch(() => null);
+  }
   if (shot) { await page.waitForTimeout(AUTOPLAY ? 2500 : 1000); await page.screenshot({ path: shot }); }
   await browser.close();
   server.close();
@@ -70,6 +77,7 @@ const server = http.createServer((req, res) => {
   if (!ready || (AUTOPLAY && !won) || errors.length) console.error('--- last console lines ---\n' + lines.slice(-30).join('\n'));
   if (!ready) { console.error(`FAIL: no "AstroLex ready" line within ${TIMEOUT_MS / 1000} s`); process.exit(1); }
   if (AUTOPLAY && !won) { console.error(`FAIL: no "AstroLex round won" line within ${WON_TIMEOUT_MS / 1000} s`); process.exit(1); }
+  if (BENCH && !bench) { console.error('FAIL: no "AstroLex bench:" line'); process.exit(1); }
   if (errors.length) { console.error('FAIL: browser errors:\n' + errors.join('\n')); process.exit(1); }
   console.log(`ok: main scene ran in ${(ms / 1000).toFixed(1)} s (${READY.exec(ready.text())[1]} tiles)`);
   if (won) console.log(`ok: autoplay round won, score ${WON.exec(won.text())[1]}`);

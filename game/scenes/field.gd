@@ -10,6 +10,7 @@ const LightRig := preload("res://scenes/light_rig.gd")
 const Starfield := preload("res://scenes/starfield.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
+const FpsMeter := preload("res://scenes/fps_meter.gd")
 
 const ACT := "act1_low_orbit"
 # Pure layout and pacing constants (screen pixels at 1080 wide, seconds).
@@ -75,6 +76,7 @@ var _oxygen_bar: ProgressBar
 var _toast: Label
 var _band: Panel
 var _band_label: Label
+var _fps_meter: CanvasLayer
 
 
 func _process(delta: float) -> void:
@@ -151,6 +153,8 @@ func advance(delta: float) -> void:
 	game_round.step(delta)
 	_apply_events()
 	_sync_views()
+	if _fps_meter != null:
+		_fps_meter.tiles = _views.size()
 	_tick_views(delta)
 	_update_tether(delta)
 	_update_hud()
@@ -212,6 +216,9 @@ func _build_world() -> void:
 	var stars: Node2D = Starfield.new()
 	stars.view_size = view_size
 	backdrop.add_child(stars)
+	if settings.show_fps or FpsMeter.fps_requested():
+		_fps_meter = FpsMeter.new()
+		add_child(_fps_meter)
 
 	_world = CanvasLayer.new()
 	_world.name = "World"

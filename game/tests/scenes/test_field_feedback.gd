@@ -163,6 +163,8 @@ func test_treatments_differ_and_reduced_motion_stops_tilt_and_sway() -> void:
 	assert_eq(seen["flat"]["tilt"], Vector2.ZERO, "flat does not tilt")
 	assert_true(seen["tilt"]["tilt"] != Vector2.ZERO, "tilt treatment tilts")
 	assert_true(seen["bevel"]["tilt"] != Vector2.ZERO, "bevel treatment tilts")
+	assert_true(seen["glass"]["tilt"] != Vector2.ZERO, "glass treatment tilts")
+	assert_eq(seen["glass"]["light_mask"], 2, "glass body is unlit by the lamp")
 	assert_true(seen["flat"]["gain"] != seen["tilt"]["gain"], "flat vs tilt shader params differ")
 	assert_true(seen["bevel"]["tex"] != seen["tilt"]["tex"], "bevel uses a different body texture")
 	assert_true(seen["flat"]["light_mask"] != seen["tilt"]["light_mask"], "flat vs tilt light mask differs")
