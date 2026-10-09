@@ -143,10 +143,10 @@ func set_settings(treatment: String, reduced_motion: bool, hint: String = "edges
 # --- recording -------------------------------------------------------------------------
 
 ## Starts listening to a field. Call before field.begin().
-func begin_round(field: Object, mode: String, round_no: int, seed_value: int) -> void:
+func begin_round(field: Object, mode: String, round_no: int, seed_value: int, level_id: String = "") -> void:
 	_field = field
 	_round = {
-		"round": round_no, "mode": mode, "act": str(field.get("ACT")), "seed": seed_value,
+		"round": round_no, "mode": mode, "act": str(field.get("ACT")), "seed": seed_value, "level": level_id,
 		"first_catch_s": null, "tap_misses": 0, "near": [], "babel_lines": [], "wrong_surplus": 0, "wrong_unneeded": 0,
 	}
 	playing = true

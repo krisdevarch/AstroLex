@@ -38,6 +38,8 @@ var mode: String = "drift"
 var act: String = ""
 var round_no: int = 1
 var seed_value: int = 0
+var level_id: String = ""
+var babel_on: bool = true
 
 var _t: Dictionary = {}
 var _content: Dictionary = {}
@@ -54,22 +56,47 @@ var _shown: Dictionary = {}
 static func create(tunables: Dictionary, content: Dictionary, act_key: String, mode_key: String, seed_value_in: int, round_number: int = 1) -> Self:
 	var r: Self = Self.new()
 	r._t = tunables
-	r._content = content
-	r.act = act_key
-	r.mode = mode_key
-	r.seed_value = seed_value_in
-	r.round_no = round_number
-	r._rng.seed = seed_value_in
-	r._babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
-	r.oxygen = r._num("oxygen.max")
-	r.stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_oxygen": r.oxygen}
-	r._pick_words()
-	r.active = r._slots_of(r.words[0])
-	r.preview = r._slots_of(r.words[1]) if r.words.size() > 1 else ([] as Array[Dictionary])
-	for _i in int(r._num("plane.backTiles")):
-		r._spawn(r._weighted_letter([]), true, 2)
-	r._refill()
+	r._setup(content, act_key, mode_key, seed_value_in, round_number, PackedStringArray())
 	return r
+
+
+## An authored level: its words in order, its seed, and its tuning keys over the base tunables.
+static func create_level(tunables: Dictionary, content: Dictionary, act_key: String, level: Dictionary, mode_key: String) -> Self:
+	var r: Self = Self.new()
+	var t: Dictionary = tunables.duplicate()
+	var tuning: Dictionary = level.get("tuning", {})
+	for k: String in tuning:
+		t[k] = float(tuning[k])
+	r._t = t
+	r.level_id = str(level.get("id", ""))
+	r.babel_on = bool(level.get("babel", true))
+	var w := PackedStringArray()
+	for x in (level["words"] as Array):
+		w.append(str(x))
+	r._setup(content, act_key, mode_key, int(level["seed"]), 1, w)
+	return r
+
+
+## Shared init. Empty `fixed_words` means the seeded random pick (create()).
+func _setup(content: Dictionary, act_key: String, mode_key: String, seed_value_in: int, round_number: int, fixed_words: PackedStringArray) -> void:
+	_content = content
+	act = act_key
+	mode = mode_key
+	seed_value = seed_value_in
+	round_no = round_number
+	_rng.seed = seed_value_in
+	_babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
+	oxygen = _num("oxygen.max")
+	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_oxygen": oxygen}
+	if fixed_words.is_empty():
+		_pick_words()
+	else:
+		words = fixed_words
+	active = _slots_of(words[0])
+	preview = _slots_of(words[1]) if words.size() > 1 else ([] as Array[Dictionary])
+	for _i in int(_num("plane.backTiles")):
+		_spawn(_weighted_letter([]), true, 2)
+	_refill()
 
 
 ## Per-round ramp multipliers and counts (toy ramp()).
@@ -412,12 +439,13 @@ func _restore_words() -> void:
 		for c: String in counts:
 			_pool[c] = int(_pool.get(c, 0)) + int(counts[c])
 		_emit({"type": "restore", "word": w, "score": gained})
-		var lines := Babel.compose(_pool, restored_words, _content, int(_num("babel.minLineLetters")), _babel_rng)
-		var text := Babel.pick(lines, _shown, _babel_rng)
-		if text != "":
-			_shown[text] = true
-			# One babel event per restored word in a chain; the view shows only the latest.
-			_emit({"type": "babel", "text": text})
+		if babel_on:
+			var lines := Babel.compose(_pool, restored_words, _content, int(_num("babel.minLineLetters")), _babel_rng)
+			var text := Babel.pick(lines, _shown, _babel_rng)
+			if text != "":
+				_shown[text] = true
+				# One babel event per restored word in a chain; the view shows only the latest.
+				_emit({"type": "babel", "text": text})
 		word_index += 1
 		if word_index >= words.size():
 			if mode == "pressure":

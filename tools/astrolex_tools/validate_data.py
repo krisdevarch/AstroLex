@@ -32,6 +32,9 @@ def validate_all() -> list[str]:
         schema = json.loads(schema_path.read_text())
         for err in Draft202012Validator(schema).iter_errors(json.loads(path.read_text())):
             errors.append(f"babel/{name}: {err.message}")
+    from astrolex_tools.levels import check_all
+
+    errors += [f"levels/{e}" for e in check_all()]
     return errors
 
 

@@ -26,6 +26,7 @@ python -m astrolex_tools.words.scan --boards 20000 --out reports/ci/scan.md     
 python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
 python -m astrolex_tools.export_toy_data        # regenerates web/toy/data.js (never edit that file by hand)
 python -m astrolex_tools.export_game_data       # regenerates game/data/*.json (never edit by hand)
+python -m astrolex_tools.levels   # checks data/levels/*.json
 python -m astrolex_tools.playtest_report --issues issues.json --out /tmp/dashboard.md   # playtest dashboard; issues.json from `gh api --paginate "repos/krisdevarch/AstroLex/issues?state=all&per_page=100"`
 ```
 

@@ -34,6 +34,7 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
 Rules:
 - The **issue body** holds a short markdown summary plus one fenced `json` block with everything except `events`, so the URL stays under 6,000 characters. Drop `babel_lines`, then trim `errors` to the last 5, if needed.
 - **Copy results** includes `events`, capped at 600: fire, catch, wrong, escape, tap_miss (with nearest tile distance), restore, babel and round_end, each with `t` in seconds.
+- `level` (round record): the authored level id such as `"1-01"`, or `""` for a random round. Added 9 Oct 2026; older results lack it.
 - `build.commit` comes from `game/data/build.json`, written by `scripts/godot/export.sh` from `git rev-parse --short HEAD` (gitignored). The value is `"dev"` when the file is absent.
 - `load.boot_ms` is the time from page start to the engine starting. `load.ready_ms` is the time to the first screen. Both come from `performance.now()` on the web, and are null elsewhere.
 - `wrong_surplus`: wrong catches of a letter the word contains but whose slot is already filled. `wrong_unneeded`: letters not in the word at all. Both added 8 Oct 2026; older results lack them, and the report shows n/a.
