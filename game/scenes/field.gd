@@ -13,7 +13,13 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
 
-const ACT := "act1_low_orbit"
+const ThiefViewScript := preload("res://scenes/thief_view.gd")
+const DEFAULT_ACT := "act1_low_orbit"
+const LOW_TIME := 5.0
+const FLOAT_SEC := 0.9
+const PAUSE_SIZE := 100.0
+const PERIWINKLE := Color(0.561, 0.612, 0.949)
+const RED := Color(1.0, 0.3, 0.3)
 # Pure layout and pacing constants (screen pixels at 1080 wide, seconds).
 const BOTTOM_PAD := 40.0
 const END_DELAY := 1.0
@@ -41,7 +47,14 @@ signal round_finished(summary: Dictionary)
 signal game_event(e: Dictionary)
 ## A tap that fired nothing; nearest_px is the distance to the nearest catchable tile, or -1.
 signal tap_missed(nearest_px: float)
+## The pause button, Escape or Android back was pressed; the flow decides and calls set_paused.
+signal pause_requested
 
+## Colour of the tether and the catch flash (the flow sets it per character).
+var tether_colour: Color = Color(0.55, 0.9, 1.0, 1.0)
+## When non-empty, used instead of GameData.load_content().
+var content_override: Dictionary = {}
+var paused: bool = false
 var autoplay: bool = false
 var print_ready: bool = true
 var view_size: Vector2 = Vector2(1080, 1920)
@@ -77,6 +90,12 @@ var _pulse_t: float = 99.0
 var _tether_fade: float = 0.0
 var _tether_end: Vector2 = Vector2.ZERO
 var _fx: Array = []  # [node, ttl]
+var _thief_views: Dictionary = {}  # thief_id -> ThiefView
+var _floats: Array = []  # [Label, age] floating "-1 s" texts
+var _clock_label: Label
+var _time_bar: ProgressBar
+var _pause_button: Button
+var _low: bool = false
 var _active_key: String = ""
 var _preview_key: String = ""
 var _active_n: int = 0
@@ -91,7 +110,6 @@ var _active_row: Control
 var _preview_row: Control
 var _score_label: Label
 var _combo_label: Label
-var _oxygen_bar: ProgressBar
 var _toast: Label
 var _band: Panel
 var _band_label: Label
@@ -110,16 +128,16 @@ func _n(key: String) -> float:
 ## Starts a round. Call after the field is in the tree.
 func begin(round_no: int, seed_value: int) -> void:
 	_tun = GameData.load_tunables()
-	_content = GameData.load_content()
-	game_round = RoundScript.create(_tun, _content, ACT, seed_value, round_no)
+	_content = content_override if not content_override.is_empty() else GameData.load_content()
+	game_round = RoundScript.create(_tun, _content, DEFAULT_ACT, seed_value, round_no)
 	_start(seed_value)
 
 
 ## Starts an authored level (its words in order, its tuning and seed). Call after the field is in the tree.
-func begin_level(level: Dictionary) -> void:
+func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = []) -> void:
 	_tun = GameData.load_tunables()
-	_content = GameData.load_content()
-	game_round = RoundScript.create_level(_tun, _content, ACT, level)
+	_content = content_override if not content_override.is_empty() else GameData.load_content()
+	game_round = RoundScript.create_level(_tun, _content, act, level, mods)
 	_level_title = "%s  %s" % [str(level.get("id", "")), str(level.get("title", ""))]
 	_level_t = LEVEL_TITLE_SEC
 	_start(int(level["seed"]))
@@ -149,6 +167,8 @@ func radius_px(t: Object) -> float:
 ## Screen-space circle hit test: nearest catchable tile inside radius + margin; fires it.
 ## Returns the tile id, or -1 on a miss (a miss does nothing).
 func tap(screen_pos: Vector2) -> int:
+	if paused:
+		return -1
 	if _intro_on:
 		skip_intro()
 		return -1
@@ -159,6 +179,15 @@ func tap(screen_pos: Vector2) -> int:
 	var best_id := -1
 	var best_d := INF
 	var nearest := INF
+	# Thieves first: a drone under the finger wins over a tile.
+	for th in game_round.thieves:
+		var d := to_screen(th.pos).distance_to(screen_pos)
+		nearest = minf(nearest, d)
+		if d <= _n("thief.radius") * _scale + margin and d < best_d:
+			best_d = d
+			best_id = th.id
+	if best_id >= 0:
+		return best_id if game_round.fire(best_id) else -1
 	for t in game_round.tiles:
 		if not t.alive or t.plane >= 2:
 			continue
@@ -178,10 +207,24 @@ func tap(screen_pos: Vector2) -> int:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		tap(event.position)
+	elif event.is_action_pressed("ui_cancel"):
+		pause_requested.emit()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		pause_requested.emit()
+
+
+## Freezes or resumes everything: rules, intro, effects; taps are ignored while paused.
+func set_paused(on: bool) -> void:
+	paused = on
+	if _pause_button != null:
+		_pause_button.text = "▶" if on else "II"
 
 
 func advance(delta: float) -> void:
-	if game_round == null:
+	if game_round == null or paused:
 		return
 	_time += delta
 	if _intro_on:
@@ -217,6 +260,11 @@ func summary() -> Dictionary:
 		"catches": int(game_round.stats["catches"]),
 		"wrong": int(game_round.stats["wrong"]),
 		"babel": last_babel,
+		"stars": game_round.stars(),
+		"time_left": game_round.time_left,
+		"act": game_round.act,
+		"stolen": int(game_round.stats["stolen"]),
+		"thieves_down": int(game_round.stats["thieves_down"]),
 	}
 
 
@@ -389,7 +437,7 @@ func _build_world() -> void:
 	_tether = Line2D.new()
 	_tether.name = "Tether"
 	_tether.width = 7.0
-	_tether.default_color = Color(0.55, 0.9, 1.0, 1.0)
+	_tether.default_color = tether_colour
 	_tether.begin_cap_mode = Line2D.LINE_CAP_ROUND
 	_tether.end_cap_mode = Line2D.LINE_CAP_ROUND
 	_tether.visible = false
@@ -434,9 +482,21 @@ func _sync_views() -> void:
 		if not live.has(id) and v.anim == "":
 			v.queue_free()
 			_views.erase(id)
+	_sync_thieves()
 
 
 func _tick_views(delta: float) -> void:
+	for tv in _thief_views.values():
+		(tv as ThiefViewScript).tick(delta)
+	for i in range(_floats.size() - 1, -1, -1):
+		_floats[i][1] += delta
+		var lab: Label = _floats[i][0]
+		var k: float = float(_floats[i][1]) / FLOAT_SEC
+		lab.modulate.a = clampf(1.0 - k, 0.0, 1.0)
+		lab.position.y = _clock_label.position.y + 40.0 + (0.0 if settings.reduced_motion else 60.0 * k)
+		if k >= 1.0:
+			lab.queue_free()
+			_floats.remove_at(i)
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
 		if v.tick(delta):
@@ -449,6 +509,30 @@ func _tick_views(delta: float) -> void:
 		if _fx[i][1] <= 0.0:
 			(_fx[i][0] as Node).queue_free()
 			_fx.remove_at(i)
+
+
+func _sync_thieves() -> void:
+	var live: Dictionary = {}
+	for th in game_round.thieves:
+		live[th.id] = true
+		var v: ThiefViewScript = _thief_views.get(th.id)
+		if v == null:
+			v = ThiefViewScript.new()
+			v.name = "Thief_%d" % th.id
+			v.setup(_n("thief.radius") * _scale, settings.reduced_motion, float(th.id) * 1.3)
+			_tiles_root.add_child(v)
+			v.place(to_screen(th.pos))
+			_thief_views[th.id] = v
+		v.set_carrying(th.carrying_id >= 0)
+		v.place(to_screen(th.pos))
+	for id in _thief_views.keys():
+		if not live.has(id):
+			(_thief_views[id] as Node).queue_free()
+			_thief_views.erase(id)
+
+
+func thief_view_count() -> int:
+	return _thief_views.size()
 
 
 var _fly_keys: Dictionary = {}  # tile_id -> pending key
@@ -503,6 +587,19 @@ func _apply_events() -> void:
 				_show_toast(msg, Color(1.0, 0.5, 0.45))
 			"escape":
 				_show_toast("It drifted off", Ui.DIM)
+			"time_cost":
+				_float_cost(float(e["amount"]))
+			"thief_grab":
+				var gv: ThiefViewScript = _thief_views.get(int(e["thief_id"]))
+				if gv != null:
+					gv.set_carrying(true)
+					gv.flash()
+				_show_toast("A drone grabbed a letter!", PERIWINKLE)
+			"stolen":
+				_show_toast("Letter stolen  −%d s" % int(_n("thief.stealCost")), Color(1.0, 0.5, 0.45))
+			"thief_down":
+				_burst(to_screen(e["pos"]), PERIWINKLE, 22)
+				_show_toast("Drone down", PERIWINKLE)
 			"restore":
 				_view_word += 1
 				_pulse_t = 0.0
@@ -530,17 +627,26 @@ func _on_catch(e: Dictionary) -> void:
 	var target := _slot_center(where, slot, row_n)
 	var slot_px := _slot_size(where, row_n)
 	v.fly_to(target, slot_px, _n("fx.flyToSlotSec"))
-	_burst(target)
+	_burst(target, tether_colour.lightened(0.3))
 
 
-func _burst(at: Vector2) -> void:
+func _float_cost(amount: float) -> void:
+	var lab := Ui.label("−%s s" % (str(int(amount)) if is_equal_approx(amount, round(amount)) else "%.1f" % amount), 48, RED)
+	lab.name = "CostFloat"
+	lab.position = Vector2(view_size.x * 0.5 + 100.0, _clock_label.position.y + 40.0)
+	lab.size = Vector2(240, 60)
+	_hud.add_child(lab)
+	_floats.append([lab, 0.0])
+
+
+func _burst(at: Vector2, colour: Color = Color(0.7, 0.95, 1.0), amount: int = 14) -> void:
 	if settings.reduced_motion:
 		return
 	var p := CPUParticles2D.new()
 	p.position = at
 	p.one_shot = true
 	p.emitting = true
-	p.amount = 14
+	p.amount = amount
 	p.lifetime = 0.5
 	p.explosiveness = 1.0
 	p.initial_velocity_min = 140.0
@@ -549,7 +655,7 @@ func _burst(at: Vector2) -> void:
 	p.gravity = Vector2.ZERO
 	p.scale_amount_min = 3.0
 	p.scale_amount_max = 7.0
-	p.color = Color(0.7, 0.95, 1.0)
+	p.color = colour
 	_fx_layer.add_child(p)
 	_fx.append([p, 0.8])
 
@@ -585,23 +691,41 @@ func _build_hud() -> void:
 	_score_label = Ui.label("0", 62, Ui.INK, HORIZONTAL_ALIGNMENT_LEFT)
 	_score_label.name = "ScoreLabel"
 	_score_label.position = Vector2(SIDE_PAD, 24)
-	_score_label.size = Vector2(500, 80)
+	_score_label.size = Vector2(300, 80)
 	_hud.add_child(_score_label)
 	_combo_label = Ui.label("×1.0", 52, Ui.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
 	_combo_label.name = "ComboLabel"
-	_combo_label.position = Vector2(view_size.x - SIDE_PAD - 400, 28)
-	_combo_label.size = Vector2(400, 80)
+	_combo_label.position = Vector2(view_size.x - SIDE_PAD - PAUSE_SIZE - 20.0 - 260.0, 28)
+	_combo_label.size = Vector2(260, 80)
 	_hud.add_child(_combo_label)
-	_oxygen_bar = ProgressBar.new()
-	_oxygen_bar.name = "OxygenBar"
-	_oxygen_bar.position = Vector2(SIDE_PAD, 112)
-	_oxygen_bar.size = Vector2(view_size.x - 2.0 * SIDE_PAD, 22)
-	_oxygen_bar.show_percentage = false
-	_oxygen_bar.min_value = 0.0
-	_oxygen_bar.max_value = _n("burst.seconds")
-	_oxygen_bar.add_theme_stylebox_override("background", Ui.box(Color(0.1, 0.13, 0.25), 11))
-	_oxygen_bar.add_theme_stylebox_override("fill", Ui.box(Color(0.35, 0.85, 0.95), 11))
-	_hud.add_child(_oxygen_bar)
+	_clock_label = Ui.label("", 96, Ui.INK)
+	_clock_label.name = "ClockLabel"
+	_clock_label.position = Vector2((view_size.x - 240.0) * 0.5, 0)
+	_clock_label.size = Vector2(240, 112)
+	_clock_label.pivot_offset = _clock_label.size * 0.5
+	_hud.add_child(_clock_label)
+	_time_bar = ProgressBar.new()
+	_time_bar.name = "TimeBar"
+	_time_bar.position = Vector2(SIDE_PAD, 118)
+	_time_bar.size = Vector2(view_size.x - 2.0 * SIDE_PAD, 22)
+	_time_bar.show_percentage = false
+	_time_bar.min_value = 0.0
+	_time_bar.max_value = _n("burst.seconds")
+	_time_bar.add_theme_stylebox_override("background", Ui.box(Color(0.1, 0.13, 0.25), 11))
+	_time_bar.add_theme_stylebox_override("fill", Ui.box(Color(0.35, 0.85, 0.95), 11))
+	_hud.add_child(_time_bar)
+	_pause_button = Button.new()
+	_pause_button.name = "PauseButton"
+	_pause_button.text = "II"
+	_pause_button.focus_mode = Control.FOCUS_NONE
+	_pause_button.add_theme_font_size_override("font_size", 44)
+	_pause_button.add_theme_color_override("font_color", Ui.INK)
+	for sb in ["normal", "hover", "pressed"]:
+		_pause_button.add_theme_stylebox_override(sb, Ui.box(Color(0.1, 0.13, 0.25, 0.85), 24, Color(0.5, 0.9, 1.0), 2))
+	_pause_button.position = Vector2(view_size.x - SIDE_PAD - PAUSE_SIZE, 8)
+	_pause_button.size = Vector2(PAUSE_SIZE, PAUSE_SIZE)
+	_pause_button.pressed.connect(func() -> void: pause_requested.emit())
+	_hud.add_child(_pause_button)
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"
 	_hud.add_child(_active_row)
@@ -669,7 +793,16 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 func _update_hud() -> void:
 	_score_label.text = "%d" % int(round(game_round.score))
 	_combo_label.text = "×%.1f" % game_round.combo
-	_oxygen_bar.value = game_round.time_left
+	_time_bar.value = game_round.time_left
+	_clock_label.text = "%d" % int(ceil(game_round.time_left))
+	var low: bool = game_round.time_left < LOW_TIME
+	if low != _low:
+		_low = low
+		var col: Color = RED if low else Color(0.35, 0.85, 0.95)
+		_time_bar.add_theme_stylebox_override("fill", Ui.box(col, 11))
+		_clock_label.add_theme_color_override("font_color", RED if low else Ui.INK)
+		if not low:
+			_clock_label.scale = Vector2.ONE
 	var akey := "%d:%s" % [game_round.word_index, "".join(game_round.active.map(func(s: Dictionary) -> String: return s["ch"]))]
 	if akey != _active_key:
 		_active_key = akey
@@ -722,6 +855,9 @@ func _tick_hud(delta: float) -> void:
 		_band_label.text = last_babel
 		_band_label.visible_characters = int(_babel_t * TYPE_CPS)
 		_band.modulate.a = clampf((show_sec - _babel_t) / 0.3, 0.0, 1.0)
+	if _low and not settings.reduced_motion:
+		var cp := 1.0 + 0.12 * absf(sin(_time * TAU))
+		_clock_label.scale = Vector2(cp, cp)
 	_pulse_t += delta
 	var k := 1.0
 	if _pulse_t < PULSE_SEC and not settings.reduced_motion:

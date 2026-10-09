@@ -22,7 +22,7 @@ func test_start_leads_to_the_field_and_shows_the_time_bar() -> void:
 	var field := main.find_child("Field", true, false)
 	assert_true(field != null, "field is up after Start")
 	if field:
-		var bar := field.find_child("OxygenBar", true, false) as Control
+		var bar := field.find_child("TimeBar", true, false) as Control
 		assert_true(bar != null and bar.visible, "time bar")
 		assert_eq(field.game_round.mode, "burst", "burst mode")
 	main.free()
