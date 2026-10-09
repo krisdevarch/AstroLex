@@ -64,8 +64,8 @@
     "burst.wrongCost",
     "burst.restoreBonus",
     "score.timeBonus",
-    "stars.three",
-    "stars.two",
+    "stars.threeShare",
+    "stars.twoShare",
     "thief.firstAt",
     "thief.interval",
     "thief.max",
@@ -389,15 +389,17 @@
       "minimum": 0,
       "description": "win: points per second left"
     },
-    "stars.three": {
+    "stars.threeShare": {
       "type": "number",
       "minimum": 0,
-      "description": "seconds left for three stars"
+      "maximum": 1,
+      "description": "share of the starting clock left for three stars (0.3333 = 10 s of 30, 20 s of 60)"
     },
-    "stars.two": {
+    "stars.twoShare": {
       "type": "number",
       "minimum": 0,
-      "description": "seconds left for two stars"
+      "maximum": 1,
+      "description": "share of the starting clock left for two stars"
     },
     "thief.firstAt": {
       "type": "number",

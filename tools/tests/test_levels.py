@@ -117,3 +117,15 @@ def test_comms_after_may_name_caught_words_but_not_later_ones(doc, words):
     assert check(doc, words) == []
     doc["levels"][0]["commsAfter"] = [{"who": "ade", "text": f"Next up, {words[3]}."}]
     assert check(doc, words) == [f"1-01: commsAfter gives away '{words[3]}' before it is caught"]
+
+
+def test_act_tuning_merges_under_level_tuning():
+    """Burst length is per act (owner, 9 Oct 2026): Act I starts at 60 s and only the late
+    Act IV levels reach 30 s. Level keys win over the act's."""
+    secs = {a: [lv["tuning"]["burst.seconds"] for lv in L.load_levels(a)] for a in
+            ("act1_low_orbit", "act2_nebula", "act3_tower", "act4_core")}
+    assert set(secs["act1_low_orbit"]) == {60}
+    assert all(30 < s for a in ("act1_low_orbit", "act2_nebula", "act3_tower") for s in secs[a])
+    assert secs["act4_core"][-1] == 30 and secs["act4_core"][0] > 30
+    flat = [s for a in secs.values() for s in a]
+    assert flat == sorted(flat, reverse=True), "the clock never grows as the campaign goes on"

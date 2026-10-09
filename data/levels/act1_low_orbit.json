@@ -2,6 +2,7 @@
   "$schema": "./levels.schema.json",
   "status": "draft",
   "act": "act1_low_orbit",
+  "tuning": {"burst.seconds": 60},
   "levels": [
     {
       "id": "1-01", "order": 1, "title": "First Breakfast", "beat": "Opening: Ade jokes about the debris, Kit asks what the Corps pays in, Rhee sets the first assignment.",

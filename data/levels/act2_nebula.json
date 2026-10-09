@@ -2,6 +2,7 @@
   "$schema": "./levels.schema.json",
   "status": "draft",
   "act": "act2_nebula",
+  "tuning": {"burst.seconds": 50},
   "levels": [
     {
       "id": "2-01", "order": 1, "title": "Pink Gas", "beat": "Opening: Kit asks if the pink gas is normal; Ade: do not touch the pink.",

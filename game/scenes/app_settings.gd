@@ -5,12 +5,13 @@ const PATH := "user://settings.cfg"
 ## Glass looks only (owner, 9 Oct 2026); a saved flat/tilt/bevel falls back to the default.
 const TREATMENTS: Array[String] = ["bubble", "glass"]
 const DEFAULT_TREATMENT := "bubble"
-const HINTS: Array[String] = ["full", "edges", "none"]
-const HINT_LABELS: Dictionary = {"full": "All letters", "edges": "First and last letter", "none": "No letters"}
-## No ghost letters by default (owner, 9 Oct 2026: the edges hint gave short words away).
-## Stored under a new key so a default "edges" saved by an older build does not carry over.
-const DEFAULT_HINT := "none"
-const HINT_KEY := "hint_v2"
+const HINTS: Array[String] = ["full", "edges", "one", "none"]
+const HINT_LABELS: Dictionary = {"full": "All letters", "edges": "First and last letter", "one": "First letter", "none": "No letters"}
+## One ghost letter per word by default: the first (owner, 9 Oct 2026, after the beta playtest;
+## "edges" gave short words away, "none" was too hard in a burst).
+## Stored under a new key so the "none" default saved by an older build does not carry over.
+const DEFAULT_HINT := "one"
+const HINT_KEY := "hint_v3"
 
 var treatment: String = DEFAULT_TREATMENT
 var reduced_motion: bool = false
