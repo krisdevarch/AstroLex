@@ -1,0 +1,10 @@
+{
+  "$schema": "./characters.schema.json",
+  "status": "draft",
+  "characters": [
+    {"id": "wren", "name": "Wren", "colour": "#4fd8eb", "perk": "Quick line: the tether flies 15% faster", "mod": {"mul": {"tether.travelTime": 0.85}}},
+    {"id": "juno", "name": "Juno", "colour": "#f2b544", "perk": "Wide grip: catches forgive a 25% wider miss", "mod": {"mul": {"tether.hitTolerance": 1.25}}},
+    {"id": "ash", "name": "Ash", "colour": "#5fd3b0", "perk": "Low profile: Babel's drones fly 20% slower", "mod": {"mul": {"thief.speed": 0.8}}},
+    {"id": "pip", "name": "Pip", "colour": "#f27fb2", "perk": "Sharp eye: one fewer decoy letter", "mod": {"add": {"spawner.decoys": -1}}}
+  ]
+}

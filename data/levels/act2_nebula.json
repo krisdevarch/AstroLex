@@ -1,0 +1,91 @@
+{
+  "$schema": "./levels.schema.json",
+  "status": "draft",
+  "act": "act2_nebula",
+  "levels": [
+    {
+      "id": "2-01", "order": 1, "title": "Pink Gas", "beat": "Opening: Kit asks if the pink gas is normal; Ade: do not touch the pink.",
+      "pacing": "teach", "words": ["joy", "awe", "love"], "seed": 2101, "babel": true,
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.08, "plane.backTiles": 5, "thief.interval": 9},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-02", "order": 2, "title": "First Feelings", "beat": "Teach: small feelings drift in. VANTA sends a time and a challenge.",
+      "pacing": "teach", "words": ["fear", "rage", "envy"], "seed": 2102, "babel": true,
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.082, "plane.backTiles": 5, "thief.interval": 9},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-03", "order": 3, "title": "Glass Cloud", "beat": "Core: pity and shame hang in the gas.",
+      "pacing": "core", "words": ["glee", "pity", "shame"], "seed": 2103, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.084, "plane.backTiles": 5, "thief.interval": 8},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-04", "order": 4, "title": "Heavy Air", "beat": "Core: darker colours gather.",
+      "pacing": "core", "words": ["guilt", "doubt", "gloom"], "seed": 2104, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.085, "plane.backTiles": 6, "thief.interval": 8},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-05", "order": 5, "title": "Slow Colour", "beat": "Core: bright and sharp words mixed.",
+      "pacing": "core", "words": ["bliss", "peace", "spite"], "seed": 2105, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.087, "plane.backTiles": 6, "thief.interval": 8},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-06", "order": 6, "title": "Still Pocket", "beat": "Rest and mid: hope, calm, trust restored; Babel notices and speaks for the first time, in an anagram.",
+      "pacing": "rest", "words": ["hope", "calm", "trust"], "seed": 2106, "babel": true,
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.089, "plane.backTiles": 6, "thief.interval": 8},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-07", "order": 7, "title": "Undertow", "beat": "Core: first four-word level; anagram traps.",
+      "pacing": "core", "words": ["dread", "cheer", "grace", "panic"], "seed": 2107, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.091, "plane.backTiles": 6, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-08", "order": 8, "title": "Hard Edges", "beat": "Core: pride and anger, counter-words close in.",
+      "pacing": "core", "words": ["anger", "pride", "scorn", "worry"], "seed": 2108, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.093, "plane.backTiles": 6, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-09", "order": 9, "title": "Lonely Drift", "beat": "Core: quiet, aching words.",
+      "pacing": "core", "words": ["lonely", "regret", "wonder", "mercy"], "seed": 2109, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.095, "plane.backTiles": 6, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-10", "order": 10, "title": "Warm Front", "beat": "Core: comfort in the gas.",
+      "pacing": "core", "words": ["warmth", "comfort", "tender", "relief"], "seed": 2110, "babel": true,
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.096, "plane.backTiles": 7, "thief.interval": 7},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-11", "order": 11, "title": "Deep Pink", "beat": "Late: the gas thickens; VANTA is near.",
+      "pacing": "core", "words": ["sorrow", "delight", "courage", "longing"], "seed": 2111, "babel": true,
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.098, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    },
+    {
+      "id": "2-12", "order": 12, "title": "The Ghost", "beat": "Encounter: Rhee recovers grief, her voice breaks; VANTA ghost appears and the player races it. Tomas names a feeling.",
+      "pacing": "encounter", "words": ["solace", "grief"], "seed": 2112, "babel": true,
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.1, "plane.backTiles": 7, "thief.interval": 6},
+      "commsBefore": [],
+      "commsAfter": []
+    }
+  ]
+}

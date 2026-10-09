@@ -7,6 +7,9 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 signal closed
 ## The player asked for the frame-rate bench.
 signal bench_pressed
+## Change-entry buttons (shown when a save is set).
+signal character_pressed
+signal difficulty_pressed
 
 var settings: AppSettings = AppSettings.new()
 var save_path: String = AppSettings.PATH
@@ -74,6 +77,14 @@ func _ready() -> void:
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
 	box.add_child(bench)
 	if save != null:
+		var ch := Ui.button("Change character", 42, Vector2(760, 100))
+		ch.name = "ChangeCharacterButton"
+		ch.pressed.connect(func() -> void: character_pressed.emit())
+		box.add_child(ch)
+		var df := Ui.button("Change difficulty", 42, Vector2(760, 100))
+		df.name = "ChangeDifficultyButton"
+		df.pressed.connect(func() -> void: difficulty_pressed.emit())
+		box.add_child(df)
 		_reset_btn = Ui.button("Reset progress", 42, Vector2(760, 100))
 		_reset_btn.name = "ResetButton"
 		_reset_btn.pressed.connect(_ask_reset)

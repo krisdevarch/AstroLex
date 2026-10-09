@@ -1,5 +1,5 @@
 extends Control
-## Title screen: ASTROLEX, Drift or Pressure, Start, Settings.
+## Title screen: ASTROLEX, Start, Settings.
 
 const Ui := preload("res://scenes/ui.gd")
 const LightRig := preload("res://scenes/light_rig.gd")
@@ -12,20 +12,13 @@ const TITLE := "ASTROLEX"
 const TILE_PX := 112.0
 const TILE_GAP := 12.0
 const TILE_Y := 380.0
-const HINTS := {
-	"drift": "Drift: no clock. Tether the letters, take your time.",
-	"pressure": "Pressure: your air drains. Restoring a word refills it.",
-}
-
-signal start_pressed(mode: String)
+signal start_pressed
 signal settings_pressed
 
-var mode: String = "drift"
 var settings: AppSettings = AppSettings.new()
-## Start button text; main sets "Continue  1-05" or "Play Act I again" when a save says so.
-var start_label: String = "Start"
+## Start button text; main sets "Continue" when a save has a profile, else "New game".
+var start_label: String = "New game"
 var tile_count: int = 0
-var _hint: Label
 
 
 func _ready() -> void:
@@ -42,41 +35,14 @@ func _ready() -> void:
 	var title := Ui.label(TITLE, 150, Ui.INK)
 	title.name = "Title"
 	box.add_child(title)
-	var modes := HBoxContainer.new()
-	modes.alignment = BoxContainer.ALIGNMENT_CENTER
-	modes.add_theme_constant_override("separation", 24)
-	box.add_child(modes)
-	var group := ButtonGroup.new()
-	var drift := Ui.button("Drift", 48, Vector2(300, 120), true)
-	drift.name = "DriftButton"
-	drift.button_group = group
-	var pressure := Ui.button("Pressure", 48, Vector2(300, 120), true)
-	pressure.name = "PressureButton"
-	pressure.button_group = group
-	modes.add_child(drift)
-	modes.add_child(pressure)
-	drift.button_pressed = mode == "drift"
-	pressure.button_pressed = mode == "pressure"
-	drift.pressed.connect(_pick.bind("drift"))
-	pressure.pressed.connect(_pick.bind("pressure"))
-	_hint = Ui.label(HINTS[mode], 30, Ui.DIM)
-	_hint.name = "ModeHint"
-	_hint.custom_minimum_size = Vector2(840, 90)
-	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(_hint)
 	var start := Ui.button(start_label, 60 if start_label.length() < 12 else 48, Vector2(560, 140))
 	start.name = "StartButton"
-	start.pressed.connect(func() -> void: start_pressed.emit(mode))
+	start.pressed.connect(func() -> void: start_pressed.emit())
 	box.add_child(start)
 	var sett := Ui.button("Settings", 40, Vector2(560, 100))
 	sett.name = "SettingsButton"
 	sett.pressed.connect(func() -> void: settings_pressed.emit())
 	box.add_child(sett)
-
-
-func _pick(m: String) -> void:
-	mode = m
-	_hint.text = HINTS[m]
 
 
 func _build_tiles(view: Vector2) -> void:
