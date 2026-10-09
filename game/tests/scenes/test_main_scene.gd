@@ -21,6 +21,9 @@ func test_start_leads_to_the_field_and_pressure_shows_the_oxygen_bar() -> void:
 	(main.find_child("PressureButton", true, false) as Button).button_pressed = true
 	(main.find_child("PressureButton", true, false) as Button).pressed.emit()
 	(main.find_child("StartButton", true, false) as Button).pressed.emit()
+	var skip := main.find_child("SkipButton", true, false) as Button
+	if skip:
+		skip.pressed.emit()
 	var field := main.find_child("Field", true, false)
 	assert_true(field != null, "field is up after Start")
 	if field:

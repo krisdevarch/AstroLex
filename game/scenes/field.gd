@@ -17,6 +17,7 @@ const ACT := "act1_low_orbit"
 const BOTTOM_PAD := 40.0
 const END_DELAY := 1.0
 const TOAST_SEC := 1.1
+const LEVEL_TITLE_SEC := 2.0
 const TYPE_CPS := 38.0
 const TETHER_FADE := 0.12
 const PULSE_SEC := 0.45
@@ -56,6 +57,9 @@ var _intro_dur: float = 0.0
 var _intro_order: Dictionary = {}  # tile_id -> launch index
 var _rift: Node2D
 
+var _level_title: String = ""
+var _level_t: float = 0.0
+var _level_label: Label
 var _tun: Dictionary = {}
 var _content: Dictionary = {}
 var _scale: float = 1080.0
@@ -107,6 +111,20 @@ func begin(mode: String, round_no: int, seed_value: int) -> void:
 	_tun = GameData.load_tunables()
 	_content = GameData.load_content()
 	game_round = RoundScript.create(_tun, _content, ACT, mode, seed_value, round_no)
+	_start(seed_value)
+
+
+## Starts an authored level (its words in order, its tuning and seed). Call after the field is in the tree.
+func begin_level(mode: String, level: Dictionary) -> void:
+	_tun = GameData.load_tunables()
+	_content = GameData.load_content()
+	game_round = RoundScript.create_level(_tun, _content, ACT, level, mode)
+	_level_title = "%s  %s" % [str(level.get("id", "")), str(level.get("title", ""))]
+	_level_t = LEVEL_TITLE_SEC
+	_start(int(level["seed"]))
+
+
+func _start(seed_value: int) -> void:
 	_scale = view_size.x
 	_off = Vector2(0.0, view_size.y - _n("field.height") * _scale - BOTTOM_PAD)
 	_build_world()
@@ -623,6 +641,12 @@ func _build_hud() -> void:
 	_toast.size = Vector2(view_size.x, 70)
 	_toast.modulate.a = 0.0
 	_hud.add_child(_toast)
+	_level_label = Ui.label(_level_title, 36, Ui.DIM)
+	_level_label.name = "LevelLabel"
+	_level_label.position = Vector2(0, BAND_Y)  # under the slot rows; Babel's band is empty at round start
+	_level_label.size = Vector2(view_size.x, 50)
+	_level_label.visible = _level_title != ""
+	_hud.add_child(_level_label)
 
 
 func _slot_text_filled(where: String, idx: int, filled: bool) -> bool:
@@ -697,6 +721,11 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 
 
 func _tick_hud(delta: float) -> void:
+	if _level_t > 0.0 and _level_label != null:
+		_level_t -= delta
+		_level_label.modulate.a = clampf(_level_t / 0.5, 0.0, 1.0)
+		if _level_t <= 0.0:
+			_level_label.visible = false
 	if _toast_t > 0.0:
 		_toast_t -= delta
 		_toast.modulate.a = clampf(_toast_t / 0.35, 0.0, 1.0)
