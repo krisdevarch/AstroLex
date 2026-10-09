@@ -10,7 +10,7 @@ Branch `claude/glass-tiles-tny1fk`. Glass is a fourth tile treatment (default st
 | 4 | Frame-rate readout (fps, p95 frame time, tiles) in rounds when enabled or with `?fps=1` | pass | `test_glass.gd` | `game/scenes/fps_meter.gd` |
 | 5 | Bench: 20/30/40 drifting tiles, glass/tilt/flat toggle, 10 s test with avg fps, p50/p95 and PASS (avg ≥ 58, p95 ≤ 20 ms); `?bench=1`, `?bench=1&auto=1` | pass | `test_glass.gd`; `node smoke.cjs ../../../build/web --bench` | console `AstroLex bench: treatment=glass tiles=20 avg=29.5 fps p50=33.3 ms p95=38.3 ms BELOW 60` (software GL in headless Chromium, not a phone figure) |
 | 6 | Godot tests and web export still pass | pass | `scripts/godot/test.sh`: 72 passed, 0 failed, no SCRIPT ERROR; `scripts/godot/export.sh web` + `smoke.cjs` ok | CI `godot.yml` |
-| 7 | Phone frame-rate test (the O-22 gate) | owner | open `https://krisdevarch.github.io/AstroLex/?bench=1` on the phone after merge, Run 10 s test on glass and on tilt | to be pasted into the PR / `wps/_index.md` |
+| 7 | Phone frame-rate test (the O-22 gate: 20 glass tiles at 60 fps) | **pass** (owner, 9 Oct 2026) | owner's iPhone, bench in the browser, Low Power Mode off: `treatment=bubble tiles=40 avg=59.7 fps p50=16.7 ms p95=16.7 ms PASS`, twice the gate's tile count | `phone-bubble-40.png` |
 
 Notes: the painted placeholder sky (one baked texture) now sits behind the stars for every treatment so the comparison is fair. Local `pytest tools` shows 3 failures that also occur on a clean `main` in this container (the local word DB was built without ENABLE); CI builds its own DB.
 
@@ -43,3 +43,9 @@ The owner asked whether bubbles would look cooler. Added `bubble` as a fifth loo
 | `scripts/godot/test.sh` | 73 passed, 0 failed (new `test_tile_view_bubble_is_round_and_untilted`) | – |
 | `smoke.cjs --bench --look=bubble` (software GL) | `avg=33.1 fps p50=29.3 ms p95=33.3 ms` | `bubbles.png` |
 | Bigger bubbles, same letters (owner, 9 Oct): `glass.bubbleScale` 1.25; visual only, the catch radius is unchanged | 73 passed; bench `avg=30.9 fps p95=40.0 ms` (software GL) | `bubbles-big.png` |
+
+## Round 5 (9 Oct 2026): the gate passes on the owner's phone
+
+- With Low Power Mode on, every look (bubble and tilt alike) ran at a locked 30 fps (p50 = p95 = 33.3 ms): iOS caps web pages at 30 fps in that mode, so the glass cost nothing extra under the cap.
+- With Low Power Mode off: **bubble, 40 tiles, avg 59.7 fps, p50 16.7 ms, p95 16.7 ms, PASS** (`phone-bubble-40.png`). The gate asked for 20 glass tiles at 60 fps; it holds at 40.
+- Follow-ups for the backlog: playtests should note Low Power Mode, since it halves the frame rate for every look.
