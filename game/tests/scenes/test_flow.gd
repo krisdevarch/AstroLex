@@ -97,6 +97,9 @@ func test_winning_4_12_shows_beta_complete() -> void:
 	main.call("_on_level_finished", {"won": true, "stars": 3, "score": 99}, _level("act4_core", 11))
 	if Flow.has(main, "CommsScreen"):
 		Flow.press(main, "SkipButton")
+	assert_true(Flow.has(main, "EndScreen"), "end screen first")
+	assert_false(Flow.has(main, "BetaComplete"), "not yet")
+	Flow.press(main, "NextButton")
 	assert_true(Flow.has(main, "BetaComplete"), "beta complete screen")
 	assert_eq((main.find_child("BetaMessage", true, false) as Label).text, "You restored every word in the beta. Story, art and music are on the way.")
 	assert_eq((main.find_child("TotalStars", true, false) as Label).text, "Total stars  %d" % s.total_stars())
