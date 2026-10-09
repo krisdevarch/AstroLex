@@ -58,6 +58,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-3.7 | Story bible v1: world rules, characters, act beats, twist, ending; wordless Prologue; Babel and comms samples | story-writer | drafted (9 Oct 2026), awaiting owner approval | `reports/WP-3.7/evidence.md` |
 | WP-3.T | Babel throws the round's letters from a rift at round start (owner ask, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.T/evidence.md` |
 | WP-4.5a | Level format and Act I's 12 levels: schema and checks, export, levels played in order with comms, Next and Retry (owner pulled forward, 9 Oct 2026) | story-writer, builder, rules-engineer, godot-dev | done, awaiting owner playtest; level file `status: draft` | `reports/WP-4.5a/evidence.md` |
+| WP-3.5a | Browser save: progress kept in the browser, versioned and sync-ready (anonymous id); Continue, Play Act I again, Reset progress (owner, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.5a/evidence.md` |
 
 ## Review queue (cap 4)
 

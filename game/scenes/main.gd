@@ -8,6 +8,7 @@ const SettingsScreen := preload("res://scenes/settings_screen.gd")
 const GlassBench := preload("res://scenes/glass_bench.gd")
 const EndScreen := preload("res://scenes/end_screen.gd")
 const Telemetry := preload("res://services/telemetry.gd")
+const Save := preload("res://services/save.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
 const CommsScreen := preload("res://scenes/comms_screen.gd")
@@ -15,6 +16,7 @@ const GameData := preload("res://rules/game_data.gd")
 
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const ACT := "act1_low_orbit"
+const SAVETEST_PATH := "user://save_test.json"
 
 ## Act I levels (from content.json) and the one being played; not saved between sessions.
 var levels: Array = []
@@ -26,6 +28,8 @@ var round_no: int = 1
 var autoplay: bool = false
 var screen: Node
 var telemetry: RefCounted
+## Progress save. Tests may set a Save.fake() before _ready; autoplay always uses a fake.
+var save: RefCounted
 var _ready_printed: bool = false
 
 
@@ -44,6 +48,15 @@ func _ready() -> void:
 	settings.load_from()
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	autoplay = autoplay_requested()
+	if save == null:
+		if autoplay or DisplayServer.get_name() == "headless":
+			save = Save.fake()
+		elif _savetest_query() != "":
+			save = Save.real(SAVETEST_PATH)  # never the real player's save
+		else:
+			save = Save.real()
+	_sync_level_index()
+	_save_debug_hook()
 	if GlassBench.bench_requested():
 		_show_bench(GlassBench.auto_requested())
 	elif autoplay:
@@ -52,6 +65,32 @@ func _ready() -> void:
 	else:
 		_show_start()
 	telemetry.mark_ready()
+
+
+static func _savetest_query() -> String:
+	if not OS.has_feature("web") or autoplay_requested():
+		return ""
+	var q := str(JavaScriptBridge.eval("window.location.search"))
+	return q if q.contains("savetest=1") else ""
+
+
+func _sync_level_index() -> void:
+	level_index = clampi(save.next_level(ACT), 0, maxi(levels.size() - 1, 0))
+
+
+## Web-only test hook: ?savetest=1 (own save file) prints the saved next level, &win=1 first records 1-01 as won.
+func _save_debug_hook() -> void:
+	var q := _savetest_query()
+	if q == "" or autoplay or levels.is_empty():
+		return
+	if q.contains("win=1"):
+		save.record_level(ACT, str((levels[0] as Dictionary)["id"]), 0, "drift", true, 100)
+		_sync_level_index()
+	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
+
+
+func _act_done() -> bool:
+	return save.act_complete(ACT, levels.size())
 
 
 func _process(delta: float) -> void:
@@ -68,13 +107,21 @@ func _swap(node: Node) -> void:
 
 
 func _show_start() -> void:
+	_sync_level_index()
 	var s: Control = StartScreen.new()
 	s.name = "StartScreen"
 	s.settings = settings
 	s.mode = mode
+	if _act_done():
+		s.start_label = "Play Act I again"
+	elif not levels.is_empty() and save.has_progress(ACT):
+		s.start_label = "Continue  %s" % str((levels[level_index] as Dictionary)["id"])
 	s.start_pressed.connect(func(m: String) -> void:
 		mode = m
 		round_no = 1
+		if _act_done():
+			save.restart_act(ACT)
+			level_index = 0
 		_begin_level_with_comms())
 	s.settings_pressed.connect(_show_settings)
 	_swap(s)
@@ -87,6 +134,7 @@ func _show_settings() -> void:
 	var s: Control = SettingsScreen.new()
 	s.name = "SettingsScreen"
 	s.settings = settings
+	s.save = save
 	s.closed.connect(_show_start)
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
 	_swap(s)
@@ -150,6 +198,8 @@ func _start_level() -> void:
 
 func _on_level_finished(summary: Dictionary, level: Dictionary) -> void:
 	summary["level"] = str(level["id"])
+	var won: bool = summary.get("won", false)
+	save.record_level(ACT, str(level["id"]), level_index, str(summary.get("mode", mode)), won, int(summary.get("score", 0)))
 	if summary.get("won", false):
 		if level_index >= levels.size() - 1:
 			summary["act_complete"] = true
@@ -166,6 +216,7 @@ func _on_level_finished(summary: Dictionary, level: Dictionary) -> void:
 ## Next level (after a win), the same level (after a loss) or back to 1-01 (Act I done).
 func _continue_from(summary: Dictionary) -> void:
 	if summary.get("act_complete", false):
+		save.restart_act(ACT)
 		level_index = 0
 		_begin_level_with_comms()
 	elif summary.get("won", false):
