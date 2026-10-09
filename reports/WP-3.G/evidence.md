@@ -33,3 +33,12 @@ The owner sent an Apple Liquid Glass reference (a clear sphere over a grid) and 
 | `scripts/godot/test.sh` | 72 passed, 0 failed | – |
 | `smoke.cjs --bench` (software GL) | `avg=36.0 fps p50=27.3 ms p95=31.3 ms` | `glass-clear.png` |
 | Rounder corners (owner, 9 Oct): glass corner radius 24 → 38 of 61 px half-width | 72 passed; bench `avg=35.7 fps` | `glass-round.png` |
+
+## Round 4 (9 Oct 2026): bubble look
+
+The owner asked whether bubbles would look cooler. Added `bubble` as a fifth look (Settings and bench): the same glass shader with a circular shape (`corner` = half width), a lens across most of the ball, a thin-film rainbow rim that drifts slowly, a bright highlight spot up and to the left, and a gentle wobble instead of tilt (a sphere looks the same from any angle). The bench takes `?look=bubble` (and `smoke.cjs --look=bubble`).
+
+| Check | Result | Artefact |
+|---|---|---|
+| `scripts/godot/test.sh` | 73 passed, 0 failed (new `test_tile_view_bubble_is_round_and_untilted`) | – |
+| `smoke.cjs --bench --look=bubble` (software GL) | `avg=33.1 fps p50=29.3 ms p95=33.3 ms` | `bubbles.png` |

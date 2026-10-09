@@ -1,5 +1,5 @@
 extends Control
-## Settings: tile treatment (flat / tilt / bevel / glass) and reduced motion. Saves on every change.
+## Settings: tile treatment (flat / tilt / bevel / glass / bubble) and reduced motion. Saves on every change.
 
 const Ui := preload("res://scenes/ui.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
@@ -30,7 +30,7 @@ func _ready() -> void:
 	box.add_child(row)
 	var group := ButtonGroup.new()
 	for t in AppSettings.TREATMENTS:
-		var b := Ui.button(t.capitalize(), 36, Vector2(190, 110), true)
+		var b := Ui.button(t.capitalize(), 36, Vector2(180, 110), true)
 		b.name = "Treatment_%s" % t
 		b.button_group = group
 		b.button_pressed = settings.treatment == t

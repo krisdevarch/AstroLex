@@ -24,11 +24,11 @@ func test_settings_round_trip_with_glass_and_show_fps() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 
 
-func _glass_view(back: bool = false) -> Node2D:
+func _glass_view(back: bool = false, look: String = "glass") -> Node2D:
 	var tun := GameData.load_tunables()
 	var v: Node2D = TileViewScene.instantiate()
 	tree.root.add_child(v)
-	v.setup("q", 130.0, 1.0, 2 if back else 0, "glass", false, tun, 0.3)
+	v.setup("q", 130.0, 1.0, 2 if back else 0, look, false, tun, 0.3)
 	if back:
 		v.set_back(0.28, 0.7)
 	v.place(Vector2(200, 300), 1.0, 0.4)
@@ -49,6 +49,18 @@ func test_tile_view_glass_setup() -> void:
 	v.free()
 
 
+func test_tile_view_bubble_is_round_and_untilted() -> void:
+	assert_true(AppSettings.TREATMENTS.has("bubble"), "bubble is a treatment")
+	var v := _glass_view(false, "bubble")
+	var mat := v.body.material as ShaderMaterial
+	assert_true(mat.shader.resource_path.ends_with("glass.gdshader"), "bubble uses the glass shader")
+	assert_true(bool(mat.get_shader_parameter("bubble")), "bubble mode on")
+	assert_eq(float(mat.get_shader_parameter("corner")), 61.0, "corner = half width, a circle")
+	assert_eq(v.current_tilt, Vector2.ZERO, "a bubble does not tilt")
+	assert_eq(v.glyph.get_theme_color("font_color"), Color.WHITE, "glyph is white")
+	v.free()
+
+
 func test_back_plane_glass_is_a_glyphless_shard() -> void:
 	var v := _glass_view(true)
 	assert_false(v.glyph.visible, "no glyph on the back plane")
@@ -66,7 +78,7 @@ func test_bench_builds_tiles_and_cycles() -> void:
 	b.cycle_count()
 	assert_eq(b.tile_count(), 30, "cycles to 30")
 	b.cycle_look()
-	assert_eq(b.treatment, "tilt", "look cycles")
+	assert_eq(b.treatment, "bubble", "look cycles")
 	b._process(1.0 / 60.0)
 	b.free()
 
@@ -99,15 +111,15 @@ func test_fps_meter_line() -> void:
 	assert_eq(FpsMeter.format_line(f, 20), "60 fps · p95 17 ms · 20 tiles")
 
 
-func test_settings_screen_has_four_treatments_fps_and_bench() -> void:
+func test_settings_screen_has_five_treatments_fps_and_bench() -> void:
 	var s: Control = load("res://scenes/settings_screen.gd").new()
 	tree.root.add_child(s)
 	for t in AppSettings.TREATMENTS:
 		var b := s.find_child("Treatment_%s" % t, true, false) as Button
 		assert_true(b != null, "button for %s" % t)
 		if b:
-			assert_true(b.custom_minimum_size.x <= 1080.0 / 4.0, "fits the row")
-	assert_eq(AppSettings.TREATMENTS.size(), 4, "four treatments")
+			assert_true(b.custom_minimum_size.x <= 1080.0 / 5.0, "fits the row")
+	assert_eq(AppSettings.TREATMENTS.size(), 5, "five treatments")
 	assert_true(s.find_child("ShowFps", true, false) is CheckButton, "show frame rate toggle")
 	var bench := s.find_child("BenchButton", true, false) as Button
 	assert_true(bench != null, "bench button")

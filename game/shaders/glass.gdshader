@@ -31,8 +31,10 @@ uniform float max_lod = 3.0;  // the sky is 108x192, so three mip levels is alre
 uniform bool shard = false;               // back plane: small frosted shard, no glyph
 
 const float HALF = 61.0;
-const float CORNER = 38.0;  // rounder than the opaque tiles; matches TileTextures.GLASS_CORNER
-const float BEVEL = 26.0;  // width of the lens zone at the rim, in texture px
+uniform float corner = 38.0;      // rounded square; corner = HALF (61) makes a circle (bubble)
+uniform float lens_width = 26.0;  // width of the lens zone at the rim, in texture px
+uniform bool bubble = false;      // soap bubble: whole-ball lens, thin-film rainbow rim, highlight spot
+uniform float bubble_time = 0.0;
 
 void vertex() {
 	vec2 p = VERTEX;
@@ -60,9 +62,9 @@ void fragment() {
 		lens = smoothstep(0.35, 1.0, r);
 		d = -(1.0 - r) * 30.0;
 	} else {
-		vec2 q = abs(p) - vec2(HALF - CORNER);
+		vec2 q = abs(p) - vec2(HALF - corner);
 		vec2 qm = max(q, vec2(0.0));
-		d = length(qm) + min(max(q.x, q.y), 0.0) - CORNER;
+		d = length(qm) + min(max(q.x, q.y), 0.0) - corner;
 		if (length(qm) > 0.0) {
 			g = normalize(qm);
 		} else if (q.x > q.y) {
@@ -71,7 +73,7 @@ void fragment() {
 			g = vec2(0.0, 1.0);
 		}
 		g *= sign(p + vec2(0.0001));
-		float t = clamp(-d / BEVEL, 0.0, 1.0);
+		float t = clamp(-d / lens_width, 0.0, 1.0);
 		lens = pow(1.0 - t, 2.5);
 	}
 	// 1 refraction: near the rim the glass samples from further in, so the sky and stars bend.
@@ -101,6 +103,16 @@ void fragment() {
 	vec3 rim_col = mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.86, 0.7), clamp(g.x * 0.5 + 0.5, 0.0, 1.0));
 	col += rim_col * (ring * (0.35 + 0.55 * diag) + ring_soft * 0.12) * (0.5 + specular * 0.7);
 	col += accent * edge_tint * lens * 0.5;
+	if (bubble && !shard) {
+		// Thin-film rainbow on the rim that drifts slowly, and a bright window highlight up-left.
+		float ang = atan(g.y, g.x) + bubble_time * 0.6;
+		vec3 film = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0 + length(p) * 0.05);
+		col += film * smoothstep(12.0, 0.0, -d) * 0.22;
+		vec2 hp = p - vec2(-HALF * 0.38, -HALF * 0.42);
+		float spot = exp(-dot(hp, hp) / (HALF * HALF * 0.018));
+		float arc = smoothstep(6.0, 2.0, abs(-d - 9.0)) * clamp(dot(g, normalize(vec2(1.0, 1.0))), 0.0, 1.0);
+		col += vec3(1.0) * (spot * 0.75 + arc * 0.25) * specular;
+	}
 	col = mix(col, flash_color, flash * 0.75);
 	COLOR = vec4(col * unlit_gain, body.a);
 }
