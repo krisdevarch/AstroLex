@@ -19,6 +19,7 @@ from pathlib import Path
 from astrolex_tools import load_tunables, repo_root
 from astrolex_tools.babel.compose import anagrams_of, load_templates
 from astrolex_tools.babel.lexicon import load_lexicon
+from astrolex_tools.levels import level_files, load_levels
 from astrolex_tools.words.acts import ACT_FILES, load_acts
 
 GENERATED = "by python -m astrolex_tools.export_game_data; do not edit"
@@ -37,12 +38,14 @@ def build_tunables() -> dict:
 
 def build_content() -> dict:
     acts = load_acts()
+    level_acts = {p.stem for p in level_files()}
     return {
         "acts": {k: {"title": ACT_FILES[k], "words": v} for k, v in acts.items()},
         "lexicon": [[lw.word, lw.pos] for lw in load_lexicon()],
         "theme": load_theme(),
         "templates": [{"id": tp.id, "pattern": tp.pattern} for tp in load_templates()],
         "anagrams": {w: anagrams_of(w) for words in acts.values() for w in words},
+        "levels": {a: load_levels(a) for a in acts if a in level_acts},
     }
 
 

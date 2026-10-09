@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AstroLex act level file (WP-4.5a)",
+  "type": "object",
+  "required": ["status", "act", "levels"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {"type": "string"},
+    "status": {"enum": ["draft", "approved"]},
+    "act": {"type": "string"},
+    "levels": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/level"}}
+  },
+  "$defs": {
+    "comm": {
+      "type": "object",
+      "required": ["who", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "who": {"enum": ["rhee", "ade", "kit", "vanta", "tomas", "babel"]},
+        "text": {"type": "string", "minLength": 1}
+      }
+    },
+    "level": {
+      "type": "object",
+      "required": ["id", "order", "title", "beat", "pacing", "words", "seed", "babel", "tuning", "commsBefore", "commsAfter"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^[0-9]-[0-9]{2}$"},
+        "order": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1},
+        "beat": {"type": "string"},
+        "pacing": {"enum": ["teach", "core", "rest", "twist", "encounter"]},
+        "words": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[a-z]+$"}},
+        "seed": {"type": "integer"},
+        "babel": {"type": "boolean"},
+        "tuning": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "spawner.decoys": {"type": "integer", "minimum": 0},
+            "drift.speed": {"type": "number"},
+            "oxygen.drainPerSec": {"type": "number"},
+            "plane.backTiles": {"type": "integer", "minimum": 0}
+          }
+        },
+        "commsBefore": {"type": "array", "items": {"$ref": "#/$defs/comm"}},
+        "commsAfter": {"type": "array", "items": {"$ref": "#/$defs/comm"}}
+      }
+    }
+  }
+}
