@@ -14,7 +14,7 @@ So the game reads one file, `game/data/content.json`, written by `python -m astr
 ## The loader (WP-B.6)
 All game code reads words and levels through one service, `game/services/dictionary.gd`. Interface: `content()`, `levels(act)`, `act_order()`, `source_name()` (`bundled`, `cache`, `remote` or `fake`) and `version()`. `main.gd` builds it, reads levels and characters from it, and passes `content()` to the field as `content_override`.
 
-- **bundled**: `res://data/content.json`, shipped in the build. Always present; the fallback. Its version is 0 until the exporter writes a `version` key.
+- **bundled**: `res://data/content.json`, shipped in the build. Always present; the fallback. Its version is `CONTENT_VERSION` in `export_game_data.py`; bump it when words or levels change.
 - **cache**: a remote document saved in `user://dictionary_cache.json` (the browser's IndexedDB on the web). At start it replaces the bundled content when it passes the shape check and its `version` is not older than the bundled one.
 - **remote**: `Dictionary.start_remote(parent)` fetches `REMOTE_URL` (a const, empty in the beta, so nothing is fetched). On the web `?dict=<url>` overrides it for testing. The document must have the shape of `content.json` (`acts`, `levels`, `lexicon`, `templates`) plus an integer `version` not older than what is loaded; otherwise it is ignored with a warning. A good document is used from the next level start and written to the cache. Any failure (network, status, bad JSON, bad shape) keeps the content already loaded, so the game never breaks offline.
 - **fake**: `Dictionary.fake(content)`, in memory, for tests. Autoplay and headless runs use bundled content only (no cache, no fetch).

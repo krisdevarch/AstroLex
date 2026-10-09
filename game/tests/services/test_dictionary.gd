@@ -20,7 +20,7 @@ func test_bundled_has_four_acts_of_twelve_levels() -> void:
 	for a in d.act_order():
 		assert_eq(d.levels(a).size(), 12, a)
 	assert_eq(d.levels("nope"), [])
-	assert_eq(d.version(), 0)
+	assert_true(d.version() > 0, "exporter writes a content version")
 	assert_true(d.content().has("lexicon"))
 
 
@@ -48,24 +48,33 @@ func test_remote_validation_rejects_bad_shapes() -> void:
 
 func test_remote_accepts_a_valid_newer_document_and_ignores_older() -> void:
 	var d: RefCounted = Dict.bundled(false)
-	assert_true(d.accept(_doc(4)), "valid")
+	var b: int = d.version()
+	assert_false(d.accept(_doc(b - 1)), "older than bundled ignored")
+	assert_eq(d.source_name(), "bundled")
+	assert_true(d.accept(_doc(b + 4)), "valid")
 	assert_eq(d.source_name(), "remote")
-	assert_eq(d.version(), 4)
-	assert_false(d.accept(_doc(3)), "older version ignored")
-	assert_eq(d.version(), 4)
-	assert_true(d.accept(_doc(4)), "same version taken")
-	assert_true(d.accept(_doc(7)))
-	assert_eq(d.version(), 7)
+	assert_eq(d.version(), b + 4)
+	assert_false(d.accept(_doc(b + 3)), "older version ignored")
+	assert_eq(d.version(), b + 4)
+	assert_true(d.accept(_doc(b + 4)), "same version taken")
+	assert_true(d.accept(_doc(b + 7)))
+	assert_eq(d.version(), b + 7)
 
 
 func test_cache_is_used_when_not_older_than_bundled() -> void:
 	_clean()
 	var f := FileAccess.open(CACHE, FileAccess.WRITE)
-	f.store_string(JSON.stringify(_doc(2)))
+	var b: int = Dict.bundled(false).version()
+	f.store_string(JSON.stringify(_doc(b + 2)))
 	f.close()
 	var d: RefCounted = Dict.bundled(true, CACHE)
 	assert_eq(d.source_name(), "cache")
-	assert_eq(d.version(), 2)
+	assert_eq(d.version(), b + 2)
+	_clean()
+	var o := FileAccess.open(CACHE, FileAccess.WRITE)
+	o.store_string(JSON.stringify(_doc(b - 1)))
+	o.close()
+	assert_eq(Dict.bundled(true, CACHE).source_name(), "bundled", "older cache ignored")
 	_clean()
 	var g := FileAccess.open(CACHE, FileAccess.WRITE)
 	g.store_string("{broken")

@@ -283,15 +283,6 @@ func _begin_level_with_comms() -> void:
 	_show_comms(_comms_of(level_index, "commsBefore"), _start_level)
 
 
-# --- playing -----------------------------------------------------------------------------
-
-func _method_args(obj: Object, method: String) -> int:
-	for m: Dictionary in obj.get_method_list():
-		if m["name"] == method:
-			return (m["args"] as Array).size()
-	return -1
-
-
 func _start_level() -> void:
 	if levels.is_empty():
 		push_error("main: no levels for %s; back to the map" % act)
@@ -306,22 +297,17 @@ func _start_level() -> void:
 	f.print_ready = not _ready_printed
 	_ready_printed = true
 	var ch := _profile_character()
-	if not autoplay and "tether_colour" in f and ch.has("colour"):
+	if not autoplay and ch.has("colour"):
 		f.tether_colour = Color(str(ch["colour"]))
-	if "content_override" in f:
-		f.content_override = dictionary.content()
+	f.content_override = dictionary.content()
 	f.round_finished.connect(_on_level_finished.bind(level))
-	if f.has_signal("pause_requested"):
-		f.pause_requested.connect(_show_pause.bind(f))
+	f.pause_requested.connect(_show_pause.bind(f))
 	_swap(f)
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
 	var char_id := "" if autoplay else str(ch.get("id", ""))
 	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), act, char_id, diff_id)
-	if _method_args(f, "begin_level") >= 3:
-		f.begin_level(level, act, _mods())
-	else:
-		f.begin_level(level)
+	f.begin_level(level, act, _mods())
 
 
 func _is_final_level() -> bool:
@@ -390,14 +376,12 @@ func _show_complete(final: bool) -> void:
 func _show_pause(f: Node) -> void:
 	if pause_menu != null:
 		return
-	if f.has_method("set_paused"):
-		f.set_paused(true)
+	f.set_paused(true)
 	var p: Control = PauseMenu.new()
 	p.name = "PauseMenu"
 	p.resumed.connect(func() -> void:
 		_close_pause()
-		if f.has_method("set_paused"):
-			f.set_paused(false))
+		f.set_paused(false))
 	p.restarted.connect(func() -> void:
 		_close_pause()
 		_start_level())

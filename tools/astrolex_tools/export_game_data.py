@@ -36,12 +36,18 @@ def build_tunables() -> dict:
     return {k: t[k] for k in sorted(t) if k != "$schema"}
 
 
+## Content version for the dictionary loader: bump (YYYYMMDDn) whenever exported words or levels change,
+## so a cached remote copy older than the bundled data is ignored.
+CONTENT_VERSION = 202610091
+
+
 def build_content() -> dict:
     chars = json.loads((repo_root() / "data" / "characters.json").read_text())["characters"]
     diff = json.loads((repo_root() / "data" / "tunables" / "difficulty.json").read_text())
     acts = load_acts()
     level_acts = {p.stem for p in level_files()}
     return {
+        "version": CONTENT_VERSION,
         "acts": {k: {"title": ACT_FILES[k], "words": v} for k, v in acts.items()},
         "lexicon": [[lw.word, lw.pos] for lw in load_lexicon()],
         "theme": load_theme(),
