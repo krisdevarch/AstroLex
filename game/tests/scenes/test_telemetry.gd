@@ -8,12 +8,12 @@ const ROUND_KEYS := ["round", "mode", "act", "seed", "won", "words", "total", "s
 
 
 ## Plays one autoplay round on a fresh field with the telemetry listening.
-func _play(tel: RefCounted, round_no: int) -> Node2D:
+func _play(tel: RefCounted, round_no: int, level_id: String = "") -> Node2D:
 	var f: Node2D = FieldScene.instantiate()
 	f.autoplay = true
 	f.print_ready = false
 	tree.root.add_child(f)
-	tel.begin_round(f, round_no, 12345)
+	tel.begin_round(f, round_no, 12345, level_id)
 	f.begin(round_no, 12345)
 	f.skip_intro()
 	var steps := 0
@@ -43,6 +43,13 @@ func test_perf_from_frame_samples() -> void:
 	assert_eq(p["frames"], 100)
 	assert_eq(p["fps_avg"], 100.0)
 	assert_eq(p["frame_ms_p50"], 10.0)
+
+
+func test_round_record_carries_the_level_id() -> void:
+	var t: RefCounted = Telemetry.fake()
+	_play(t, 1, "1-01")
+	assert_eq(str((t.rounds[0] as Dictionary).get("level", "missing")), "1-01")
+	assert_true(str(t.issue_body_and_url()["body"]).contains("- round 1 (1-01) burst:"))
 
 
 func test_summary_json_matches_the_contract() -> void:
