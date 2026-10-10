@@ -69,3 +69,46 @@ def test_wrong_kinds_and_device_family():
     assert _device_name({"model": "GenericDevice", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X)"}) == "iPhone"
     assert _device_name({"model": "Pixel 9", "ua": "Android"}) == "Pixel 9"
     assert _device_name({"model": "", "ua": "curl"}) == ""
+
+
+def _burst(level, seed, won, unneeded=None):
+    r = {"round": 1, "mode": "burst", "level": level, "seed": seed, "won": won, "secs": 50,
+         "wrong": 2, "tap_misses": 1}
+    if unneeded is not None:
+        r["wrong_unneeded"] = unneeded
+    return r
+
+
+def test_bare_json_issue_is_counted():
+    issue = {"number": 38, "title": "[playtest] samsung a51", "body": json.dumps(_result("c", False)),
+             "created_at": "2026-10-10T08:00:00Z"}
+    sessions, skipped = pr.collect([issue], [])
+    assert len(sessions) == 1 and skipped == 0
+
+
+def test_feel_note_extracted_and_listed():
+    note_body = ("Summary\n\n### How did it feel?\n<!-- Type here: what was hard, confusing or fun. -->\n"
+                 "Too many decoys | hard to find P\n\n```json\n" + json.dumps(_result("n", True)) + "\n```\n")
+    empty_body = ("Summary\n\n### How did it feel?\n<!-- Type here. -->\n\n```json\n"
+                  + json.dumps(_result("e", True)) + "\n```\n")
+    issues = [{"number": 5, "title": "[playtest] a", "body": note_body, "created_at": "2026-10-10T08:00:00Z"},
+              {"number": 6, "title": "[playtest] b", "body": empty_body, "created_at": "2026-10-10T09:00:00Z"}]
+    sessions, skipped = pr.collect(issues, [])
+    assert sessions[0]["_note"] == "Too many decoys | hard to find P"
+    assert "_note" not in sessions[1]
+    report = pr.build_report(sessions, skipped)
+    notes = report.split("## Tester notes (latest 10)")[1]
+    assert "| #5 | 2026-10-10 | Too many decoys \\| hard to find P |" in notes
+    assert "#6" not in notes and "Type here" not in report
+
+
+def test_per_level_table_groups_burst_and_falls_back_to_seed():
+    s = _result("p", True)
+    s["rounds"] = [_burst("1-01", 1101, True, 0), _burst("1-01", 1101, False, 4), _burst("", 1102, False),
+                   {"round": 1, "mode": "drift", "won": True, "seed": 7}]
+    s["_src"], s["_date"] = "#1", "2026-10-10"
+    report = pr.build_report([s], 0)
+    per_level = report.split("## Per level (burst)")[1].split("## Perf")[0]
+    assert "| 1-01 | 2 | 50% | 50.0 | 2.00 | 2.00 | 1.00 |" in per_level
+    assert "| seed 1102 | 1 | 0% | 50.0 | 2.00 | n/a | 1.00 |" in per_level
+    assert "seed 7" not in per_level

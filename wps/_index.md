@@ -61,6 +61,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-3.5a | Browser save: progress kept in the browser, versioned and sync-ready (anonymous id); Continue, Play Act I again, Reset progress (owner, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.5a/evidence.md` |
 | M-beta (WP-B.1 to B.8) | Playable beta end to end: 30 s bursts, Babel thief drones, character (suit, perk, pronouns) and difficulty pick, level map with stars for Acts I–IV (II–IV draft levels, no comms yet), pause, act and beta complete, save v2, dictionary loader with a remote source behind a switch | orchestrator + workers | done, awaiting owner playtest; suit names and perks, difficulty presets and Acts II–IV levels are `status: draft` | `wps/MILESTONE-beta.md`, `reports/WP-B/evidence.md` |
 | WP-B.9 | Beta playtest tune (owner, 9 Oct 2026): burst length per act (I 60 s, II 50, III 45, IV 40 then 35, 30 s only in 4-10 to 4-12), stars as a share of the clock, first-letter hint by default | orchestrator | done, awaiting owner playtest | `reports/WP-B/evidence.md` |
+| WP-B.10 | Playtest tooling fixes (owner, 10 Oct 2026, after reviewing issues #16 to #38): dashboard counts bare-JSON issues and adds per-level burst table and tester notes; round records carry `level`; issues ask "How did it feel?". Decoys unchanged (owner: tooling only) | builder, godot-dev | done, awaiting owner merge | `reports/WP-B.10/evidence.md` |
 
 ## Review queue (cap 4)
 

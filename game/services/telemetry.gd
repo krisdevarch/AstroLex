@@ -206,7 +206,7 @@ func _finish_round(won: bool) -> void:
 	var st: Dictionary = gr.stats
 	var near: Array = _round["near"]
 	var r := {
-		"round": _round["round"], "mode": _round["mode"], "act": _round["act"], "character": _round["character"], "difficulty": _round["difficulty"], "seed": _round["seed"],
+		"round": _round["round"], "mode": _round["mode"], "act": _round["act"], "character": _round["character"], "difficulty": _round["difficulty"], "seed": _round["seed"], "level": _round.get("level", ""),
 		"won": won, "words": gr.restored_words.size(), "total": gr.words.size(),
 		"score": int(round(gr.score)), "secs": snappedf(float(st["secs"]), 0.1),
 		"catches": int(st["catches"]), "wrong": int(st["wrong"]), "escapes": int(st["escapes"]),
@@ -311,15 +311,16 @@ func _summary_md(res: Dictionary) -> String:
 	var lines := PackedStringArray()
 	lines.append("**Playtest** build `%s` (%s) · session `%s` · %d round(s) · %d error(s)" % [build["commit"], build["platform"], session, rounds.size(), errors.size()])
 	for r in rounds:
-		lines.append("- round %d %s: %s, score %d, words %d/%d, %.0f s, %d catches, %d wrong (%d surplus, %d unneeded), %d missed taps" % [
-			int(r["round"]), str(r["mode"]), "won" if bool(r["won"]) else "lost", int(r["score"]),
+		var lvl := str(r.get("level", ""))
+		lines.append("- round %d%s %s: %s, score %d, words %d/%d, %.0f s, %d catches, %d wrong (%d surplus, %d unneeded), %d missed taps" % [
+			int(r["round"]), (" (%s)" % lvl) if lvl != "" else "", str(r["mode"]), "won" if bool(r["won"]) else "lost", int(r["score"]),
 			int(r["words"]), int(r["total"]), float(r["secs"]), int(r["catches"]), int(r["wrong"]), int(r.get("wrong_surplus", 0)), int(r.get("wrong_unneeded", 0)), int(r["tap_misses"])])
 	lines.append("- fps avg %.1f, frame p50 %.1f ms, p95 %.1f ms" % [float(p["fps_avg"]), float(p["frame_ms_p50"]), float(p["frame_ms_p95"])])
 	return "\n".join(lines)
 
 
 func _body_for(res: Dictionary) -> String:
-	return "%s\n\n```json\n%s\n```\n" % [_summary_md(res), JSON.stringify(res)]
+	return "%s\n\n### How did it feel?\n<!-- Type here: what was hard, confusing or fun. -->\n\n```json\n%s\n```\n" % [_summary_md(res), JSON.stringify(res)]
 
 
 func url_for(title: String, body: String) -> String:

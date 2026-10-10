@@ -3,7 +3,7 @@
 Owner decision (8 Oct 2026): test results go to GitHub, with no server.
 - At the end of a round, **Send results** opens a prefilled GitHub issue titled `[playtest] ...`; the tester taps Submit.
 - **Copy results** puts the full JSON on the clipboard, for testers without a GitHub account.
-- `.github/workflows/playtest-report.yml` rebuilds the **Playtest dashboard** issue from every `[playtest]` issue.
+- `.github/workflows/playtest-report.yml` rebuilds the **Playtest dashboard** issue from every `[playtest]` issue, with a per-level table for burst rounds and the latest tester notes.
 
 The repo is public, so issues are public. Results are anonymous: a random 6-character session id, with no names, accounts or precise location.
 
@@ -34,7 +34,7 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
 `settings.hint` is the Hint level (`full`, `edges` or `none`): which unfilled word-slot letters are shown as faint ghosts.
 
 Rules:
-- The **issue body** holds a short markdown summary plus one fenced `json` block with everything except `events`, so the URL stays under 6,000 characters. Drop `babel_lines`, then trim `errors` to the last 5, if needed.
+- The **issue body** holds a short markdown summary plus one fenced `json` block with everything except `events`, so the URL stays under 6,000 characters. Between the summary and the json block is a `### How did it feel?` section where the tester types a free-text note; the dashboard lists it (HTML comments stripped). A `[playtest]` issue whose body is only the bare results JSON (pasted from **Copy results**) is counted too. Drop `babel_lines`, then trim `errors` to the last 5, if needed.
 - **Copy results** includes `events`, capped at 600: fire, catch, wrong, escape, tap_miss (with nearest tile distance), restore, babel and round_end, each with `t` in seconds.
 - `level` (round record): the authored level id such as `"1-01"`, or `""` for a random round. Added 9 Oct 2026; older results lack it.
 - `build.commit` comes from `game/data/build.json`, written by `scripts/godot/export.sh` from `git rev-parse --short HEAD` (gitignored). The value is `"dev"` when the file is absent.
