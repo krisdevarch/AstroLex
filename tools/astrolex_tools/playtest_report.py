@@ -19,6 +19,8 @@ from . import repo_root
 SCHEMA = "astrolex.playtest.v1"
 TITLE_PREFIX = "[playtest]"
 _FENCE = re.compile(r"```json[^\S\n]*\n(.*?)```", re.S | re.I)
+_NOTE_HEAD = re.compile(r"^###[^\S\n]*How did it feel\?[^\n]*\n", re.M | re.I)
+_COMMENT = re.compile(r"<!--.*?-->", re.S)
 
 
 def esc(value, limit: int = 120) -> str:
@@ -55,10 +57,18 @@ def load_issues(path: Path) -> list[dict]:
 
 
 def parse_issue_body(body: str):
-    m = _FENCE.search(body or "")
+    body = body or ""
+    m = _FENCE.search(body)
     if not m:
-        return None
-    return _loads(m.group(1))
+        return _loads(body.strip())  # bare JSON pasted from Copy results
+    data = _loads(m.group(1))
+    if data is not None:
+        h = _NOTE_HEAD.search(body[: m.start()])
+        if h:
+            note = " ".join(_COMMENT.sub("", body[h.end(): m.start()]).split())
+            if note:
+                data["_note"] = note
+    return data
 
 
 def _loads(text: str):
@@ -146,11 +156,11 @@ def p95(vals) -> str:
     return f"{s[min(len(s) - 1, int(0.95 * len(s)))]:.1f}"
 
 
-def table(head: list[str], rows: list[list]) -> list[str]:
+def table(head: list[str], rows: list[list], limit: int = 120) -> list[str]:
     if not rows:
         return ["_none_", ""]
     out = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
-    out += ["| " + " | ".join(esc(c) for c in r) + " |" for r in rows]
+    out += ["| " + " | ".join(esc(c, limit) for c in r) + " |" for r in rows]
     return out + [""]
 
 
@@ -190,6 +200,25 @@ def build_report(sessions: list[dict], skipped: int) -> str:
     L += table(["mode", "rounds", "win rate", "median first catch s", "median secs", "wrong/round",
                 "surplus/round", "unneeded/round", "escapes/round", "tap misses/round", "median near-miss px"], rows)
 
+    levels: dict[str, list[dict]] = {}
+    for r in all_rounds:
+        if r.get("mode") != "burst":
+            continue
+        lv, seed = r.get("level"), r.get("seed")
+        key = lv if isinstance(lv, str) and lv else (f"seed {seed}" if seed not in (None, "") else "unknown")
+        levels.setdefault(key, []).append(r)
+    rows = []
+    for k, rs in sorted(levels.items()):
+        n = len(rs)
+        wins = sum(1 for r in rs if r.get("won") is True)
+        unneeded = [r for r in rs if "wrong_unneeded" in r]
+        rows.append([k, n, f"{100 * wins / n:.0f}%", med(_nums(rs, "secs")),
+                     f"{sum(_nums(rs, 'wrong')) / n:.2f}",
+                     f"{sum(_nums(unneeded, 'wrong_unneeded')) / len(unneeded):.2f}" if unneeded else "n/a",
+                     f"{sum(_nums(rs, 'tap_misses')) / n:.2f}"])
+    L += ["## Per level (burst)", ""] + table(
+        ["level", "rounds", "win rate", "median secs", "wrong/round", "unneeded/round", "tap misses/round"], rows)
+
     perfs = [_dict(s.get("perf")) for s in sessions]
     loads = [_dict(s.get("load")) for s in sessions]
     L += ["## Perf", "", f"- Median fps_avg: {med(_nums(perfs, 'fps_avg'))}",
@@ -215,6 +244,9 @@ def build_report(sessions: list[dict], skipped: int) -> str:
     rows = [[s["_src"], s["_date"] or "n/a", s.get("session", ""), _dict(s.get("build")).get("commit", ""),
              len(rs), sum(1 for r in rs if r.get("won") is True)] for s, rs in latest]
     L += ["## Latest 10 sessions", ""] + table(["source", "date", "session", "commit", "rounds", "won"], rows)
+    notes = [s for s in sorted(sessions, key=lambda s: s["_date"], reverse=True) if s.get("_note")][:10]
+    L += ["## Tester notes (latest 10)", ""] + table(
+        ["source", "date", "note"], [[s["_src"], s["_date"] or "n/a", s["_note"]] for s in notes], limit=300)
     return "\n".join(L).rstrip() + "\n"
 
 
