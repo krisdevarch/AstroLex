@@ -1,6 +1,6 @@
 # AstroLex characters: look and image prompts (v5)
 
-Status: draft. The owner picked this direction on 11 October 2026 after trying several versions (realistic pilots, comic caricatures, porthole frames, card-game splash art, animals, capsule critters). The reference image is `docs/design/characters/wren-v5-reference.png`. Text only; no game code or data changes. The playable characters are the four suits in `data/characters.json` (status: draft).
+Status: draft. The owner picked this direction on 11 October 2026 after trying several versions (realistic pilots, comic caricatures, porthole frames, card-game splash art, animals, capsule critters). The reference portraits for all four characters are in `docs/design/characters/` (see Reference images below). Text only; no game code or data changes. The playable characters are the four suits in `data/characters.json` (status: draft).
 
 ## The look in one line
 
@@ -22,6 +22,14 @@ Cute, glossy humanoid space aliens from the far future, shown as an upright bust
 4. Big expressive eyes, a friendly confident face, all ages: no baby proportions, no scary faces, no weapons, nothing revealing.
 5. One playful feature per character. No animal mixes beyond that one feature.
 6. Transparent background, no frame, no border, no text. Square image, 1024 px or more.
+
+## Reference images
+
+The owner generated these from the prompts below on 11 October 2026 and chose them as the reference for each character. The fake checkerboard the image tool painted in was cut out, so each file is a 768 px PNG with a transparent background.
+
+| Wren | Juno | Ash | Pip |
+|---|---|---|---|
+| ![Wren](characters/wren-v5.png) | ![Juno](characters/juno-v5.png) | ![Ash](characters/ash-v5.png) | ![Pip](characters/pip-v5.png) |
 
 ## The four prompts
 
