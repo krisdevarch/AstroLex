@@ -55,6 +55,17 @@ Signature colours are from design direction section 9. Each shows on the bubble,
 - **Voice sheet:** The Catcher has few lines. Most are one-word choices or short replies, three to six words. They tease back. They say "ok", "on it", "heard". They never explain how they feel, never give speeches, never use the name they lost. The player picks pronouns and look; the lines never assume a gender.
 - **Arc:** Prologue, nameless and willing. Act I, competent and cheerful. Act II, shaken by grief. Act III, angry at Rhee, then steady. Act IV, calm enough to let Babel finish. The last word is their own name.
 
+#### The four Catchers (playable suits)
+
+The player picks one of four Catchers at the start (`data/characters.json`). Each is a different being who answered the Lexicon Corps' call, with a past that explains their suit perk. The story beats, the arc and the lost name are the same for all four; only a little flavour changes: one comms line in Act I, the way they say "ok", and the portrait. The player still picks pronouns, so none of the four has a fixed gender in the text. Art: `docs/design/characters/`.
+
+- **Wren, the courier** (cyan #4FD8EB, Quick line: the tether flies 15% faster). A fin-eared racer who ran messages between stations when the comm lines went dead. Wren learned to be first because a late message was a lost one. Cheeky and confident, goggles always up. Says "first!" instead of "on it".
+- **Juno, the pirate** (amber #F2B544, Wide grip: catches forgive a 25% wider miss). A two-eyed salvage pirate who once raided the wrecks of the Loud Wars for scrap: hat with a skull badge, an eyepatch over the left eye, a peg leg from an old hull collapse, a spyglass on the belt. When Babel took the words, Juno found a better haul. Now Juno plunders the drift for letters and hands every one back. Big hands and a wide grip from years of hauling cargo. Warm, loud, generous. Says "aye" and calls the board "the haul". Juno never steals from people, only from Babel's hoard.
+- **Ash, the ninja** (seafoam #5FD3B0, Low profile: Babel's drones fly 20% slower). A violet-eyed ninja warrior from a silent order that trained in the dark between stations, long before Babel made silence the law. Ash moves so quietly that Babel's drones lose track. Masked, red headband, a finger to the lips. Ash carries two blades on the back and never draws them on anyone; in the Corps they are line-cutters, used only to free a snagged tether. Calm, few words even for a Catcher. Says "shh" and "done".
+- **Pip, the scientist** (pink #F27FB2, Sharp eye: one fewer decoy letter). A one-eyed field scientist in a puffy suit with star antennae and a lens over that giant eye. Pip spots a forged letter before anyone else because Pip has been studying Babel's forgeries since the first week. Curious and delighted by everything. Says "ooh" and "for the record".
+
+**First reply by Catcher.** The Prologue has no words, so in the first Act I comms, when Rhee asks "Ready?", the reply depends on the pick: Wren "Already there.", Juno "Aye. Show me the haul.", Ash "Shh. Ready.", Pip "Ooh. Yes. Ready." Owner approval needed for these lines.
+
 ### Rhee Vashti
 - **Colour:** amber #F8BC04.
 - **Traits:** exact, warm, guilty.
@@ -184,7 +195,7 @@ The principle: silence is not peace, and listening is. The tone is hopeful. It l
 - **A lost round still moves the story on.** A lost Pressure round earns a Babel line or a comms beat (Hades). Babel's line after a loss is teasing, not crushing. Nothing is locked behind winning a single round.
 - **Comms.** 30 seconds or less to read. Skippable. Between levels only, never during play. No exposition dumps. One idea per bubble.
 - **Words and slang.** Timeless words in the campaign. Current slang only in seasonal Transmissions. Nothing in the main campaign references the player's generation.
-- **No violence.** The Catcher never destroys anything. They restore.
+- **No violence.** The Catcher never destroys anything. They restore. Costume pieces stay costume: Juno's pirate gear is salvage, not plunder from people, and Ash's blades are never drawn on anyone and only cut a snagged tether.
 - **Sentences.** Plain and short. No em-dashes in any line.
 - **No runtime AI** in the delivery of the fiction. Every line is written by a person or built from templates.
 
