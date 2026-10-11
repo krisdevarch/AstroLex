@@ -70,7 +70,7 @@ Cute flat vector full-body game character of a humanoid space alien from the far
 
 Character: Juno, a big-hearted salvage engineer of the Lexicon Corps whose wide, steady hands never drop a letter.
 Head: big round head with chubby cheeks and a broad jaw, flat honey-amber skin (#F2B544) with a lighter golden cel-shade (#F8BC04), round rose cheek patches (#C874B2).
-Eyes: three small happy eyes in a row with warm brown irises and white highlights.
+Eyes: two happy eyes with warm brown irises and white highlights, the left one under a black pirate eyepatch, the right one winking.
 Playful feature: two short curly antennae with glowing lamp tips, one teal (#39977F) and one golden yellow.
 Headgear: chunky padded ear protectors in burnt copper (#A44322) with a small glowing amber worklamp on one side.
 Outfit: a padded work vest in copper (#A44322) and deep wine (#530F1E) with big rounded shoulder pads, bright teal straps (#39977F) across the chest, golden rivets and a small glowing amber badge, wide wine work trousers with copper knee pads and heavy copper boots.
