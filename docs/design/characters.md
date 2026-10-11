@@ -1,6 +1,6 @@
 # AstroLex characters: look and image prompts (v5)
 
-Status: draft. The owner picked this direction on 11 October 2026 after trying several versions (realistic pilots, comic caricatures, porthole frames, card-game splash art, animals, capsule critters). The reference portraits for all four characters are in `docs/design/characters/` (see Reference images below). Text only; no game code or data changes. The playable characters are the four suits in `data/characters.json` (status: draft).
+Status: draft. The owner picked this direction on 11 October 2026 after trying several versions (realistic pilots, comic caricatures, porthole frames, card-game splash art, animals, capsule critters). The reference portraits for all four characters are in `docs/design/characters/` (see Final characters below). Text only; no game code or data changes. The playable characters are the four suits in `data/characters.json` (status: draft).
 
 ## The look in one line
 
@@ -23,15 +23,15 @@ Cute, glossy humanoid space aliens from the far future, shown as a full-body sta
 5. One playful feature per character. No animal mixes beyond that one feature. The cast stays diverse: different head shapes, eye counts and builds (Wren slim, Juno big and round, Ash soft, Pip small). Only the pose, camera and line style are shared.
 6. Transparent background, no frame, no border, no text, no ground shadow. Portrait image (2:3) or square, 1024 px or more.
 
-## Reference images
+## Final characters
 
-The owner generated these from the prompts below on 11 October 2026 and chose them as the reference for each character. The fake checkerboard the image tool painted in was cut out, so each file is a 768 px PNG with a transparent background.
-
-These show the characters' features and colours. The prompts below keep every feature as is, take the head pose and camera from the Ash image, show the whole standing figure, and move the rendering to a flat vector sticker style with bold outlines (the owner's chosen style sheet, 11 October 2026). Replace these files when the regenerated versions are chosen.
+The owner generated these from the prompts below on 11 October 2026 and chose them as the final look of each character. The backgrounds the image tool painted in (a grey backdrop or a fake checkerboard) were cut out, so each file is a 1024 px PNG with a transparent background. The soft ground shadow under the feet is kept. They replace the earlier bust references.
 
 | Wren | Juno | Ash | Pip |
 |---|---|---|---|
-| ![Wren](characters/wren-v5.png) | ![Juno](characters/juno-v5.png) | ![Ash](characters/ash-v5.png) | ![Pip](characters/pip-v5.png) |
+| ![Wren](characters/wren.png) | ![Juno](characters/juno.png) | ![Ash](characters/ash.png) | ![Pip](characters/pip.png) |
+
+Each one keeps its suit colour and playful feature (Wren's fin ears and goggles, Juno's amber head and lamp antennae, Ash's big violet eyes and "shh" finger, Pip's giant eye and star antennae). The final images add costume touches that the prompts below do not ask for (Juno's pirate hat, eyepatch and peg leg, Ash's ninja hood and swords); the prompts are still the starting point for any new pose or expression.
 
 ## The four prompts
 
