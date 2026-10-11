@@ -4,30 +4,30 @@ Status: draft. The owner picked this direction on 11 October 2026 after trying s
 
 ## The look in one line
 
-Cute, glossy humanoid space aliens from the far future, shown as an upright bust (head, shoulders, upper chest) on a transparent background. The game adds the frame.
+Cute, glossy humanoid space aliens from the far future, shown as a full-body standing figure on a transparent background, in the flat vector sticker style of the owner's character sheet. The game crops the head for the corner portrait and adds the frame.
 
 ## Why it fits the game
 
 - **The far future, after Babel took the words.** The characters are human-shaped but clearly not human: non-human skin, one playful feature each (fins, antennae, a giant eye), so the world feels distant without being scary.
 - **The Catcher's suit.** Each character is one of the four suits a player can pick. The outfit on the shoulders is that suit, and its perk shows in the design (Wren's speed goggles, Juno's big lamp, Ash's quiet hood, Pip's lens).
 - **Colour story (design direction §9, O-27).** Each character carries their suit colour from `data/characters.json` as the main colour, with accents from the act palettes, so the portrait reads at a glance.
-- **Easy to animate.** Simple shapes on separate layers: the feature (crest, antennae, ears), eyes, eyelids, brows, mouth, head, body. A blink, a feature bob and a mouth swap cover the corner portrait.
+- **Easy to animate.** Simple shapes on separate layers: the feature (crest, antennae, ears), eyes, eyelids, brows, mouth, head, body. A blink, a feature bob and a mouth swap cover the corner portrait, which the game crops from the full figure.
 - **Catchy.** Saturated, multi-colour accents and a glossy finish stand out on a phone screen and in a share card.
 
 ## Rules for every character
 
-1. Upright bust: head, shoulders and upper chest, centred, posed like the Ash reference: a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, head about 45% of the image height, a little space above the head.
+1. Full body, standing still with both feet on the ground and arms relaxed (no running, jumping or action pose), centred, posed like the Ash reference from the shoulders up: a slight three-quarter turn of about 15 degrees toward the right side of the image, head tilted slightly, eyes looking straight at the viewer. Stylised proportions like the owner's sheet: the head about a third of the body height, a little space above the head and below the feet.
 2. Flat vector sticker style, like a clean game character sheet: bold, even dark outlines around every shape, flat fills with one simple cel-shade and one glossy highlight per shape, no painterly gradients, simple geometric shapes. Every character uses the same line weight and shading so they read as one cast.
 3. Bright and colourful: one main colour (the suit colour) plus two or three accent colours that contrast with it, never a single hue.
 4. Big expressive eyes, a friendly confident face, all ages: no baby proportions, no scary faces, no weapons, nothing revealing.
 5. One playful feature per character. No animal mixes beyond that one feature. The cast stays diverse: different head shapes, eye counts and builds (Wren slim, Juno big and round, Ash soft, Pip small). Only the pose, camera and line style are shared.
-6. Transparent background, no frame, no border, no text. Square image, 1024 px or more.
+6. Transparent background, no frame, no border, no text, no ground shadow. Portrait image (2:3) or square, 1024 px or more.
 
 ## Reference images
 
 The owner generated these from the prompts below on 11 October 2026 and chose them as the reference for each character. The fake checkerboard the image tool painted in was cut out, so each file is a 768 px PNG with a transparent background.
 
-These show the characters' features and colours. The prompts below keep every feature as is, take the pose and camera from the Ash image, and move the rendering to a flat vector sticker style with bold outlines (the owner's chosen style sheet, 11 October 2026). Replace these files when the regenerated versions are chosen.
+These show the characters' features and colours. The prompts below keep every feature as is, take the head pose and camera from the Ash image, show the whole standing figure, and move the rendering to a flat vector sticker style with bold outlines (the owner's chosen style sheet, 11 October 2026). Replace these files when the regenerated versions are chosen.
 
 | Wren | Juno | Ash | Pip |
 |---|---|---|---|
@@ -42,23 +42,23 @@ Each prompt is complete and ready to paste. Image tools often ignore hex codes, 
 Suit colour `#4FD8EB`. The fastest Catcher: cheeky, confident, always there first.
 
 ```
-Cute flat vector game character portrait of a humanoid space alien from the far future, upper-body bust: head, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, confident and friendly, like a hero portrait in a collectible card game.
+Cute flat vector full-body game character of a humanoid space alien from the far future, standing still with both feet on the ground and arms relaxed, centred, a slight three-quarter turn of about 15 degrees toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, confident and friendly, like one figure from a mobile game character sheet.
 
 Character: Wren, a fast, cheeky courier of the Lexicon Corps who catches lost letters in orbit and is always there first.
 Head: sleek teardrop head swept back for speed, flat bright cyan skin (#4FD8EB) with a lighter aqua cel-shade (#9CF3FF), round coral cheek patches (#FF6B35).
 Eyes: two big glossy eyes with dark teal irises, white highlights and a cheeky squint.
 Playful feature: a swept-back crest of three long feathers on top of the head, cyan fading to hot magenta tips (#D946EF), and small fin-shaped ears with coral inner membranes.
 Headgear: chunky racing goggles pushed up on the forehead, gunmetal frames with glowing cyan lenses and a golden yellow strap buckle (#F8BC04).
-Outfit: a glossy deep indigo racing jacket (#1E1860) with a high collar, bright cyan go-faster stripes over the shoulders, a thin coral piping line, small glowing cyan tabs, and a tiny wrist launcher just visible.
+Outfit: a glossy deep indigo racing jacket (#1E1860) with a high collar, bright cyan go-faster stripes over the shoulders, a thin coral piping line, small glowing cyan tabs, a tiny wrist launcher, slim indigo trousers and chunky cyan boots.
 Expression: cocky grin with one tiny fang showing, one brow raised.
 Lighting: soft key light from the upper left, bright cyan rim light from behind, a magenta glow on the far side.
 
-Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same standing pose for every character, face toward the right side of the image, centred, whole figure visible from the top of the head to the feet, head about one third of the body height, some space above the head and below the feet, portrait or square image. No frame, no border, no circle, no badge, no ground shadow.
 Background: transparent.
 
 Style: clean flat vector sticker art like a mobile game character sheet: bold even dark outlines around every shape, flat colour fills, one simple cel-shade and one small glossy highlight per shape, no painterly gradients, simple rounded geometric shapes, vivid saturated multi-colour palette. Must read clearly at 256 by 256 pixels.
 
-Avoid: frame, border, circle, badge, full body, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
+Avoid: frame, border, circle, badge, cropped figure, running, jumping or action pose, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
 ```
 
 ### Juno (Wide grip: catches forgive a 25% wider miss)
@@ -66,23 +66,23 @@ Avoid: frame, border, circle, badge, full body, realistic human, painterly rende
 Suit colour `#F2B544`. The big-hearted engineer: warm, steady, the one you want next to you.
 
 ```
-Cute flat vector game character portrait of a humanoid space alien from the far future, upper-body bust: head, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, warm and friendly, like a hero portrait in a collectible card game.
+Cute flat vector full-body game character of a humanoid space alien from the far future, standing still with both feet on the ground and arms relaxed, centred, a slight three-quarter turn of about 15 degrees toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, warm and friendly, like one figure from a mobile game character sheet.
 
 Character: Juno, a big-hearted salvage engineer of the Lexicon Corps whose wide, steady hands never drop a letter.
 Head: big round head with chubby cheeks and a broad jaw, flat honey-amber skin (#F2B544) with a lighter golden cel-shade (#F8BC04), round rose cheek patches (#C874B2).
 Eyes: three small happy eyes in a row with warm brown irises and white highlights.
 Playful feature: two short curly antennae with glowing lamp tips, one teal (#39977F) and one golden yellow.
 Headgear: chunky padded ear protectors in burnt copper (#A44322) with a small glowing amber worklamp on one side.
-Outfit: a padded work vest in copper (#A44322) and deep wine (#530F1E) with big rounded shoulder pads, bright teal straps (#39977F) across the chest, golden rivets and a small glowing amber badge.
+Outfit: a padded work vest in copper (#A44322) and deep wine (#530F1E) with big rounded shoulder pads, bright teal straps (#39977F) across the chest, golden rivets and a small glowing amber badge, wide wine work trousers with copper knee pads and heavy copper boots.
 Expression: wide warm smile, eyes crinkled with kindness.
 Lighting: soft key light from the upper left, warm amber rim light from behind, a teal glow on the far side.
 
-Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same standing pose for every character, face toward the right side of the image, centred, whole figure visible from the top of the head to the feet, head about one third of the body height, some space above the head and below the feet, portrait or square image. No frame, no border, no circle, no badge, no ground shadow.
 Background: transparent.
 
 Style: clean flat vector sticker art like a mobile game character sheet: bold even dark outlines around every shape, flat colour fills, one simple cel-shade and one small glossy highlight per shape, no painterly gradients, simple rounded geometric shapes, vivid saturated multi-colour palette. Must read clearly at 256 by 256 pixels.
 
-Avoid: frame, border, circle, badge, full body, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
+Avoid: frame, border, circle, badge, cropped figure, running, jumping or action pose, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
 ```
 
 ### Ash (Low profile: Babel's drones fly 20% slower)
@@ -90,23 +90,23 @@ Avoid: frame, border, circle, badge, full body, realistic human, painterly rende
 Suit colour `#5FD3B0`. The quiet scout: calm, watchful, slips past Babel's drones.
 
 ```
-Cute flat vector game character portrait of a humanoid space alien from the far future, upper-body bust: head, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, calm and friendly, like a hero portrait in a collectible card game.
+Cute flat vector full-body game character of a humanoid space alien from the far future, standing still with both feet on the ground and arms relaxed, centred, a slight three-quarter turn of about 15 degrees toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, calm and friendly, like one figure from a mobile game character sheet.
 
 Character: Ash, a quiet scout of the Lexicon Corps who drifts so softly that Babel's drones barely notice.
 Head: soft rounded head with a smooth slightly longer face, flat seafoam-mint skin (#5FD3B0) with a pale mint cel-shade (#C8F5E6), faint glowing violet freckles (#7B337D) across the cheeks.
 Eyes: two huge round glossy eyes with deep violet irises, starry white highlights.
 Playful feature: two long floppy ears that wrap around the head like a hood, seafoam outside and rose pink inside (#C874B2).
 Headgear: a soft hood in deep violet (#430D4B) resting on the ears, with a small glowing seafoam clasp.
-Outfit: a smooth hooded cloak in deep violet and plum (#7B337D) over a fitted charcoal suit, a padded rose-pink scarf (#C874B2), thin glowing seafoam seams.
+Outfit: a smooth hooded cloak in deep violet and plum (#7B337D) over a fitted charcoal suit, a padded rose-pink scarf (#C874B2), thin glowing seafoam seams, the cloak reaching the knees over slim charcoal leggings and soft violet boots.
 Expression: shy little smile, one finger raised near the lips as if saying "shh".
 Lighting: soft key light from the upper left, seafoam rim light from behind, a rose glow on the far side.
 
-Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same standing pose for every character, face toward the right side of the image, centred, whole figure visible from the top of the head to the feet, head about one third of the body height, some space above the head and below the feet, portrait or square image. No frame, no border, no circle, no badge, no ground shadow.
 Background: transparent.
 
 Style: clean flat vector sticker art like a mobile game character sheet: bold even dark outlines around every shape, flat colour fills, one simple cel-shade and one small glossy highlight per shape, no painterly gradients, simple rounded geometric shapes, vivid saturated multi-colour palette. Must read clearly at 256 by 256 pixels.
 
-Avoid: frame, border, circle, badge, full body, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
+Avoid: frame, border, circle, badge, cropped figure, running, jumping or action pose, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
 ```
 
 ### Pip (Sharp eye: one fewer decoy letter)
@@ -114,23 +114,23 @@ Avoid: frame, border, circle, badge, full body, realistic human, painterly rende
 Suit colour `#F27FB2`. The curious scientist: small, bright, first to spot the fake letter.
 
 ```
-Cute flat vector game character portrait of a humanoid space alien from the far future, upper-body bust: head, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, curious and friendly, like a hero portrait in a collectible card game.
+Cute flat vector full-body game character of a humanoid space alien from the far future, standing still with both feet on the ground and arms relaxed, centred, a slight three-quarter turn of about 15 degrees toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, curious and friendly, like one figure from a mobile game character sheet.
 
 Character: Pip, a small, bright field scientist of the Lexicon Corps who spots the decoy letter before anyone else.
 Head: small round bean-shaped head, flat bubblegum-pink skin (#F27FB2) with a light pink cel-shade (#FFD0E6), golden star-shaped freckles (#F8BC04).
 Eyes: one giant eye in the middle of the face with a magenta iris (#D946EF), a big white highlight, framed by a slim teal monocle ring (#39977F).
 Playful feature: two little antennae with glowing star tips, one teal and one golden yellow.
 Headgear: a small grape-purple headset (#4B0082) with a flip-down loupe arm.
-Outfit: a puffy quilted jacket in grape purple (#4B0082) and violet (#6A0DAD) with a magenta collar (#D946EF), teal patch pockets, a pen clipped to the chest and two colourful stickers.
+Outfit: a puffy quilted jacket in grape purple (#4B0082) and violet (#6A0DAD) with a magenta collar (#D946EF), teal patch pockets, a pen clipped to the chest and two colourful stickers, short grape shorts over teal leggings and round magenta boots.
 Expression: delighted open smile, as if they just found something amazing.
 Lighting: soft key light from the upper left, pink rim light from behind, a teal glow on the far side.
 
-Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same standing pose for every character, face toward the right side of the image, centred, whole figure visible from the top of the head to the feet, head about one third of the body height, some space above the head and below the feet, portrait or square image. No frame, no border, no circle, no badge, no ground shadow.
 Background: transparent.
 
 Style: clean flat vector sticker art like a mobile game character sheet: bold even dark outlines around every shape, flat colour fills, one simple cel-shade and one small glossy highlight per shape, no painterly gradients, simple rounded geometric shapes, vivid saturated multi-colour palette. Must read clearly at 256 by 256 pixels.
 
-Avoid: frame, border, circle, badge, full body, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
+Avoid: frame, border, circle, badge, cropped figure, running, jumping or action pose, realistic human, painterly rendering, soft airbrushed gradients, photorealism, gritty texture, dull or single-colour palette, scary, weapons, text, logos, watermark.
 ```
 
 ## Colours at a glance
