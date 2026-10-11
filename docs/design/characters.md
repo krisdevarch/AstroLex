@@ -16,7 +16,7 @@ Cute, glossy humanoid space aliens from the far future, shown as an upright bust
 
 ## Rules for every character
 
-1. Upright bust: head, shoulders and upper chest, centred, three-quarter view, head about 45% of the image height, a little space above the head.
+1. Upright bust: head, shoulders and upper chest, centred, posed like the Ash reference: a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, head about 45% of the image height, a little space above the head.
 2. One shared style, set by the Wren and Ash references: slim, human-like proportions (an oval face with a defined chin, cheekbones and a small nose, a visible neck, natural shoulders and torso), two big almond-shaped eyes with detailed irises, soft painted shading with glossy highlights, thin line art in a darker shade of each colour (not black), soft rim light. No round mascot bodies, no chibi proportions.
 3. Bright and colourful: one main colour (the suit colour) plus two or three accent colours that contrast with it, never a single hue.
 4. Big expressive eyes, a friendly confident face, all ages: no baby proportions, no scary faces, no weapons, nothing revealing.
@@ -42,7 +42,7 @@ Each prompt is complete and ready to paste. Image tools often ignore hex codes, 
 Suit colour `#4FD8EB`. The fastest Catcher: cheeky, confident, always there first.
 
 ```
-Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, three-quarter view, confident and friendly, like a hero portrait in a collectible card game.
+Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, confident and friendly, like a hero portrait in a collectible card game.
 
 Character: Wren, a fast, cheeky courier of the Lexicon Corps who catches lost letters in orbit and is always there first.
 Head: sleek teardrop head swept back for speed, glossy bright cyan skin (#4FD8EB) with a lighter aqua sheen (#9CF3FF), round coral cheek patches (#FF6B35).
@@ -53,7 +53,7 @@ Outfit: a glossy deep indigo racing jacket (#1E1860) with a high collar, bright 
 Expression: cocky grin with one tiny fang showing, one brow raised.
 Lighting: soft key light from the upper left, bright cyan rim light from behind, a magenta glow on the far side.
 
-Composition: centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
 Background: transparent.
 
 Style: polished stylised mobile game hero art, the same style for the whole cast: an oval face with a defined chin, soft cheekbones and a small nose, a visible neck, natural human-like shoulders and torso, two big almond-shaped eyes with detailed glossy irises and lashes, soft painted shading, bright white specular highlights, thin line art in a darker shade of each colour instead of black, vivid saturated multi-colour palette, clean shapes. Must read clearly at 256 by 256 pixels.
@@ -66,7 +66,7 @@ Avoid: frame, border, circle, badge, full body, chibi, round mascot body, blob o
 Suit colour `#F2B544`. The big-hearted engineer: warm, steady, the one you want next to you.
 
 ```
-Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, three-quarter view, warm and friendly, like a hero portrait in a collectible card game.
+Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, warm and friendly, like a hero portrait in a collectible card game.
 
 Character: Juno, a big-hearted salvage engineer of the Lexicon Corps whose wide, steady hands never drop a letter.
 Head: oval face with a strong, friendly jaw and soft round cheeks, glossy honey-amber skin (#F2B544) with a golden sheen (#F8BC04), rose cheek blush (#C874B2), a small glowing teal gem set in the middle of the forehead.
@@ -77,7 +77,7 @@ Outfit: a fitted padded work vest in copper (#A44322) and deep wine (#530F1E) ov
 Expression: wide warm smile, eyes crinkled with kindness.
 Lighting: soft key light from the upper left, warm amber rim light from behind, a teal glow on the far side.
 
-Composition: centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
 Background: transparent.
 
 Style: polished stylised mobile game hero art, the same style for the whole cast: an oval face with a defined chin, soft cheekbones and a small nose, a visible neck, natural human-like shoulders and torso, two big almond-shaped eyes with detailed glossy irises and lashes, soft painted shading, bright white specular highlights, thin line art in a darker shade of each colour instead of black, vivid saturated multi-colour palette, clean shapes. Must read clearly at 256 by 256 pixels.
@@ -90,7 +90,7 @@ Avoid: frame, border, circle, badge, full body, chibi, round mascot body, blob o
 Suit colour `#5FD3B0`. The quiet scout: calm, watchful, slips past Babel's drones.
 
 ```
-Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, three-quarter view, calm and friendly, like a hero portrait in a collectible card game.
+Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, calm and friendly, like a hero portrait in a collectible card game.
 
 Character: Ash, a quiet scout of the Lexicon Corps who drifts so softly that Babel's drones barely notice.
 Head: soft rounded head with a smooth slightly longer face, glossy seafoam-mint skin (#5FD3B0) with a pale mint sheen (#C8F5E6), faint glowing violet freckles (#7B337D) across the cheeks.
@@ -101,7 +101,7 @@ Outfit: a smooth hooded cloak in deep violet and plum (#7B337D) over a fitted ch
 Expression: shy little smile, one finger raised near the lips as if saying "shh".
 Lighting: soft key light from the upper left, seafoam rim light from behind, a rose glow on the far side.
 
-Composition: centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
 Background: transparent.
 
 Style: polished stylised mobile game hero art, the same style for the whole cast: an oval face with a defined chin, soft cheekbones and a small nose, a visible neck, natural human-like shoulders and torso, two big almond-shaped eyes with detailed glossy irises and lashes, soft painted shading, bright white specular highlights, thin line art in a darker shade of each colour instead of black, vivid saturated multi-colour palette, clean shapes. Must read clearly at 256 by 256 pixels.
@@ -114,7 +114,7 @@ Avoid: frame, border, circle, badge, full body, chibi, round mascot body, blob o
 Suit colour `#F27FB2`. The curious scientist: small, bright, first to spot the fake letter.
 
 ```
-Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, three-quarter view, curious and friendly, like a hero portrait in a collectible card game.
+Cute glossy 2D game hero portrait of a slim humanoid space alien from the far future with human-like proportions, upper-body bust: head, neck, shoulders and upper chest, upright and centred, a slight three-quarter turn of about 15 degrees, head and shoulders angled a little toward the right side of the image, head tilted slightly, eyes looking straight at the viewer, curious and friendly, like a hero portrait in a collectible card game.
 
 Character: Pip, a small, bright field scientist of the Lexicon Corps who spots the decoy letter before anyone else.
 Head: slim oval face with a small pointed chin and short pointed ears, glossy bubblegum-pink skin (#F27FB2) with a light pink sheen (#FFD0E6), glowing golden star-shaped freckles (#F8BC04) across the nose.
@@ -125,7 +125,7 @@ Outfit: a fitted quilted jacket in grape purple (#4B0082) and violet (#6A0DAD) w
 Expression: delighted open smile, as if they just found something amazing.
 Lighting: soft key light from the upper left, pink rim light from behind, a teal glow on the far side.
 
-Composition: centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
+Composition: same pose for every character, face toward the right side of the image, centred, head about 45 percent of the image height, some space above the head, cut off at mid-chest, square image. No frame, no border, no circle, no badge.
 Background: transparent.
 
 Style: polished stylised mobile game hero art, the same style for the whole cast: an oval face with a defined chin, soft cheekbones and a small nose, a visible neck, natural human-like shoulders and torso, two big almond-shaped eyes with detailed glossy irises and lashes, soft painted shading, bright white specular highlights, thin line art in a darker shade of each colour instead of black, vivid saturated multi-colour palette, clean shapes. Must read clearly at 256 by 256 pixels.
