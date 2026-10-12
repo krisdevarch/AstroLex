@@ -30,6 +30,9 @@ var _phase: float = 0.0
 var _mat: ShaderMaterial
 var _flash_t: float = 0.0
 var _flash_dur: float = 0.4
+var _glow: HintGlow
+var _glow_t: float = 0.0
+var _glow_dur: float = 1.0
 var _anim_t: float = 0.0
 var _anim_dur: float = 1.0
 var _from: Vector2 = Vector2.ZERO
@@ -141,6 +144,43 @@ func flash(dur: float) -> void:
 	_flash_t = _flash_dur
 
 
+## Amber hint glow for dur seconds (pulses unless reduced motion).
+func glow(dur: float) -> void:
+	_glow_dur = maxf(0.01, dur)
+	_glow_t = _glow_dur
+	if _glow == null:
+		_glow = HintGlow.new()
+		_glow.name = "HintGlow"
+		_glow.z_index = -1
+		add_child(_glow)
+		move_child(_glow, 0)
+	_glow.radius = size_px * 0.5 * (float(_tun.get("glass.bubbleScale", 1.0)) if treatment == "bubble" else 1.0) * 1.15
+	_glow.alpha = 1.0
+	_glow.queue_redraw()
+
+
+func clear_glow() -> void:
+	_glow_t = 0.0
+	if _glow != null:
+		_glow.queue_free()
+		_glow = null
+
+
+func glow_left() -> float:
+	return _glow_t
+
+
+class HintGlow extends Node2D:
+	var radius: float = 60.0
+	var alpha: float = 1.0
+
+	func _draw() -> void:
+		var amber := Color("F8BC04")
+		for i in 6:
+			draw_circle(Vector2.ZERO, radius * (1.0 + 0.09 * float(5 - i)), Color(amber.r, amber.g, amber.b, 0.16 * alpha))
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 48, Color(amber.r, amber.g, amber.b, alpha), 6.0, true)
+
+
 func fly_to(target: Vector2, target_size_px: float, dur: float) -> void:
 	anim = "fly"
 	_from = position
@@ -161,6 +201,15 @@ func dissolve(dur: float) -> void:
 
 ## Advances flash and animation; true when a fly or dissolve has finished.
 func tick(delta: float) -> bool:
+	if _glow_t > 0.0:
+		_glow_t = maxf(0.0, _glow_t - delta)
+		var k := _glow_t / _glow_dur
+		var pulse := 1.0 if reduced_motion else 0.75 + 0.25 * sin(_glow_t * 14.0)
+		_glow.alpha = clampf(k * 3.0, 0.0, 1.0) * pulse
+		_glow.queue_redraw()
+		if _glow_t <= 0.0:
+			_glow.queue_free()
+			_glow = null
 	if _flash_t > 0.0:
 		_flash_t = maxf(0.0, _flash_t - delta)
 		_mat.set_shader_parameter("flash", _flash_t / _flash_dur)

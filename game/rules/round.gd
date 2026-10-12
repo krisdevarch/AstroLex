@@ -9,7 +9,8 @@ extends RefCounted
 ##   spawn{tile_id,ch,plane,decoy,pos} fire{tile_id} queue{tile_id}
 ##   catch{tile_id,where,slot,ch,pos} wrong{tile_id,kind,ch} escape{tile_id}
 ##   dissolve{tile_id,ch,decoy,pos} restore{word,score} babel{text} round_end{won}
-##   time_cost{amount,reason} (reason "wrong" or "stolen"; time_left already reduced)
+##   time_cost{amount,reason} (reason "wrong", "stolen" or "hint"; time_left already reduced)
+##   hint{tile_id} (use_hint(): the tile to highlight; its time_cost follows)
 ##   thief_spawn{thief_id,pos} thief_grab{thief_id,tile_id} (the tile stops being catchable)
 ##   stolen{thief_id,tile_id,ch} (thief left the top with the tile; both are gone, the letter respawns later)
 ##   thief_down{thief_id,tile_id,pos} (shot; tile_id is the released tile or -1)
@@ -125,7 +126,7 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	burst_seconds = _num("burst.seconds")
 	time_left = burst_seconds
 	_next_thief_at = _num("thief.firstAt") if _num("thief.interval") > 0.0 else INF
-	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0}
+	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0}
 	if fixed_words.is_empty():
 		_pick_words()
 	else:
@@ -177,6 +178,60 @@ func fire(tile_id: int) -> bool:
 	else:
 		_start_shot_at(tile_id, tile.pos, "tile")
 	return true
+
+
+## Hint: picks the catchable tile whose letter fills the lowest unfilled slot of the active word
+## (ties: lowest tile id), charges burst.hintCost, emits hint{tile_id} and returns the id.
+## Repeating while the hinted tile is still alive, catchable and needed returns the same id free
+## (hint event again, no cost, no stat). Refused (-1, no cost) when time_left <= burst.hintCost, so a
+## hint never ends the round. Also -1 when the round is not in play or no such tile exists.
+func use_hint() -> int:
+	if state != "play":
+		return -1
+	var word_key := _active_key()
+	if _hinted_id >= 0 and _hinted_word == word_key and _hint_ok(find_tile(_hinted_id)):
+		_emit({"type": "hint", "tile_id": _hinted_id})
+		return _hinted_id
+	_hinted_id = -1
+	if time_left <= _num("burst.hintCost"):
+		return -1
+	var best_id := -1
+	var best_slot := 1 << 30
+	for t in tiles:
+		if not _hint_ok(t):
+			continue
+		var idx := _open_slot(active, t.ch)
+		if idx < best_slot or (idx == best_slot and t.id < best_id):
+			best_slot = idx
+			best_id = t.id
+	if best_id < 0:
+		return -1
+	_hinted_id = best_id
+	_hinted_word = word_key
+	stats["hints"] = int(stats["hints"]) + 1
+	_emit({"type": "hint", "tile_id": best_id})
+	_cost(_num("burst.hintCost"), "hint")
+	return best_id
+
+
+var _hinted_id := -1
+var _hinted_word := ""
+
+
+func _active_key() -> String:
+	var k := ""
+	for sl in active:
+		k += sl["ch"]
+	return k
+
+
+## Catchable now and its letter fills an open slot of the active word.
+func _hint_ok(t: Tile) -> bool:
+	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0:
+		return false
+	if (not shot.is_empty() and shot["tile_id"] == t.id) or queued_id == t.id:
+		return false
+	return _open_slot(active, t.ch) >= 0
 
 
 func drain_events() -> Array[Dictionary]:

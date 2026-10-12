@@ -17,6 +17,8 @@ var treatment: String = DEFAULT_TREATMENT
 var reduced_motion: bool = false
 var hint: String = DEFAULT_HINT
 var show_fps: bool = false
+## Master mute switch (the game has no audio yet); false mutes bus 0.
+var sound_on: bool = true
 
 
 func save_to(path: String = PATH) -> int:
@@ -25,6 +27,7 @@ func save_to(path: String = PATH) -> int:
 	cf.set_value("look", "reduced_motion", reduced_motion)
 	cf.set_value("look", HINT_KEY, hint)
 	cf.set_value("debug", "show_fps", show_fps)
+	cf.set_value("audio", "sound_on", sound_on)
 	return cf.save(path)
 
 
@@ -40,3 +43,9 @@ func load_from(path: String = PATH) -> void:
 	if HINTS.has(h):
 		hint = h
 	show_fps = bool(cf.get_value("debug", "show_fps", false))
+	sound_on = bool(cf.get_value("audio", "sound_on", true))
+
+
+## Mutes or unmutes the master bus to match sound_on.
+func apply_audio() -> void:
+	AudioServer.set_bus_mute(0, not sound_on)

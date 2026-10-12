@@ -51,7 +51,7 @@ func test_clock_follows_time_and_does_not_drain_in_the_intro() -> void:
 	for _i in 120:
 		f.advance(1.0 / 60.0)
 	var lab := f.find_child("ClockLabel", true, false) as Label
-	assert_eq(lab.text, "%d" % int(ceil(f.game_round.time_left)), "readout follows the clock")
+	assert_eq(lab.text, "%ds" % int(ceil(f.game_round.time_left)), "readout follows the clock")
 	assert_true(f.game_round.time_left < t0, "clock runs after the intro")
 	f.free()
 
