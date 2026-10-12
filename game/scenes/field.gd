@@ -8,7 +8,7 @@ const GameData := preload("res://rules/game_data.gd")
 const TileViewScript := preload("res://scenes/tile_view.gd")
 const TileViewScene: PackedScene = preload("res://scenes/tile_view.tscn")
 const LightRig := preload("res://scenes/light_rig.gd")
-const Starfield := preload("res://scenes/starfield.gd")
+const ActBackdrop := preload("res://scenes/act_backdrop.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
@@ -34,30 +34,38 @@ const TETHER_FADE := 0.12
 const PULSE_SEC := 0.45
 const HINT_GLOW_SEC := 1.5
 const HINT_FLASH_SEC := 0.45
-const SIDE_PAD := 40.0
-const EDGE := 50.0
-const CHIP_Y := 36.0
+# One grid for the whole screen (pixels at 1080 wide): a 48 px margin on both sides, a left column
+# for the portrait and a right column for the words, points and buttons, with a 48 px gutter.
+const SIDE_PAD := 48.0
+const EDGE := 48.0
+const COL_L_W := 280.0  # left column: x 48..328
+const COL_R_X := 376.0  # right column: x 376..1032
+const CHIP_Y := 40.0
 const CHIP_H := 76.0
-const BAND_Y := 136.0
+const BAND_Y := 140.0
 const BAND_H := 110.0
 const FIELD_TOP := 280.0  # top of the play field (below Babel's band)
-const FIELD_BOTTOM_UP := 660.0  # bottom of the play field, above the portrait and the night panel
-const PANEL_TOP_UP := 520.0  # highest point of the night panel
-const TRAY_X := 760.0
-const TRAY_UP := 470.0
-const TRAY_W := 584.0
-const TRAY_H := 132.0
-const SLOT_ROW_W := 560.0
-const SLOT_MAX := 96.0
-const PREVIEW_UP := 565.0
-const PREVIEW_SIZE := 52.0
-const BTN_SIZE := 124.0
-const BTN_GAP := 16.0
-const BTN_UP := 150.0
-const PORTRAIT_X := 220.0
-const PORTRAIT_UP := 430.0
-const PORTRAIT_D := 356.0
-const COST_FLOAT_UP := 700.0
+const FIELD_BOTTOM_UP := 590.0  # bottom of the play field, just above the night panel's crest
+const PANEL_TOP_UP := 560.0  # highest point of the night panel
+const INFO_UP := 456.0  # centre of the info row (next word at left, points at right)
+const INFO_H := 64.0
+const TRAY_UP := 338.0  # centre of the slot tray
+const TRAY_H := 140.0
+const TRAY_PAD := 20.0
+const SLOT_MAX := 100.0
+const SLOT_GAP := 12.0
+const PREVIEW_SIZE := 46.0
+const PREVIEW_GAP := 8.0
+const PREVIEW_ROW_W := 330.0
+const NEXT_W := 92.0  # the "NEXT" caption before the preview boxes
+const BTN_SIZE := 140.0
+const BTN_UP := 174.0  # centre of the button row
+const CLOCK_UP := 60.0  # centre of the clock bar
+const CLOCK_H := 24.0
+const CLOCK_LABEL_W := 110.0
+const PORTRAIT_UP := 296.0  # portrait centre: midway between the info row top and the button row bottom
+const PORTRAIT_D := 280.0
+const COST_FLOAT_UP := 640.0
 # Babel's throw: look of a single flight (timing and origin are tunables under babel.*).
 const THROW_START_SCALE := 0.15
 const THROW_WOBBLE := 0.12
@@ -146,6 +154,8 @@ var _active_n: int = 0
 var _preview_n: int = 0
 
 var _world: CanvasLayer
+var _backdrop: Node2D
+var _night: Control
 var _tiles_root: Node2D
 var _fx_layer: CanvasLayer
 var _hud: CanvasLayer
@@ -461,9 +471,11 @@ func _build_world() -> void:
 	backdrop.name = "Backdrop"
 	backdrop.layer = 0
 	add_child(backdrop)
-	var stars: Node2D = Starfield.new()
-	stars.view_size = view_size
-	backdrop.add_child(stars)
+	_backdrop = ActBackdrop.new()
+	_backdrop.name = "ActScene"
+	_backdrop.view_size = view_size
+	_backdrop.reduced_motion = settings.reduced_motion
+	backdrop.add_child(_backdrop)
 	if settings.show_fps or FpsMeter.fps_requested():
 		_fps_meter = FpsMeter.new()
 		add_child(_fps_meter)
@@ -735,19 +747,29 @@ func panel_top() -> float:
 	return view_size.y - PANEL_TOP_UP
 
 
+## Right column of the grid: x from COL_R_X to the right margin.
+func _col_r() -> Rect2:
+	return Rect2(COL_R_X, 0.0, view_size.x - EDGE - COL_R_X, view_size.y)
+
+
 func _slot_size(where: String, n: int) -> float:
+	var k := float(maxi(n, 1))
+	var gaps := float(maxi(n - 1, 0))
 	if where == "preview":
-		return minf(PREVIEW_SIZE, (SLOT_ROW_W - 8.0 * float(maxi(n - 1, 0))) / float(maxi(n, 1)))
-	var gap := 12.0
-	return minf(SLOT_MAX, (SLOT_ROW_W - gap * float(maxi(n - 1, 0))) / float(maxi(n, 1)))
+		return minf(PREVIEW_SIZE, (PREVIEW_ROW_W - PREVIEW_GAP * gaps) / k)
+	return minf(SLOT_MAX, (_col_r().size.x - 2.0 * TRAY_PAD - SLOT_GAP * gaps) / k)
 
 
+## Active slots are centred in the tray; the preview boxes start right after the "NEXT" caption.
 func _slot_center(where: String, idx: int, n: int) -> Vector2:
 	var size := _slot_size(where, n)
-	var gap := 12.0 if where == "active" else 8.0
-	var total := size * n + gap * (n - 1)
-	var x := TRAY_X - total * 0.5 + size * 0.5 + float(idx) * (size + gap)
-	return Vector2(x, view_size.y - (TRAY_UP if where == "active" else PREVIEW_UP))
+	var col := _col_r()
+	if where == "preview":
+		var px := col.position.x + NEXT_W + size * 0.5 + float(idx) * (size + PREVIEW_GAP)
+		return Vector2(px, view_size.y - INFO_UP)
+	var total := size * n + SLOT_GAP * (n - 1)
+	var x := col.get_center().x - total * 0.5 + size * 0.5 + float(idx) * (size + SLOT_GAP)
+	return Vector2(x, view_size.y - TRAY_UP)
 
 
 func _ignore(c: Control) -> Control:
@@ -771,7 +793,7 @@ func _chip(panel_name: String, label_name: String, text: String) -> Panel:
 	return p
 
 
-func _icon_button(node_name: String, kind: String, x: float, border: Color, icon_colour: Color, bg: Color) -> Button:
+func _icon_button(node_name: String, kind: String, x: float, border: Color, icon_colour: Color, bg: Color, size: float) -> Button:
 	var b := Button.new()
 	b.name = node_name
 	b.focus_mode = Control.FOCUS_NONE
@@ -779,7 +801,7 @@ func _icon_button(node_name: String, kind: String, x: float, border: Color, icon
 	b.add_theme_stylebox_override("hover", Ui.box(bg.lightened(0.08), 30, border, 3))
 	b.add_theme_stylebox_override("pressed", Ui.box(bg.lightened(0.2), 30, border, 3))
 	b.position = Vector2(x, view_size.y - BTN_UP - BTN_SIZE * 0.5)
-	b.size = Vector2(BTN_SIZE, BTN_SIZE)
+	b.size = Vector2(size, BTN_SIZE)
 	var ic: Control = HudArt.Icon.new()
 	ic.name = "Icon"
 	ic.set("kind", kind)
@@ -792,11 +814,13 @@ func _icon_button(node_name: String, kind: String, x: float, border: Color, icon
 
 
 func _build_portrait() -> void:
-	var centre := Vector2(PORTRAIT_X, view_size.y - PORTRAIT_UP)
+	var centre := Vector2(EDGE + COL_L_W * 0.5, view_size.y - PORTRAIT_UP)
 	var holder := Control.new()
 	holder.name = "Portrait"
-	holder.size = Vector2(PORTRAIT_D, PORTRAIT_D)
-	holder.position = centre - holder.size * 0.5
+	# The art is drawn at HudArt.ART_D and scaled down to fit the left column.
+	holder.size = Vector2(HudArt.ART_D, HudArt.ART_D)
+	holder.scale = Vector2.ONE * (PORTRAIT_D / HudArt.ART_D)
+	holder.position = centre - holder.size * 0.5 * holder.scale
 	_ignore(holder)
 	var art: Control = HudArt.PortraitArt.new()
 	art.name = "PortraitArt"
@@ -823,7 +847,7 @@ func _build_portrait() -> void:
 	pill.name = "PortraitName"
 	pill.add_theme_stylebox_override("panel", Ui.box(tether_colour, 23))
 	pill.size = Vector2(maxf(150.0, ThemeDB.fallback_font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x + 64.0), 46.0)
-	pill.position = Vector2(centre.x - pill.size.x * 0.5, centre.y + PORTRAIT_D * 0.5 - 30.0)
+	pill.position = Vector2(centre.x - pill.size.x * 0.5, centre.y + PORTRAIT_D * 0.5 - pill.size.y * 0.5)
 	var pl := Ui.label(nm, 28, Color(0.04, 0.06, 0.16))
 	pl.name = "PortraitNameLabel"
 	pl.add_theme_constant_override("outline_size", 0)
@@ -844,6 +868,7 @@ func _build_hud() -> void:
 	night.size = Vector2(w, HudArt.PANEL_H)
 	night.position = Vector2(0.0, h - HudArt.PANEL_H)
 	_hud.add_child(_ignore(night))
+	_night = night
 	if character_id != "":
 		_build_portrait()
 	# Top: level chip, Level n / N chip, Babel's band.
@@ -886,46 +911,53 @@ func _build_hud() -> void:
 	_toast.size = Vector2(w, 70)
 	_toast.modulate.a = 0.0
 	_hud.add_child(_toast)
-	# Slots: a dark tray right of the portrait, the next word's small boxes above it.
+	var col := _col_r()
+	# Info row (right column): the next word's boxes at left, points and combo at right.
+	var next_cap := Ui.label("NEXT", 24, Ui.DIM, HORIZONTAL_ALIGNMENT_LEFT)
+	next_cap.name = "NextCaption"
+	next_cap.add_theme_constant_override("outline_size", 0)
+	next_cap.position = Vector2(col.position.x, h - INFO_UP - INFO_H * 0.5)
+	next_cap.size = Vector2(NEXT_W, INFO_H)
+	next_cap.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hud.add_child(_ignore(next_cap))
+	_preview_row = Control.new()
+	_preview_row.name = "PreviewSlots"
+	_hud.add_child(_ignore(_preview_row))
+	_score_row = HBoxContainer.new()
+	_score_row.name = "ScoreRow"
+	_score_row.alignment = BoxContainer.ALIGNMENT_END
+	_score_row.position = Vector2(col.end.x - 220.0, h - INFO_UP - INFO_H * 0.5)
+	_score_row.size = Vector2(220.0, INFO_H)
+	_score_row.add_theme_constant_override("separation", 12)
+	_hud.add_child(_ignore(_score_row))
+	_score_label = Ui.label("0", 60, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT)
+	_score_label.name = "ScoreLabel"
+	_score_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_score_row.add_child(_ignore(_score_label))
+	_combo_label = Ui.label("×1.0", 36, Ui.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
+	_combo_label.name = "ComboLabel"
+	_combo_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_score_row.add_child(_ignore(_combo_label))
+	# Slot tray (right column, full width).
 	var tray := Panel.new()
 	tray.name = "SlotTray"
-	tray.size = Vector2(TRAY_W, TRAY_H)
-	tray.position = Vector2(TRAY_X, h - TRAY_UP) - tray.size * 0.5
-	tray.add_theme_stylebox_override("panel", Ui.box(Color(6.0 / 255.0, 10.0 / 255.0, 36.0 / 255.0, 0.72), 30, Color(1, 1, 1, 0.22), 1))
+	tray.position = Vector2(col.position.x, h - TRAY_UP - TRAY_H * 0.5)
+	tray.size = Vector2(col.size.x, TRAY_H)
+	tray.add_theme_stylebox_override("panel", Ui.box(Color(4.0 / 255.0, 8.0 / 255.0, 26.0 / 255.0, 0.86), 32, Color(CYAN_EDGE.r, CYAN_EDGE.g, CYAN_EDGE.b, 0.35), 2))
 	_hud.add_child(_ignore(tray))
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"
 	_hud.add_child(_ignore(_active_row))
-	_preview_row = Control.new()
-	_preview_row.name = "PreviewSlots"
-	_hud.add_child(_ignore(_preview_row))
-	# Bottom row: points and combo at left, four icon buttons at right.
-	_score_row = HBoxContainer.new()
-	_score_row.name = "ScoreRow"
-	_score_row.position = Vector2(EDGE, h - 222.0)
-	_score_row.size = Vector2(420, 84)
-	_score_row.add_theme_constant_override("separation", 14)
-	_hud.add_child(_ignore(_score_row))
-	_score_label = Ui.label("0", 76, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT)
-	_score_label.name = "ScoreLabel"
-	_score_row.add_child(_ignore(_score_label))
-	_combo_label = Ui.label("×1.0", 42, Ui.ACCENT, HORIZONTAL_ALIGNMENT_LEFT)
-	_combo_label.name = "ComboLabel"
-	_combo_label.size_flags_vertical = Control.SIZE_SHRINK_END
-	_score_row.add_child(_ignore(_combo_label))
-	var cap := Ui.label("POINTS", 24, Ui.DIM, HORIZONTAL_ALIGNMENT_LEFT)
-	cap.name = "PointsCaption"
-	cap.add_theme_constant_override("outline_size", 0)
-	cap.position = Vector2(EDGE + 4.0, h - 136.0)
-	cap.size = Vector2(200, 30)
-	_hud.add_child(_ignore(cap))
-	var x0 := w - EDGE - (4.0 * BTN_SIZE + 3.0 * BTN_GAP)
+	# Button row (right column, full width): Hint, Pause, Sound, Settings.
+	var bw := BTN_SIZE
+	var gap := (col.size.x - 4.0 * bw) / 3.0
 	var plain := Color(0.04, 0.06, 0.2, 0.92)
 	var edge := Color(0.55, 0.62, 0.85, 0.55)
-	_hint_button = _icon_button("HintButton", "hint", x0, AMBER, AMBER, Color(0.2, 0.15, 0.03, 0.92))
-	_pause_button = _icon_button("PauseButton", "pause", x0 + (BTN_SIZE + BTN_GAP), edge, Ui.INK, plain)
-	_sound_button = _icon_button("SoundButton", "sound", x0 + 2.0 * (BTN_SIZE + BTN_GAP), edge, Ui.INK, plain)
-	_settings_button = _icon_button("SettingsButton", "settings", x0 + 3.0 * (BTN_SIZE + BTN_GAP), edge, Ui.INK, plain)
+	var x0 := col.position.x
+	_hint_button = _icon_button("HintButton", "hint", x0, AMBER, AMBER, Color(0.2, 0.15, 0.03, 0.92), bw)
+	_pause_button = _icon_button("PauseButton", "pause", x0 + (bw + gap), edge, Ui.INK, plain, bw)
+	_sound_button = _icon_button("SoundButton", "sound", x0 + 2.0 * (bw + gap), edge, Ui.INK, plain, bw)
+	_settings_button = _icon_button("SettingsButton", "settings", x0 + 3.0 * (bw + gap), edge, Ui.INK, plain, bw)
 	_pause_icon = _pause_button.get_node("Icon")
 	_sound_icon = _sound_button.get_node("Icon")
 	_hint_button.pressed.connect(request_hint)
@@ -933,26 +965,27 @@ func _build_hud() -> void:
 	_sound_button.pressed.connect(toggle_sound)
 	_settings_button.pressed.connect(func() -> void: settings_requested.emit())
 	_sync_sound_icon()
-	# Clock: a coral bar across the bottom with the seconds at its right.
+	# Clock: a coral bar across the full width, the seconds right-aligned to the margin.
 	_fill_coral = HudArt.bar_fill_box(HudArt.CORAL, HudArt.CORAL_LIGHT)
 	_fill_crimson = HudArt.bar_fill_box(HudArt.CRIMSON, HudArt.CRIMSON_LIGHT)
 	_time_bar = ProgressBar.new()
 	_time_bar.name = "TimeBar"
-	_time_bar.position = Vector2(EDGE, h - 74.0)
-	_time_bar.custom_minimum_size = Vector2(0, 28)
-	_time_bar.size = Vector2(w - 2.0 * EDGE - 130.0, 28)
+	_time_bar.position = Vector2(EDGE, h - CLOCK_UP - CLOCK_H * 0.5)
+	_time_bar.custom_minimum_size = Vector2(0, CLOCK_H)
+	_time_bar.size = Vector2(w - 2.0 * EDGE - CLOCK_LABEL_W - 16.0, CLOCK_H)
 	_time_bar.show_percentage = false
 	_time_bar.min_value = 0.0
 	_time_bar.max_value = _n("burst.seconds")
-	_time_bar.add_theme_stylebox_override("background", Ui.box(Color(1, 1, 1, 0.1), 14))
+	_time_bar.add_theme_stylebox_override("background", Ui.box(Color(1, 1, 1, 0.1), int(CLOCK_H * 0.5)))
 	_time_bar.add_theme_stylebox_override("fill", _fill_coral)
 	_hud.add_child(_ignore(_time_bar))
 	_clock_label = Ui.label("", 40, CLOCK_TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
 	_clock_label.name = "ClockLabel"
 	_clock_label.add_theme_constant_override("outline_size", 0)
-	_clock_label.position = Vector2(w - EDGE - 120.0, h - 84.0)
-	_clock_label.size = Vector2(120, 48)
-	_clock_label.pivot_offset = Vector2(120, 24)
+	_clock_label.position = Vector2(w - EDGE - CLOCK_LABEL_W, h - CLOCK_UP - 24.0)
+	_clock_label.size = Vector2(CLOCK_LABEL_W, 48)
+	_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_clock_label.pivot_offset = Vector2(CLOCK_LABEL_W, 24)
 	_hud.add_child(_ignore(_clock_label))
 
 
@@ -1017,7 +1050,21 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 		p.add_theme_stylebox_override("panel", Ui.box(Color("0c1030"), r, CYAN_EDGE if active else Color(0.45, 0.5, 0.72), 5 if active else 2))
 
 
+## Share of the level's words restored so far: colour and city lights come back with it.
+func restored_share() -> float:
+	if game_round == null or game_round.words.is_empty():
+		return 0.0
+	if game_round.state == "won":
+		return 1.0
+	return clampf(float(game_round.word_index) / float(game_round.words.size()), 0.0, 1.0)
+
+
 func _update_hud() -> void:
+	var share := restored_share()
+	if _backdrop != null:
+		_backdrop.restore = share
+	if _night != null and not is_equal_approx(float(_night.get("lit")), share):
+		_night.set("lit", share)
 	_score_label.text = "%d" % int(round(game_round.score))
 	_combo_label.text = "×%.1f" % game_round.combo
 	_time_bar.max_value = game_round.burst_seconds

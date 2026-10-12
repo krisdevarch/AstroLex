@@ -47,43 +47,59 @@ static func glass_mask(corner: float = GLASS_CORNER) -> Texture2D:
 	return tex
 
 
-## Pre-baked placeholder sky for the backdrop: navy to violet/teal gradient with soft nebula blobs.
+## Act I sky (Low Orbit, palette "Deep Space Blue" #062C43 #054569 #5591A9 #9CCDDC + coral): deep
+## navy at the top, a faint teal band of the galaxy crossing the upper sky, a calm darker middle
+## where the letters drift, and Earth's blue glow with a coral sunrise rising from the bottom right.
 ## One small texture, stretched over the screen by a single sprite. Generated once.
 static func sky() -> Texture2D:
 	if _cache.has("sky"):
 		return _cache["sky"]
-	var w := 108
-	var h := 192
+	var w := 135
+	var h := 240
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	var top := Color(0.03, 0.06, 0.20)
-	var mid := Color(0.16, 0.10, 0.36)
-	var low := Color(0.06, 0.26, 0.34)
-	# [centre uv, radius (uv of width), colour, strength]
-	var blobs := [
-		[Vector2(0.25, 0.22), 0.34, Color(0.75, 0.30, 0.85), 0.55],
-		[Vector2(0.78, 0.50), 0.40, Color(0.15, 0.75, 0.85), 0.5],
-		[Vector2(0.35, 0.82), 0.36, Color(0.95, 0.55, 0.45), 0.4],
-	]
+	var stops := [[0.0, Color("01040d")], [0.30, Color("041a33")], [0.62, Color("062843")], [0.84, Color("07385a")], [1.0, Color("0d5578")]]
+	var band := Color("5591A9")
+	var band_hi := Color("9CCDDC")
+	var coral := Color("FF6B35")
 	for y in h:
 		var v := float(y) / float(h - 1)
-		var base: Color = top.lerp(mid, clampf(v * 2.0, 0.0, 1.0)) if v < 0.5 else mid.lerp(low, (v - 0.5) * 2.0)
+		var base: Color = stops[0][1]
+		for i in range(1, stops.size()):
+			if v <= float(stops[i][0]):
+				var t := (v - float(stops[i - 1][0])) / (float(stops[i][0]) - float(stops[i - 1][0]))
+				base = (stops[i - 1][1] as Color).lerp(stops[i][1], smoothstep(0.0, 1.0, t))
+				break
 		for x in w:
 			var u := float(x) / float(w - 1)
 			var c := Vector3(base.r, base.g, base.b)
-			for b in blobs:
-				var dd := (Vector2(u, v * 1.78) - Vector2(b[0].x, b[0].y * 1.78)).length() / float(b[1])
-				var a := exp(-dd * dd * 2.2) * float(b[3])
-				var bc: Color = b[2]
-				c += Vector3(bc.r, bc.g, bc.b) * a
-			img.set_pixel(x, y, Color(minf(c.x, 1.0), minf(c.y, 1.0), minf(c.z, 1.0), 1.0))
+			# Galaxy band: a soft diagonal from the upper left down to the right, brightest high up.
+			var d := (v * 1.78 - (0.12 + 0.62 * u)) / 0.2
+			var k := exp(-d * d) * (0.6 - 0.46 * smoothstep(0.16, 0.55, v))
+			var lane := exp(-pow(d * 3.2 - 0.6, 2.0)) * k * 0.55  # a darker dust lane inside it
+			var bc := band.lerp(band_hi, exp(-d * d * 4.0))
+			c += Vector3(bc.r, bc.g, bc.b) * k - Vector3(lane, lane, lane) * 0.6
+			# Sunrise: coral warmth just above the limb at the lower right.
+			var sd := Vector2((u - 0.92) * 1.0, (v - 0.86) * 1.78).length() / 0.42
+			var sk := exp(-sd * sd * 1.6) * 0.55
+			c += Vector3(coral.r, coral.g * 0.85, coral.b * 0.6) * sk
+			# Teal wisps at the top right and a deep blue pool at the lower left frame the field.
+			var t1 := Vector2((u - 0.95) * 1.0, (v - 0.12) * 1.78).length() / 0.45
+			c += Vector3(0.20, 0.45, 0.55) * exp(-t1 * t1 * 1.8) * 0.6
+			var t2 := Vector2((u - 0.0) * 1.0, (v - 0.72) * 1.78).length() / 0.5
+			c += Vector3(0.02, 0.22, 0.38) * exp(-t2 * t2 * 1.8) * 0.9
+			# Calm middle: a slightly darker oval behind the play field keeps the glyphs readable.
+			var md := Vector2((u - 0.5) * 1.2, (v - 0.47) * 1.78).length() / 0.62
+			c *= 1.0 - 0.2 * exp(-md * md)
+			img.set_pixel(x, y, Color(clampf(c.x, 0.0, 1.0), clampf(c.y, 0.0, 1.0), clampf(c.z, 0.0, 1.0), 1.0))
 	img.generate_mipmaps()  # the glass blurs the sky by sampling a lower mip level
 	var tex := ImageTexture.create_from_image(img)
 	_cache["sky"] = tex
 	return tex
 
 
-## Baked stars (transparent, 540x960, mipmapped). The backdrop draws it full screen and the glass
-## samples it, so stars bend at a glass tile's rim.
+## Baked stars (transparent, 540x960, mipmapped): a scatter over the whole sky plus a dense dust of
+## faint stars along the galaxy band. The backdrop draws it full screen and the glass samples it,
+## so stars bend at a glass tile's rim.
 static func stars() -> Texture2D:
 	if _cache.has("stars"):
 		return _cache["stars"]
@@ -92,17 +108,30 @@ static func stars() -> Texture2D:
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 424242
-	for i in 110:
-		var c := Vector2(rng.randf() * w, rng.randf() * h)
-		var b := rng.randf_range(0.25, 0.9)
-		var r := rng.randf_range(0.6, 1.6)
+	for i in 640:
+		var c: Vector2
+		var b: float
+		var r: float
+		if i < 140:
+			c = Vector2(rng.randf() * w, rng.randf() * h)
+			b = rng.randf_range(0.3, 0.95)
+			r = rng.randf_range(0.6, 1.7)
+		else:
+			# Along the band: x uniform, y on the band's centre line with a gaussian spread.
+			var u := rng.randf()
+			var off := rng.randfn(0.0, 0.07)
+			c = Vector2(u * w, (0.12 + 0.62 * u + off) / 1.78 * h)
+			var fade := 1.0 - 0.75 * smoothstep(0.2, 0.55, c.y / h)
+			b = rng.randf_range(0.2, 0.7) * fade
+			r = rng.randf_range(0.45, 1.1)
+		var tint := Color(0.75, 0.85, 1.0) if rng.randf() < 0.8 else Color(1.0, 0.86, 0.7)
 		for y in range(int(c.y - r - 1.0), int(c.y + r + 2.0)):
 			for x in range(int(c.x - r - 1.0), int(c.x + r + 2.0)):
 				if x < 0 or y < 0 or x >= w or y >= h:
 					continue
-				var a := clampf(r + 0.5 - Vector2(x + 0.5, y + 0.5).distance_to(c), 0.0, 1.0)
-				if a > 0.0:
-					img.set_pixel(x, y, Color(0.7 * b, 0.8 * b, b, a))
+				var a := clampf(r + 0.5 - Vector2(x + 0.5, y + 0.5).distance_to(c), 0.0, 1.0) * clampf(b * 1.3, 0.0, 1.0)
+				if a > img.get_pixel(x, y).a:
+					img.set_pixel(x, y, Color(tint.r, tint.g, tint.b, a))
 	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache["stars"] = tex

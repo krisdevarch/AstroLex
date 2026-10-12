@@ -2,10 +2,10 @@ extends RefCounted
 ## Procedural art for the in-round HUD (no image assets): Earth's night side, the porthole portrait
 ## frame, vector icons and the coral clock fill. Drawn in _draw; every size is a pixel at 1080 wide.
 
-const PANEL_H := 560.0  # height of the night panel control
+const PANEL_H := 600.0  # height of the night panel control
 const CREST := 40.0  # local y of the highest point (so it sits PANEL_H - CREST above the bottom)
-const EDGE_LEFT := 90.0
-const EDGE_RIGHT := 130.0
+const EDGE_DROP := 66.0  # how far the curve falls from the crest to either screen edge
+const ART_D := 356.0  # the portrait art's own size; the field scales it to fit its column
 const ATMOS := Color("8fe3ff")
 const CORAL := Color("FF6B35")
 const CORAL_LIGHT := Color("ff9a6e")
@@ -45,13 +45,16 @@ static func clip_material() -> ShaderMaterial:
 
 
 class NightPanel extends Control:
-	## Local y of the planet's curved top edge at x (width w): rises to a crest at the middle, eases down to the right.
+	## Share of the level's words restored: city lights come back on with it (3 lit at the start).
+	var lit: float = 0.0:
+		set(v):
+			lit = v
+			queue_redraw()
+
+	## Local y of the planet's curved top edge at x (width w): a symmetric arc, highest at the middle.
 	static func edge_y(x: float, w: float) -> float:
-		var cx := w * 0.5
-		if x <= cx:
-			return lerpf(EDGE_LEFT, CREST, sin(x / cx * PI * 0.5))
-		var u := (x - cx) / (w - cx)
-		return lerpf(CREST, EDGE_RIGHT, 1.0 - cos(u * PI * 0.5))
+		var u := (x - w * 0.5) / (w * 0.5)
+		return CREST + EDGE_DROP * u * u
 
 	func _draw() -> void:
 		var w := size.x
@@ -75,13 +78,17 @@ class NightPanel extends Control:
 		draw_polyline(line, Color(ATMOS.r, ATMOS.g, ATMOS.b, 0.07), 22.0, true)
 		draw_polyline(line, Color(ATMOS.r, ATMOS.g, ATMOS.b, 0.16), 11.0, true)
 		draw_polyline(line, ATMOS, 3.0, true)
-		# City lights: coral dots just under the curve on the right half.
-		for i in 11:
-			var cxp := w * (0.56 + 0.040 * float(i)) + float((i * 7) % 5) * 3.0
-			var cyp := NightPanel.edge_y(cxp, w) + 16.0 + float((i * 37) % 53)
-			var rad := 2.5 + float(i % 3)
-			draw_circle(Vector2(cxp, cyp), rad * 3.0, Color(CORAL.r, CORAL.g, CORAL.b, 0.14))
-			draw_circle(Vector2(cxp, cyp), rad, CORAL)
+		# City lights: coral clusters under the curve; more come on as words are restored.
+		var total := 22
+		var on := 3 + int(round(lit * float(total - 3)))
+		for i in total:
+			var cxp := w * (0.05 + 0.9 * fposmod(float(i) * 0.6180339, 1.0))
+			var cyp := NightPanel.edge_y(cxp, w) + 14.0 + float((i * 37) % 47)
+			var rad := 2.0 + float(i % 3)
+			var lit_now := i < on
+			var a := 1.0 if lit_now else 0.18
+			draw_circle(Vector2(cxp, cyp), rad * 3.2, Color(CORAL.r, CORAL.g, CORAL.b, 0.14 * a))
+			draw_circle(Vector2(cxp, cyp), rad, Color(CORAL.r, CORAL.g, CORAL.b, a) if lit_now else Color(0.5, 0.5, 0.55, 0.35))
 
 	static func _grad(y: float, h: float, a: Color, b: Color) -> Color:
 		return a.lerp(b, clampf((y - CREST) / (h - CREST), 0.0, 1.0))

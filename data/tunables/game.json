@@ -32,6 +32,7 @@
   "field.height": 1.6,
   "field.topMargin": 0.32,
   "tile.size": 0.12,
+  "tile.minGap": 0.04,
   "plane.frontScale": 1.0,
   "plane.midScale": 0.8,
   "plane.backScale": 0.45,

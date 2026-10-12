@@ -36,6 +36,7 @@
     "field.height",
     "field.topMargin",
     "tile.size",
+    "tile.minGap",
     "plane.frontScale",
     "plane.midScale",
     "plane.backScale",
@@ -234,6 +235,11 @@
       "type": "number",
       "minimum": 0,
       "description": "field units reserved at the top for the HUD"
+    },
+    "tile.minGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "minimum clear gap in field units between catchable (plane 0 and 1) tiles"
     },
     "tile.size": {
       "type": "number",

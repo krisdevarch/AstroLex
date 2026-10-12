@@ -791,3 +791,49 @@ func test_thief_schedule_advances_when_spawn_skipped_at_max() -> void:
 	while r.state == "play" and float(r.stats["secs"]) < 9.0:
 		r.step(1.0 / 60.0)
 	assert_eq(_of_type(r.drain_events(), "thief_spawn").size(), 0, "no replacement before next interval")
+
+
+func _min_slack(r: Round) -> float:
+	var worst := 1e9
+	var gap: float = float(_tun["tile.minGap"])
+	var live: Array = []
+	for t in r.tiles:
+		if t.alive and t.plane < 2:
+			live.append(t)
+	for i in live.size():
+		for j in range(i + 1, live.size()):
+			worst = minf(worst, live[i].pos.distance_to(live[j].pos) - (live[i].radius + live[j].radius + gap))
+	return worst
+
+
+func test_spawn_never_overlaps_catchable_tiles() -> void:
+	for seed_value in 200:
+		# Act 1 round 1 is sparse enough that 24 tries always find room; denser rounds may keep the
+		# last try and rely on the tick separation (covered by the drifting test).
+		var r := _make(seed_value, 1, "act1_low_orbit")
+		assert_true(_min_slack(r) >= -1e-6, "overlap at spawn, seed %d" % seed_value)
+
+
+func test_catchable_tiles_keep_their_gap_while_drifting() -> void:
+	for seed_value in 30:
+		var r := _make(seed_value)
+		var worst := 1e9
+		for _i in 1200:
+			r.step(1.0 / 60.0)
+			worst = minf(worst, _min_slack(r))
+		assert_true(worst >= -0.01, "seed %d slack %f" % [seed_value, worst])
+
+
+func test_head_on_pair_bounces() -> void:
+	var r := _make(5)
+	for t in r.tiles:
+		t.alive = false
+	var a: RefCounted = r._spawn("A", true, 0)
+	var b: RefCounted = r._spawn("B", true, 0)
+	a.pos = Vector2(0.4, 0.9)
+	b.pos = Vector2(0.4 + a.radius + b.radius + 0.01, 0.9)
+	a.vel = Vector2(0.1, 0.0)
+	b.vel = Vector2(-0.1, 0.0)
+	r._separate_tiles()
+	assert_true(a.vel.x < 0.0 and b.vel.x > 0.0, "velocities exchanged")
+	assert_true(b.pos.x - a.pos.x >= a.radius + b.radius + float(_tun["tile.minGap"]) - 1e-6, "pushed apart")

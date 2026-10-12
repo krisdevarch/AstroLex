@@ -43,7 +43,7 @@ func test_bottom_hud_anchors_to_the_real_bottom_on_a_taller_screen() -> void:
 	assert_true(bar.position.y > 2342.0 - 100.0 and bar.position.y < 2342.0, "clock bar hugs the bottom")
 	var btn := f.find_child("HintButton", true, false) as Control
 	assert_true(btn.position.y + btn.size.y < 2342.0 and btn.position.y > 2342.0 - 300.0, "buttons sit above the bar")
-	assert_eq(f.panel_top(), 2342.0 - 520.0, "panel top follows the bottom")
+	assert_eq(f.panel_top(), 2342.0 - 560.0, "panel top follows the bottom")
 	f.free()
 
 
@@ -79,11 +79,11 @@ func test_hint_icon_is_first_button_icon() -> void:
 	f.free()
 
 
-func test_preview_row_fits_the_tray_for_an_eleven_letter_word() -> void:
+func test_preview_row_fits_its_width_for_an_eleven_letter_word() -> void:
 	var f := _field("wren")
 	var n := 11
 	var total: float = f._slot_size("preview", n) * n + 8.0 * (n - 1)
-	assert_true(total <= f.SLOT_ROW_W + 0.01, "preview row within tray width (%.0f)" % total)
+	assert_true(total <= f.PREVIEW_ROW_W + 0.01, "preview row within its width (%.0f)" % total)
 	f.free()
 
 
@@ -135,3 +135,49 @@ func test_no_tile_is_drawn_under_the_bottom_panel() -> void:
 		assert_true(frames >= 60, "sampled %d frames" % frames)
 		assert_true(worst < top, "tiles stay above the panel (worst bottom %.0f, panel %.0f)" % [worst, top])
 		f.free()
+
+
+func test_hud_sits_on_one_grid() -> void:
+	for size in [Vector2(1080, 1920), Vector2(1179, 2556)]:
+		var f := _field("ash", size)
+		var right: float = size.x - f.EDGE
+		var tray := f.find_child("SlotTray", true, false) as Control
+		var hint := f.find_child("HintButton", true, false) as Control
+		var gear := f.find_child("SettingsButton", true, false) as Control
+		var clock := f.find_child("ClockLabel", true, false) as Control
+		var counter := f.find_child("LevelCounterChip", true, false) as Control
+		var band := f.find_child("BabelBand", true, false) as Control
+		var bar := f.find_child("TimeBar", true, false) as Control
+		var chip := f.find_child("LevelChip", true, false) as Control
+		for c: Control in [tray, gear, clock, counter, band]:
+			assert_true(absf(c.position.x + c.size.x - right) < 0.5, "%s ends on the right margin" % c.name)
+		for c: Control in [bar, chip, band]:
+			assert_true(absf(c.position.x - f.EDGE) < 0.5, "%s starts on the left margin" % c.name)
+		assert_true(absf(tray.position.x - hint.position.x) < 0.5, "tray and buttons share the right column's left edge")
+		var portrait := f.find_child("Portrait", true, false) as Control
+		var p_right: float = portrait.position.x + portrait.size.x * portrait.scale.x
+		assert_true(p_right <= tray.position.x - 40.0, "portrait stays in the left column")
+		# The row of active slots is centred in the tray.
+		var row := f.find_child("ActiveSlots", true, false) as Control
+		var first := row.get_child(0) as Control
+		var last := row.get_child(row.get_child_count() - 1) as Control
+		var mid := (first.position.x + last.position.x + last.size.x) * 0.5
+		assert_true(absf(mid - (tray.position.x + tray.size.x * 0.5)) < 0.5, "slots centred in the tray")
+		f.free()
+
+
+func test_backdrop_regains_colour_as_words_are_restored() -> void:
+	var f := _field("wren")
+	var bg := f.find_child("ActScene", true, false)
+	assert_true(bg != null, "act scene backdrop exists")
+	var s0: float = bg.saturation()
+	assert_true(s0 < 1.0, "starts drained (%.2f)" % s0)
+	f.game_round.word_index = f.game_round.words.size() - 1
+	f._update_hud()
+	assert_true(f.restored_share() > 0.5, "share follows the word index")
+	for _i in 120:
+		bg._process(1.0 / 30.0)
+	assert_true(bg.saturation() > s0 + 0.2, "colour comes back (%.2f)" % bg.saturation())
+	var night := f.find_child("NightPanel", true, false)
+	assert_true(float(night.get("lit")) > 0.5, "city lights come on")
+	f.free()
