@@ -422,6 +422,81 @@ func test_wrong_catch_costs_time_and_can_end_the_round() -> void:
 	assert_eq(_types(ev).slice(_types(ev).size() - 3), PackedStringArray(["wrong", "time_cost", "round_end"]))
 
 
+func test_hint_returns_a_needed_tile_and_costs_hint_cost() -> void:
+	var r := _make(21)
+	var before := r.time_left
+	var id := r.use_hint()
+	assert_true(id >= 0, "hint id")
+	var t: RefCounted = r.find_tile(id)
+	assert_true(t != null and not t.decoy and t.plane < 2, "catchable real tile")
+	assert_true(_letters(r.active).contains(t.ch), "letter is needed")
+	assert_eq(before - r.time_left, float(_tun["burst.hintCost"]))
+	assert_eq(int(r.stats["hints"]), 1)
+	# Lowest unfilled slot wins.
+	for t2 in r.tiles:
+		if t2.alive and t2.plane < 2 and t2.carried_by < 0 and r._open_slot(r.active, t2.ch) >= 0:
+			assert_true(r._open_slot(r.active, t2.ch) >= r._open_slot(r.active, t.ch), "lowest slot")
+
+
+func test_hint_emits_hint_and_time_cost() -> void:
+	var r := _make(21)
+	r.drain_events()
+	var id := r.use_hint()
+	var ev := r.drain_events()
+	assert_eq(_types(ev), PackedStringArray(["hint", "time_cost"]))
+	assert_eq(ev[0]["tile_id"], id)
+	assert_eq(ev[1]["reason"], "hint")
+	assert_eq(ev[1]["amount"], float(_tun["burst.hintCost"]))
+
+
+func test_hint_is_refused_when_not_playing() -> void:
+	var r := _make(21)
+	r.time_left = 0.0
+	r.step(0.1)
+	assert_true(r.state != "play", "round over")
+	r.drain_events()
+	var before := r.time_left
+	assert_eq(r.use_hint(), -1)
+	assert_eq(r.time_left, before)
+	assert_eq(r.drain_events().size(), 0)
+	assert_eq(int(r.stats["hints"]), 0)
+
+
+func test_hint_stat_counts_each_use() -> void:
+	var r := _make(21)
+	r.use_hint()
+	r.tiles[0].vel = r.tiles[0].vel
+	var id := r.use_hint()
+	assert_eq(int(r.stats["hints"]), 1, "repeat is free and uncounted")
+	assert_true(id >= 0)
+
+
+func test_repeat_hint_is_free_and_reglows() -> void:
+	var r := _make(21)
+	var id := r.use_hint()
+	var t := r.time_left
+	r.drain_events()
+	assert_eq(r.use_hint(), id)
+	assert_eq(r.time_left, t)
+	assert_eq(_types(r.drain_events()), PackedStringArray(["hint"]))
+	# Once the hinted tile is gone the next hint costs again and may pick another tile.
+	r._remove(r.find_tile(id))
+	var id2 := r.use_hint()
+	if id2 >= 0:
+		assert_true(id2 != id)
+		assert_eq(int(r.stats["hints"]), 2)
+
+
+func test_hint_refused_when_it_would_end_the_round() -> void:
+	var r := _make(21)
+	r.time_left = float(_tun["burst.hintCost"])
+	r.drain_events()
+	assert_eq(r.use_hint(), -1)
+	assert_eq(r.time_left, float(_tun["burst.hintCost"]))
+	assert_eq(r.state, "play")
+	assert_eq(r.drain_events().size(), 0)
+
+
 func test_stars_thresholds() -> void:
 	var r := _make(1)
 	assert_eq(r.stars(), 0, "not won")

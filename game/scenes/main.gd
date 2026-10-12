@@ -60,6 +60,7 @@ func _ready() -> void:
 	act = str(dictionary.act_order()[0]) if not dictionary.act_order().is_empty() else act
 	levels = dictionary.levels(act)
 	settings.load_from()
+	settings.apply_audio()
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	if save == null:
 		if offline:
@@ -299,9 +300,14 @@ func _start_level() -> void:
 	var ch := _profile_character()
 	if not autoplay and ch.has("colour"):
 		f.tether_colour = Color(str(ch["colour"]))
+	if not autoplay and ch.has("id"):
+		f.character_id = str(ch["id"])
+		f.character_name = str(ch.get("name", ch["id"]))
+	f.level_counter = "Level %d / %d" % [level_index + 1, levels.size()]
 	f.content_override = dictionary.content()
 	f.round_finished.connect(_on_level_finished.bind(level))
 	f.pause_requested.connect(_show_pause.bind(f))
+	f.settings_requested.connect(_show_field_settings.bind(f))
 	_swap(f)
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
@@ -391,10 +397,46 @@ func _show_pause(f: Node) -> void:
 		telemetry.playing = false
 		_show_map())
 	pause_menu = p
-	add_child(p)
+	var layer := CanvasLayer.new()  # above the field's HUD layer
+	layer.name = "PauseLayer"
+	layer.layer = 40
+	layer.add_child(p)
+	add_child(layer)
+
+
+## The field's settings button: pause, then settings on top; closing returns to the pause menu.
+func _show_field_settings(f: Node) -> void:
+	if pause_menu == null:
+		_show_pause(f)
+	if pause_menu == null or has_node("FieldSettings"):
+		return
+	pause_menu.visible = false
+	var layer := CanvasLayer.new()
+	layer.name = "FieldSettings"
+	layer.layer = 45
+	var back := ColorRect.new()
+	back.color = Color(0.02, 0.03, 0.08, 0.96)
+	back.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(back)
+	var s: Control = SettingsScreen.new()
+	s.name = "SettingsScreen"
+	s.settings = settings
+	s.closed.connect(func() -> void:
+		layer.queue_free()
+		if pause_menu != null:
+			pause_menu.visible = true)
+	layer.add_child(s)
+	add_child(layer)
 
 
 func _close_pause() -> void:
+	var fs := get_node_or_null("FieldSettings")
+	if fs != null:
+		fs.queue_free()
 	if pause_menu != null:
-		pause_menu.queue_free()
+		var holder := pause_menu.get_parent()
+		if holder is CanvasLayer:
+			holder.queue_free()
+		else:
+			pause_menu.queue_free()
 		pause_menu = null

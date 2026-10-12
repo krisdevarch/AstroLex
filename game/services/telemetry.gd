@@ -211,7 +211,7 @@ func _finish_round(won: bool) -> void:
 		"score": int(round(gr.score)), "secs": snappedf(float(st["secs"]), 0.1),
 		"catches": int(st["catches"]), "wrong": int(st["wrong"]), "escapes": int(st["escapes"]),
 		"wrong_surplus": _round["wrong_surplus"], "wrong_unneeded": _round["wrong_unneeded"],
-		"first_catch_s": _round["first_catch_s"], "min_time": snappedf(float(st["min_time"]), 0.1), "stolen": int(st.get("stolen", 0)), "thieves_down": int(st.get("thieves_down", 0)),
+		"first_catch_s": _round["first_catch_s"], "min_time": snappedf(float(st["min_time"]), 0.1), "stolen": int(st.get("stolen", 0)), "thieves_down": int(st.get("thieves_down", 0)), "hints": int(st.get("hints", 0)),
 		"tap_misses": _round["tap_misses"],
 		"near_miss_px_p50": null if near.is_empty() else int(round(percentile(near, 0.5))),
 		"babel_lines": _round["babel_lines"],

@@ -62,6 +62,7 @@
     "autoplay.tapInterval",
     "burst.seconds",
     "burst.wrongCost",
+    "burst.hintCost",
     "burst.restoreBonus",
     "score.timeBonus",
     "stars.threeShare",
@@ -378,6 +379,11 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds lost per wrong catch"
+    },
+    "burst.hintCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds lost when the player uses a hint"
     },
     "burst.restoreBonus": {
       "type": "number",

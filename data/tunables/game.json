@@ -58,6 +58,7 @@
   "autoplay.tapInterval": 0.45,
   "burst.seconds": 30,
   "burst.wrongCost": 1,
+  "burst.hintCost": 3,
   "burst.restoreBonus": 0,
   "score.timeBonus": 5,
   "stars.threeShare": 0.3333,

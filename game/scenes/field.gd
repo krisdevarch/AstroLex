@@ -12,29 +12,52 @@ const Starfield := preload("res://scenes/starfield.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
+const HudArt := preload("res://scenes/hud_art.gd")
 
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const DEFAULT_ACT := "act1_low_orbit"
 const LOW_TIME := 5.0
 const FLOAT_SEC := 0.9
-const PAUSE_SIZE := 100.0
+const AMBER := Color("F8BC04")
+const CREAM := Color("F1ECDC")
+const INK_DARK := Color("0d1030")
+const CYAN_EDGE := Color("5fe0f5")
+const CLOCK_TEXT := Color(1.0, 0.85, 0.78)
 const PERIWINKLE := Color(0.561, 0.612, 0.949)
 const RED := Color(1.0, 0.3, 0.3)
-# Pure layout and pacing constants (screen pixels at 1080 wide, seconds).
-const BOTTOM_PAD := 40.0
+# Pure layout and pacing constants (screen pixels at 1080 wide, seconds). Bottom items are offsets
+# up from the real bottom of the visible viewport, so taller phones just add field height.
 const END_DELAY := 1.0
 const TOAST_SEC := 1.1
-const LEVEL_TITLE_SEC := 2.0
 const TYPE_CPS := 38.0
 const TETHER_FADE := 0.12
 const PULSE_SEC := 0.45
-const ACTIVE_Y := 225.0
-const PREVIEW_Y := 328.0
-const ACTIVE_MAX := 118.0
-const PREVIEW_SIZE := 52.0
+const HINT_GLOW_SEC := 1.5
+const HINT_FLASH_SEC := 0.45
 const SIDE_PAD := 40.0
-const BAND_Y := 372.0
-const BAND_H := 120.0
+const EDGE := 50.0
+const CHIP_Y := 36.0
+const CHIP_H := 76.0
+const BAND_Y := 136.0
+const BAND_H := 110.0
+const FIELD_TOP := 280.0  # top of the play field (below Babel's band)
+const FIELD_BOTTOM_UP := 660.0  # bottom of the play field, above the portrait and the night panel
+const PANEL_TOP_UP := 520.0  # highest point of the night panel
+const TRAY_X := 760.0
+const TRAY_UP := 470.0
+const TRAY_W := 584.0
+const TRAY_H := 132.0
+const SLOT_ROW_W := 560.0
+const SLOT_MAX := 96.0
+const PREVIEW_UP := 565.0
+const PREVIEW_SIZE := 52.0
+const BTN_SIZE := 124.0
+const BTN_GAP := 16.0
+const BTN_UP := 150.0
+const PORTRAIT_X := 220.0
+const PORTRAIT_UP := 430.0
+const PORTRAIT_D := 356.0
+const COST_FLOAT_UP := 700.0
 # Babel's throw: look of a single flight (timing and origin are tunables under babel.*).
 const THROW_START_SCALE := 0.15
 const THROW_WOBBLE := 0.12
@@ -49,9 +72,18 @@ signal game_event(e: Dictionary)
 signal tap_missed(nearest_px: float)
 ## The pause button, Escape or Android back was pressed; the flow decides and calls set_paused.
 signal pause_requested
+## The settings button was pressed; the flow pauses and opens the settings screen.
+signal settings_requested
 
 ## Colour of the tether and the catch flash (the flow sets it per character).
 var tether_colour: Color = Color(0.55, 0.9, 1.0, 1.0)
+## The chosen Catcher (the flow sets them); an empty id shows no portrait (autoplay).
+var character_id: String = ""
+var character_name: String = ""
+## "Level n / N" within the act (the flow sets it); empty hides the chip.
+var level_counter: String = ""
+## Where the sound switch saves.
+var settings_path: String = AppSettings.PATH
 ## When non-empty, used instead of GameData.load_content().
 var content_override: Dictionary = {}
 var paused: bool = false
@@ -72,12 +104,13 @@ var _intro_order: Dictionary = {}  # tile_id -> launch index
 var _rift: Node2D
 
 var _level_title: String = ""
-var _level_t: float = 0.0
 var _level_label: Label
+var _counter_label: Label
 var _tun: Dictionary = {}
 var _content: Dictionary = {}
 var _scale: float = 1080.0
-var _off: Vector2 = Vector2.ZERO
+var _ft: float = FIELD_TOP  # screen y of the field top (field y = topMargin)
+var _field_x: float = 0.0  # screen x of the field left edge (the field is centred)
 var _time: float = 0.0
 var _ap_timer: float = 0.0
 var _views: Dictionary = {}  # tile_id -> TileView
@@ -95,6 +128,17 @@ var _floats: Array = []  # [Label, age] floating "-1 s" texts
 var _clock_label: Label
 var _time_bar: ProgressBar
 var _pause_button: Button
+var _pause_icon: Control
+var _hint_button: Button
+var _sound_button: Button
+var _sound_icon: Control
+var _settings_button: Button
+var _hint_flash_t: float = 0.0
+var _fill_coral: StyleBoxTexture
+var _fill_crimson: StyleBoxTexture
+var _portrait: Control
+var _fly_layer: CanvasLayer
+var _score_row: HBoxContainer
 var _low: bool = false
 var _active_key: String = ""
 var _preview_key: String = ""
@@ -138,14 +182,20 @@ func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = [])
 	_tun = GameData.load_tunables()
 	_content = content_override if not content_override.is_empty() else GameData.load_content()
 	game_round = RoundScript.create_level(_tun, _content, act, level, mods)
-	_level_title = "%s  %s" % [str(level.get("id", "")), str(level.get("title", ""))]
-	_level_t = LEVEL_TITLE_SEC
+	_level_title = "%s · %s" % [str(level.get("id", "")), str(level.get("title", ""))]
 	_start(int(level["seed"]))
 
 
 func _start(seed_value: int) -> void:
 	_scale = view_size.x
-	_off = Vector2(0.0, view_size.y - _n("field.height") * _scale - BOTTOM_PAD)
+	# One uniform scale for x and y: the field fits between Babel's band and the bottom HUD and is
+	# centred sideways (the backdrop still fills the screen). Layout maths assume at least 1600 high.
+	view_size.y = maxf(view_size.y, 1600.0)
+	var avail := view_size.y - FIELD_BOTTOM_UP - FIELD_TOP
+	var span := _n("field.height") - _n("field.topMargin")
+	_scale = minf(view_size.x, avail / span)
+	_field_x = (view_size.x - _scale) * 0.5
+	_ft = FIELD_TOP + (avail - span * _scale) * 0.5
 	_build_world()
 	_build_hud()
 	_apply_events()
@@ -157,7 +207,7 @@ func _start(seed_value: int) -> void:
 
 
 func to_screen(p: Vector2) -> Vector2:
-	return _off + p * _scale
+	return Vector2(_field_x + p.x * _scale, _ft + (p.y - _n("field.topMargin")) * _scale)
 
 
 func radius_px(t: Object) -> float:
@@ -219,8 +269,8 @@ func _notification(what: int) -> void:
 ## Freezes or resumes everything: rules, intro, effects; taps are ignored while paused.
 func set_paused(on: bool) -> void:
 	paused = on
-	if _pause_button != null:
-		_pause_button.text = "▶" if on else "II"
+	if _pause_icon != null:
+		_pause_icon.set("kind", "play" if on else "pause")
 
 
 func advance(delta: float) -> void:
@@ -425,7 +475,7 @@ func _build_world() -> void:
 	var rig: Node2D = LightRig.new()
 	rig.name = "LightRig"
 	_world.add_child(rig)
-	rig.configure(Vector2(view_size.x * 0.5, _off.y + _n("field.height") * _scale * 0.45), view_size.y * 1.1, _world.layer)
+	rig.configure(Vector2(view_size.x * 0.5, _ft + (_n("field.height") - _n("field.topMargin")) * _scale * 0.45), view_size.y * 1.1, _world.layer)
 	_tiles_root = Node2D.new()
 	_tiles_root.name = "Tiles"
 	_world.add_child(_tiles_root)
@@ -442,6 +492,10 @@ func _build_world() -> void:
 	_tether.end_cap_mode = Line2D.LINE_CAP_ROUND
 	_tether.visible = false
 	_fx_layer.add_child(_tether)
+	_fly_layer = CanvasLayer.new()  # above the HUD so a caught tile is seen flying into its slot
+	_fly_layer.name = "Fly"
+	_fly_layer.layer = 11
+	add_child(_fly_layer)
 	var launcher := Launcher.new()
 	launcher.name = "Launcher"
 	launcher.position = to_screen(game_round.origin())
@@ -493,7 +547,7 @@ func _tick_views(delta: float) -> void:
 		var lab: Label = _floats[i][0]
 		var k: float = float(_floats[i][1]) / FLOAT_SEC
 		lab.modulate.a = clampf(1.0 - k, 0.0, 1.0)
-		lab.position.y = _clock_label.position.y + 40.0 + (0.0 if settings.reduced_motion else 60.0 * k)
+		lab.position.y = view_size.y - COST_FLOAT_UP + (0.0 if settings.reduced_motion else 60.0 * k)
 		if k >= 1.0:
 			lab.queue_free()
 			_floats.remove_at(i)
@@ -587,6 +641,10 @@ func _apply_events() -> void:
 				_show_toast(msg, Color(1.0, 0.5, 0.45))
 			"escape":
 				_show_toast("It drifted off", Ui.DIM)
+			"hint":
+				var hv: TileViewScript = _views.get(int(e["tile_id"]))
+				if hv != null and hv.anim == "":
+					hv.glow(HINT_GLOW_SEC)
 			"time_cost":
 				_float_cost(float(e["amount"]))
 			"thief_grab":
@@ -619,6 +677,8 @@ func _on_catch(e: Dictionary) -> void:
 	var slot := int(e["slot"])
 	var key := Vector2i(_view_word + (1 if where == "preview" else 0), slot)
 	_pending[key] = true
+	if v != null:
+		v.clear_glow()
 	_fly_keys[id] = key
 	if v == null:
 		_unpend_for(id)
@@ -626,6 +686,8 @@ func _on_catch(e: Dictionary) -> void:
 	var row_n := _active_n if where == "active" else _preview_n
 	var target := _slot_center(where, slot, row_n)
 	var slot_px := _slot_size(where, row_n)
+	if _fly_layer != null and v.get_parent() != _fly_layer:
+		v.reparent(_fly_layer, false)
 	v.fly_to(target, slot_px, _n("fx.flyToSlotSec"))
 	_burst(target, tether_colour.lightened(0.3))
 
@@ -633,7 +695,7 @@ func _on_catch(e: Dictionary) -> void:
 func _float_cost(amount: float) -> void:
 	var lab := Ui.label("−%s s" % (str(int(amount)) if is_equal_approx(amount, round(amount)) else "%.1f" % amount), 48, RED)
 	lab.name = "CostFloat"
-	lab.position = Vector2(view_size.x * 0.5 + 100.0, _clock_label.position.y + 40.0)
+	lab.position = Vector2(view_size.x * 0.5 + 100.0, view_size.y - COST_FLOAT_UP)
 	lab.size = Vector2(240, 60)
 	_hud.add_child(lab)
 	_floats.append([lab, 0.0])
@@ -668,95 +730,256 @@ func _show_toast(text: String, color: Color) -> void:
 
 # --- HUD -------------------------------------------------------------------------------
 
+## Screen y of the highest point of the night panel; no catchable tile is drawn below it.
+func panel_top() -> float:
+	return view_size.y - PANEL_TOP_UP
+
+
 func _slot_size(where: String, n: int) -> float:
 	if where == "preview":
-		return PREVIEW_SIZE
+		return minf(PREVIEW_SIZE, (SLOT_ROW_W - 8.0 * float(maxi(n - 1, 0))) / float(maxi(n, 1)))
 	var gap := 12.0
-	return minf(ACTIVE_MAX, (view_size.x - 2.0 * SIDE_PAD - gap * float(maxi(n - 1, 0))) / float(maxi(n, 1)))
+	return minf(SLOT_MAX, (SLOT_ROW_W - gap * float(maxi(n - 1, 0))) / float(maxi(n, 1)))
 
 
 func _slot_center(where: String, idx: int, n: int) -> Vector2:
 	var size := _slot_size(where, n)
 	var gap := 12.0 if where == "active" else 8.0
 	var total := size * n + gap * (n - 1)
-	var x := (view_size.x - total) * 0.5 + size * 0.5 + float(idx) * (size + gap)
-	return Vector2(x, ACTIVE_Y if where == "active" else PREVIEW_Y)
+	var x := TRAY_X - total * 0.5 + size * 0.5 + float(idx) * (size + gap)
+	return Vector2(x, view_size.y - (TRAY_UP if where == "active" else PREVIEW_UP))
+
+
+func _ignore(c: Control) -> Control:
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return c
+
+
+## A rounded chip with one label inside; returns the panel (the label is its child `label_name`).
+func _chip(panel_name: String, label_name: String, text: String) -> Panel:
+	var p := Panel.new()
+	p.name = panel_name
+	p.add_theme_stylebox_override("panel", Ui.box(Color(0.03, 0.05, 0.16, 0.82), int(CHIP_H * 0.5), Color(1, 1, 1, 0.2), 2))
+	var l := Ui.label(text, 32, Color(0.93, 0.95, 1.0))
+	l.name = label_name
+	l.add_theme_constant_override("outline_size", 0)
+	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	p.add_child(l)
+	p.size = Vector2(ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 32).x + 60.0, CHIP_H)
+	_ignore(p)
+	_ignore(l)
+	return p
+
+
+func _icon_button(node_name: String, kind: String, x: float, border: Color, icon_colour: Color, bg: Color) -> Button:
+	var b := Button.new()
+	b.name = node_name
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_stylebox_override("normal", Ui.box(bg, 30, border, 3))
+	b.add_theme_stylebox_override("hover", Ui.box(bg.lightened(0.08), 30, border, 3))
+	b.add_theme_stylebox_override("pressed", Ui.box(bg.lightened(0.2), 30, border, 3))
+	b.position = Vector2(x, view_size.y - BTN_UP - BTN_SIZE * 0.5)
+	b.size = Vector2(BTN_SIZE, BTN_SIZE)
+	var ic: Control = HudArt.Icon.new()
+	ic.name = "Icon"
+	ic.set("kind", kind)
+	ic.set("colour", icon_colour)
+	ic.size = b.size
+	_ignore(ic)
+	b.add_child(ic)
+	_hud.add_child(b)
+	return b
+
+
+func _build_portrait() -> void:
+	var centre := Vector2(PORTRAIT_X, view_size.y - PORTRAIT_UP)
+	var holder := Control.new()
+	holder.name = "Portrait"
+	holder.size = Vector2(PORTRAIT_D, PORTRAIT_D)
+	holder.position = centre - holder.size * 0.5
+	_ignore(holder)
+	var art: Control = HudArt.PortraitArt.new()
+	art.name = "PortraitArt"
+	art.set("colour", tether_colour)
+	art.size = holder.size
+	_ignore(art)
+	holder.add_child(art)
+	var path := "res://brand/characters/%s.png" % character_id
+	if ResourceLoader.exists(path):
+		var bust := TextureRect.new()
+		bust.name = "PortraitBust"
+		bust.texture = load(path)
+		bust.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bust.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bust.size = Vector2(HudArt.DISC_R * 2.0, HudArt.DISC_R * 2.0)
+		bust.position = (holder.size - bust.size) * 0.5
+		bust.material = HudArt.clip_material()
+		_ignore(bust)
+		holder.add_child(bust)
+	_hud.add_child(holder)
+	_portrait = holder
+	var nm := (character_name if character_name != "" else character_id).to_upper()
+	var pill := Panel.new()
+	pill.name = "PortraitName"
+	pill.add_theme_stylebox_override("panel", Ui.box(tether_colour, 23))
+	pill.size = Vector2(maxf(150.0, ThemeDB.fallback_font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x + 64.0), 46.0)
+	pill.position = Vector2(centre.x - pill.size.x * 0.5, centre.y + PORTRAIT_D * 0.5 - 30.0)
+	var pl := Ui.label(nm, 28, Color(0.04, 0.06, 0.16))
+	pl.name = "PortraitNameLabel"
+	pl.add_theme_constant_override("outline_size", 0)
+	pl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pill.add_child(_ignore(pl))
+	_hud.add_child(_ignore(pill))
 
 
 func _build_hud() -> void:
+	var w := view_size.x
+	var h := view_size.y
 	_hud = CanvasLayer.new()
 	_hud.name = "Hud"
 	_hud.layer = 10
 	add_child(_hud)
-	_score_label = Ui.label("0", 62, Ui.INK, HORIZONTAL_ALIGNMENT_LEFT)
-	_score_label.name = "ScoreLabel"
-	_score_label.position = Vector2(SIDE_PAD, 24)
-	_score_label.size = Vector2(300, 80)
-	_hud.add_child(_score_label)
-	_combo_label = Ui.label("×1.0", 52, Ui.ACCENT, HORIZONTAL_ALIGNMENT_RIGHT)
-	_combo_label.name = "ComboLabel"
-	_combo_label.position = Vector2(view_size.x - SIDE_PAD - PAUSE_SIZE - 20.0 - 260.0, 28)
-	_combo_label.size = Vector2(260, 80)
-	_hud.add_child(_combo_label)
-	_clock_label = Ui.label("", 96, Ui.INK)
-	_clock_label.name = "ClockLabel"
-	_clock_label.position = Vector2((view_size.x - 240.0) * 0.5, 0)
-	_clock_label.size = Vector2(240, 112)
-	_clock_label.pivot_offset = _clock_label.size * 0.5
-	_hud.add_child(_clock_label)
-	_time_bar = ProgressBar.new()
-	_time_bar.name = "TimeBar"
-	_time_bar.position = Vector2(SIDE_PAD, 118)
-	_time_bar.size = Vector2(view_size.x - 2.0 * SIDE_PAD, 22)
-	_time_bar.show_percentage = false
-	_time_bar.min_value = 0.0
-	_time_bar.max_value = _n("burst.seconds")
-	_time_bar.add_theme_stylebox_override("background", Ui.box(Color(0.1, 0.13, 0.25), 11))
-	_time_bar.add_theme_stylebox_override("fill", Ui.box(Color(0.35, 0.85, 0.95), 11))
-	_hud.add_child(_time_bar)
-	_pause_button = Button.new()
-	_pause_button.name = "PauseButton"
-	_pause_button.text = "II"
-	_pause_button.focus_mode = Control.FOCUS_NONE
-	_pause_button.add_theme_font_size_override("font_size", 44)
-	_pause_button.add_theme_color_override("font_color", Ui.INK)
-	for sb in ["normal", "hover", "pressed"]:
-		_pause_button.add_theme_stylebox_override(sb, Ui.box(Color(0.1, 0.13, 0.25, 0.85), 24, Color(0.5, 0.9, 1.0), 2))
-	_pause_button.position = Vector2(view_size.x - SIDE_PAD - PAUSE_SIZE, 8)
-	_pause_button.size = Vector2(PAUSE_SIZE, PAUSE_SIZE)
-	_pause_button.pressed.connect(func() -> void: pause_requested.emit())
-	_hud.add_child(_pause_button)
-	_active_row = Control.new()
-	_active_row.name = "ActiveSlots"
-	_hud.add_child(_active_row)
-	_preview_row = Control.new()
-	_preview_row.name = "PreviewSlots"
-	_hud.add_child(_preview_row)
+	var night: Control = HudArt.NightPanel.new()
+	night.name = "NightPanel"
+	night.size = Vector2(w, HudArt.PANEL_H)
+	night.position = Vector2(0.0, h - HudArt.PANEL_H)
+	_hud.add_child(_ignore(night))
+	if character_id != "":
+		_build_portrait()
+	# Top: level chip, Level n / N chip, Babel's band.
+	var lc := _chip("LevelChip", "LevelLabel", _level_title)
+	lc.position = Vector2(SIDE_PAD, CHIP_Y)
+	lc.visible = _level_title != ""
+	_hud.add_child(lc)
+	_level_label = lc.get_node("LevelLabel")
+	var cc := _chip("LevelCounterChip", "LevelCounter", level_counter)
+	cc.position = Vector2(w - SIDE_PAD - cc.size.x, CHIP_Y)
+	cc.visible = level_counter != ""
+	_hud.add_child(cc)
+	_counter_label = cc.get_node("LevelCounter")
 	_band = Panel.new()
 	_band.name = "BabelBand"
 	_band.position = Vector2(SIDE_PAD, BAND_Y)
-	_band.size = Vector2(view_size.x - 2.0 * SIDE_PAD, BAND_H)
-	_band.add_theme_stylebox_override("panel", Ui.box(Color(0.12, 0.05, 0.16, 0.85), 16, Color(0.75, 0.35, 0.85), 2))
+	_band.size = Vector2(w - 2.0 * SIDE_PAD, BAND_H)
+	_band.add_theme_stylebox_override("panel", Ui.box(Color(0.07, 0.06, 0.24, 0.88), 34, PERIWINKLE, 3))
 	_band.visible = false
-	_hud.add_child(_band)
-	_band_label = Ui.label("", 36, Color(0.95, 0.8, 1.0))
+	_hud.add_child(_ignore(_band))
+	var tag := Panel.new()
+	tag.name = "BabelTag"
+	tag.add_theme_stylebox_override("panel", Ui.box(Color(0, 0, 0, 0), 27, PERIWINKLE, 2))
+	tag.position = Vector2(26, (BAND_H - 54.0) * 0.5)
+	tag.size = Vector2(136, 54)
+	var tl := Ui.label("BABEL", 24, PERIWINKLE)
+	tl.add_theme_constant_override("outline_size", 0)
+	tl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tag.add_child(_ignore(tl))
+	_band.add_child(_ignore(tag))
+	_band_label = Ui.label("", 40, Color(0.9, 0.92, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
 	_band_label.name = "BabelText"
-	_band_label.position = Vector2(20, 6)
-	_band_label.size = _band.size - Vector2(40, 12)
+	_band_label.position = Vector2(184, 6)
+	_band_label.size = _band.size - Vector2(184 + 26, 12)
 	_band_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_band.add_child(_band_label)
 	_toast = Ui.label("", 44, Ui.INK)
 	_toast.name = "Toast"
-	_toast.position = Vector2(0, _off.y + _n("field.topMargin") * _scale + 24.0)
-	_toast.size = Vector2(view_size.x, 70)
+	_toast.position = Vector2(0, _ft + 24.0)
+	_toast.size = Vector2(w, 70)
 	_toast.modulate.a = 0.0
 	_hud.add_child(_toast)
-	_level_label = Ui.label(_level_title, 36, Ui.DIM)
-	_level_label.name = "LevelLabel"
-	_level_label.position = Vector2(0, BAND_Y)  # under the slot rows; Babel's band is empty at round start
-	_level_label.size = Vector2(view_size.x, 50)
-	_level_label.visible = _level_title != ""
-	_hud.add_child(_level_label)
+	# Slots: a dark tray right of the portrait, the next word's small boxes above it.
+	var tray := Panel.new()
+	tray.name = "SlotTray"
+	tray.size = Vector2(TRAY_W, TRAY_H)
+	tray.position = Vector2(TRAY_X, h - TRAY_UP) - tray.size * 0.5
+	tray.add_theme_stylebox_override("panel", Ui.box(Color(6.0 / 255.0, 10.0 / 255.0, 36.0 / 255.0, 0.72), 30, Color(1, 1, 1, 0.22), 1))
+	_hud.add_child(_ignore(tray))
+	_active_row = Control.new()
+	_active_row.name = "ActiveSlots"
+	_hud.add_child(_ignore(_active_row))
+	_preview_row = Control.new()
+	_preview_row.name = "PreviewSlots"
+	_hud.add_child(_ignore(_preview_row))
+	# Bottom row: points and combo at left, four icon buttons at right.
+	_score_row = HBoxContainer.new()
+	_score_row.name = "ScoreRow"
+	_score_row.position = Vector2(EDGE, h - 222.0)
+	_score_row.size = Vector2(420, 84)
+	_score_row.add_theme_constant_override("separation", 14)
+	_hud.add_child(_ignore(_score_row))
+	_score_label = Ui.label("0", 76, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT)
+	_score_label.name = "ScoreLabel"
+	_score_row.add_child(_ignore(_score_label))
+	_combo_label = Ui.label("×1.0", 42, Ui.ACCENT, HORIZONTAL_ALIGNMENT_LEFT)
+	_combo_label.name = "ComboLabel"
+	_combo_label.size_flags_vertical = Control.SIZE_SHRINK_END
+	_score_row.add_child(_ignore(_combo_label))
+	var cap := Ui.label("POINTS", 24, Ui.DIM, HORIZONTAL_ALIGNMENT_LEFT)
+	cap.name = "PointsCaption"
+	cap.add_theme_constant_override("outline_size", 0)
+	cap.position = Vector2(EDGE + 4.0, h - 136.0)
+	cap.size = Vector2(200, 30)
+	_hud.add_child(_ignore(cap))
+	var x0 := w - EDGE - (4.0 * BTN_SIZE + 3.0 * BTN_GAP)
+	var plain := Color(0.04, 0.06, 0.2, 0.92)
+	var edge := Color(0.55, 0.62, 0.85, 0.55)
+	_hint_button = _icon_button("HintButton", "hint", x0, AMBER, AMBER, Color(0.2, 0.15, 0.03, 0.92))
+	_pause_button = _icon_button("PauseButton", "pause", x0 + (BTN_SIZE + BTN_GAP), edge, Ui.INK, plain)
+	_sound_button = _icon_button("SoundButton", "sound", x0 + 2.0 * (BTN_SIZE + BTN_GAP), edge, Ui.INK, plain)
+	_settings_button = _icon_button("SettingsButton", "settings", x0 + 3.0 * (BTN_SIZE + BTN_GAP), edge, Ui.INK, plain)
+	_pause_icon = _pause_button.get_node("Icon")
+	_sound_icon = _sound_button.get_node("Icon")
+	_hint_button.pressed.connect(request_hint)
+	_pause_button.pressed.connect(func() -> void: pause_requested.emit())
+	_sound_button.pressed.connect(toggle_sound)
+	_settings_button.pressed.connect(func() -> void: settings_requested.emit())
+	_sync_sound_icon()
+	# Clock: a coral bar across the bottom with the seconds at its right.
+	_fill_coral = HudArt.bar_fill_box(HudArt.CORAL, HudArt.CORAL_LIGHT)
+	_fill_crimson = HudArt.bar_fill_box(HudArt.CRIMSON, HudArt.CRIMSON_LIGHT)
+	_time_bar = ProgressBar.new()
+	_time_bar.name = "TimeBar"
+	_time_bar.position = Vector2(EDGE, h - 74.0)
+	_time_bar.custom_minimum_size = Vector2(0, 28)
+	_time_bar.size = Vector2(w - 2.0 * EDGE - 130.0, 28)
+	_time_bar.show_percentage = false
+	_time_bar.min_value = 0.0
+	_time_bar.max_value = _n("burst.seconds")
+	_time_bar.add_theme_stylebox_override("background", Ui.box(Color(1, 1, 1, 0.1), 14))
+	_time_bar.add_theme_stylebox_override("fill", _fill_coral)
+	_hud.add_child(_ignore(_time_bar))
+	_clock_label = Ui.label("", 40, CLOCK_TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
+	_clock_label.name = "ClockLabel"
+	_clock_label.add_theme_constant_override("outline_size", 0)
+	_clock_label.position = Vector2(w - EDGE - 120.0, h - 84.0)
+	_clock_label.size = Vector2(120, 48)
+	_clock_label.pivot_offset = Vector2(120, 24)
+	_hud.add_child(_ignore(_clock_label))
+
+
+## Hint button: asks the rules for a hint. Returns the tile id, or -1 (the button flashes).
+func request_hint() -> int:
+	if paused or _intro_on or game_round == null or game_round.state != "play":
+		return -1
+	var id: int = game_round.use_hint()
+	if id < 0:
+		_hint_flash_t = HINT_FLASH_SEC
+		_hint_button.modulate = Color(1.0, 0.35, 0.35)
+	_apply_events()
+	_update_hud()
+	return id
+
+
+## Sound button: flips the mute switch, applies it to the master bus and saves it.
+func toggle_sound() -> void:
+	settings.sound_on = not settings.sound_on
+	settings.apply_audio()
+	settings.save_to(settings_path)
+	_sync_sound_icon()
+
+
+func _sync_sound_icon() -> void:
+	if _sound_icon != null:
+		_sound_icon.set("kind", "sound" if settings.sound_on else "muted")
 
 
 func _slot_text_filled(where: String, idx: int, filled: bool) -> bool:
@@ -772,11 +995,12 @@ func _rebuild_row(row: Control, where: String, slots: Array[Dictionary]) -> void
 	var size := _slot_size(where, n)
 	for i in n:
 		var p := Panel.new()
+		p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		p.name = "Slot_%d" % i
 		p.size = Vector2(size, size)
 		p.pivot_offset = p.size * 0.5
 		p.position = _slot_center(where, i, n) - p.size * 0.5
-		var l := Ui.label("", int(size * 0.64), Color(0.05, 0.07, 0.16))
+		var l := Ui.label("", int(size * 0.64), INK_DARK)
 		l.name = "Glyph"
 		l.size = p.size
 		l.add_theme_constant_override("outline_size", 0)
@@ -785,9 +1009,12 @@ func _rebuild_row(row: Control, where: String, slots: Array[Dictionary]) -> void
 
 
 func _style_slot(p: Panel, filled: bool, where: String) -> void:
-	var bg := Color(0.94, 0.92, 0.84) if filled else Color(0.08, 0.1, 0.2, 0.8)
-	var border := Color(0.5, 0.9, 1.0) if where == "active" else Color(0.35, 0.42, 0.65)
-	p.add_theme_stylebox_override("panel", Ui.box(bg, int(p.size.x * 0.18), border, 3 if not filled else 0))
+	var r := int(p.size.x * 0.2)
+	var active := where == "active"
+	if filled:
+		p.add_theme_stylebox_override("panel", Ui.box(CREAM, r, Color.WHITE, 3 if active else 2))
+	else:
+		p.add_theme_stylebox_override("panel", Ui.box(Color("0c1030"), r, CYAN_EDGE if active else Color(0.45, 0.5, 0.72), 5 if active else 2))
 
 
 func _update_hud() -> void:
@@ -795,13 +1022,12 @@ func _update_hud() -> void:
 	_combo_label.text = "×%.1f" % game_round.combo
 	_time_bar.max_value = game_round.burst_seconds
 	_time_bar.value = game_round.time_left
-	_clock_label.text = "%d" % int(ceil(game_round.time_left))
+	_clock_label.text = "%ds" % int(ceil(game_round.time_left))
 	var low: bool = game_round.time_left < LOW_TIME
 	if low != _low:
 		_low = low
-		var col: Color = RED if low else Color(0.35, 0.85, 0.95)
-		_time_bar.add_theme_stylebox_override("fill", Ui.box(col, 11))
-		_clock_label.add_theme_color_override("font_color", RED if low else Ui.INK)
+		_time_bar.add_theme_stylebox_override("fill", _fill_crimson if low else _fill_coral)
+		_clock_label.add_theme_color_override("font_color", HudArt.CRIMSON if low else CLOCK_TEXT)
 		if not low:
 			_clock_label.scale = Vector2.ONE
 	var akey := "%d:%s" % [game_round.word_index, "".join(game_round.active.map(func(s: Dictionary) -> String: return s["ch"]))]
@@ -838,16 +1064,14 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 		var ch := str(slots[i]["ch"]).to_upper()
 		g.text = ch if filled or hint_shown(i, slots.size()) else ""
 		g.modulate.a = 1.0 if filled else _n("hud.hintAlpha")
-		g.add_theme_color_override("font_color", Color(0.05, 0.07, 0.16) if filled else Color(0.8, 0.92, 1.0))
+		g.add_theme_color_override("font_color", INK_DARK if filled else Color.WHITE)
 		_style_slot(p, filled, where)
 
 
 func _tick_hud(delta: float) -> void:
-	if _level_t > 0.0 and _level_label != null:
-		_level_t -= delta
-		_level_label.modulate.a = clampf(_level_t / 0.5, 0.0, 1.0)
-		if _level_t <= 0.0:
-			_level_label.visible = false
+	if _hint_flash_t > 0.0:
+		_hint_flash_t = maxf(0.0, _hint_flash_t - delta)
+		_hint_button.modulate = Color.WHITE.lerp(Color(1.0, 0.35, 0.35), _hint_flash_t / HINT_FLASH_SEC)
 	if _toast_t > 0.0:
 		_toast_t -= delta
 		_toast.modulate.a = clampf(_toast_t / 0.35, 0.0, 1.0)
