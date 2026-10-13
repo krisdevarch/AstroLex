@@ -139,3 +139,24 @@ func test_the_card_takes_only_the_first_choice() -> void:
 	card.choose("next")
 	assert_eq(main.level_index, 1, "Next pressed twice moves on one level")
 	main.free()
+
+
+func test_restart_during_the_chatter_drops_it_and_its_follow_up() -> void:
+	var main: Node = Flow.returning(tree)
+	var f := Flow.to_field(main)
+	_win(f)
+	f.autoplay = false
+	Flow.press(main, "NextButton")
+	assert_true(f.story_active(), "chatter playing")
+	main._show_pause(f)
+	Flow.press(main, "RestartButton")
+	assert_false(f.story_active(), "restart drops the chatter")
+	assert_true(f.intro_active(), "and throws the letters")
+	assert_eq(f.last_babel, "", "Babel's line from the last level is gone")
+	f.skip_intro()
+	for _i in 600:
+		f.advance(1.0 / 30.0)
+		if f.intro_active():
+			break
+	assert_false(f.intro_active(), "the old chatter never re-runs the throw")
+	main.free()

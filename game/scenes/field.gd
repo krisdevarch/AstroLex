@@ -285,6 +285,9 @@ func _build_once() -> void:
 ## The next level (or a retry) on the same screen: what the last level left behind goes, the chips
 ## cross-fade to the new name and number, the slots pop in empty and the clock bar refills.
 func _reset_for_level() -> void:
+	_drop_story()  # a Restart from the pause menu during the chatter
+	last_babel = ""  # a new level: Babel has not spoken yet
+	_babel_t = 99.0
 	_cleared = false
 	_intro_on = false
 	if _rift != null:
@@ -340,6 +343,7 @@ func _reset_for_level() -> void:
 
 ## The crew's chatter on this screen; the letters wait until it ends (or is skipped), then `then`.
 func play_story(messages: Array, then: Callable) -> void:
+	_drop_story()
 	_story_on = true
 	_tiles_root.visible = false
 	var s: Control = StoryStrip.new()
@@ -357,10 +361,20 @@ func play_story(messages: Array, then: Callable) -> void:
 	s.finished.connect(func() -> void:
 		_story_on = false
 		_story = null
-		_tiles_root.visible = true
+		_tiles_root.visible = not _cleared  # the act's closing chatter: the old letters stay gone
 		then.call())
 	_story = s
 	_hud.add_child(s)
+
+
+## Ends a strip that is still playing without running what was to follow it.
+func _drop_story() -> void:
+	if _story != null and is_instance_valid(_story):
+		for c in _story.finished.get_connections():
+			_story.finished.disconnect(c["callable"])
+		_story.queue_free()
+	_story = null
+	_story_on = false
 
 
 ## True while the crew are talking between levels; the rules do not step meanwhile.
