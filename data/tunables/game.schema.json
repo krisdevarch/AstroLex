@@ -60,7 +60,9 @@
     "glass.grain",
     "glass.milk",
     "glass.bubbleScale",
-    "glass.bubbleTint",
+    "glass.live",
+    "glass.magnify",
+    "glass.rimBend",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -364,11 +366,22 @@
       "maximum": 1,
       "description": "glass tile: faint milky lift of the clear glass"
     },
-    "glass.bubbleTint": {
+    "glass.live": {
+      "type": "number",
+      "enum": [0, 1],
+      "description": "bubble look: 1 refracts the live screen (planets show magnified through the glass), 0 falls back to the baked sky"
+    },
+    "glass.magnify": {
       "type": "number",
       "minimum": 0,
       "maximum": 1,
-      "description": "bubble look: how strongly each bubble is tinted in its colour (0 = clear glass)"
+      "description": "bubble look: lens magnification at the centre of the bubble (0.12 = 12 % bigger)"
+    },
+    "glass.rimBend": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "bubble look: extra magnification toward the rim, where the glass bends most"
     },
     "glass.grain": {
       "type": "number",

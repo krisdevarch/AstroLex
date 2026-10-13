@@ -158,24 +158,12 @@ func test_settings_screen_has_two_glass_looks_fps_and_bench() -> void:
 	s.free()
 
 
-func test_bubbles_are_softly_coloured_and_letters_stay_white() -> void:
+
+func test_bubble_glass_magnifies_the_live_screen() -> void:
 	var tun := GameData.load_tunables()
-	assert_true(float(tun["glass.bubbleTint"]) > 0.0 and float(tun["glass.bubbleTint"]) <= 0.5, "a soft tint, not paint")
-	var seen := {}
-	for i in 12:
-		var v: Node2D = TileViewScene.instantiate()
-		tree.root.add_child(v)
-		v.setup("h", 130.0, 1.0, 0, "bubble", false, tun, float(i) * 1.7)
-		var mat := v.body.material as ShaderMaterial
-		assert_eq(float(mat.get_shader_parameter("tint")), float(tun["glass.bubbleTint"]), "tint reaches the shader")
-		var c: Color = mat.get_shader_parameter("accent")
-		assert_true(v.BUBBLE_TINTS.has(c), "accent is a bubble colour")
-		assert_eq(v.glyph.get_theme_color("font_color"), Color.WHITE, "letter stays white")
-		seen[c.to_html()] = true
-		v.free()
-	assert_true(seen.size() >= 4, "the same letter comes in several colours, so colour is no clue")
-	var g: Node2D = TileViewScene.instantiate()
-	tree.root.add_child(g)
-	g.setup("h", 130.0, 1.0, 0, "glass", false, tun, 0.3)
-	assert_eq(float((g.body.material as ShaderMaterial).get_shader_parameter("tint")), 0.0, "the glass look stays clear")
-	g.free()
+	var v := _glass_view(false, "bubble")
+	var mat := v.body.material as ShaderMaterial
+	assert_true(bool(mat.get_shader_parameter("live")), "the bubble reads the live screen")
+	assert_true(float(mat.get_shader_parameter("magnify")) > 0.0, "and magnifies it")
+	assert_eq(float(mat.get_shader_parameter("rim_bend")), float(tun["glass.rimBend"]), "rim bend is the tunable")
+	v.free()

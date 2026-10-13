@@ -3,9 +3,11 @@ shader_type canvas_item;
 // 1 refraction (blurred, brightened sky read from the screen texture, warped by the bevel normal),
 // 2 frost core behind the glyph, 3 (the glyph is a Label drawn on top), 4 specular that slides
 // with tilt_deg, 5 rim/bottom edge tint in an accent colour. Tilt vertex code is the same as tile.gdshader.
-// The glass does NOT read the live screen: a screen-texture copy plus mipmaps every frame came out
-// black and slow on iPhone Safari. It samples the baked sky texture (the same one the backdrop draws,
-// full screen) at the pixel's SCREEN_UV, so it costs two plain texture fetches and works everywhere.
+// The square glass samples the baked sky texture (the same one the backdrop draws, full screen) at the
+// pixel's SCREEN_UV: a screen-texture copy plus mipmaps every frame came out black and slow on iPhone
+// Safari. The bubble look (13 Oct 2026, owner: "the glass does not magnify the object behind") reads
+// the live screen with no mipmaps, one copy per frame, so the planets show magnified through it;
+// `live` off falls back to the baked sky.
 // Chromatic edge fringe and fine grain follow the CC0 "Fluid Glass UI" shader by Binbun.
 
 uniform sampler2D sky_tex : filter_linear_mipmap, repeat_disable;
@@ -33,7 +35,10 @@ uniform bool shard = false;               // back plane: small frosted shard, no
 const float HALF = 61.0;
 uniform float corner = 38.0;      // rounded square; corner = HALF (61) makes a circle (bubble)
 uniform float lens_width = 26.0;  // width of the lens zone at the rim, in texture px
-uniform float tint : hint_range(0.0, 1.0) = 0.0;  // bubble look: wash of the accent colour over the ball
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear, repeat_disable;  // live: what is drawn behind
+uniform bool live = true;          // bubble look: refract the live screen (planets too), else the baked sky
+uniform float magnify = 0.12;      // bubble look: lens magnification at the centre (0.12 = 12 % bigger)
+uniform float rim_bend = 0.9;      // bubble look: extra magnification toward the rim, where the glass bends most
 uniform bool bubble = false;      // soap bubble: whole-ball lens, thin-film rainbow rim, highlight spot
 uniform float bubble_time = 0.0;
 
@@ -82,10 +87,28 @@ void fragment() {
 	vec2 uv = SCREEN_UV + shift;
 	float lod = blur * max_lod + (shard ? 1.0 : 0.0);
 	vec2 fringe = shift * chroma;
-	vec3 col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv, lod).g, textureLod(sky_tex, uv - fringe, lod).b);
-	vec4 st = textureLod(stars_tex, uv, lod * 0.5);
-	col += st.rgb * st.a;
-	col = mix(col, vec3(0.86, 0.9, 0.98), milk + 0.12 * lens);
+	vec3 col;
+	if (bubble && !shard && live) {
+		// Liquid glass (owner reference, 13 Oct 2026: the clear "+" disc): a convex lens over the live
+		// screen. Each pixel samples a point nearer the centre, so what is behind (planets, stars)
+		// shows magnified, most strongly in the rim band, with a slight colour split at the edge.
+		// The pixel's offset from the centre in screen UV comes from the texture-to-screen
+		// derivatives, so it holds at any size, scale or y direction.
+		vec2 per_px = vec2(dFdx(UV.x), dFdy(UV.y)) * 128.0;  // texture px per screen px (signed)
+		vec2 off = p / per_px * SCREEN_PIXEL_SIZE;            // this pixel's offset from the centre
+		float rr = clamp(length(p) / HALF, 0.0, 1.0);
+		float m = 1.0 + magnify + rim_bend * pow(rr, 5.0);
+		float k = 1.0 - 1.0 / m;
+		float split = chroma * 0.08 * rr * rr;
+		col = vec3(texture(screen_tex, SCREEN_UV - off * (k + split)).r, texture(screen_tex, SCREEN_UV - off * k).g, texture(screen_tex, SCREEN_UV - off * (k - split)).b);
+		col /= max(unlit_gain, vec3(0.01));  // the screen is already lit; undo the gain applied at the end
+		col = mix(col, vec3(0.9, 0.94, 1.0), milk * 0.5 + 0.1 * pow(rr, 6.0));
+	} else {
+		col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv, lod).g, textureLod(sky_tex, uv - fringe, lod).b);
+		vec4 st = textureLod(stars_tex, uv, lod * 0.5);
+		col += st.rgb * st.a;
+		col = mix(col, vec3(0.86, 0.9, 0.98), milk + 0.12 * lens);
+	}
 	float n = fract(sin(dot(floor(FRAGCOORD.xy), vec2(9.82131, 58.234))) * 45312.1324);
 	col *= 1.0 + (n * 2.0 - 1.0) * grain;
 	// 2 frost core (0 by default: the glass is clear).
@@ -105,17 +128,14 @@ void fragment() {
 	col += rim_col * (ring * (0.35 + 0.55 * diag) + ring_soft * 0.12) * (0.5 + specular * 0.7);
 	col += accent * edge_tint * lens * 0.5;
 	if (bubble && !shard) {
-		col = mix(col, accent * 0.85, tint);
-	}
-	if (bubble && !shard) {
-		// Thin-film rainbow on the rim that drifts slowly, and a bright window highlight up-left.
-		float ang = atan(g.y, g.x) + bubble_time * 0.6;
-		vec3 film = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0 + length(p) * 0.05);
-		col += film * smoothstep(12.0, 0.0, -d) * 0.22;
-		vec2 hp = p - vec2(-HALF * 0.38, -HALF * 0.42);
-		float spot = exp(-dot(hp, hp) / (HALF * HALF * 0.018));
-		float arc = smoothstep(6.0, 2.0, abs(-d - 9.0)) * clamp(dot(g, normalize(vec2(1.0, 1.0))), 0.0, 1.0);
-		col += vec3(1.0) * (spot * 0.75 + arc * 0.25) * specular;
+		// A thin bright rim, brightest top-left and bottom-right, with a faint iridescent tint that
+		// drifts slowly, as on the owner's "+" disc. No highlight spot: the middle stays clear.
+		float ang = atan(g.y, g.x) + bubble_time * 0.4;
+		vec3 film = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0);
+		float edge = smoothstep(5.0, 0.0, -d);
+		col += film * edge * 0.08;
+		float arc = smoothstep(3.0, 0.5, abs(-d - 2.0)) * pow(abs(dot(g, normalize(vec2(-1.0, -1.0)))), 2.0);
+		col += vec3(1.0) * arc * 0.55 * specular;
 	}
 	col = mix(col, flash_color, flash * 0.75);
 	COLOR = vec4(col * unlit_gain, body.a);
