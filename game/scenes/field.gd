@@ -786,7 +786,7 @@ func _combo_pop(at: Vector2, combo: float) -> void:
 	lab.size = Vector2(320, 80)
 	lab.pivot_offset = lab.size * 0.5
 	lab.position = at - lab.size * 0.5
-	_hud.add_child(_ignore(lab))
+	_fly_layer.add_child(_ignore(lab))  # above the letters and the HUD
 	_pops.append([lab, 0.0, lab.position])
 
 
@@ -1110,7 +1110,7 @@ func _build_hud() -> void:
 	_banner.position = Vector2(0, _ft + (view_size.y - FIELD_BOTTOM_UP - _ft) * 0.38)
 	_banner.pivot_offset = _banner.size * 0.5
 	_banner.visible = false
-	_hud.add_child(_ignore(_banner))
+	_fly_layer.add_child(_ignore(_banner))  # above the letters
 	# Slot tray: the active word on the first row, the next word on the second, Hint at its end.
 	var tr := _tray_rect()
 	var tray := Panel.new()

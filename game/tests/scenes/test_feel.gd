@@ -79,7 +79,8 @@ func test_a_combo_pops_up_where_the_letter_was_caught() -> void:
 	assert_true(not is_instance_valid(pop) or pop.is_queued_for_deletion(), "and floats away")
 	var tun := GameData.load_tunables()
 	f._combo_pop(Vector2(400, 700), float(tun["combo.max"]))
-	assert_true((f.find_child("ComboPop", true, false) as Label).text.ends_with("MAX"), "the top combo says MAX")
+	var top: Label = f._pops[f._pops.size() - 1][0]
+	assert_true(top.text.ends_with("MAX"), "the top combo says MAX")
 	f.free()
 
 
