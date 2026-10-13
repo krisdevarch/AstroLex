@@ -195,6 +195,8 @@ var _banner_t: float = 99.0
 var _shake_t: float = 0.0
 var _shake_px: float = 0.0
 var _beat_sec: int = -1
+## Browsers refuse (and log an error for) a vibration before the player has touched the page.
+var _touched: bool = false
 
 
 func _process(delta: float) -> void:
@@ -303,6 +305,7 @@ func tap(screen_pos: Vector2) -> int:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_touched = true
 		tap(event.position)
 	elif event.is_action_pressed("ui_cancel"):
 		pause_requested.emit()
@@ -808,9 +811,10 @@ func _shake(px: float) -> void:
 	_shake_t = _n("fx.shakeSec")
 
 
-## A short vibration where the device has one (Android browsers; a no-op elsewhere).
+## A short vibration where the device has one (Android browsers; a no-op elsewhere), once the
+## player has touched the screen (never in autoplay).
 func _buzz(ms: int) -> void:
-	if not settings.reduced_motion:
+	if _touched and not autoplay and not settings.reduced_motion:
 		Input.vibrate_handheld(ms)
 
 
