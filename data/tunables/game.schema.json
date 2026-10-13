@@ -74,6 +74,11 @@
     "glass.gloss",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
+    "fx.shakePx",
+    "fx.shakeSec",
+    "fx.bannerSec",
+    "fx.heartbeatSec",
+    "sfx.volumeDb",
     "hud.hintAlpha",
     "autoplay.tapInterval",
     "burst.seconds",
@@ -476,6 +481,32 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds for a caught tile to fly to its slot"
+    },
+    "fx.shakePx": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 60,
+      "description": "screen pixels (1080 wide) the play field shakes when a word is restored; half for a wrong catch or a drone shot down"
+    },
+    "fx.shakeSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds a shake takes to settle"
+    },
+    "fx.bannerSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds the restored word stays across the field"
+    },
+    "fx.heartbeatSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "a heartbeat sounds once a second while the clock is below this many seconds"
+    },
+    "sfx.volumeDb": {
+      "type": "number",
+      "maximum": 6,
+      "description": "volume of the placeholder sound effects, in decibels"
     },
     "fx.dissolveSec": {
       "type": "number",
