@@ -14,3 +14,4 @@ Notes
 - The live screen read is new for the web build. The earlier attempt (screen copy plus mipmaps) came out black and slow on iPhone Safari; this one has no mipmaps. It renders correctly in headless Chromium (SwiftShader); iPhone Safari is untested here. If it misbehaves there, `glass.live` 0 restores the baked-sky glass.
 - Screenshots: local web export in headless Chromium at `?autoplay=1` with a temporary character override that is not committed.
 - An earlier version of this branch tinted the bubbles in soft colours; the owner chose clear bubbles, so that was removed.
+- Owner, 14:22: "reduce the circles for like 4-5 px": `glass.bubbleScale` 1.2 → 1.12 (about 5 CSS px less on a 393-px-wide phone). Letters and spacing are unchanged.
