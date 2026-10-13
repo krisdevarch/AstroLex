@@ -19,6 +19,8 @@ const DEFAULT_LOOK := "bubble"
 var ch: String = ""
 var plane: int = 0
 var is_back: bool = false
+var is_item: bool = false
+var item: String = ""
 var treatment: String = DEFAULT_LOOK
 var reduced_motion: bool = false
 var size_px: float = 100.0
@@ -106,6 +108,34 @@ func _shadow_corner() -> float:
 	return TileTextures.GLASS_CORNER
 
 
+## Decoy items: every sticker cut from the owner's sheet (docs/design/space-items-sheet.jpg). A decoy
+## drifts and bounces like a letter, and tapping it is a miss.
+const ITEMS := ["teacup", "bread", "spoon", "key", "desk_lamp", "door", "envelope", "chair", "tv", "satellite", "solar_panel", "gears", "cable_tangle", "helmet", "power_cable", "battery", "wrench", "gear_tag", "backpack", "glove", "camera", "thermos", "asteroid_purple", "asteroid_teal", "asteroid_brown", "asteroid_small", "comet_small", "comet_mid", "comet_big", "rocket", "sputnik"]
+const ITEM_ART := "res://art/space/%s.png"
+const ITEM_FILL := 0.95  # the item's longest side as a share of the bubble's diameter
+const ITEM_TUMBLE := 0.25  # radians per second, alternating direction
+const ITEM_FLASH := Color(1.0, 0.35, 0.3)
+
+
+## Shows this decoy as a sticker item: no bubble, no letter, no shadow. It keeps its colour (it is a
+## play piece now, not background) and tumbles slowly unless reduced motion is on.
+func set_item(art: String) -> void:
+	is_item = true
+	item = art
+	glyph.visible = false
+	shadow.visible = false
+	body.material = null
+	body.texture = load(ITEM_ART % art)
+	var k := size_px * float(_tun.get("glass.bubbleScale", 1.0)) * ITEM_FILL / maxf(body.texture.get_width(), body.texture.get_height())
+	body.scale = Vector2(k, k)
+	_body_scale = body.scale
+	body.rotation = (fposmod(_phase, TAU) - PI) * 0.2
+	current_tilt = Vector2.ZERO
+	_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
+	# Unlit like the glass, so the ambient tint does not dim it.
+	body.self_modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0) * Color(0.82, 0.86, 0.95)
+
+
 ## Star tints for the back plane: pale, as the small white stars in the owner's mock v3.
 const STAR_TINTS := [Color("fff6d8"), Color("dceeff"), Color("ffffff"), Color("cfe6ff"), Color("fff6d8")]
 
@@ -133,6 +163,10 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		return
 	position = screen_pos
 	var tilt := Vector2.ZERO
+	if is_item:
+		if not reduced_motion:
+			body.rotation = (fposmod(_phase, TAU) - PI) * 0.2 + time * ITEM_TUMBLE * (1.0 if int(_phase * 10.0) % 2 == 0 else -1.0)
+		return
 	if is_back:
 		if not reduced_motion:
 			var tw := 1.0 + 0.18 * sin(time * 2.1 + _phase * 3.0)
@@ -234,6 +268,9 @@ func tick(delta: float) -> bool:
 	if _flash_t > 0.0:
 		_flash_t = maxf(0.0, _flash_t - delta)
 		_mat.set_shader_parameter("flash", _flash_t / _flash_dur)
+		if is_item:
+			var fc := Color.WHITE.lerp(ITEM_FLASH, _flash_t / _flash_dur)
+			modulate = Color(fc.r, fc.g, fc.b, modulate.a)
 	if anim == "":
 		return false
 	_anim_t += delta

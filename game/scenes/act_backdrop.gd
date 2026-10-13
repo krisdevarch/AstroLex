@@ -2,8 +2,8 @@ extends Node2D
 ## The sky behind the play field: the owner's painted Low Orbit backdrop (13 Oct 2026, mock v3): a
 ## blue night with the Milky Way, a crescent moon and Earth's night side with its city lights at the
 ## bottom, lined up so Earth's rim sits under the HUD's curve (`horizon_y`). Over it, a few twinkling
-## sticker sparkles and now and then a shooting star (owner: "make the stars a bit more interesting"). Planets, the sun, asteroids, rockets, a
-## satellite and meteors move through the field in sky_drifters.gd. Colour story: the scene starts drained and its
+## sticker sparkles and now and then a shooting star (owner: "make the stars a bit more interesting"). The owner's sticker
+## items are the decoys, drawn by tile_view.gd. Colour story: the scene starts drained and its
 ## colour comes back as words are restored (`restore` 0..1). Placeholder art (O-14).
 
 

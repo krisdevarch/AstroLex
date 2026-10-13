@@ -9,7 +9,6 @@ const TileViewScript := preload("res://scenes/tile_view.gd")
 const TileViewScene: PackedScene = preload("res://scenes/tile_view.tscn")
 const LightRig := preload("res://scenes/light_rig.gd")
 const ActBackdrop := preload("res://scenes/act_backdrop.gd")
-const SkyDrifters := preload("res://scenes/sky_drifters.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
@@ -162,7 +161,7 @@ var _preview_n: int = 0
 
 var _world: CanvasLayer
 var _backdrop: Node2D
-var _drifters: Node2D
+var _item_deck: Array = []  # decoy item art, dealt in a seeded order so items rarely repeat
 var _seed: int = 0
 var _night: Control
 var _tiles_root: Node2D
@@ -500,14 +499,6 @@ func _build_world() -> void:
 	rig.name = "LightRig"
 	_world.add_child(rig)
 	rig.configure(Vector2(view_size.x * 0.5, _ft + (_n("field.height") - _n("field.topMargin")) * _scale * 0.45), view_size.y * 1.1, _world.layer)
-	# Planets, rockets and comets drift just behind the letters (visual only, taps pass through).
-	_drifters = SkyDrifters.new()  # full colour always (owner, 13 Oct: planets must stay bright)
-	_drifters.name = "SkyDrifters"
-	_drifters.view_size = view_size
-	_drifters.area = Rect2(0.0, FIELD_TOP, view_size.x, panel_top() - FIELD_TOP)
-	_drifters.reduced_motion = settings.reduced_motion
-	_drifters.seed_value = _seed
-	_world.add_child(_drifters)
 	_tiles_root = Node2D.new()
 	_tiles_root.name = "Tiles"
 	_world.add_child(_tiles_root)
@@ -552,9 +543,26 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.name = "Tile_%d" % t.id
 	if t.plane == 2:
 		v.set_back(_n("plane.backAlpha"), _n("plane.backDesaturate"))
+	elif t.decoy:
+		v.set_item(_next_item())
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
+
+
+## Decoys are the owner's sticker items (owner, 13 Oct 2026: "use them as decoys ... they should be
+## dynamic"), dealt from a deck shuffled by the level seed so the field rarely shows the same one twice.
+func _next_item() -> String:
+	if _item_deck.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = _seed + _view_word * 7919 + _views.size()
+		_item_deck = TileViewScript.ITEMS.duplicate()
+		for i in _item_deck.size():
+			var j := rng.randi_range(i, _item_deck.size() - 1)
+			var tmp = _item_deck[i]
+			_item_deck[i] = _item_deck[j]
+			_item_deck[j] = tmp
+	return _item_deck.pop_back()
 
 
 func _sync_views() -> void:

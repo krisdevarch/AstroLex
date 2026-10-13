@@ -189,40 +189,46 @@ func test_backdrop_regains_colour_as_words_are_restored() -> void:
 	f.free()
 
 
-func test_sky_drifters_move_behind_the_letters() -> void:
+func test_decoys_are_drifting_items() -> void:
 	var f := _field("wren")
-	var sky := f.find_child("SkyDrifters", true, false)
-	assert_true(sky != null, "drifters exist")
-	var tiles := f.find_child("Tiles", true, false)
-	assert_eq(sky.get_parent(), tiles.get_parent(), "same layer as the letters")
-	assert_true(sky.get_index() < tiles.get_index(), "drawn behind the letters")
-	assert_true(sky.item_count() >= 8, "lost items present")
-	var every := 0
-	for b in sky._bodies:
-		assert_true(not str(b["art"]).contains("planet") and b["art"] != "earth" and b["art"] != "sun", "no planets")
-		if sky.EVERYDAY.has(b["art"]):
-			every += 1
-	assert_true(every >= 6, "mostly Act 1 everyday items")
-	var p0: Vector2 = sky._bodies[1]["pos"]
-	for _i in 60:
-		sky.tick(1.0 / 30.0)
-	assert_true(sky._bodies[1]["pos"].distance_to(p0) > 1.0, "items drift")
-	for _i in 600:
-		sky.tick(1.0 / 30.0)
-	for p in sky._bodies:
-		assert_true(sky.area.grow(p["r"]).has_point(p["pos"]), "item stays around the field")
+	assert_true(not _has(f, "SkyDrifters"), "no background items: the items are the decoys")
+	var decoys: Array = []
+	var seen := {}
+	for t in f.game_round.tiles:
+		if t.plane >= 2:
+			continue
+		var v = f._views[t.id]
+		assert_eq(v.is_item, t.decoy, "a tile is an item exactly when it is a decoy")
+		if t.decoy:
+			decoys.append(t)
+			assert_true(v.ITEMS.has(v.item), "item %s is from the owner's sheet" % v.item)
+			assert_true(not v.glyph.visible, "an item shows no letter")
+			assert_true(v.body.texture != null, "item art loads")
+			seen[v.item] = true
+		else:
+			assert_true(v.glyph.visible, "a letter shows its glyph")
+	assert_true(decoys.size() >= 1, "the field has decoys")
+	assert_eq(seen.size(), decoys.size(), "no item repeats on the field")
+	var t0: Object = decoys[0]
+	var p0: Vector2 = f._views[t0.id].position
+	for _i in 30:
+		f.advance(1.0 / 30.0)
+	assert_true(f._views[t0.id].position.distance_to(p0) > 1.0, "items drift like letters")
 	f.free()
 
 
-func test_sky_drifters_hold_still_under_reduced_motion() -> void:
+func test_tapping_an_item_is_a_miss() -> void:
 	var f := _field("wren")
-	var sky := f.find_child("SkyDrifters", true, false)
-	sky.reduced_motion = true
-	var p0: Vector2 = sky._bodies[1]["pos"]
-	for _i in 120:
-		sky.tick(1.0 / 30.0)
-	assert_eq(sky._bodies[1]["pos"], p0, "no drift")
-	assert_true(not sky.craft_flying(), "no rocket")
+	var decoy: Object = null
+	for t in f.game_round.tiles:
+		if t.decoy and t.plane < 2:
+			decoy = t
+			break
+	var wrong0 := int(f.game_round.stats["wrong"])
+	assert_eq(f.tap(f.to_screen(decoy.pos)), decoy.id, "the item can be tapped")
+	for _i in 60:
+		f.advance(1.0 / 60.0)
+	assert_eq(int(f.game_round.stats["wrong"]), wrong0 + 1, "tapping an item counts as a wrong catch")
 	f.free()
 
 
