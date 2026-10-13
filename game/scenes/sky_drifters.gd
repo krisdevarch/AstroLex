@@ -18,13 +18,13 @@ const ASTEROIDS := 6
 const INK := Color(0.06, 0.08, 0.22)
 ## [kind, radius px, base, detail, shade, ring, start spot as a share of the area]
 const PLANETS := [
-	[4, 120.0, "ff7a1f", "ffd23a", "e04a12", false, Vector2(0.93, 0.02)],  # sun, top right
-	[1, 140.0, "e3a24a", "b86a26", "a85b1c", false, Vector2(0.9, 0.62)],  # orange, Venus-like
-	[2, 118.0, "2f8fe0", "4cc24a", "1f5fae", false, Vector2(0.1, 0.36)],  # Earth with clouds
-	[0, 92.0, "8a52c6", "e48fd8", "5a2d8e", true, Vector2(0.55, 0.06)],  # ringed purple
-	[3, 74.0, "2a7fe0", "86d4ff", "1a56a8", false, Vector2(0.1, 0.9)],  # blue water planet
-	[0, 46.0, "e2492e", "f58a4a", "a8281a", false, Vector2(0.58, 0.88)],  # small red
-	[1, 58.0, "8f909c", "6b6c78", "54556a", false, Vector2(0.38, 0.5)],  # grey moon
+	[4, 120.0, "ff6a00", "ffe24a", "ff3d00", false, Vector2(0.93, 0.02)],  # sun, top right
+	[1, 140.0, "ffa63d", "e86a1f", "d0561a", false, Vector2(0.9, 0.62)],  # orange, spotted
+	[2, 118.0, "2e9cff", "3fd651", "1f6fe0", false, Vector2(0.1, 0.36)],  # Earth with clouds
+	[0, 92.0, "9b4dff", "ff7ae0", "6a2ad0", true, Vector2(0.55, 0.06)],  # ringed purple
+	[3, 74.0, "1f8fff", "7fe8ff", "1a5fe0", false, Vector2(0.1, 0.9)],  # blue water planet
+	[0, 46.0, "ff3b2e", "ffa03a", "d01e1e", false, Vector2(0.58, 0.88)],  # small red
+	[1, 58.0, "21d1b8", "0f9c8a", "0d8a7a", false, Vector2(0.38, 0.5)],  # teal moon
 ]
 
 var view_size: Vector2 = Vector2(1080, 1920)
@@ -191,7 +191,7 @@ func _sun_rays(c: Vector2, r: float) -> void:
 func _ring_on(ci: CanvasItem, c: Vector2, r: float, a0: float, a1: float) -> void:
 	ci.draw_set_transform(c, -0.28, Vector2(1.0, 0.3))
 	ci.draw_arc(Vector2.ZERO, r * 1.75, a0, a1, 48, _grey(INK), r * 0.2, true)
-	ci.draw_arc(Vector2.ZERO, r * 1.75, a0, a1, 48, _grey(Color("8fc4ff")), r * 0.14, true)
+	ci.draw_arc(Vector2.ZERO, r * 1.75, a0, a1, 48, _grey(Color("5fd0ff")), r * 0.14, true)
 	ci.draw_arc(Vector2.ZERO, r * 1.72, a0, a1, 48, _grey(Color("d8ecff")), r * 0.04, true)
 	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
@@ -200,12 +200,12 @@ func _rock(a: Dictionary) -> void:
 	var r: float = a["r"]
 	draw_set_transform(a["pos"], a["rot"], Vector2(r, r))
 	var shape: PackedVector2Array = a["shape"]
-	draw_colored_polygon(shape, _grey(Color("8a8790")))
+	draw_colored_polygon(shape, _grey(Color("a3897a")))
 	var outline := shape.duplicate()
 	outline.append(shape[0])
 	draw_polyline(outline, _grey(INK), 2.5 / r, true)
-	draw_circle(Vector2(-0.3, -0.2), 0.22, _grey(Color("6a6770")))
-	draw_circle(Vector2(0.35, 0.25), 0.15, _grey(Color("6a6770")))
+	draw_circle(Vector2(-0.3, -0.2), 0.22, _grey(Color("7d6658")))
+	draw_circle(Vector2(0.35, 0.25), 0.15, _grey(Color("7d6658")))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 

@@ -5,7 +5,7 @@ Branch `claude/project-thread-4bg9x3`, 12 Oct 2026.
 | AC | Result | Check | Artefact |
 |---|---|---|---|
 | AC1 | pass | `scripts/godot/test.sh`: `test_spawn_never_overlaps_catchable_tiles`, `test_catchable_tiles_keep_their_gap_while_drifting`, `test_head_on_pair_bounces` (test_round.gd) | log: 157 passed, 0 failed |
-| AC2 | pass | `python -m astrolex_tools.validate_data` → ok; `python -m astrolex_tools.export_game_data` leaves no diff | `data/tunables/game.json` `tile.minGap: 0.04` |
+| AC2 | pass | `python -m astrolex_tools.validate_data` → ok; `python -m astrolex_tools.export_game_data` leaves no diff | `data/tunables/game.json` `tile.minGap: 0.03`, `tile.size: 0.13` |
 | AC3 | pass | `test_hud_sits_on_one_grid` (test_hud.gd) | `phone-393x852-ash.jpg`, `phone-405x720-juno.jpg` |
 | AC4 | pass | `test_backdrop_regains_colour_as_words_are_restored` (test_hud.gd) | screenshots |
 | AC4b | pass | `test_sky_drifters_move_behind_the_letters`, `test_sky_drifters_hold_still_under_reduced_motion` (test_hud.gd) | `motion-393x852-wren.gif` |
@@ -16,3 +16,4 @@ Notes
 - The shot target is not frozen by separation: the shot locks its aim at fire time and the hit test is distance-based.
 - Screenshots: local web export in headless Chromium (SwiftShader) at `?autoplay=1` with a temporary character override that is not committed. The sky, planets and craft are placeholder art (O-14) drawn from gradients, shapes and one planet shader (`game/scenes/planet.gdshader`).
 - 13 Oct: sky restyled after two owner references (cartoon planets on a starry blue night) and the card choice "Just behind letters".
+- 13 Oct (owner: "make the letters a bit larger", "planets more colourful"): `tile.size` 0.12 → 0.13 and the glyph from 0.62 to 0.68 of the tile; `tile.minGap` 0.04 → 0.03 so the larger letters still pack; planets keep full colour (the start-of-level drain now applies to the sky only) with brighter palettes and lighter shading.

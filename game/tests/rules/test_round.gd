@@ -124,7 +124,7 @@ func test_back_tiles_are_decorative_and_not_catchable() -> void:
 		if t.plane == 2:
 			found += 1
 			assert_false(r.fire(t.id))
-			assert_true(absf(t.radius - 0.12 * 0.45 / 2.0) < 1e-6)
+			assert_true(absf(t.radius - float(_tun["tile.size"]) * float(_tun["plane.backScale"]) / 2.0) < 1e-6)
 	assert_eq(found, 6)
 	assert_false(r.fire(99999))
 	assert_true(r.shot.is_empty())

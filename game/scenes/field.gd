@@ -175,8 +175,6 @@ var _fps_meter: CanvasLayer
 func _process(delta: float) -> void:
 	if game_round != null:
 		advance(minf(delta, 0.25))
-	if _drifters != null and _backdrop != null:
-		_drifters.sat = _backdrop.saturation()
 
 
 func _n(key: String) -> float:
@@ -493,7 +491,7 @@ func _build_world() -> void:
 	_world.add_child(rig)
 	rig.configure(Vector2(view_size.x * 0.5, _ft + (_n("field.height") - _n("field.topMargin")) * _scale * 0.45), view_size.y * 1.1, _world.layer)
 	# Planets, rockets and comets drift just behind the letters (visual only, taps pass through).
-	_drifters = SkyDrifters.new()
+	_drifters = SkyDrifters.new()  # full colour always (owner, 13 Oct: planets must stay bright)
 	_drifters.name = "SkyDrifters"
 	_drifters.view_size = view_size
 	_drifters.area = Rect2(0.0, FIELD_TOP, view_size.x, panel_top() - FIELD_TOP)

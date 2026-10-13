@@ -86,7 +86,7 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.size = Vector2(size_px, size_px)
 	glyph.position = -glyph.size * 0.5
 	glyph.pivot_offset = glyph.size * 0.5
-	glyph.add_theme_font_size_override("font_size", int(size_px * 0.62))
+	glyph.add_theme_font_size_override("font_size", int(size_px * 0.68))
 	# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 	glyph.add_theme_color_override("font_color", Color.WHITE)
 	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))

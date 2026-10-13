@@ -63,9 +63,9 @@ void fragment() {
 	if (kind != 4) {
 		// Cartoon shading: a soft darker crescent at the lower right, a small highlight at the upper left.
 		float dark = smoothstep(0.35, 1.05, length(p - vec2(-0.45, -0.45)));
-		col = mix(col, shade.rgb * 0.75, dark * 0.5);
-		col += vec3(1.0) * (1.0 - smoothstep(0.0, 0.45, length(p - vec2(-0.42, -0.42)))) * 0.12;
-		col *= 0.85 + 0.15 * z;
+		col = mix(col, shade.rgb, dark * 0.35);
+		col += vec3(1.0) * (1.0 - smoothstep(0.0, 0.45, length(p - vec2(-0.42, -0.42)))) * 0.18;
+		col *= 0.94 + 0.06 * z;
 	}
 	// Ink outline, like a sticker.
 	col = mix(col, ink.rgb, smoothstep(0.935 - aa, 0.935, r));

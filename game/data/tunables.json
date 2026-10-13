@@ -67,9 +67,9 @@
   "thief.speed": 0.16,
   "thief.stealCost": 2,
   "tile.maxTiltDeg": 20,
-  "tile.minGap": 0.04,
+  "tile.minGap": 0.03,
   "tile.shadowOffset": 14,
-  "tile.size": 0.12,
+  "tile.size": 0.13,
   "tile.swayDeg": 6,
   "tile.swaySpeed": 0.6
 }
