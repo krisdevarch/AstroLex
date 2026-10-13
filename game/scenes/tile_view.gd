@@ -9,6 +9,10 @@ const GLASS_SHADER: Shader = preload("res://shaders/glass.gdshader")
 ## The ambient CanvasModulate dims anything it tints; glass is off the lamp, so undo it.
 const GLASS_GAIN := Vector3(1.55, 1.52, 1.28)
 const GLASS_ACCENT := Color(0.35, 0.85, 1.0)
+## Bubble colours (owner, 13 Oct 2026: "colourful letter bubbles"). Deep enough that the white letter
+## stays readable; no amber or yellow, which belong to the hint glow. Picked per bubble, not per
+## letter, so a colour never reads as a clue.
+const BUBBLE_TINTS := [Color("e0457b"), Color("8b5cf6"), Color("23a36b"), Color("2b7bd9"), Color("e8692c"), Color("0fa3b1")]
 const LOOKS: Array[String] = ["glass", "bubble"]
 const DEFAULT_LOOK := "bubble"
 
@@ -62,7 +66,9 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_mat.set_shader_parameter("lens_width", TileTextures.HALF * 0.75 if round_shape else 26.0)
 	_mat.set_shader_parameter("bubble", round_shape)
 	_mat.set_shader_parameter("unlit_gain", GLASS_GAIN)
-	_mat.set_shader_parameter("accent", GLASS_ACCENT)
+	var tint := float(tun.get("glass.bubbleTint", 0.0)) if round_shape else 0.0
+	_mat.set_shader_parameter("tint", tint)
+	_mat.set_shader_parameter("accent", bubble_colour() if tint > 0.0 else GLASS_ACCENT)
 	_mat.set_shader_parameter("blur", float(_tun["glass.blur"]))
 	_mat.set_shader_parameter("refract_px", float(_tun["glass.refractPx"]))
 	_mat.set_shader_parameter("frost", float(_tun["glass.frost"]))
@@ -86,12 +92,17 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.size = Vector2(size_px, size_px)
 	glyph.position = -glyph.size * 0.5
 	glyph.pivot_offset = glyph.size * 0.5
-	glyph.add_theme_font_size_override("font_size", int(size_px * 0.68))
+	glyph.add_theme_font_size_override("font_size", int(size_px * float(tun.get("tile.glyphScale", 0.68))))
 	# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 	glyph.add_theme_color_override("font_color", Color.WHITE)
 	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
 	glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
 	glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
+
+
+## This bubble's colour: one of BUBBLE_TINTS, picked from the tile's phase (random per tile).
+func bubble_colour() -> Color:
+	return BUBBLE_TINTS[absi(hash(_phase)) % BUBBLE_TINTS.size()]
 
 
 func _shadow_corner() -> float:

@@ -33,6 +33,7 @@ uniform bool shard = false;               // back plane: small frosted shard, no
 const float HALF = 61.0;
 uniform float corner = 38.0;      // rounded square; corner = HALF (61) makes a circle (bubble)
 uniform float lens_width = 26.0;  // width of the lens zone at the rim, in texture px
+uniform float tint : hint_range(0.0, 1.0) = 0.0;  // bubble look: wash of the accent colour over the ball
 uniform bool bubble = false;      // soap bubble: whole-ball lens, thin-film rainbow rim, highlight spot
 uniform float bubble_time = 0.0;
 
@@ -103,6 +104,9 @@ void fragment() {
 	vec3 rim_col = mix(vec3(0.75, 0.85, 1.0), vec3(1.0, 0.86, 0.7), clamp(g.x * 0.5 + 0.5, 0.0, 1.0));
 	col += rim_col * (ring * (0.35 + 0.55 * diag) + ring_soft * 0.12) * (0.5 + specular * 0.7);
 	col += accent * edge_tint * lens * 0.5;
+	if (bubble && !shard) {
+		col = mix(col, accent * 0.85, tint);
+	}
 	if (bubble && !shard) {
 		// Thin-film rainbow on the rim that drifts slowly, and a bright window highlight up-left.
 		float ang = atan(g.y, g.x) + bubble_time * 0.6;
