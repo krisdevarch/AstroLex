@@ -1,5 +1,5 @@
 extends RefCounted
-## Procedural tile art: glass masks (rounded square or circle), the back-plane shard, a soft drop
+## Procedural tile art: glass masks (rounded square or circle), the back-plane sticker star, a soft drop
 ## shadow, and the baked sky and stars that the backdrop draws and the glass samples. Generated
 ## once and cached. Placeholder until human art exists.
 
@@ -13,19 +13,32 @@ const BASE := Color(0.94, 0.92, 0.84)
 static var _cache: Dictionary = {}
 
 
-## Blank debris for the back plane: a faint four-point star fragment, no bevel, no glyph.
+## Back-plane debris (owner, 13 Oct 2026: "make the stars a bit more interesting"): a sticker
+## star like the owner's sheet, a four-point sparkle with a dark ink outline and a white glint.
+## The fill is near white so the tile view can tint it (self_modulate); the ink stays dark.
 static func shard() -> Texture2D:
 	if _cache.has("shard"):
 		return _cache["shard"]
 	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
 	var centre := Vector2(SIZE, SIZE) * 0.5
+	var ink := Color(0.04, 0.06, 0.18)
+	var outline := 7.0
 	for y in SIZE:
 		for x in SIZE:
 			var p := Vector2(x + 0.5, y + 0.5) - centre
-			var r := HALF * (0.46 + 0.54 * pow(absf(cos(2.0 * p.angle())), 2.5))
-			var a := clampf(r - p.length() + 0.5, 0.0, 1.0)
-			var shade := 1.0 - 0.25 * clampf(p.length() / maxf(r, 1.0), 0.0, 1.0)
-			img.set_pixel(x, y, Color(BASE.r * shade, BASE.g * shade, BASE.b * shade, a))
+			var r := HALF * (0.42 + 0.58 * pow(absf(cos(2.0 * p.angle())), 2.2))
+			var d := p.length() - r  # rough signed distance to the star's edge
+			var a := clampf(0.5 - d, 0.0, 1.0)
+			if a <= 0.0:
+				continue
+			var fill_k := clampf(-d - outline + 0.5, 0.0, 1.0)
+			var shade := 1.0 - 0.22 * clampf(p.length() / maxf(r, 1.0), 0.0, 1.0)
+			var glint := clampf(1.0 - (p - Vector2(-7, -9)).length() / 7.0, 0.0, 1.0)
+			var fill := Color(shade, shade, shade).lerp(Color.WHITE, glint)
+			var c := ink.lerp(fill, fill_k)
+			c.a = a
+			img.set_pixel(x, y, c)
+	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache["shard"] = tex
 	return tex

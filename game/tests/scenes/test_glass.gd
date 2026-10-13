@@ -63,11 +63,37 @@ func test_tile_view_bubble_is_round_and_untilted() -> void:
 	v.free()
 
 
-func test_back_plane_glass_is_a_glyphless_shard() -> void:
+func test_back_plane_is_a_glyphless_sticker_star() -> void:
 	var v := _glass_view(true)
 	assert_false(v.glyph.visible, "no glyph on the back plane")
 	assert_eq(v.current_tilt, Vector2.ZERO, "no tilt")
-	assert_true(bool((v.body.material as ShaderMaterial).get_shader_parameter("shard")), "shard mode")
+	assert_true(v.body.material == null, "a flat sticker, not glass")
+	assert_true(v.body.self_modulate != Color.WHITE, "tinted in a sheet colour")
+	var s0: Vector2 = v.body.scale
+	var r0: float = v.body.rotation
+	v.place(Vector2(200, 300), 1.7, 0.4)
+	assert_true(v.body.scale != s0 or v.body.rotation != r0, "the star twinkles")
+	v.free()
+
+
+func test_bubble_pulse_is_extremely_subtle() -> void:
+	var tun := GameData.load_tunables()
+	var amp := float(tun["tile.pulse"])
+	assert_true(amp > 0.0 and amp <= 0.02, "pulse is on and no more than 2 %")
+	var v := _glass_view(false, "bubble")
+	var lo := 99.0
+	var hi := 0.0
+	for i in 60:
+		v.place(Vector2(200, 300), float(i) * 0.1, 0.4)
+		var a: float = (v.body.scale.x + v.body.scale.y) * 0.5  # wobble cancels in the mean
+		lo = minf(lo, a)
+		hi = maxf(hi, a)
+	assert_true(hi > lo, "the bubble breathes")
+	assert_true((hi - lo) / lo <= amp * 2.0 + 0.002, "but only by the tunable amount")
+	v.reduced_motion = true
+	var still: Vector2 = v.body.scale
+	v.place(Vector2(200, 300), 9.3, 0.4)
+	assert_eq(v.body.scale, still, "no pulse under reduced motion")
 	v.free()
 
 

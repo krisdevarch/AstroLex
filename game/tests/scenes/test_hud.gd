@@ -219,3 +219,27 @@ func test_sky_drifters_hold_still_under_reduced_motion() -> void:
 	assert_eq(sky._bodies[1]["pos"], p0, "no drift")
 	assert_true(not sky.craft_flying(), "no rocket")
 	f.free()
+
+
+func test_backdrop_has_sticker_sparkles_and_shooting_stars() -> void:
+	var bg: Node2D = load("res://scenes/act_backdrop.gd").new()
+	tree.root.add_child(bg)
+	var tints := {}
+	for sp in bg._sparkles:
+		tints[(sp[3] as Color).to_html()] = true
+	assert_true(tints.size() >= 3, "sparkles come in the sheet's colours")
+	var seen := false
+	for i in 600:
+		bg._process(1.0 / 30.0)
+		if bg.shooting():
+			seen = true
+			break
+	assert_true(seen, "a shooting star crosses within 20 s")
+	bg.free()
+	var calm: Node2D = load("res://scenes/act_backdrop.gd").new()
+	calm.reduced_motion = true
+	tree.root.add_child(calm)
+	for i in 600:
+		calm._process(1.0 / 30.0)
+	assert_false(calm.shooting(), "no shooting stars under reduced motion")
+	calm.free()

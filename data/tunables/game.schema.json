@@ -47,6 +47,8 @@
     "tile.maxTiltDeg",
     "tile.swayDeg",
     "tile.swaySpeed",
+    "tile.pulse",
+    "tile.pulseHz",
     "tile.shadowOffset",
     "glass.blur",
     "glass.refractPx",
@@ -295,6 +297,17 @@
       "type": "number",
       "minimum": 0,
       "description": "2.5D tile: sway cycles per second"
+    },
+    "tile.pulse": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.05,
+      "description": "bubble letters: share of size the breathing pulse adds and removes (owner: extremely subtle)"
+    },
+    "tile.pulseHz": {
+      "type": "number",
+      "minimum": 0,
+      "description": "bubble letters: breathing pulse cycles per second"
     },
     "tile.shadowOffset": {
       "type": "number",

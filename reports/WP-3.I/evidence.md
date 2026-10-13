@@ -4,12 +4,13 @@ Branch `claude/project-thread-4bg9x3`, 12 Oct 2026.
 
 | AC | Result | Check | Artefact |
 |---|---|---|---|
-| AC1 | pass | `scripts/godot/test.sh`: `test_spawn_never_overlaps_catchable_tiles`, `test_catchable_tiles_keep_their_gap_while_drifting`, `test_head_on_pair_bounces` (test_round.gd) | log: 157 passed, 0 failed |
+| AC1 | pass | `scripts/godot/test.sh`: `test_spawn_never_overlaps_catchable_tiles`, `test_catchable_tiles_keep_their_gap_while_drifting`, `test_head_on_pair_bounces` (test_round.gd) | log: 159 passed, 0 failed |
 | AC2 | pass | `python -m astrolex_tools.validate_data` → ok; `python -m astrolex_tools.export_game_data` leaves no diff | `data/tunables/game.json` `tile.minGap: 0.03`, `tile.size: 0.13` |
 | AC3 | pass | `test_hud_follows_the_owner_mock` (test_hud.gd) | `phone-393x852-ash.jpg`, `phone-405x720-juno.jpg` |
 | AC4 | pass | `test_backdrop_regains_colour_as_words_are_restored` (test_hud.gd) | screenshots |
 | AC4b | pass | `test_sky_drifters_move_behind_the_letters`, `test_sky_drifters_hold_still_under_reduced_motion` (test_hud.gd) | screenshots |
-| AC5 | pass | `scripts/godot/test.sh` 157/0, no SCRIPT ERROR; `scripts/godot/export.sh web` exit 0; `node smoke.cjs ../../../build/web` → "ok: main scene ran" | — |
+| AC4c | pass | `test_back_plane_is_a_glyphless_sticker_star`, `test_bubble_pulse_is_extremely_subtle` (test_glass.gd), `test_backdrop_has_sticker_sparkles_and_shooting_stars` (test_hud.gd) | `phone-393x852-ash.jpg`; `data/tunables/game.json` `tile.pulse: 0.015`, `tile.pulseHz: 0.45`, `plane.backAlpha: 0.85` |
+| AC5 | pass | `scripts/godot/test.sh` 159/0, no SCRIPT ERROR; `scripts/godot/export.sh web` exit 0; `node smoke.cjs ../../../build/web` → "ok: main scene ran" | — |
 
 Notes
 - Spawn uses up to 64 tries per tile (act 1 round 1 packs about 22 catchable tiles); if none fits, the last try is kept and the per-tick separation pushes the pair apart within a few frames. Denser acts rely on that.
@@ -18,3 +19,4 @@ Notes
 - 13 Oct: sky restyled after two owner references (cartoon planets on a starry blue night) and the card choice "Just behind letters".
 - 13 Oct (owner: "make the letters a bit larger", "planets more colourful"): `tile.size` 0.12 → 0.13 and the glyph from 0.62 to 0.68 of the tile; `tile.minGap` 0.04 → 0.03 so the larger letters still pack; planets keep full colour (the start-of-level drain now applies to the sky only) with brighter palettes and lighter shading.
 - 13 Oct (owner sticker sheet and layout mock `docs/design/mock-v2.jpg`): the drawn planets and craft are replaced by the owner's stickers in `game/art/space/` (licence to be confirmed by the owner, see its README), and the HUD is rebuilt to the mock. Points sit under "AstroLex" in the centre chip and the seconds inside the timer pill, since the mock has no place for them. The level chip shows the level's name only.
+- 13 Oct (owner: "make the stars a bit more interesting", "make the letter bubble pulsate, extremely subtle"): the back-plane debris and the backdrop sparkles are now sticker stars in the sheet's colours (gold, cream, cyan, pink) with an ink outline and a white glint; they twinkle and turn, and a shooting star crosses every few seconds. Back-plane alpha 0.28 → 0.85 so they read. Letter bubbles breathe by ±1.5 % at 0.45 Hz (`tile.pulse`, `tile.pulseHz`). Under reduced motion there is no pulse, twinkle or shooting star.
