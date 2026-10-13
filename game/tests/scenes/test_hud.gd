@@ -148,13 +148,12 @@ func test_hud_follows_the_owner_mock() -> void:
 		var bar := f.find_child("TimeBar", true, false) as Control
 		var counter := f.find_child("LevelCounterChip", true, false) as Control
 		var chip := f.find_child("LevelChip", true, false) as Control
-		var mid := f.find_child("TitleChip", true, false) as Control
 		var portrait := f.find_child("Portrait", true, false) as Control
 		var pill := f.find_child("PortraitName", true, false) as Control
 		for c: Control in [tray, gear, counter]:
 			assert_true(absf(c.position.x + c.size.x - right) < 0.5, "%s ends on the right margin" % c.name)
-		assert_true(absf(chip.position.x - f.EDGE) < 0.5, "level chip starts on the left margin")
-		assert_true(absf(mid.position.x + mid.size.x * 0.5 - size.x * 0.5) < 0.5, "AstroLex chip centred")
+		assert_true(absf(chip.position.x + chip.size.x * 0.5 - size.x * 0.5) < 0.5, "level name chip centred (mock v3)")
+		assert_true(f.find_child("TitleChip", true, false) == null, "no AstroLex chip in mock v3")
 		assert_true(hint.position.x + hint.size.x <= tray.position.x + tray.size.x, "Hint sits inside the tray")
 		assert_true(hint.position.y > tray.position.y and hint.position.y + hint.size.y < tray.position.y + tray.size.y, "Hint inside the tray")
 		assert_true(absf(bar.position.x - tray.position.x) < 0.5, "timer pill lines up with the tray")
@@ -197,15 +196,21 @@ func test_sky_drifters_move_behind_the_letters() -> void:
 	var tiles := f.find_child("Tiles", true, false)
 	assert_eq(sky.get_parent(), tiles.get_parent(), "same layer as the letters")
 	assert_true(sky.get_index() < tiles.get_index(), "drawn behind the letters")
-	assert_true(sky.planet_count() >= 5, "planets present")
+	assert_true(sky.item_count() >= 8, "lost items present")
+	var every := 0
+	for b in sky._bodies:
+		assert_true(not str(b["art"]).contains("planet") and b["art"] != "earth" and b["art"] != "sun", "no planets")
+		if sky.EVERYDAY.has(b["art"]):
+			every += 1
+	assert_true(every >= 6, "mostly Act 1 everyday items")
 	var p0: Vector2 = sky._bodies[1]["pos"]
 	for _i in 60:
 		sky.tick(1.0 / 30.0)
-	assert_true(sky._bodies[1]["pos"].distance_to(p0) > 1.0, "planets drift")
+	assert_true(sky._bodies[1]["pos"].distance_to(p0) > 1.0, "items drift")
 	for _i in 600:
 		sky.tick(1.0 / 30.0)
 	for p in sky._bodies:
-		assert_true(sky.area.grow(p["r"]).has_point(p["pos"]), "planet stays around the field")
+		assert_true(sky.area.grow(p["r"]).has_point(p["pos"]), "item stays around the field")
 	f.free()
 
 

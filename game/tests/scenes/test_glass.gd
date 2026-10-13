@@ -167,3 +167,9 @@ func test_bubble_glass_magnifies_the_live_screen() -> void:
 	assert_true(float(mat.get_shader_parameter("magnify")) > 0.0, "and magnifies it")
 	assert_eq(float(mat.get_shader_parameter("rim_bend")), float(tun["glass.rimBend"]), "rim bend is the tunable")
 	v.free()
+
+
+func test_the_game_font_is_libre_caslon_condensed() -> void:
+	var f: Font = ThemeDB.fallback_font
+	var base: Font = f.base_font if f is FontVariation else f
+	assert_true(base != null and base.resource_path.ends_with("LibreCaslonCondensed.ttf"), "default font is Libre Caslon Condensed (%s)" % (base.resource_path if base else "none"))

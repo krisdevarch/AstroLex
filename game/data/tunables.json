@@ -34,7 +34,7 @@
   "glass.rimBend": 0.9,
   "glass.specular": 0.7,
   "hud.hintAlpha": 0.35,
-  "plane.backAlpha": 0.85,
+  "plane.backAlpha": 0.6,
   "plane.backDesaturate": 0.7,
   "plane.backScale": 0.45,
   "plane.backSpeedMul": 0.35,

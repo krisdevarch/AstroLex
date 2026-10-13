@@ -1,16 +1,14 @@
 extends RefCounted
-## Procedural art for the in-round HUD (no image assets): Earth's night side, the porthole portrait
+## Procedural art for the in-round HUD: the veil over Earth's night side, the porthole portrait
 ## frame, vector icons and the coral clock fill. Drawn in _draw; every size is a pixel at 1080 wide.
 
 const PANEL_H := 600.0  # height of the night panel control
 const CREST := 40.0  # local y of the highest point (so it sits PANEL_H - CREST above the bottom)
-const EDGE_DROP := 66.0  # how far the curve falls from the crest to either screen edge
+const EDGE_DROP := 100.0  # how far the curve falls from the crest to either screen edge (as the painted Earth)
+const VEIL_MAX := 0.45  # how dark Earth is veiled before any word is restored
+const VEIL_GAP := 26.0  # the veil starts this far under the rim
+const VEIL_FADE := 70.0
 const ART_D := 356.0  # the portrait art's own size; the field scales it to fit its column
-const ATMOS := Color("8fe3ff")
-const RIM := Color("36d6ff")
-const RIM_CORE := Color("c8f6ff")
-const CITY_A := Color("ffb347")
-const CITY_B := Color("ffe08a")
 const CORAL := Color("FF6B35")
 const CORAL_LIGHT := Color("ff9a6e")
 const CRIMSON := Color("ff3b5c")
@@ -48,7 +46,8 @@ static func clip_material() -> ShaderMaterial:
 
 
 class NightPanel extends Control:
-	## Share of the level's words restored: city lights come back on with it (3 lit at the start).
+	## Earth's night side is painted in the backdrop (owner, mock v3). This panel only veils it:
+	## the veil lifts as words are restored, so the city lights come up with the colour story.
 	var lit: float = 0.0:
 		set(v):
 			lit = v
@@ -62,46 +61,20 @@ class NightPanel extends Control:
 	func _draw() -> void:
 		var w := size.x
 		var h := size.y
-		var top_c := Color("13265e")
-		var bot_c := Color("08112e")
+		var a := lerpf(VEIL_MAX, 0.0, clampf(lit, 0.0, 1.0))
+		if a <= 0.001:
+			return
+		var veil := Color("060b22")
 		var x := 0.0
 		while x < w:
 			var x2 := minf(x + 12.0, w)
-			var y1 := NightPanel.edge_y(x, w)
-			var y2 := NightPanel.edge_y(x2, w)
-			var pts := PackedVector2Array([Vector2(x, y1), Vector2(x2 + 0.5, y2), Vector2(x2 + 0.5, h), Vector2(x, h)])
-			var cols := PackedColorArray([_grad(y1, h, top_c, bot_c), _grad(y2, h, top_c, bot_c), bot_c, bot_c])
-			draw_polygon(pts, cols)
+			# The veil starts a little under the rim and fades in, so the painted rim glow stays clear.
+			var y1 := NightPanel.edge_y(x, w) + VEIL_GAP
+			var y2 := NightPanel.edge_y(x2, w) + VEIL_GAP
+			var pts := PackedVector2Array([Vector2(x, y1), Vector2(x2 + 0.5, y2), Vector2(x2 + 0.5, y2 + VEIL_FADE), Vector2(x, y1 + VEIL_FADE)])
+			draw_polygon(pts, PackedColorArray([Color(veil, 0.0), Color(veil, 0.0), Color(veil, a), Color(veil, a)]))
+			draw_rect(Rect2(x, y1 + VEIL_FADE, x2 + 0.5 - x, h - y1 - VEIL_FADE), Color(veil, a))
 			x = x2
-		var line := PackedVector2Array()
-		var lx := 0.0
-		while lx <= w + 0.1:
-			line.append(Vector2(lx, NightPanel.edge_y(lx, w)))
-			lx += 8.0
-		# A bright cyan atmosphere rim with a wide glow, as in the owner's mock.
-		var widths := [46.0, 28.0, 16.0, 8.0, 4.0]
-		var alphas := [0.08, 0.16, 0.3, 0.6, 1.0]
-		for i in widths.size():
-			var c: Color = RIM if i < 4 else RIM_CORE
-			draw_polyline(line, Color(c.r, c.g, c.b, float(alphas[i])), float(widths[i]), true)
-		# City lights: a band of small warm dots under the rim; more come on as words are restored.
-		var total := 120
-		var on := int(round(lerpf(0.35, 1.0, lit) * float(total)))
-		for i in total:
-			var u := fposmod(float(i) * 0.6180339, 1.0)
-			var cxp := w * u
-			var depth := fposmod(float(i) * 0.3819660 + 0.13, 1.0)
-			var cyp := NightPanel.edge_y(cxp, w) + 18.0 + depth * depth * 140.0
-			var rad := 1.6 + float(i % 3) * 0.8
-			var warm: Color = CITY_A if i % 3 else CITY_B
-			if i < on:
-				draw_circle(Vector2(cxp, cyp), rad * 3.0, Color(warm.r, warm.g, warm.b, 0.16))
-				draw_circle(Vector2(cxp, cyp), rad, warm)
-			else:
-				draw_circle(Vector2(cxp, cyp), rad, Color(0.45, 0.5, 0.6, 0.3))
-
-	static func _grad(y: float, h: float, a: Color, b: Color) -> Color:
-		return a.lerp(b, clampf((y - CREST) / (h - CREST), 0.0, 1.0))
 
 
 class PortraitArt extends Control:

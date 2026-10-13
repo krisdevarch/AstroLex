@@ -37,7 +37,7 @@
   "plane.frontScale": 1.0,
   "plane.midScale": 0.8,
   "plane.backScale": 0.45,
-  "plane.backAlpha": 0.85,
+  "plane.backAlpha": 0.6,
   "plane.backSpeedMul": 0.35,
   "plane.backDesaturate": 0.7,
   "plane.backTiles": 6,

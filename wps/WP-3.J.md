@@ -1,4 +1,4 @@
-# WP-3.J: Bigger letter bubbles in liquid glass
+# WP-3.J: Bigger letter bubbles in liquid glass, lost items, painted backdrop and the game font
 
 Owner feedback (13 Oct 2026, after WP-3.I merged): "can you make a letters a little bit more bigger", then, on colourful bubbles: "no just make the bubbles bigger, also i've noticed that the glass layout does not magnify the object behind. and it should look exactly like this" with a reference image of Apple-style liquid-glass controls (not committed: third-party art), "take the icon with the plus sign". Web only. Bubbles stay clear (no colour).
 
@@ -7,10 +7,15 @@ Owner feedback (13 Oct 2026, after WP-3.I merged): "can you make a letters a lit
 - **Room for them:** the spawner tries up to 256 spots and keeps the roomiest; after each refill and each tick, the separation runs a few passes so a crowded cluster settles.
 - **Liquid glass like the reference "+" disc:** the bubble reads the live screen and acts as a convex lens: what is behind (planets, rockets, stars) shows magnified, `glass.magnify` 0.12 at the centre and more toward the rim (`glass.rimBend` 0.9), with a slight colour split at the edge. A thin bright rim, brightest top-left and bottom-right, a faint iridescent edge and the soft drop shadow; no highlight spot. `glass.live` 0 falls back to the baked sky. The square glass look is unchanged.
 
+- **Lost items instead of planets (owner, 14:34: "change the items to match this", "remove the planets"):** the planets, sun and UFOs are gone. The floating objects come from the owner's second sheet (`docs/design/space-items-sheet.jpg`, cut out into `game/art/space/`): eight spots take Act 1's lost everyday items (teacup, bread, spoon, key, lamp, door, letter, chair, TV), three take orbit junk, and a comet, rocket or sputnik crosses now and then. Items are tinted toward the night sky as in mock v3, so the letters stay brightest.
+- **Mock v3 (`docs/design/mock-v3.jpg`) and the owner's painted backdrop (`game/art/backdrop/low_orbit.jpg`):** the backdrop is scaled so its Earth's rim sits on the HUD curve. The HUD no longer draws its own Earth; `NightPanel` is now a veil over the painted city lights that lifts as words are restored. Top: the level's name in a centred chip (points under it) and "Level n / N" at right; the "AstroLex" chip is gone. Back-plane star alpha 0.85 → 0.6. The bubbles stay liquid glass (the mock's dark bubbles were not copied, since the owner approved the glass).
+- **Font (owner: "for the whole game use Libre Caslon Condensed"):** `game/fonts/LibreCaslonCondensed.ttf` (OFL 1.1, `game/fonts/OFL.txt`) at weight 600 is the project's default font.
+
 ## Acceptance criteria
 | AC | Check |
 |---|---|
 | AC1 | New tunables (`tile.glyphScale`, `glass.live`, `glass.magnify`, `glass.rimBend`) have schema entries and are exported | `validate_data`, `export_game_data` leaves no diff |
 | AC2 | At the larger size no two catchable tiles spawn or drift closer than r1 + r2 + `tile.minGap` | `test_spawn_never_overlaps_catchable_tiles`, `test_catchable_tiles_keep_their_gap_while_drifting` (test_round.gd) |
 | AC3 | Bubbles read the live screen and magnify it; the glyph follows `tile.glyphScale` | `test_bubble_glass_magnifies_the_live_screen`, `test_tile_view_bubble_is_round_and_untilted` (test_glass.gd) + screenshot |
+| AC3b | Floating items are the new stickers, mostly Act 1 everyday items, no planets; the backdrop is the painted image; the level chip is centred and there is no AstroLex chip; the default font is Libre Caslon Condensed | `test_sky_drifters_move_behind_the_letters`, `test_hud_follows_the_owner_mock` (test_hud.gd), `test_the_game_font_is_libre_caslon_condensed` (test_glass.gd) + screenshot |
 | AC4 | All existing tests pass, the web export builds and the Chromium smoke test runs | `scripts/godot/test.sh`, `scripts/godot/export.sh web`, `node smoke.cjs` |

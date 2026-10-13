@@ -41,7 +41,7 @@ const SIDE_PAD := 44.0
 const EDGE := 44.0
 const CHIP_Y := 34.0
 const CHIP_H := 86.0
-const CHIP_MID_W := 330.0  # the centre "AstroLex" chip, which also carries the points
+const CHIP_MID_W := 360.0  # the centre chip: the level name, with the points under it
 const BAND_Y := 150.0  # Babel's speech bubble
 const BAND_H := 104.0
 const BAND_INSET := 100.0
@@ -481,6 +481,7 @@ func _build_world() -> void:
 	_backdrop = ActBackdrop.new()
 	_backdrop.name = "ActScene"
 	_backdrop.view_size = view_size
+	_backdrop.horizon_y = view_size.y - HudArt.PANEL_H + HudArt.CREST
 	_backdrop.reduced_motion = settings.reduced_motion
 	backdrop.add_child(_backdrop)
 	if settings.show_fps or FpsMeter.fps_requested():
@@ -895,26 +896,25 @@ func _build_hud() -> void:
 	_night = night
 	if character_id != "":
 		_build_portrait()
-	# Top: level name at left, AstroLex with the points in the middle, Level n / N at right.
-	var lc := _chip("LevelChip", "LevelLabel", _level_title)
-	lc.position = Vector2(SIDE_PAD, CHIP_Y)
-	lc.visible = _level_title != ""
-	_hud.add_child(lc)
-	_level_label = lc.get_node("LevelLabel")
+	# Top (owner mock v3): the level's name in the middle with the points under it, Level n / N at right.
 	var cc := _chip("LevelCounterChip", "LevelCounter", level_counter)
 	cc.position = Vector2(w - SIDE_PAD - cc.size.x, CHIP_Y)
 	cc.visible = level_counter != ""
 	_hud.add_child(cc)
 	_counter_label = cc.get_node("LevelCounter")
-	var mid := _chip("TitleChip", "TitleLabel", "AstroLex", CHIP_MID_W)
+	var mid := _chip("LevelChip", "LevelLabel", _level_title, CHIP_MID_W)
 	mid.size.x = CHIP_MID_W
 	mid.position = Vector2((w - CHIP_MID_W) * 0.5, CHIP_Y)
-	var title := mid.get_node("TitleLabel") as Label
-	title.add_theme_font_size_override("font_size", 36)
+	var title := mid.get_node("LevelLabel") as Label
+	var fs := 34
+	while fs > 22 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
+		fs -= 2
+	title.add_theme_font_size_override("font_size", fs)
 	title.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	title.size = Vector2(CHIP_MID_W, 52)
 	title.position = Vector2(0, 4)
 	_hud.add_child(mid)
+	_level_label = title
 	_score_row = HBoxContainer.new()
 	_score_row.name = "ScoreRow"
 	_score_row.alignment = BoxContainer.ALIGNMENT_CENTER
