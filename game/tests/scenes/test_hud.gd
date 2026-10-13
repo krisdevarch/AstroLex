@@ -162,10 +162,13 @@ func test_hud_follows_the_owner_mock() -> void:
 		var p_right: float = portrait.position.x + portrait.size.x * portrait.scale.x
 		assert_true(p_right < tray.position.x, "portrait left of the tray")
 		assert_true(pill.position.y > portrait.position.y + portrait.size.y * portrait.scale.y - 40.0, "name pill under the portrait")
-		# The active word's row starts at the tray's left padding; the next word's row sits under it.
+		# The active word is centred in the tray's first row (owner tray mock); the next word's row sits under it.
 		var row := f.find_child("ActiveSlots", true, false) as Control
 		var first := row.get_child(0) as Control
-		assert_true(absf(first.position.x - (tray.position.x + f.TRAY_PAD)) < 0.5, "first slot at the tray padding")
+		var last := row.get_child(row.get_child_count() - 1) as Control
+		var left_gap: float = first.position.x - tray.position.x
+		var right_gap: float = tray.position.x + tray.size.x - (last.position.x + last.size.x)
+		assert_true(absf(left_gap - right_gap) < 1.0, "active word centred in the tray")
 		var prow := f.find_child("PreviewSlots", true, false) as Control
 		if prow.get_child_count() > 0:
 			assert_true((prow.get_child(0) as Control).position.y > first.position.y, "next word under the active word")
