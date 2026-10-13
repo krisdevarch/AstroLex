@@ -13,6 +13,10 @@
     "tap.driftMarginMul",
     "drift.speed",
     "drift.speedVariation",
+    "drift.curve",
+    "drift.curveHz",
+    "drift.surge",
+    "drift.surgeHz",
     "spawner.decoys",
     "spawner.decoyRatio",
     "spawner.frontShare",
@@ -136,6 +140,27 @@
       "type": "number",
       "minimum": 0,
       "description": "fraction of drift.speed each tile varies by"
+    },
+    "drift.curve": {
+      "type": "number",
+      "minimum": 0,
+      "description": "radians per second at the peak of a letter's swerve; 0 drifts in straight lines"
+    },
+    "drift.curveHz": {
+      "type": "number",
+      "minimum": 0,
+      "description": "how often a letter's swerve swings from one side to the other, per second"
+    },
+    "drift.surge": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.9,
+      "description": "fraction a letter's speed surges above and eases below its spawn speed"
+    },
+    "drift.surgeHz": {
+      "type": "number",
+      "minimum": 0,
+      "description": "surges per second"
     },
     "spawner.decoys": {
       "type": "integer",
@@ -313,6 +338,18 @@
       "type": "number",
       "minimum": 0,
       "description": "2.5D tile: maximum perspective tilt"
+    },
+    "tile.bounceSquash": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.4,
+      "description": "how far a bubble flattens when it bounces (fraction of its size)"
+    },
+    "tile.leanDeg": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "degrees a letter leans into its sideways motion"
     },
     "tile.swayDeg": {
       "type": "number",

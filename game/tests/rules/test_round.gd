@@ -143,13 +143,14 @@ func test_tiles_stay_inside_the_bounds_while_drifting() -> void:
 func test_drift_speed_is_within_the_variation_band_and_ramps() -> void:
 	for round_no in [1, 4]:
 		var r := _make(5, round_no)
-		var base: float = 0.1 * (1.0 + 0.08 * (round_no - 1))
+		var base: float = float(_tun["drift.speed"]) * (1.0 + float(_tun["ramp.driftStep"]) * (round_no - 1))
+		var band: float = float(_tun["drift.speedVariation"])
 		for t in r.tiles:
 			if t.plane >= 2:
 				continue
 			var s: float = t.vel.length()
 			var b: float = base * (float(_tun["plane.midSpeedMul"]) if t.plane == 1 else 1.0)  # mid layer: parallax
-			assert_true(s >= b * 0.65 - 1e-6 and s <= b * 1.35 + 1e-6, "speed %f base %f plane %d" % [s, b, t.plane])
+			assert_true(s >= b * (1.0 - band) - 1e-6 and s <= b * (1.0 + band) + 1e-6, "speed %f base %f plane %d" % [s, b, t.plane])
 
 
 func test_ramp_numbers() -> void:
@@ -855,3 +856,31 @@ func test_letter_layers_may_overlap_but_not_within_a_layer() -> void:
 	assert_true(a.pos.distance_to(b.pos) < a.radius, "so a mid letter can sit behind a front letter")
 	assert_true(c.pos.distance_to(b.pos) >= b.radius + c.radius + float(_tun["tile.minGap"]) - 1e-6, "letters on one layer push apart")
 	assert_true(b.radius < a.radius, "the mid layer is smaller")
+
+
+func test_letters_swoop_on_curved_paths_and_surge() -> void:
+	var r := _make(5)
+	var t = null
+	for c in r.tiles:
+		if c.plane == 0:
+			t = c
+			break
+	var heading0: float = t.vel.angle()
+	var speeds: Array[float] = []
+	var turned := 0.0
+	for i in 240:  # four seconds
+		r.step(1.0 / 60.0)
+		speeds.append(t.vel.length())
+		turned = maxf(turned, absf(angle_difference(heading0, t.vel.angle())))
+	assert_true(turned > 0.2, "heading turns without a wall (%f rad)" % turned)
+	assert_true(speeds.max() > speeds.min() * 1.2, "speed surges and eases")
+	assert_true(speeds.max() <= t.base_speed * (1.0 + float(_tun["drift.surge"])) * 1.6 + 1e-6, "surge stays bounded")
+
+
+func test_a_stopped_letter_stays_stopped() -> void:
+	var r := _make(5)
+	for t in r.tiles:
+		t.vel = Vector2.ZERO
+	r.step(0.5)
+	for t in r.tiles:
+		assert_true(t.vel.length() < 1e-6, "no steering on a stopped tile")
