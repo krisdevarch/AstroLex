@@ -136,6 +136,14 @@ func set_item(art: String) -> void:
 	body.self_modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0) * Color(0.82, 0.86, 0.95)
 
 
+## Mid plane (2.5D): a letter one layer back, smaller (plane.midScale, applied by the caller) and a
+## little dimmer and bluer, so it reads as further away when it drifts behind a front letter.
+func set_depth(dim: float) -> void:
+	var k := 1.0 - clampf(dim, 0.0, 1.0)
+	body.self_modulate = Color(k, k * 1.02, minf(1.0, k * 1.12), 1.0)
+	glyph.self_modulate = Color(k, k * 1.02, minf(1.0, k * 1.12), 1.0)
+
+
 ## Back plane: one of the owner's sticker items drifting slowly behind the letters (owner, 13 Oct
 ## 2026: "keep the decoys in the background moving"). It cannot be tapped.
 func set_back(alpha: float, art: String) -> void:

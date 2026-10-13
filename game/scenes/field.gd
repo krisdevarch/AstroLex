@@ -267,12 +267,15 @@ func tap(screen_pos: Vector2) -> int:
 			best_id = th.id
 	if best_id >= 0:
 		return best_id if game_round.fire(best_id) else -1
+	# Letters sit on two layers (2.5D): under the finger, the front layer wins, then the nearest.
+	var best_plane := 99
 	for t in game_round.tiles:
 		if not t.alive or t.plane >= 2:
 			continue
 		var d := to_screen(t.pos).distance_to(screen_pos)
 		nearest = minf(nearest, d)
-		if d <= radius_px(t) + margin and d < best_d:
+		if d <= radius_px(t) + margin and (t.plane < best_plane or (t.plane == best_plane and d < best_d)):
+			best_plane = t.plane
 			best_d = d
 			best_id = t.id
 	if best_id < 0:
@@ -552,6 +555,8 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.name = "Tile_%d" % t.id
 	if t.plane == 2:
 		v.set_back(_n("plane.backAlpha"), _next_item())
+	elif t.plane == 1:
+		v.set_depth(_n("plane.midDim"))
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
