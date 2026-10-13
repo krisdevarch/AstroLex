@@ -43,6 +43,8 @@
     "plane.backScale",
     "plane.backAlpha",
     "plane.backSpeedMul",
+    "plane.midSpeedMul",
+    "plane.midDim",
     "plane.backDesaturate",
     "plane.backTiles",
     "tile.maxTiltDeg",
@@ -285,6 +287,17 @@
       "type": "number",
       "minimum": 0,
       "description": "drift speed multiplier for back-plane tiles (parallax)"
+    },
+    "plane.midSpeedMul": {
+      "type": "number",
+      "minimum": 0,
+      "description": "drift speed multiplier for mid-plane letters (2.5D parallax)"
+    },
+    "plane.midDim": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "how much darker mid-plane letters draw, so they read as one layer back"
     },
     "plane.backDesaturate": {
       "type": "number",

@@ -32,16 +32,31 @@ func test_tap_on_a_tile_fires_and_a_far_tap_does_not() -> void:
 	var f := _make_field(false)
 	var target = null
 	for t in f.game_round.tiles:
-		if t.plane < 2 and t.alive:
+		if t.plane == 0 and t.alive:
 			target = t
 			break
-	assert_true(target != null, "a catchable tile exists")
+	assert_true(target != null, "a front tile exists")
 	# Far from every tile: off the left edge of the screen.
 	assert_eq(f.tap(Vector2(-900, -900)), -1, "far tap misses")
 	assert_true(f.game_round.shot.is_empty(), "a miss fires nothing")
 	var id: int = f.tap(f.to_screen(target.pos))
 	assert_eq(id, target.id, "tap on the tile picks it")
 	assert_eq(int(f.game_round.shot["tile_id"]), target.id, "the shot targets it")
+	f.free()
+
+
+func test_a_tap_on_overlapping_letters_picks_the_front_one() -> void:
+	var f := _make_field(false)
+	var front = null
+	var mid = null
+	for t in f.game_round.tiles:
+		if t.alive and t.plane == 0 and front == null:
+			front = t
+		elif t.alive and t.plane == 1 and mid == null:
+			mid = t
+	assert_true(front != null and mid != null, "both letter layers are used")
+	mid.pos = front.pos + Vector2(0.01, 0.0)  # the mid letter drifts right behind the front one
+	assert_eq(f.tap(f.to_screen(mid.pos)), front.id, "the front letter wins, even if the tap is nearer the mid one")
 	f.free()
 
 

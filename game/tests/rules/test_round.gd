@@ -148,7 +148,8 @@ func test_drift_speed_is_within_the_variation_band_and_ramps() -> void:
 			if t.plane >= 2:
 				continue
 			var s: float = t.vel.length()
-			assert_true(s >= base * 0.65 - 1e-6 and s <= base * 1.35 + 1e-6, "speed %f base %f" % [s, base])
+			var b: float = base * (float(_tun["plane.midSpeedMul"]) if t.plane == 1 else 1.0)  # mid layer: parallax
+			assert_true(s >= b * 0.65 - 1e-6 and s <= b * 1.35 + 1e-6, "speed %f base %f plane %d" % [s, b, t.plane])
 
 
 func test_ramp_numbers() -> void:
@@ -801,7 +802,8 @@ func _min_slack(r: Round) -> float:
 			live.append(t)
 	for i in live.size():
 		for j in range(i + 1, live.size()):
-			worst = minf(worst, live[i].pos.distance_to(live[j].pos) - (live[i].radius + live[j].radius + gap))
+			if live[i].plane == live[j].plane:  # the two letter layers may overlap (2.5D)
+				worst = minf(worst, live[i].pos.distance_to(live[j].pos) - (live[i].radius + live[j].radius + gap))
 	return worst
 
 
@@ -836,3 +838,20 @@ func test_head_on_pair_bounces() -> void:
 	r._separate_tiles()
 	assert_true(a.vel.x < 0.0 and b.vel.x > 0.0, "velocities exchanged")
 	assert_true(b.pos.x - a.pos.x >= a.radius + b.radius + float(_tun["tile.minGap"]) - 1e-6, "pushed apart")
+
+
+func test_letter_layers_may_overlap_but_not_within_a_layer() -> void:
+	var r := _make(5)
+	for t in r.tiles:
+		t.alive = false
+	var a: RefCounted = r._spawn("A", true, 0)
+	var b: RefCounted = r._spawn("B", true, 1)
+	var c: RefCounted = r._spawn("C", true, 1)
+	a.pos = Vector2(0.5, 0.9)
+	b.pos = Vector2(0.5, 0.9)
+	c.pos = Vector2(0.52, 0.9)
+	r._separate_tiles()
+	assert_eq(a.pos, Vector2(0.5, 0.9), "a front letter is not pushed by mid letters behind it")
+	assert_true(a.pos.distance_to(b.pos) < a.radius, "so a mid letter can sit behind a front letter")
+	assert_true(c.pos.distance_to(b.pos) >= b.radius + c.radius + float(_tun["tile.minGap"]) - 1e-6, "letters on one layer push apart")
+	assert_true(b.radius < a.radius, "the mid layer is smaller")

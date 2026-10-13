@@ -324,7 +324,7 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	var best_pos := Vector2.ZERO
 	for _try in 256:
 		var p := Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
-		var slack := INF if plane >= 2 else _catchable_slack(p, r, gap)
+		var slack := INF if plane >= 2 else _catchable_slack(p, r, gap, plane)
 		if slack > best_slack:
 			best_slack = slack
 			best_pos = p
@@ -336,6 +336,8 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	var speed := _num("drift.speed") * float(ramp()["drift"]) * (1.0 + _rng.randf_range(-var_frac, var_frac))
 	if plane >= 2:
 		speed *= _num("plane.backSpeedMul")
+	elif plane == 1:
+		speed *= _num("plane.midSpeedMul")  # parallax: the deeper layer drifts a little slower
 	tile.vel = Vector2(cos(angle), sin(angle)) * speed
 	tiles.append(tile)
 	_by_id[tile.id] = tile
@@ -343,17 +345,18 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	return tile
 
 
-## A weighted-random letter that is not in `excluded` (an Array of single-character strings).
-## The smallest clearance between a tile of radius r at p and any live catchable tile (negative: overlap).
-func _catchable_slack(p: Vector2, r: float, gap: float) -> float:
+## The smallest clearance between a tile of radius r at p and any live catchable tile on the same
+## plane (negative: overlap). The front and mid planes may overlap: a letter can drift behind another
+## (2.5D, owner 13 Oct 2026: "letters ... one behind another").
+func _catchable_slack(p: Vector2, r: float, gap: float, plane: int) -> float:
 	var worst := INF
 	for o: Tile in tiles:
-		if o.alive and o.plane < 2:
+		if o.alive and o.plane == plane:
 			worst = minf(worst, p.distance_to(o.pos) - (r + o.radius + gap))
 	return worst
 
 
-## Pushes overlapping catchable tiles apart and bounces them (equal masses), in list order.
+## Pushes overlapping catchable tiles on the same plane apart and bounces them (equal masses), in list order.
 ## Returns true when it moved any tile.
 func _separate_tiles() -> bool:
 	var moved := false
@@ -365,7 +368,7 @@ func _separate_tiles() -> bool:
 			continue
 		for j in range(i + 1, n):
 			var b: Tile = tiles[j]
-			if not b.alive or b.plane >= 2 or b.carried_by >= 0:
+			if not b.alive or b.plane != a.plane or b.carried_by >= 0:
 				continue
 			var need := a.radius + b.radius + gap
 			var d := b.pos - a.pos
@@ -395,6 +398,7 @@ func _clamp_to_field(t: Tile) -> void:
 	t.pos.y = clampf(t.pos.y, _num("field.topMargin") + r, _num("field.height") - r)
 
 
+## A weighted-random letter that is not in `excluded` (an Array of single-character strings).
 func _weighted_letter(excluded: Array) -> String:
 	var letters: Array = []
 	var total := 0
