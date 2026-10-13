@@ -20,9 +20,17 @@ const DEFAULT_ACT := "act1_low_orbit"
 const LOW_TIME := 5.0
 const FLOAT_SEC := 0.9
 const AMBER := Color("F8BC04")
-const CREAM := Color("F1ECDC")
-const INK_DARK := Color("0d1030")
 const SLOT_EDGE := Color("3cbfd2")  # the mock's teal slot outline
+# The owner's tray mock (16:51): a navy tray with a slate rim, near-black slots with a teal outline,
+# cream letter tiles with a darker bottom lip, and an orange Hint button with a glowing bulb.
+const TRAY_FILL := Color(0.09, 0.12, 0.2, 0.95)
+const TRAY_EDGE := Color("2f3b58")
+const SLOT_FILL := Color("121826")
+const TILE_CREAM := Color("f6ebcd")
+const TILE_LIP := Color("d4bf92")
+const TILE_INK := Color("1c2740")
+const HINT_FILL := Color("f7a21d")
+const HINT_RIM := Color("9c540c")
 const CLOCK_TEXT := Color(1.0, 0.85, 0.78)
 const PERIWINKLE := Color("7579f0")
 const TEXT_CREAM := Color("efe8d6")  # the mock's warm off-white for HUD text
@@ -63,8 +71,9 @@ const TRAY_BOTTOM_UP := 156.0
 const TRAY_PAD := 20.0
 const ROW1_UP := 320.0  # centre of the active word's row
 const ROW2_UP := 216.0  # centre of the next word's row
-const SLOT_MAX := 76.0
+const SLOT_MAX := 78.0
 const SLOT_GAP := 10.0
+const SLOTS_PER_ROW := 7
 const HINT_D := 88.0  # round Hint button at the right end of the next word's row
 const BOTTOM_UP := 76.0  # centre of the timer pill and the round buttons
 const BTN_SIZE := 88.0
@@ -785,15 +794,22 @@ func _row_width(where: String) -> float:
 	return inner if where == "active" else inner - HINT_D - SLOT_GAP
 
 
+## One slot size for both rows, as in the owner's tray mock (16:51): seven slots fill the first row.
+## Longer words shrink to fit their row.
 func _slot_size(where: String, n: int) -> float:
+	var per_row := float(SLOTS_PER_ROW)
+	var s := minf(SLOT_MAX, (_row_width("active") - SLOT_GAP * (per_row - 1.0)) / per_row)
 	var k := float(maxi(n, 1))
-	return minf(SLOT_MAX, (_row_width(where) - SLOT_GAP * float(maxi(n - 1, 0))) / k)
+	return minf(s, (_row_width(where) - SLOT_GAP * (k - 1.0)) / k)
 
 
-## Both rows start at the tray's left padding, like the mock.
+## The active word is centred in the first row; the next word starts at the left of the second.
 func _slot_center(where: String, idx: int, n: int) -> Vector2:
 	var size := _slot_size(where, n)
-	var x := _tray_rect().position.x + TRAY_PAD + size * 0.5 + float(idx) * (size + SLOT_GAP)
+	var x0 := _tray_rect().position.x + TRAY_PAD
+	if where == "active":
+		x0 += (_row_width("active") - (float(n) * size + float(maxi(n - 1, 0)) * SLOT_GAP)) * 0.5
+	var x := x0 + size * 0.5 + float(idx) * (size + SLOT_GAP)
 	return Vector2(x, view_size.y - (ROW1_UP if where == "active" else ROW2_UP))
 
 
@@ -825,14 +841,14 @@ func _chip(panel_name: String, label_name: String, text: String, min_w: float = 
 
 
 ## A round icon button centred at `centre`.
-func _icon_button(node_name: String, kind: String, centre: Vector2, d: float, border: Color, icon_colour: Color, bg: Color) -> Button:
+func _icon_button(node_name: String, kind: String, centre: Vector2, d: float, border: Color, icon_colour: Color, bg: Color, border_w: int = 3) -> Button:
 	var b := Button.new()
 	b.name = node_name
 	b.focus_mode = Control.FOCUS_NONE
 	var r := int(d * 0.5)
-	b.add_theme_stylebox_override("normal", Ui.box(bg, r, border, 3))
-	b.add_theme_stylebox_override("hover", Ui.box(bg.lightened(0.08), r, border, 3))
-	b.add_theme_stylebox_override("pressed", Ui.box(bg.lightened(0.2), r, border, 3))
+	b.add_theme_stylebox_override("normal", Ui.box(bg, r, border, border_w))
+	b.add_theme_stylebox_override("hover", Ui.box(bg.lightened(0.08), r, border, border_w))
+	b.add_theme_stylebox_override("pressed", Ui.box(bg.lightened(0.2), r, border, border_w))
 	b.size = Vector2(d, d)
 	b.position = centre - b.size * 0.5
 	var ic: Control = HudArt.Icon.new()
@@ -980,7 +996,7 @@ func _build_hud() -> void:
 	tray.name = "SlotTray"
 	tray.position = tr.position
 	tray.size = tr.size
-	tray.add_theme_stylebox_override("panel", Ui.box(Color(0.06, 0.08, 0.14, 0.9), 38, Color("2b3a58"), 6))
+	tray.add_theme_stylebox_override("panel", Ui.box(TRAY_FILL, 40, TRAY_EDGE, 5))
 	_hud.add_child(_ignore(tray))
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"
@@ -988,7 +1004,7 @@ func _build_hud() -> void:
 	_preview_row = Control.new()
 	_preview_row.name = "PreviewSlots"
 	_hud.add_child(_ignore(_preview_row))
-	_hint_button = _icon_button("HintButton", "hint", Vector2(tr.end.x - TRAY_PAD - HINT_D * 0.5, h - ROW2_UP), HINT_D, Color("ffd45a"), Color("fff3b0"), Color("f5a524"))
+	_hint_button = _icon_button("HintButton", "hint", Vector2(tr.end.x - TRAY_PAD - HINT_D * 0.5, h - ROW2_UP), HINT_D, HINT_RIM, Color.WHITE, HINT_FILL, 4)
 	# Bottom row under the tray: the timer pill, then Pause, Sound and Settings as round buttons.
 	var by := h - BOTTOM_UP
 	var bx := w - EDGE - BTN_SIZE * 0.5
@@ -1071,7 +1087,7 @@ func _rebuild_row(row: Control, where: String, slots: Array[Dictionary]) -> void
 		p.size = Vector2(size, size)
 		p.pivot_offset = p.size * 0.5
 		p.position = _slot_center(where, i, n) - p.size * 0.5
-		var l := Ui.label("", int(size * 0.64), INK_DARK)
+		var l := Ui.label("", int(size * 0.6), TILE_INK)
 		l.name = "Glyph"
 		l.size = p.size
 		l.add_theme_constant_override("outline_size", 0)
@@ -1080,12 +1096,14 @@ func _rebuild_row(row: Control, where: String, slots: Array[Dictionary]) -> void
 
 
 func _style_slot(p: Panel, filled: bool, where: String) -> void:
-	var r := int(p.size.x * 0.22)
+	var r := int(p.size.x * 0.24)
 	if filled:
-		p.add_theme_stylebox_override("panel", Ui.box(CREAM, r, Color("d9cfb0"), 3))
+		# A cream tile with a darker lip along the bottom, so it reads as a raised key.
+		var sb := Ui.box(TILE_CREAM, r, TILE_LIP, 0)
+		sb.border_width_bottom = maxi(4, int(p.size.y * 0.08))
+		p.add_theme_stylebox_override("panel", sb)
 	else:
-		var edge := SLOT_EDGE if where == "active" else Color(SLOT_EDGE.r, SLOT_EDGE.g, SLOT_EDGE.b, 0.8)
-		p.add_theme_stylebox_override("panel", Ui.box(Color("111a29"), r, edge, 4))
+		p.add_theme_stylebox_override("panel", Ui.box(SLOT_FILL, r, SLOT_EDGE, 5))
 
 
 ## Share of the level's words restored so far: colour and city lights come back with it.
@@ -1149,7 +1167,7 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 		var ch := str(slots[i]["ch"]).to_upper()
 		g.text = ch if filled or hint_shown(i, slots.size()) else ""
 		g.modulate.a = 1.0 if filled else _n("hud.hintAlpha")
-		g.add_theme_color_override("font_color", INK_DARK if filled else Color.WHITE)
+		g.add_theme_color_override("font_color", TILE_INK if filled else Color.WHITE)
 		_style_slot(p, filled, where)
 
 

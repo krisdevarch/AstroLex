@@ -136,12 +136,20 @@ class Icon extends Control:
 			"play":
 				draw_colored_polygon(PackedVector2Array([c + Vector2(-14, -26), c + Vector2(-14, 26), c + Vector2(24, 0)]), col)
 			"hint":
-				var b := c + Vector2(0, -10)
-				draw_arc(b, 20.0, deg_to_rad(120), deg_to_rad(420), 40, col, 5.0, true)
-				draw_line(b + Vector2(-10, 17), b + Vector2(-10, 28), col, 5.0)
-				draw_line(b + Vector2(10, 17), b + Vector2(10, 28), col, 5.0)
-				draw_line(b + Vector2(-10, 34), b + Vector2(10, 34), col, 5.0)
-				draw_line(b + Vector2(-5, 41), b + Vector2(5, 41), col, 5.0)
+				# The owner's tray mock: a warm glow on the orange button, a yellow bulb with a dark
+				# ink outline and a white glint, on a grey screw base.
+				var b := c + Vector2(0, -11)
+				for i in 5:
+					draw_circle(c + Vector2(0, -8), 44.0 - float(i) * 6.0, Color(1.0, 0.84, 0.3, 0.13))
+				var ink := Color("4a2c0c")
+				draw_circle(b, 25.0, ink)
+				draw_circle(b, 20.5, Color("ffd23f"))
+				draw_circle(b + Vector2(-3, -3), 13.0, Color("ffe682"))
+				draw_arc(b, 13.5, deg_to_rad(195), deg_to_rad(255), 12, Color.WHITE, 4.5, true)
+				draw_rect(Rect2(b.x - 13.0, b.y + 18.0, 26.0, 21.0), ink)
+				draw_rect(Rect2(b.x - 9.5, b.y + 21.0, 19.0, 6.0), Color("c9cdd3"))
+				draw_rect(Rect2(b.x - 9.5, b.y + 30.0, 19.0, 5.0), Color("a3a9b2"))
+				draw_rect(Rect2(b.x - 5.0, b.y + 39.0, 10.0, 5.0), ink)
 			"sound", "muted":
 				draw_rect(Rect2(c.x - 28, c.y - 9, 13, 18), col)
 				draw_colored_polygon(PackedVector2Array([c + Vector2(-16, -9), c + Vector2(-2, -21), c + Vector2(-2, 21), c + Vector2(-16, 9)]), col)
