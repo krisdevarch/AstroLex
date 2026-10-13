@@ -29,7 +29,7 @@ func test_hud_nodes_exist_and_portrait_only_with_a_character() -> void:
 	for n in ["NightPanel", "Portrait", "PortraitBust", "PortraitName", "SlotTray", "ActiveSlots", "PreviewSlots", "ScoreLabel", "ComboLabel", "HintButton", "PauseButton", "SoundButton", "SettingsButton", "TimeBar", "ClockLabel", "LevelCounterChip", "BabelBand"]:
 		assert_true(_has(f, n), "node %s exists" % n)
 	assert_eq((f.find_child("LevelCounter", true, false) as Label).text, "Level 1 / 12", "counter text")
-	assert_eq((f.find_child("PortraitNameLabel", true, false) as Label).text, "WREN", "uppercase name pill")
+	assert_eq((f.find_child("PortraitNameLabel", true, false) as Label).text, "Wren", "name pill")
 	f.free()
 	var g := _field("")
 	assert_true(not _has(g, "Portrait"), "no portrait without a character")
@@ -40,10 +40,10 @@ func test_hud_nodes_exist_and_portrait_only_with_a_character() -> void:
 func test_bottom_hud_anchors_to_the_real_bottom_on_a_taller_screen() -> void:
 	var f := _field("ash", Vector2(1080, 2342))
 	var bar := f.find_child("TimeBar", true, false) as Control
-	assert_true(bar.position.y > 2342.0 - 100.0 and bar.position.y < 2342.0, "clock bar hugs the bottom")
+	assert_true(bar.position.y > 2342.0 - 140.0 and bar.position.y < 2342.0, "clock bar hugs the bottom")
 	var btn := f.find_child("HintButton", true, false) as Control
 	assert_true(btn.position.y + btn.size.y < 2342.0 and btn.position.y > 2342.0 - 300.0, "buttons sit above the bar")
-	assert_eq(f.panel_top(), 2342.0 - 560.0, "panel top follows the bottom")
+	assert_eq(f.panel_top(), 2342.0 - 530.0, "panel top follows the bottom")
 	f.free()
 
 
@@ -82,8 +82,8 @@ func test_hint_icon_is_first_button_icon() -> void:
 func test_preview_row_fits_its_width_for_an_eleven_letter_word() -> void:
 	var f := _field("wren")
 	var n := 11
-	var total: float = f._slot_size("preview", n) * n + 8.0 * (n - 1)
-	assert_true(total <= f.PREVIEW_ROW_W + 0.01, "preview row within its width (%.0f)" % total)
+	var total: float = f._slot_size("preview", n) * n + f.SLOT_GAP * (n - 1)
+	assert_true(total <= f._row_width("preview") + 0.01, "next word's row fits beside Hint (%.0f)" % total)
 	f.free()
 
 
@@ -137,32 +137,39 @@ func test_no_tile_is_drawn_under_the_bottom_panel() -> void:
 		f.free()
 
 
-func test_hud_sits_on_one_grid() -> void:
+func test_hud_follows_the_owner_mock() -> void:
 	for size in [Vector2(1080, 1920), Vector2(1179, 2556)]:
 		var f := _field("ash", size)
 		var right: float = size.x - f.EDGE
 		var tray := f.find_child("SlotTray", true, false) as Control
 		var hint := f.find_child("HintButton", true, false) as Control
 		var gear := f.find_child("SettingsButton", true, false) as Control
-		var clock := f.find_child("ClockLabel", true, false) as Control
-		var counter := f.find_child("LevelCounterChip", true, false) as Control
-		var band := f.find_child("BabelBand", true, false) as Control
+		var pause := f.find_child("PauseButton", true, false) as Control
 		var bar := f.find_child("TimeBar", true, false) as Control
+		var counter := f.find_child("LevelCounterChip", true, false) as Control
 		var chip := f.find_child("LevelChip", true, false) as Control
-		for c: Control in [tray, gear, clock, counter, band]:
-			assert_true(absf(c.position.x + c.size.x - right) < 0.5, "%s ends on the right margin" % c.name)
-		for c: Control in [bar, chip, band]:
-			assert_true(absf(c.position.x - f.EDGE) < 0.5, "%s starts on the left margin" % c.name)
-		assert_true(absf(tray.position.x - hint.position.x) < 0.5, "tray and buttons share the right column's left edge")
+		var mid := f.find_child("TitleChip", true, false) as Control
 		var portrait := f.find_child("Portrait", true, false) as Control
+		var pill := f.find_child("PortraitName", true, false) as Control
+		for c: Control in [tray, gear, counter]:
+			assert_true(absf(c.position.x + c.size.x - right) < 0.5, "%s ends on the right margin" % c.name)
+		assert_true(absf(chip.position.x - f.EDGE) < 0.5, "level chip starts on the left margin")
+		assert_true(absf(mid.position.x + mid.size.x * 0.5 - size.x * 0.5) < 0.5, "AstroLex chip centred")
+		assert_true(hint.position.x + hint.size.x <= tray.position.x + tray.size.x, "Hint sits inside the tray")
+		assert_true(hint.position.y > tray.position.y and hint.position.y + hint.size.y < tray.position.y + tray.size.y, "Hint inside the tray")
+		assert_true(absf(bar.position.x - tray.position.x) < 0.5, "timer pill lines up with the tray")
+		assert_true(bar.position.x + bar.size.x < pause.position.x, "timer pill ends before the round buttons")
+		assert_true(bar.position.y > tray.position.y + tray.size.y, "timer row under the tray")
 		var p_right: float = portrait.position.x + portrait.size.x * portrait.scale.x
-		assert_true(p_right <= tray.position.x - 40.0, "portrait stays in the left column")
-		# The row of active slots is centred in the tray.
+		assert_true(p_right < tray.position.x, "portrait left of the tray")
+		assert_true(pill.position.y > portrait.position.y + portrait.size.y * portrait.scale.y - 40.0, "name pill under the portrait")
+		# The active word's row starts at the tray's left padding; the next word's row sits under it.
 		var row := f.find_child("ActiveSlots", true, false) as Control
 		var first := row.get_child(0) as Control
-		var last := row.get_child(row.get_child_count() - 1) as Control
-		var mid := (first.position.x + last.position.x + last.size.x) * 0.5
-		assert_true(absf(mid - (tray.position.x + tray.size.x * 0.5)) < 0.5, "slots centred in the tray")
+		assert_true(absf(first.position.x - (tray.position.x + f.TRAY_PAD)) < 0.5, "first slot at the tray padding")
+		var prow := f.find_child("PreviewSlots", true, false) as Control
+		if prow.get_child_count() > 0:
+			assert_true((prow.get_child(0) as Control).position.y > first.position.y, "next word under the active word")
 		f.free()
 
 
@@ -191,13 +198,13 @@ func test_sky_drifters_move_behind_the_letters() -> void:
 	assert_eq(sky.get_parent(), tiles.get_parent(), "same layer as the letters")
 	assert_true(sky.get_index() < tiles.get_index(), "drawn behind the letters")
 	assert_true(sky.planet_count() >= 5, "planets present")
-	var p0: Vector2 = sky._planets[1]["pos"]
+	var p0: Vector2 = sky._bodies[1]["pos"]
 	for _i in 60:
 		sky.tick(1.0 / 30.0)
-	assert_true(sky._planets[1]["pos"].distance_to(p0) > 1.0, "planets drift")
+	assert_true(sky._bodies[1]["pos"].distance_to(p0) > 1.0, "planets drift")
 	for _i in 600:
 		sky.tick(1.0 / 30.0)
-	for p in sky._planets:
+	for p in sky._bodies:
 		assert_true(sky.area.grow(p["r"]).has_point(p["pos"]), "planet stays around the field")
 	f.free()
 
@@ -206,9 +213,9 @@ func test_sky_drifters_hold_still_under_reduced_motion() -> void:
 	var f := _field("wren")
 	var sky := f.find_child("SkyDrifters", true, false)
 	sky.reduced_motion = true
-	var p0: Vector2 = sky._planets[1]["pos"]
+	var p0: Vector2 = sky._bodies[1]["pos"]
 	for _i in 120:
 		sky.tick(1.0 / 30.0)
-	assert_eq(sky._planets[1]["pos"], p0, "no drift")
+	assert_eq(sky._bodies[1]["pos"], p0, "no drift")
 	assert_true(not sky.craft_flying(), "no rocket")
 	f.free()

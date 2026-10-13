@@ -7,19 +7,22 @@ const CREST := 40.0  # local y of the highest point (so it sits PANEL_H - CREST 
 const EDGE_DROP := 66.0  # how far the curve falls from the crest to either screen edge
 const ART_D := 356.0  # the portrait art's own size; the field scales it to fit its column
 const ATMOS := Color("8fe3ff")
+const RIM := Color("36d6ff")
+const RIM_CORE := Color("c8f6ff")
+const CITY_A := Color("ffb347")
+const CITY_B := Color("ffe08a")
 const CORAL := Color("FF6B35")
 const CORAL_LIGHT := Color("ff9a6e")
 const CRIMSON := Color("ff3b5c")
 const CRIMSON_LIGHT := Color("ff7a90")
 const RIM_R := 178.0
-const DISC_R := 160.0
+const DISC_R := 148.0
 const CLIP_SHADER := "shader_type canvas_item;\nvoid fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tc.a *= smoothstep(0.5, 0.49, length(UV - vec2(0.5)));\n\tCOLOR = c;\n}\n"
 
 
 ## A coral (or crimson) rounded bar fill: a 9-slice texture so the ends stay round at any length.
-static func bar_fill_box(c1: Color, c2: Color) -> StyleBoxTexture:
-	var w := 64
-	var h := 28
+static func bar_fill_box(c1: Color, c2: Color, h: int = 28) -> StyleBoxTexture:
+	var w := maxi(64, h * 2 + 8)
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	var r := float(h) * 0.5
 	for y in h:
@@ -59,8 +62,8 @@ class NightPanel extends Control:
 	func _draw() -> void:
 		var w := size.x
 		var h := size.y
-		var top_c := Color("1c3374")
-		var bot_c := Color("0b1638")
+		var top_c := Color("13265e")
+		var bot_c := Color("08112e")
 		var x := 0.0
 		while x < w:
 			var x2 := minf(x + 12.0, w)
@@ -75,21 +78,27 @@ class NightPanel extends Control:
 		while lx <= w + 0.1:
 			line.append(Vector2(lx, NightPanel.edge_y(lx, w)))
 			lx += 8.0
-		var rim := Color("8fd0ff")
-		draw_polyline(line, Color(rim.r, rim.g, rim.b, 0.07), 22.0, true)
-		draw_polyline(line, Color(rim.r, rim.g, rim.b, 0.16), 11.0, true)
-		draw_polyline(line, rim, 3.0, true)
-		# City lights: coral clusters under the curve; more come on as words are restored.
-		var total := 22
-		var on := 3 + int(round(lit * float(total - 3)))
+		# A bright cyan atmosphere rim with a wide glow, as in the owner's mock.
+		var widths := [46.0, 28.0, 16.0, 8.0, 4.0]
+		var alphas := [0.08, 0.16, 0.3, 0.6, 1.0]
+		for i in widths.size():
+			var c: Color = RIM if i < 4 else RIM_CORE
+			draw_polyline(line, Color(c.r, c.g, c.b, float(alphas[i])), float(widths[i]), true)
+		# City lights: a band of small warm dots under the rim; more come on as words are restored.
+		var total := 120
+		var on := int(round(lerpf(0.35, 1.0, lit) * float(total)))
 		for i in total:
-			var cxp := w * (0.05 + 0.9 * fposmod(float(i) * 0.6180339, 1.0))
-			var cyp := NightPanel.edge_y(cxp, w) + 14.0 + float((i * 37) % 47)
-			var rad := 2.0 + float(i % 3)
-			var lit_now := i < on
-			var a := 1.0 if lit_now else 0.18
-			draw_circle(Vector2(cxp, cyp), rad * 3.2, Color(CORAL.r, CORAL.g, CORAL.b, 0.14 * a))
-			draw_circle(Vector2(cxp, cyp), rad, Color(CORAL.r, CORAL.g, CORAL.b, a) if lit_now else Color(0.5, 0.5, 0.55, 0.35))
+			var u := fposmod(float(i) * 0.6180339, 1.0)
+			var cxp := w * u
+			var depth := fposmod(float(i) * 0.3819660 + 0.13, 1.0)
+			var cyp := NightPanel.edge_y(cxp, w) + 18.0 + depth * depth * 140.0
+			var rad := 1.6 + float(i % 3) * 0.8
+			var warm: Color = CITY_A if i % 3 else CITY_B
+			if i < on:
+				draw_circle(Vector2(cxp, cyp), rad * 3.0, Color(warm.r, warm.g, warm.b, 0.16))
+				draw_circle(Vector2(cxp, cyp), rad, warm)
+			else:
+				draw_circle(Vector2(cxp, cyp), rad, Color(0.45, 0.5, 0.6, 0.3))
 
 	static func _grad(y: float, h: float, a: Color, b: Color) -> Color:
 		return a.lerp(b, clampf((y - CREST) / (h - CREST), 0.0, 1.0))
@@ -98,44 +107,41 @@ class NightPanel extends Control:
 class PortraitArt extends Control:
 	var colour: Color = Color(0.55, 0.9, 1.0)
 
+	## A porthole as in the owner's mock: a glow in the suit colour, a thick metal ring with bolts,
+	## a thin coloured inner ring and a pale sky behind the Catcher.
 	func _draw() -> void:
 		var c := size * 0.5
-		for i in 6:
-			draw_circle(c, RIM_R + 24.0 - float(i) * 4.0, Color(colour.r, colour.g, colour.b, 0.07))
-		# Metal rim: a light grey ring, brighter at the upper left.
-		var segs := 48
+		for i in 8:
+			draw_circle(c, RIM_R + 26.0 - float(i) * 3.5, Color(colour.r, colour.g, colour.b, 0.08))
+		draw_circle(c, RIM_R + 2.0, Color("0b1433"))
+		var segs := 64
 		for i in segs:
 			var a0 := TAU * float(i) / float(segs)
 			var a1 := TAU * float(i + 1) / float(segs) + 0.02
-			var shade := 0.62 + 0.30 * cos(a0 + 0.8 + PI)
-			draw_arc(c, RIM_R - 5.0, a0, a1, 4, Color(shade, shade + 0.02, shade + 0.06), 10.0)
-		draw_arc(c, RIM_R - 14.0, 0.0, TAU, 96, colour, 8.0, true)
-		draw_circle(c, DISC_R, Color("0a1030"))
-		# Suit-colour glow low in the sky.
-		for i in 7:
-			draw_circle(c + Vector2(0, 28), 128.0 - float(i) * 16.0, Color(colour.r, colour.g, colour.b, 0.07))
-		var stars := [Vector2(-92, -84), Vector2(-40, -118), Vector2(30, -96), Vector2(88, -60), Vector2(112, -10), Vector2(-120, -20), Vector2(60, -128), Vector2(-70, -40), Vector2(8, -60), Vector2(126, 40)]
-		for i in stars.size():
-			var s: Vector2 = stars[i]
-			draw_circle(c + s, 1.6 + float(i % 3) * 0.5, Color(1, 1, 1, 0.5 + 0.1 * float(i % 4)))
-		# Earth's dark curve at the bottom of the porthole.
-		var top := PackedVector2Array()
-		var bottom := PackedVector2Array()
-		var ex := 0.0
-		var ey := DISC_R + 70.0
-		var er := 190.0
-		var n := 24
-		for i in n + 1:
-			var dx := -DISC_R * 0.99 + 2.0 * DISC_R * 0.99 * float(i) / float(n)
-			var y_d := sqrt(maxf(DISC_R * DISC_R - dx * dx, 0.0))
-			var y_e := ey - sqrt(maxf(er * er - (dx - ex) * (dx - ex), 0.0))
-			top.append(c + Vector2(dx, minf(y_e, y_d)))
-			bottom.append(c + Vector2(dx, y_d))
-		for i in n:
-			if bottom[i].y - top[i].y < 0.5 and bottom[i + 1].y - top[i + 1].y < 0.5:
-				continue
-			draw_colored_polygon(PackedVector2Array([top[i], top[i + 1], bottom[i + 1] + Vector2(0, 0.5), bottom[i] + Vector2(0, 0.5)]), Color("060b22"))
-		draw_polyline(top, Color(ATMOS.r, ATMOS.g, ATMOS.b, 0.55), 2.0, true)
+			var shade := 0.6 + 0.3 * cos(a0 + 0.8 + PI)
+			draw_arc(c, RIM_R - 9.0, a0, a1, 4, Color(shade, shade + 0.03, shade + 0.08), 20.0)
+		draw_arc(c, RIM_R + 1.0, 0.0, TAU, 96, Color("0b1433"), 3.0, true)
+		for i in 8:
+			var p := c + Vector2.from_angle(TAU * float(i) / 8.0 + PI / 8.0) * (RIM_R - 9.0)
+			draw_circle(p, 6.0, Color(0.32, 0.36, 0.45))
+			draw_circle(p + Vector2(-1.2, -1.2), 3.6, Color(0.88, 0.9, 0.95))
+		draw_arc(c, DISC_R + 1.0, 0.0, TAU, 96, colour, 6.0, true)
+		draw_circle(c, DISC_R - 2.0, Color("bfe4ff"))
+		for i in 6:
+			draw_circle(c + Vector2(0, 40), 120.0 - float(i) * 16.0, Color(1, 1, 1, 0.06))
+
+
+## The little triangle on top of Babel's bubble, pointing up.
+class BubbleTail extends Control:
+	var colour: Color = Color(0.56, 0.61, 0.95)
+	var fill: Color = Color(0.08, 0.12, 0.29)
+
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		var tri := PackedVector2Array([Vector2(0, h), Vector2(w * 0.62, 0), Vector2(w, h)])
+		draw_colored_polygon(tri, fill)
+		draw_polyline(PackedVector2Array([Vector2(0, h - 3), Vector2(w * 0.62, 0), Vector2(w, h - 3)]), colour, 4.0, true)
 
 
 class Icon extends Control:
