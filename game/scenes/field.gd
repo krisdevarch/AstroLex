@@ -9,6 +9,7 @@ const TileViewScript := preload("res://scenes/tile_view.gd")
 const TileViewScene: PackedScene = preload("res://scenes/tile_view.tscn")
 const LightRig := preload("res://scenes/light_rig.gd")
 const ActBackdrop := preload("res://scenes/act_backdrop.gd")
+const SkyDrifters := preload("res://scenes/sky_drifters.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
@@ -155,6 +156,7 @@ var _preview_n: int = 0
 
 var _world: CanvasLayer
 var _backdrop: Node2D
+var _drifters: Node2D
 var _night: Control
 var _tiles_root: Node2D
 var _fx_layer: CanvasLayer
@@ -173,6 +175,8 @@ var _fps_meter: CanvasLayer
 func _process(delta: float) -> void:
 	if game_round != null:
 		advance(minf(delta, 0.25))
+	if _drifters != null and _backdrop != null:
+		_drifters.sat = _backdrop.saturation()
 
 
 func _n(key: String) -> float:
@@ -488,6 +492,13 @@ func _build_world() -> void:
 	rig.name = "LightRig"
 	_world.add_child(rig)
 	rig.configure(Vector2(view_size.x * 0.5, _ft + (_n("field.height") - _n("field.topMargin")) * _scale * 0.45), view_size.y * 1.1, _world.layer)
+	# Planets, rockets and comets drift just behind the letters (visual only, taps pass through).
+	_drifters = SkyDrifters.new()
+	_drifters.name = "SkyDrifters"
+	_drifters.view_size = view_size
+	_drifters.area = Rect2(0.0, FIELD_TOP, view_size.x, panel_top() - FIELD_TOP)
+	_drifters.reduced_motion = settings.reduced_motion
+	_world.add_child(_drifters)
 	_tiles_root = Node2D.new()
 	_tiles_root.name = "Tiles"
 	_world.add_child(_tiles_root)

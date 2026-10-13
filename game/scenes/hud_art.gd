@@ -59,8 +59,8 @@ class NightPanel extends Control:
 	func _draw() -> void:
 		var w := size.x
 		var h := size.y
-		var top_c := Color("0f2f5c")
-		var bot_c := Color("050b1e")
+		var top_c := Color("1c3374")
+		var bot_c := Color("0b1638")
 		var x := 0.0
 		while x < w:
 			var x2 := minf(x + 12.0, w)
@@ -75,9 +75,10 @@ class NightPanel extends Control:
 		while lx <= w + 0.1:
 			line.append(Vector2(lx, NightPanel.edge_y(lx, w)))
 			lx += 8.0
-		draw_polyline(line, Color(ATMOS.r, ATMOS.g, ATMOS.b, 0.07), 22.0, true)
-		draw_polyline(line, Color(ATMOS.r, ATMOS.g, ATMOS.b, 0.16), 11.0, true)
-		draw_polyline(line, ATMOS, 3.0, true)
+		var rim := Color("8fd0ff")
+		draw_polyline(line, Color(rim.r, rim.g, rim.b, 0.07), 22.0, true)
+		draw_polyline(line, Color(rim.r, rim.g, rim.b, 0.16), 11.0, true)
+		draw_polyline(line, rim, 3.0, true)
 		# City lights: coral clusters under the curve; more come on as words are restored.
 		var total := 22
 		var on := 3 + int(round(lit * float(total - 3)))

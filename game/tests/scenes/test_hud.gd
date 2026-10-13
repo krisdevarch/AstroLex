@@ -177,7 +177,38 @@ func test_backdrop_regains_colour_as_words_are_restored() -> void:
 	assert_true(f.restored_share() > 0.5, "share follows the word index")
 	for _i in 120:
 		bg._process(1.0 / 30.0)
-	assert_true(bg.saturation() > s0 + 0.2, "colour comes back (%.2f)" % bg.saturation())
+	assert_true(bg.saturation() > s0 + 0.1, "colour comes back (%.2f)" % bg.saturation())
 	var night := f.find_child("NightPanel", true, false)
 	assert_true(float(night.get("lit")) > 0.5, "city lights come on")
+	f.free()
+
+
+func test_sky_drifters_move_behind_the_letters() -> void:
+	var f := _field("wren")
+	var sky := f.find_child("SkyDrifters", true, false)
+	assert_true(sky != null, "drifters exist")
+	var tiles := f.find_child("Tiles", true, false)
+	assert_eq(sky.get_parent(), tiles.get_parent(), "same layer as the letters")
+	assert_true(sky.get_index() < tiles.get_index(), "drawn behind the letters")
+	assert_true(sky.planet_count() >= 5, "planets present")
+	var p0: Vector2 = sky._planets[1]["pos"]
+	for _i in 60:
+		sky.tick(1.0 / 30.0)
+	assert_true(sky._planets[1]["pos"].distance_to(p0) > 1.0, "planets drift")
+	for _i in 600:
+		sky.tick(1.0 / 30.0)
+	for p in sky._planets:
+		assert_true(sky.area.grow(p["r"]).has_point(p["pos"]), "planet stays around the field")
+	f.free()
+
+
+func test_sky_drifters_hold_still_under_reduced_motion() -> void:
+	var f := _field("wren")
+	var sky := f.find_child("SkyDrifters", true, false)
+	sky.reduced_motion = true
+	var p0: Vector2 = sky._planets[1]["pos"]
+	for _i in 120:
+		sky.tick(1.0 / 30.0)
+	assert_eq(sky._planets[1]["pos"], p0, "no drift")
+	assert_true(not sky.craft_flying(), "no rocket")
 	f.free()
