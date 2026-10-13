@@ -12,3 +12,5 @@ var alive: bool = true
 ## Draw radius in field units (tile.size * plane scale / 2); also the bounce inset.
 var radius: float = 0.0
 var carried_by: int = -1
+## Spawn speed (field units per second); drift steers and surges around it. 0: plain straight drift.
+var base_speed: float = 0.0

@@ -26,6 +26,7 @@ const LetterPool := preload("res://rules/letter_pool.gd")
 const Thief := preload("res://rules/thief.gd")
 const Self := preload("res://rules/round.gd")
 
+const GOLDEN_ANGLE := 2.39996  # radians; spreads per-tile phases evenly
 const BABEL_SEED_XOR := 0x5BAB31
 const THIEF_SEED_XOR := 0x7E1EF5
 const THIEF_IDLE_MUL := 0.25
@@ -339,6 +340,7 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	elif plane == 1:
 		speed *= _num("plane.midSpeedMul")  # parallax: the deeper layer drifts a little slower
 	tile.vel = Vector2(cos(angle), sin(angle)) * speed
+	tile.base_speed = speed
 	tiles.append(tile)
 	_by_id[tile.id] = tile
 	_emit({"type": "spawn", "tile_id": tile.id, "ch": ch, "plane": plane, "decoy": decoy, "pos": tile.pos})
@@ -673,6 +675,7 @@ func _remove_thief(th: Thief) -> void:
 
 
 func _drift(t: Tile, h: float) -> void:
+	_steer(t, h)
 	var r := t.radius
 	t.pos += t.vel * h
 	if t.pos.x < r:
@@ -689,6 +692,20 @@ func _drift(t: Tile, h: float) -> void:
 	elif t.pos.y > bottom:
 		t.pos.y = bottom
 		t.vel.y = -absf(t.vel.y)
+
+
+## Letters swoop instead of sliding in straight lines (owner, 13 Oct 2026: "very slow"): the heading
+## turns one way then the other, and the speed surges and eases. Both follow sine waves whose phase
+## comes from the tile id, so neighbours move out of step and the drift stays deterministic.
+## A tile someone stopped (vel zero) stays stopped.
+func _steer(t: Tile, h: float) -> void:
+	if t.base_speed <= 0.0 or t.vel.length() < EPS:
+		return
+	var ph := float(t.id) * GOLDEN_ANGLE
+	var secs := float(stats["secs"])
+	var turn := _num("drift.curve") * sin(secs * TAU * _num("drift.curveHz") + ph)
+	var surge := 1.0 + _num("drift.surge") * sin(secs * TAU * _num("drift.surgeHz") + ph * 1.7)
+	t.vel = t.vel.normalized().rotated(turn * h) * t.base_speed * surge
 
 
 func _start_shot_at(target_id: int, at: Vector2, kind: String) -> void:

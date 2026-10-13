@@ -41,6 +41,13 @@ var _from: Vector2 = Vector2.ZERO
 var _to: Vector2 = Vector2.ZERO
 var _to_scale: float = 1.0
 var _body_scale: Vector2 = Vector2.ONE
+## Motion feel: the last placement, the smoothed screen velocity and the bounce squash.
+var _last_pos: Vector2 = Vector2.INF
+var _last_time: float = 0.0
+var _vel_px: Vector2 = Vector2.ZERO
+var _squash_t: float = 0.0
+var _squash_axis: Vector2 = Vector2.ZERO
+const SQUASH_DUR := 0.28  # seconds a bounce squash takes to spring back
 
 
 func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_treatment: String, p_reduced: bool, tun: Dictionary, p_phase: float) -> void:
@@ -156,6 +163,7 @@ func set_back(alpha: float, art: String) -> void:
 func place(screen_pos: Vector2, time: float, nx: float) -> void:
 	if anim != "":
 		return
+	_track_motion(screen_pos, time)
 	position = screen_pos
 	var tilt := Vector2.ZERO
 	if is_item:
@@ -168,7 +176,8 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		if not reduced_motion:
 			var wob := 0.03 * sin(time * 2.3 + _phase * 2.0)
 			var pulse := 1.0 + float(_tun.get("tile.pulse", 0.0)) * sin(time * TAU * float(_tun.get("tile.pulseHz", 0.5)) + _phase)
-			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob)
+			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob) * _squash()
+			glyph.rotation = _lean()
 			_mat.set_shader_parameter("bubble_time", time + _phase)
 		current_tilt = Vector2.ZERO
 		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
@@ -181,6 +190,44 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		tilt.x = clampf(sway_deg * cos(time * w * 0.8 + _phase * 1.3) - maxd * 0.15, -maxd, maxd)
 	current_tilt = tilt
 	_mat.set_shader_parameter("tilt_deg", tilt)
+
+
+## Watches the tile's screen motion: a sharp turn in x or y is a bounce (off a wall or another
+## letter), which squashes the bubble along that axis for a moment.
+func _track_motion(p: Vector2, time: float) -> void:
+	var dt := time - _last_time
+	if _last_pos != Vector2.INF and dt > 0.0001 and dt < 0.25:
+		var v := (p - _last_pos) / dt
+		var min_px := size_px * 0.3  # ignore tiny nudges from crowding
+		if absf(_vel_px.x) > min_px and absf(v.x) > min_px and signf(v.x) != signf(_vel_px.x):
+			_bounce(Vector2.RIGHT)
+		elif absf(_vel_px.y) > min_px and absf(v.y) > min_px and signf(v.y) != signf(_vel_px.y):
+			_bounce(Vector2.DOWN)
+		_vel_px = _vel_px.lerp(v, clampf(dt * 10.0, 0.0, 1.0))
+	if dt > 0.0:
+		_squash_t = maxf(0.0, _squash_t - dt)
+	_last_pos = p
+	_last_time = time
+
+
+func _bounce(axis: Vector2) -> void:
+	_squash_axis = axis
+	_squash_t = SQUASH_DUR
+
+
+## Scale factor for the bounce: flattened along the bounce axis, then a springy overshoot back.
+func _squash() -> Vector2:
+	if _squash_t <= 0.0:
+		return Vector2.ONE
+	var u := 1.0 - _squash_t / SQUASH_DUR
+	var a := float(_tun.get("tile.bounceSquash", 0.0)) * sin(u * PI * 1.5) * (1.0 - u)
+	return Vector2.ONE - _squash_axis * a + Vector2(_squash_axis.y, _squash_axis.x) * a * 0.6
+
+
+## The letter leans into its motion, as if the bubble were being towed.
+func _lean() -> float:
+	var k := clampf(_vel_px.x / maxf(1.0, size_px * 2.5), -1.0, 1.0)
+	return deg_to_rad(float(_tun.get("tile.leanDeg", 0.0))) * k
 
 
 func flash(dur: float) -> void:
