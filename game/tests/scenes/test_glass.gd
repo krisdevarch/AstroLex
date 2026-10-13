@@ -174,3 +174,26 @@ func test_the_game_font_is_fredoka() -> void:
 	var f: Font = ThemeDB.fallback_font
 	var base: Font = f.base_font if f is FontVariation else f
 	assert_true(base != null and base.resource_path.ends_with("Fredoka.ttf"), "default font is Fredoka (%s)" % (base.resource_path if base else "none"))
+
+
+func test_bubble_squashes_on_a_bounce_and_leans_into_its_motion() -> void:
+	var v := _glass_view(false, "bubble")
+	var t := 2.0
+	var x := 200.0
+	for i in 20:  # moving right at 300 px/s
+		t += 1.0 / 60.0
+		x += 5.0
+		v.place(Vector2(x, 300), t, 0.4)
+	assert_true(v.glyph.rotation > 0.02, "leans into rightward motion")
+	assert_eq(v._squash(), Vector2.ONE, "no squash while gliding")
+	for i in 6:  # bounce: now moving left
+		t += 1.0 / 60.0
+		x -= 5.0
+		v.place(Vector2(x, 300), t, 0.4)
+	var sq: Vector2 = v._squash()
+	assert_true(sq.x < 0.95 and sq.y > 1.0, "flattened along the bounce axis (%s)" % sq)
+	for i in 40:  # springs back
+		t += 1.0 / 60.0
+		v.place(Vector2(x, 300), t, 0.4)
+	assert_eq(v._squash(), Vector2.ONE, "springs back after the bounce")
+	v.free()
