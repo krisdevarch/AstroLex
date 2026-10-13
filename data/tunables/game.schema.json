@@ -36,6 +36,7 @@
     "field.height",
     "field.topMargin",
     "tile.size",
+    "tile.minGap",
     "plane.frontScale",
     "plane.midScale",
     "plane.backScale",
@@ -46,6 +47,8 @@
     "tile.maxTiltDeg",
     "tile.swayDeg",
     "tile.swaySpeed",
+    "tile.pulse",
+    "tile.pulseHz",
     "tile.shadowOffset",
     "glass.blur",
     "glass.refractPx",
@@ -235,6 +238,11 @@
       "minimum": 0,
       "description": "field units reserved at the top for the HUD"
     },
+    "tile.minGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "minimum clear gap in field units between catchable (plane 0 and 1) tiles"
+    },
     "tile.size": {
       "type": "number",
       "minimum": 0,
@@ -289,6 +297,17 @@
       "type": "number",
       "minimum": 0,
       "description": "2.5D tile: sway cycles per second"
+    },
+    "tile.pulse": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.05,
+      "description": "bubble letters: share of size the breathing pulse adds and removes (owner: extremely subtle)"
+    },
+    "tile.pulseHz": {
+      "type": "number",
+      "minimum": 0,
+      "description": "bubble letters: breathing pulse cycles per second"
     },
     "tile.shadowOffset": {
       "type": "number",

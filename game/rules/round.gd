@@ -318,7 +318,11 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	tile.plane = plane
 	tile.radius = _num("tile.size") * _scale_of(plane) / 2.0
 	var r := tile.radius
-	tile.pos = Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
+	var gap := _num("tile.minGap")
+	for _try in 64:
+		tile.pos = Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
+		if plane >= 2 or not _overlaps_catchable(tile.pos, r, gap):
+			break
 	var angle := _rng.randf() * TAU
 	var var_frac := _num("drift.speedVariation")
 	var speed := _num("drift.speed") * float(ramp()["drift"]) * (1.0 + _rng.randf_range(-var_frac, var_frac))
@@ -332,6 +336,53 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 
 
 ## A weighted-random letter that is not in `excluded` (an Array of single-character strings).
+func _overlaps_catchable(p: Vector2, r: float, gap: float) -> bool:
+	for o: Tile in tiles:
+		if o.alive and o.plane < 2:
+			var need := r + o.radius + gap
+			if p.distance_squared_to(o.pos) < need * need:
+				return true
+	return false
+
+
+## Pushes overlapping catchable tiles apart and bounces them (equal masses), in list order.
+func _separate_tiles() -> void:
+	var gap := _num("tile.minGap")
+	var n := tiles.size()
+	for i in n:
+		var a: Tile = tiles[i]
+		if not a.alive or a.plane >= 2 or a.carried_by >= 0:
+			continue
+		for j in range(i + 1, n):
+			var b: Tile = tiles[j]
+			if not b.alive or b.plane >= 2 or b.carried_by >= 0:
+				continue
+			var need := a.radius + b.radius + gap
+			var d := b.pos - a.pos
+			var dist_sq := d.length_squared()
+			if dist_sq >= need * need:
+				continue
+			var dist := sqrt(dist_sq)
+			var normal := Vector2(1.0, 0.0)
+			if dist > 1e-6:
+				normal = d / dist
+			var push := (need - dist) * 0.5
+			a.pos -= normal * push
+			b.pos += normal * push
+			_clamp_to_field(a)
+			_clamp_to_field(b)
+			var rel := (b.vel - a.vel).dot(normal)
+			if rel < 0.0:
+				a.vel += normal * rel
+				b.vel -= normal * rel
+
+
+func _clamp_to_field(t: Tile) -> void:
+	var r := t.radius
+	t.pos.x = clampf(t.pos.x, r, 1.0 - r)
+	t.pos.y = clampf(t.pos.y, _num("field.topMargin") + r, _num("field.height") - r)
+
+
 func _weighted_letter(excluded: Array) -> String:
 	var letters: Array = []
 	var total := 0
@@ -450,6 +501,7 @@ func _tick(h: float) -> void:
 	for t: Tile in tiles:
 		if t.carried_by < 0:
 			_drift(t, h)
+	_separate_tiles()
 	_tick_thieves(h)
 	if not shot.is_empty():
 		shot["elapsed"] = float(shot["elapsed"]) + h

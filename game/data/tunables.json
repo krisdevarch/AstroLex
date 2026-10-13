@@ -31,7 +31,7 @@
   "glass.refractPx": 24,
   "glass.specular": 0.7,
   "hud.hintAlpha": 0.35,
-  "plane.backAlpha": 0.28,
+  "plane.backAlpha": 0.85,
   "plane.backDesaturate": 0.7,
   "plane.backScale": 0.45,
   "plane.backSpeedMul": 0.35,
@@ -67,8 +67,11 @@
   "thief.speed": 0.16,
   "thief.stealCost": 2,
   "tile.maxTiltDeg": 20,
+  "tile.minGap": 0.03,
+  "tile.pulse": 0.015,
+  "tile.pulseHz": 0.45,
   "tile.shadowOffset": 14,
-  "tile.size": 0.12,
+  "tile.size": 0.13,
   "tile.swayDeg": 6,
   "tile.swaySpeed": 0.6
 }

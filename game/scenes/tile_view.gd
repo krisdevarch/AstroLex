@@ -86,7 +86,7 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.size = Vector2(size_px, size_px)
 	glyph.position = -glyph.size * 0.5
 	glyph.pivot_offset = glyph.size * 0.5
-	glyph.add_theme_font_size_override("font_size", int(size_px * 0.62))
+	glyph.add_theme_font_size_override("font_size", int(size_px * 0.68))
 	# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 	glyph.add_theme_color_override("font_color", Color.WHITE)
 	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
@@ -100,8 +100,13 @@ func _shadow_corner() -> float:
 	return TileTextures.GLASS_CORNER
 
 
-## Back plane: blank debris (a small frosted glass shard, no letter). Dim, shadowless, never tilted.
-## The desaturate argument is unused since the opaque looks went; kept so callers need no change.
+## Sticker-star tints for the back plane (owner's sheet: gold, white, cyan, pink).
+const STAR_TINTS := [Color("ffd84a"), Color("fff6d8"), Color("7fe8ff"), Color("ff9bd2"), Color("ffd84a")]
+
+
+## Back plane: debris drawn as a sticker star (no letter), shadowless and never tilted. It twinkles
+## (a slow turn and a scale pulse) unless reduced motion is on. The desaturate argument is unused
+## since the opaque looks went; kept so callers need no change.
 func set_back(alpha: float, _desaturate: float = 0.0) -> void:
 	is_back = true
 	modulate = Color(1.0, 1.0, 1.0, alpha)
@@ -110,7 +115,9 @@ func set_back(alpha: float, _desaturate: float = 0.0) -> void:
 	shadow.visible = false
 	body.light_mask = 2
 	body.texture = TileTextures.shard()
-	_mat.set_shader_parameter("shard", true)
+	body.material = null  # a flat sticker, not glass
+	body.self_modulate = STAR_TINTS[int(absf(_phase) * 7.0) % STAR_TINTS.size()]
+	current_tilt = Vector2.ZERO
 	_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 
 
@@ -120,11 +127,19 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		return
 	position = screen_pos
 	var tilt := Vector2.ZERO
+	if is_back:
+		if not reduced_motion:
+			var tw := 1.0 + 0.18 * sin(time * 2.1 + _phase * 3.0)
+			body.scale = _body_scale * tw
+			body.rotation = fposmod(_phase + time * 0.25 * (1.0 if _phase > PI else -1.0), TAU)
+		return
 	if treatment == "bubble":
-		# A sphere looks the same from any angle, so no tilt: the bubble wobbles instead.
-		if not reduced_motion and not is_back:
+		# A sphere looks the same from any angle, so no tilt: the bubble wobbles instead, and
+		# breathes with a very small pulse (owner, 13 Oct 2026: "extremely subtle").
+		if not reduced_motion:
 			var wob := 0.03 * sin(time * 2.3 + _phase * 2.0)
-			body.scale = _body_scale * Vector2(1.0 + wob, 1.0 - wob)
+			var pulse := 1.0 + float(_tun.get("tile.pulse", 0.0)) * sin(time * TAU * float(_tun.get("tile.pulseHz", 0.5)) + _phase)
+			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob)
 			_mat.set_shader_parameter("bubble_time", time + _phase)
 		current_tilt = Vector2.ZERO
 		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)

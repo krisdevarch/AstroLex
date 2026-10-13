@@ -29,7 +29,7 @@ func test_map_leads_through_comms_to_level_1_01() -> void:
 		assert_eq(f.game_round.level_id, "1-01", "level 1-01")
 		assert_eq(main.level_index, 0, "index 0")
 		var lab := f.find_child("LevelLabel", true, false) as Label
-		assert_true(lab != null and lab.text.begins_with("1-01"), "HUD shows the level id")
+		assert_true(lab != null and lab.text != "" and not lab.text.begins_with("1-01"), "HUD shows the level name (the counter chip gives the number)")
 	main.free()
 
 
