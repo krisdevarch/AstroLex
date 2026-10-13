@@ -14,7 +14,7 @@ const CORAL_LIGHT := Color("ff9a6e")
 const CRIMSON := Color("ff3b5c")
 const CRIMSON_LIGHT := Color("ff7a90")
 const RIM_R := 178.0
-const DISC_R := 148.0
+const DISC_R := 138.0
 const CLIP_SHADER := "shader_type canvas_item;\nvoid fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tc.a *= smoothstep(0.5, 0.49, length(UV - vec2(0.5)));\n\tCOLOR = c;\n}\n"
 
 
@@ -80,19 +80,27 @@ class NightPanel extends Control:
 class PortraitArt extends Control:
 	var colour: Color = Color(0.55, 0.9, 1.0)
 
-	## A porthole as in the owner's mock v3: a soft glow in the suit colour, a thick dark ring outlined
-	## in that colour, and a pale sky behind the Catcher.
+	## A porthole as in the owner's mock v3: a soft glow and a bright ring in the suit colour, a
+	## brushed metal rim with eight bolts, and a deep blue window behind the Catcher.
 	func _draw() -> void:
 		var c := size * 0.5
 		for i in 10:
-			draw_circle(c, RIM_R + 30.0 - float(i) * 3.0, Color(colour.r, colour.g, colour.b, 0.06))
-		draw_circle(c, RIM_R + 2.0, Color("0b1433"))
-		draw_arc(c, RIM_R - 1.0, 0.0, TAU, 128, colour, 5.0, true)
-		draw_arc(c, RIM_R - 14.0, 0.0, TAU, 128, Color(1, 1, 1, 0.06), 14.0, true)
-		draw_arc(c, DISC_R + 3.0, 0.0, TAU, 128, colour, 5.0, true)
-		draw_circle(c, DISC_R - 2.0, Color("bfe4ff"))
+			draw_circle(c, RIM_R + 30.0 - float(i) * 3.0, Color(colour.r, colour.g, colour.b, 0.07))
+		draw_circle(c, RIM_R + 4.0, colour)
+		draw_circle(c, RIM_R - 4.0, Color("1b2333"))
+		# Metal rim: a grey band, lighter on top, with a thin dark inner lip.
+		draw_circle(c, RIM_R - 7.0, Color("8d97a6"))
+		draw_arc(c, RIM_R - 18.0, PI * 1.1, PI * 1.9, 48, Color(1, 1, 1, 0.22), 14.0, true)
+		draw_arc(c, RIM_R - 18.0, PI * 0.1, PI * 0.9, 48, Color(0, 0, 0, 0.16), 14.0, true)
+		for i in 8:
+			var d := Vector2.from_angle(TAU * float(i) / 8.0 - PI * 0.5)
+			var bolt := c + d * (RIM_R - 18.0)
+			draw_circle(bolt, 8.5, Color("3b4352"))
+			draw_circle(bolt, 6.0, Color("a9b2bf"))
+		draw_circle(c, DISC_R + 6.0, Color("39414f"))
+		draw_circle(c, DISC_R, Color("2a4a86"))
 		for i in 6:
-			draw_circle(c + Vector2(0, 40), 120.0 - float(i) * 16.0, Color(1, 1, 1, 0.06))
+			draw_circle(c + Vector2(0, -30), 130.0 - float(i) * 18.0, Color(0.6, 0.8, 1.0, 0.05))
 
 
 ## The little triangle on top of Babel's bubble, pointing up.

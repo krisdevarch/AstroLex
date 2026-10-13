@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://df3nk51i2qvjt"
-path="res://.godot/imported/LibreCaslonCondensed.ttf-620e6c80e6a85a5f03b7402e699904b1.fontdata"
+uid="uid://bhfnkn3k6dhc"
+path="res://.godot/imported/Fredoka.ttf-298377900bfb6872c6093eeb33bab54d.fontdata"
 
 [deps]
 
-source_file="res://fonts/LibreCaslonCondensed.ttf"
-dest_files=["res://.godot/imported/LibreCaslonCondensed.ttf-620e6c80e6a85a5f03b7402e699904b1.fontdata"]
+source_file="res://fonts/Fredoka.ttf"
+dest_files=["res://.godot/imported/Fredoka.ttf-298377900bfb6872c6093eeb33bab54d.fontdata"]
 
 [params]
 

@@ -354,7 +354,9 @@ func _catchable_slack(p: Vector2, r: float, gap: float) -> float:
 
 
 ## Pushes overlapping catchable tiles apart and bounces them (equal masses), in list order.
-func _separate_tiles() -> void:
+## Returns true when it moved any tile.
+func _separate_tiles() -> bool:
+	var moved := false
 	var gap := _num("tile.minGap")
 	var n := tiles.size()
 	for i in n:
@@ -375,6 +377,7 @@ func _separate_tiles() -> void:
 			if dist > 1e-6:
 				normal = d / dist
 			var push := (need - dist) * 0.5
+			moved = true
 			a.pos -= normal * push
 			b.pos += normal * push
 			_clamp_to_field(a)
@@ -383,6 +386,7 @@ func _separate_tiles() -> void:
 			if rel < 0.0:
 				a.vel += normal * rel
 				b.vel -= normal * rel
+	return moved
 
 
 func _clamp_to_field(t: Tile) -> void:
@@ -437,8 +441,9 @@ func _refill() -> void:
 	_spawn_needed()
 	_trim_surplus()
 	_ensure_decoys()
-	for _pass in 8:  # settle any spawn that found no free spot
-		_separate_tiles()
+	for _pass in 64:  # settle any spawn that found no free spot; stop once nothing moves
+		if not _separate_tiles():
+			break
 
 
 func _spawn_needed() -> void:

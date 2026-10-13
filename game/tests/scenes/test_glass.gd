@@ -169,7 +169,7 @@ func test_bubble_glass_magnifies_the_live_screen() -> void:
 	v.free()
 
 
-func test_the_game_font_is_libre_caslon_condensed() -> void:
+func test_the_game_font_is_fredoka() -> void:
 	var f: Font = ThemeDB.fallback_font
 	var base: Font = f.base_font if f is FontVariation else f
-	assert_true(base != null and base.resource_path.ends_with("LibreCaslonCondensed.ttf"), "default font is Libre Caslon Condensed (%s)" % (base.resource_path if base else "none"))
+	assert_true(base != null and base.resource_path.ends_with("Fredoka.ttf"), "default font is Fredoka (%s)" % (base.resource_path if base else "none"))

@@ -106,7 +106,10 @@ void fragment() {
 		col = vec3(texture(screen_tex, SCREEN_UV - off * (k + split)).r, texture(screen_tex, SCREEN_UV - off * k).g, texture(screen_tex, SCREEN_UV - off * (k - split)).b);
 		col /= max(unlit_gain, vec3(0.01));  // the screen is already lit; undo the gain applied at the end
 		col = mix(col, vec3(0.9, 0.94, 1.0), milk * 0.5 + 0.1 * pow(rr, 6.0));
-		col = mix(col, vec3(0.04, 0.08, 0.2), dark * (1.0 - 0.55 * pow(rr, 4.0)));
+		// Mock v3: a navy core that clears into a pale, see-through film band at the rim.
+		float band = smoothstep(0.76, 0.97, rr);
+		col = mix(col, vec3(0.05, 0.09, 0.2), dark * (1.0 - band));
+		col = mix(col, vec3(0.86, 0.9, 1.0), 0.22 * band);
 	} else {
 		col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv, lod).g, textureLod(sky_tex, uv - fringe, lod).b);
 		vec4 st = textureLod(stars_tex, uv, lod * 0.5);
@@ -135,16 +138,16 @@ void fragment() {
 		// Soap-bubble rim (owner mock v3): a thin iridescent band that drifts slowly, a bright line
 		// top-left and bottom-right, and a white highlight crescent with a dot, top-left.
 		float ang = atan(g.y, g.x) + bubble_time * 0.4;
-		vec3 irid = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0);
-		float edge = smoothstep(9.0, 0.0, -d);
-		col += irid * edge * film;
+		vec3 irid = mix(0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0), vec3(1.0), 0.4);  // pastel
+		float edge = smoothstep(13.0, 0.0, -d) * (0.55 + 0.45 * smoothstep(13.0, 3.0, -d));
+		col += irid * edge * film * 0.6;
 		float arc = smoothstep(3.0, 0.5, abs(-d - 2.0)) * pow(abs(dot(g, normalize(vec2(-1.0, -1.0)))), 2.0);
 		col += vec3(1.0) * arc * 0.55 * specular;
 		vec2 pn = p / HALF;
 		float a2 = atan(pn.y, pn.x);
-		float crescent = smoothstep(0.07, 0.0, abs(length(pn) - 0.74)) * smoothstep(0.75, 0.0, abs(a2 + 2.25));
+		float crescent = smoothstep(0.13, 0.0, abs(length(pn) - 0.72)) * smoothstep(0.8, 0.0, abs(a2 + 2.25));
 		float dot_hl = smoothstep(0.1, 0.03, length(pn - vec2(-0.3, -0.62)));
-		col += vec3(1.0) * (crescent * 0.75 + dot_hl * 0.85) * gloss;
+		col += vec3(1.0) * (crescent * 0.6 + dot_hl * 0.85) * gloss;
 	}
 	col = mix(col, flash_color, flash * 0.75);
 	COLOR = vec4(col * unlit_gain, body.a);

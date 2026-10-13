@@ -1,5 +1,5 @@
 extends RefCounted
-## The game's font (owner, 13 Oct 2026: "for the whole game use Libre Caslon Condensed"), set as the
+## The game's font: Fredoka, a rounded sans matching the owner's mock v3 (owner, 13 Oct 2026), set as the
 ## engine's fallback font at startup so every label, button and tile letter uses it. Set at runtime,
 ## not as the project's custom font: a fresh import loads that setting before the font is imported
 ## and logs a parse error.
