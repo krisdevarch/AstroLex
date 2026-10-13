@@ -16,9 +16,11 @@ const HudArt := preload("res://scenes/hud_art.gd")
 const GameFont := preload("res://scenes/game_font.gd")
 
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
+const Sfx := preload("res://scenes/sfx.gd")
 const DEFAULT_ACT := "act1_low_orbit"
 const LOW_TIME := 5.0
 const FLOAT_SEC := 0.9
+const POP_SEC := 0.8
 const AMBER := Color("F8BC04")
 const SLOT_EDGE := Color("3cbfd2")  # the mock's teal slot outline
 # The owner's tray mock (16:51): a navy tray with a slate rim, near-black slots with a teal outline,
@@ -185,6 +187,16 @@ var _toast: Label
 var _band: Panel
 var _band_label: Label
 var _fps_meter: CanvasLayer
+## Game feel (WP-3.N): placeholder sounds, the combo pop, the restored-word banner, the shake.
+var sfx: Sfx
+var _pops: Array = []  # [Label, age, start_pos] rising combo pops
+var _banner: Label
+var _banner_t: float = 99.0
+var _shake_t: float = 0.0
+var _shake_px: float = 0.0
+var _beat_sec: int = -1
+## Browsers refuse (and log an error for) a vibration before the player has touched the page.
+var _touched: bool = false
 
 
 func _process(delta: float) -> void:
@@ -227,6 +239,11 @@ func _start(seed_value: int) -> void:
 	_ft = FIELD_TOP + (avail - span * _scale) * 0.5
 	_build_world()
 	_build_hud()
+	if sfx == null:
+		sfx = Sfx.new()
+		sfx.name = "Sfx"
+		add_child(sfx)
+	sfx.volume_db = _n("sfx.volumeDb")
 	_apply_events()
 	_sync_views()
 	_update_hud()
@@ -288,6 +305,7 @@ func tap(screen_pos: Vector2) -> int:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_touched = true
 		tap(event.position)
 	elif event.is_action_pressed("ui_cancel"):
 		pause_requested.emit()
@@ -323,6 +341,7 @@ func advance(delta: float) -> void:
 	_update_tether(delta)
 	_update_hud()
 	_tick_hud(delta)
+	_tick_feel(delta)
 	if _end_t >= 0.0 and not finished:
 		_end_t += delta
 		if _end_t >= END_DELAY:
@@ -679,6 +698,8 @@ func _apply_events() -> void:
 				var t := game_round.find_tile(int(e["tile_id"]))
 				if t != null:
 					_ensure_view(t)
+			"fire":
+				sfx.fire()
 			"catch":
 				_on_catch(e)
 			"dissolve":
@@ -691,6 +712,9 @@ func _apply_events() -> void:
 					wv.flash(0.45)
 				var msg := "Not in the record   −%d s" % int(_n("burst.wrongCost"))
 				_show_toast(msg, Color(1.0, 0.5, 0.45))
+				sfx.wrong()
+				_shake(_n("fx.shakePx") * 0.5)
+				_buzz(60)
 			"escape":
 				_show_toast("It drifted off", Ui.DIM)
 			"hint":
@@ -707,12 +731,16 @@ func _apply_events() -> void:
 				_show_toast("A drone grabbed a letter!", PERIWINKLE)
 			"stolen":
 				_show_toast("Letter stolen  −%d s" % int(_n("thief.stealCost")), Color(1.0, 0.5, 0.45))
+				sfx.stolen()
 			"thief_down":
 				_burst(to_screen(e["pos"]), PERIWINKLE, 22)
 				_show_toast("Drone down", PERIWINKLE)
+				sfx.thief_down()
+				_shake(_n("fx.shakePx") * 0.5)
 			"restore":
 				_view_word += 1
 				_pulse_t = 0.0
+				_celebrate(str(e["word"]))
 			"babel":
 				last_babel = str(e["text"])
 				_babel_t = 0.0
@@ -742,6 +770,89 @@ func _on_catch(e: Dictionary) -> void:
 		v.reparent(_fly_layer, false)
 	v.fly_to(target, slot_px, _n("fx.flyToSlotSec"))
 	_burst(target, tether_colour.lightened(0.3))
+	if where == "active":
+		sfx.catch_note(slot)
+	else:
+		sfx.catch_note(0)
+	_buzz(15)
+	if game_round.combo > 1.0 + 0.001:
+		_combo_pop(v.position, game_round.combo)
+
+
+## A rising "×1.3" where the letter was caught; it grows warmer and bigger as the combo climbs.
+func _combo_pop(at: Vector2, combo: float) -> void:
+	var cmax := _n("combo.max")
+	var k := clampf((combo - 1.0) / maxf(0.01, cmax - 1.0), 0.0, 1.0)
+	var maxed := combo >= cmax - 0.001
+	var lab := Ui.label(("×%.1f  MAX" if maxed else "×%.1f") % combo, int(lerpf(44.0, 68.0, k)), AMBER.lerp(Color(1.0, 0.45, 0.25), k))
+	lab.name = "ComboPop"
+	lab.size = Vector2(320, 80)
+	lab.pivot_offset = lab.size * 0.5
+	lab.position = at - lab.size * 0.5
+	_fly_layer.add_child(_ignore(lab))  # above the letters and the HUD
+	_pops.append([lab, 0.0, lab.position])
+
+
+## A word restored: the word bursts across the field, a chord plays and the world gives a jolt.
+func _celebrate(word: String) -> void:
+	sfx.restore()
+	_buzz(40)
+	_shake(_n("fx.shakePx"))
+	_banner.text = word.to_upper() + "!"
+	_banner_t = 0.0
+	_burst(Vector2(view_size.x * 0.5, _banner.position.y + _banner.size.y * 0.5), AMBER, 40)
+
+
+## Shakes the play field (not the HUD) for fx.shakeSec; reduced motion turns it off.
+func _shake(px: float) -> void:
+	if settings.reduced_motion or px <= 0.0:
+		return
+	_shake_px = maxf(_shake_px if _shake_t > 0.0 else 0.0, px)
+	_shake_t = _n("fx.shakeSec")
+
+
+## A short vibration where the device has one (Android browsers; a no-op elsewhere), once the
+## player has touched the screen (never in autoplay).
+func _buzz(ms: int) -> void:
+	if _touched and not autoplay and not settings.reduced_motion:
+		Input.vibrate_handheld(ms)
+
+
+func _tick_feel(delta: float) -> void:
+	if _shake_t > 0.0:
+		_shake_t = maxf(0.0, _shake_t - delta)
+		var a := _shake_px * _shake_t / maxf(0.01, _n("fx.shakeSec"))
+		_world.offset = Vector2(sin(_time * 91.0), cos(_time * 77.0)) * a
+	elif _world.offset != Vector2.ZERO:
+		_world.offset = Vector2.ZERO
+	for i in range(_pops.size() - 1, -1, -1):
+		_pops[i][1] += delta
+		var lab: Label = _pops[i][0]
+		var u: float = float(_pops[i][1]) / POP_SEC
+		var grow := 1.0 if settings.reduced_motion else 1.0 + 0.5 * sin(PI * minf(1.0, u * 3.0))
+		lab.scale = Vector2(grow, grow)
+		lab.position = _pops[i][2] - Vector2(0, 0.0 if settings.reduced_motion else 120.0 * u)
+		lab.modulate.a = clampf((1.0 - u) * 2.0, 0.0, 1.0)
+		if u >= 1.0:
+			lab.queue_free()
+			_pops.remove_at(i)
+	_banner_t += delta
+	var bsec := _n("fx.bannerSec")
+	_banner.visible = _banner_t < bsec
+	if _banner.visible:
+		var u := _banner_t / bsec
+		var x := minf(1.0, u / 0.2)  # a quick overshoot pop in the first fifth
+		var pop := 1.0 if settings.reduced_motion else lerpf(0.4, 1.0, x) + 0.25 * sin(PI * x)
+		_banner.scale = Vector2(pop, pop)
+		_banner.modulate.a = clampf((1.0 - u) * 3.0, 0.0, 1.0)
+	# Heartbeat once a second in the last stretch of the clock.
+	if game_round.state == "play" and game_round.time_left < _n("fx.heartbeatSec"):
+		var sec := int(ceil(game_round.time_left))
+		if sec != _beat_sec:
+			_beat_sec = sec
+			sfx.heartbeat()
+	else:
+		_beat_sec = -1
 
 
 func _float_cost(amount: float) -> void:
@@ -995,6 +1106,15 @@ func _build_hud() -> void:
 	_toast.size = Vector2(w, 70)
 	_toast.modulate.a = 0.0
 	_hud.add_child(_toast)
+	_banner = Ui.label("", 110, AMBER)
+	_banner.name = "WordBanner"
+	_banner.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.15, 0.9))
+	_banner.add_theme_constant_override("outline_size", 18)
+	_banner.size = Vector2(w, 160)
+	_banner.position = Vector2(0, _ft + (view_size.y - FIELD_BOTTOM_UP - _ft) * 0.38)
+	_banner.pivot_offset = _banner.size * 0.5
+	_banner.visible = false
+	_fly_layer.add_child(_ignore(_banner))  # above the letters
 	# Slot tray: the active word on the first row, the next word on the second, Hint at its end.
 	var tr := _tray_rect()
 	var tray := Panel.new()

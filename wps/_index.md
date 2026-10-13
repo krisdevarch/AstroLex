@@ -60,7 +60,8 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-3.J | Bigger letter bubbles in liquid glass, Act 1 lost items instead of planets, the owner's painted backdrop and mock v3 top bar, Fredoka font, round 6 to the owner design brief | godot-dev | merged (#44) | `reports/WP-3.J/evidence.md` |
 | WP-3.K | Letter tray and Hint button to the owner's tray mock; bubbles about 2.5 px smaller | godot-dev | merged (#45) | `reports/WP-3.K/evidence.md` |
 | WP-3.L | Letters in 2.5D layers (one behind another), more letters, bubbles about 4 px smaller; the WP-3.J/3.K look is locked | godot-dev | merged (#46) | `reports/WP-3.L/evidence.md` |
-| WP-3.M | Livelier letter movement: faster, curved swooping paths, speed surges, bounce squash and lean | godot-dev | done, awaiting owner merge | `reports/WP-3.M/evidence.md` |
+| WP-3.M | Livelier letter movement: faster, curved swooping paths, speed surges, bounce squash and lean | godot-dev | merged (#47) | `reports/WP-3.M/evidence.md` |
+| WP-3.N | Game feel pack 1: level speeds ×1.6 (the WP-3.M speed-up never reached levels), placeholder sounds, combo pop, restored-word banner, shake, heartbeat | godot-dev | done, awaiting owner merge | `reports/WP-3.N/evidence.md` |
 | WP-3.7 | Story bible v1: world rules, characters, act beats, twist, ending; wordless Prologue; Babel and comms samples | story-writer | drafted (9 Oct 2026), awaiting owner approval | `reports/WP-3.7/evidence.md` |
 | WP-3.T | Babel throws the round's letters from a rift at round start (owner ask, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.T/evidence.md` |
 | WP-4.5a | Level format and Act I's 12 levels: schema and checks, export, levels played in order with comms, Next and Retry (owner pulled forward, 9 Oct 2026) | story-writer, builder, rules-engineer, godot-dev | done, awaiting owner playtest; level file `status: draft` | `reports/WP-4.5a/evidence.md` |
