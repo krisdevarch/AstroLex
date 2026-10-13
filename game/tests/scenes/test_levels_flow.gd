@@ -21,7 +21,7 @@ func test_map_leads_through_comms_to_level_1_01() -> void:
 	Flow.press(main, "StartButton")
 	assert_true(Flow.has(main, "LevelMap"), "map after Continue")
 	Flow.press(main, "Level_1-01")
-	assert_true(Flow.has(main, "CommsScreen"), "comms before level")
+	assert_true(Flow.has(main, "StoryStrip"), "comms before level")
 	Flow.press(main, "SkipButton")
 	var f := main.find_child("Field", true, false)
 	assert_true(f != null, "field after skip")
@@ -44,13 +44,13 @@ func test_win_offers_next_and_next_plays_the_following_level() -> void:
 		steps += 1
 	assert_eq(f.game_round.state, "won", "bot wins 1-01")
 	assert_true(main.save.next_level(main.act) >= 1, "win saved")
-	if Flow.has(main, "CommsScreen"):
+	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
 	assert_true(Flow.has(main, "NextButton"), "Next offered after a win")
 	assert_true(Flow.has(main, "RetryButton") and Flow.has(main, "MapButton"), "Retry and Map")
 	assert_false(Flow.has(main, "ModeSwitchButton"), "no mode switch")
 	Flow.press(main, "NextButton")
-	if Flow.has(main, "CommsScreen"):
+	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
 	var f2 := main.find_child("Field", true, false)
 	assert_true(f2 != null and f2.game_round.level_id == "1-02", "next level is 1-02")
@@ -69,36 +69,48 @@ func test_loss_offers_retry_but_no_next_and_keeps_the_level() -> void:
 	main.free()
 
 
-func test_comms_screen_skip_and_colours() -> void:
-	var c: Control = load("res://scenes/comms_screen.gd").new()
+func test_story_strip_taps_skip_and_colours() -> void:
+	var c: Control = load("res://scenes/story_strip.gd").new()
 	c.messages = [{"who": "rhee", "text": "Hello."}, {"who": "babel", "text": "No."}, {"who": "kit", "text": "Hi."}]
+	c.size = Vector2(1080, 1000)
 	var done := [0]
+	var babel: Array = []
 	c.finished.connect(func() -> void: done[0] += 1)
+	c.babel_line.connect(func(t: String) -> void: babel.append(t))
 	tree.root.add_child(c)
-	var names: Array = []
-	for n in c.find_children("Speaker", "Label", true, false):
-		names.append(n)
-	assert_eq(names.size(), 3, "three speaker labels")
-	assert_eq((names[0] as Label).get_theme_color("font_color"), Color("F8BC04"), "rhee colour")
-	assert_eq((names[1] as Label).get_theme_color("font_color"), Color("7070FF"), "babel colour")
-	assert_eq((names[2] as Label).get_theme_color("font_color"), Color("FF88CC"), "kit colour")
-	assert_eq(c.shown_count(), 1, "one bubble at first")
-	c.advance()
+	assert_eq(c.shown_count(), 1, "one line at first")
+	c.advance()  # finishes typing the first line
+	c.advance()  # Babel's line goes to his own bubble
+	assert_eq(babel, ["No."], "Babel speaks in his bubble, not the crew's")
 	c.advance()
 	assert_eq(c.shown_count(), 3, "all shown after taps")
+	var names: Array = c.find_children("Speaker", "Label", true, false)
+	assert_eq(names.size(), 2, "two crew bubbles")
+	assert_eq((names[0] as Label).get_theme_color("font_color"), Color("F8BC04"), "rhee colour")
+	assert_eq((names[1] as Label).get_theme_color("font_color"), Color("FF88CC"), "kit colour")
 	(c.find_child("SkipButton", true, false) as Button).pressed.emit()
-	(c.find_child("SkipButton", true, false) as Button).pressed.emit()
+	assert_eq(done[0], 1, "finished once")
+	c.skip()
 	assert_eq(done[0], 1, "finished emitted once")
 	c.free()
 
 
-func test_comms_reduced_motion_shows_all() -> void:
-	var c: Control = load("res://scenes/comms_screen.gd").new()
+func test_story_strip_reads_on_by_itself_and_reduced_motion_shows_all() -> void:
+	var c: Control = load("res://scenes/story_strip.gd").new()
 	c.messages = [{"who": "ade", "text": "a"}, {"who": "vanta", "text": "b"}]
-	c.reduced_motion = true
+	c.size = Vector2(1080, 1000)
 	tree.root.add_child(c)
-	assert_eq(c.shown_count(), 2, "all at once")
+	for _i in 200:
+		c.tick(1.0 / 30.0)
+	assert_true(c.is_done(), "the lines move on at reading pace and end")
 	c.free()
+	var r: Control = load("res://scenes/story_strip.gd").new()
+	r.messages = [{"who": "ade", "text": "a"}, {"who": "vanta", "text": "b"}]
+	r.size = Vector2(1080, 1000)
+	r.reduced_motion = true
+	tree.root.add_child(r)
+	assert_eq(r.shown_count(), 2, "all at once")
+	r.free()
 
 
 func test_begin_level_uses_the_level_words_in_order() -> void:

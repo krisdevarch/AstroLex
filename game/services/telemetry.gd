@@ -151,8 +151,11 @@ func begin_round(field: Object, round_no: int, seed_value: int, level_id: String
 		"first_catch_s": null, "tap_misses": 0, "near": [], "babel_lines": [], "wrong_surplus": 0, "wrong_unneeded": 0,
 	}
 	playing = true
-	field.connect("game_event", _on_game_event)
-	field.connect("tap_missed", _on_tap_missed)
+	# The same game screen plays one level after another (WP-3.O): listen once.
+	if not field.is_connected("game_event", _on_game_event):
+		field.connect("game_event", _on_game_event)
+	if not field.is_connected("tap_missed", _on_tap_missed):
+		field.connect("tap_missed", _on_tap_missed)
 
 
 func _add_event(type: String, extra: Dictionary = {}) -> void:

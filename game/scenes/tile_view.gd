@@ -24,7 +24,7 @@ var item: String = ""
 var treatment: String = DEFAULT_LOOK
 var reduced_motion: bool = false
 var size_px: float = 100.0
-var anim: String = ""  # "", "fly" or "dissolve"
+var anim: String = ""  # "", "fly", "dissolve" or "scatter"
 var current_tilt: Vector2 = Vector2.ZERO
 
 var _tun: Dictionary = {}
@@ -290,7 +290,18 @@ func dissolve(dur: float) -> void:
 	z_index = 5
 
 
-## Advances flash and animation; true when a fly or dissolve has finished.
+## The level is over: the tile drifts out of the field along `push` (pixels) and fades.
+func scatter(push: Vector2, dur: float) -> void:
+	anim = "scatter"
+	_from = position
+	_to = position + push
+	_to_scale = modulate.a  # the alpha it fades from (back items are already faint)
+	_anim_dur = maxf(0.01, dur)
+	_anim_t = 0.0
+	clear_glow()
+
+
+## Advances flash and animation; true when a fly, dissolve or scatter has finished.
 func tick(delta: float) -> bool:
 	if _glow_t > 0.0:
 		_glow_t = maxf(0.0, _glow_t - delta)
@@ -316,6 +327,11 @@ func tick(delta: float) -> bool:
 		position = _from.lerp(_to, e)
 		scale = Vector2.ONE * lerpf(1.0, _to_scale, e)
 		_mat.set_shader_parameter("tilt_deg", current_tilt * (1.0 - e))
+	elif anim == "scatter":
+		var e := u * u  # eases in: the letters let go, then speed away
+		position = _from.lerp(_to, e)
+		modulate.a = _to_scale * (1.0 - u)
+		scale = Vector2.ONE * (1.0 - 0.35 * u)
 	else:
 		modulate.a = 1.0 - u
 		scale = Vector2.ONE * (1.0 + 0.25 * u)

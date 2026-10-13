@@ -17,6 +17,7 @@ const GameFont := preload("res://scenes/game_font.gd")
 
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const Sfx := preload("res://scenes/sfx.gd")
+const StoryStrip := preload("res://scenes/story_strip.gd")
 const DEFAULT_ACT := "act1_low_orbit"
 const LOW_TIME := 5.0
 const FLOAT_SEC := 0.9
@@ -197,6 +198,22 @@ var _shake_px: float = 0.0
 var _beat_sec: int = -1
 ## Browsers refuse (and log an error for) a vibration before the player has touched the page.
 var _touched: bool = false
+## Between levels (WP-3.O): the field stays up from one level to the next. When a level ends the
+## leftover letters drift away and the level card rises here; on Next the crew's chatter plays here,
+## the chips, slots and clock change over, and Babel throws the next level's letters.
+var _launcher: Node2D
+var _cleared: bool = false
+var _card_layer: CanvasLayer
+var _card: Control
+var _story: Control
+var _story_on: bool = false
+var _refill_t: float = -1.0
+var _refill_from: float = 0.0
+var _chip_t: float = 99.0
+var _slots_in_t: float = 99.0
+const CHIP_SWAP_SEC := 0.5
+const SLOT_IN_SEC := 0.28
+const SLOT_IN_STAGGER := 0.05
 
 
 func _process(delta: float) -> void:
@@ -217,17 +234,36 @@ func begin(round_no: int, seed_value: int) -> void:
 
 
 ## Starts an authored level (its words in order, its tuning and seed). Call after the field is in the tree.
-func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = []) -> void:
+## Called again on the same field for the next level (or a retry): the screen stays and changes over
+## in place. `story` is the crew's chatter to play on this screen before Babel throws the letters.
+func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = [], story: Array = []) -> void:
 	_tun = GameData.load_tunables()
 	_content = content_override if not content_override.is_empty() else GameData.load_content()
 	game_round = RoundScript.create_level(_tun, _content, act, level, mods)
 	_level_title = str(level.get("title", level.get("id", "")))  # the mock shows the name; "Level n / N" gives the number
-	_start(int(level["seed"]))
+	_start(int(level["seed"]), story)
 
 
-func _start(seed_value: int) -> void:
+func _start(seed_value: int, story: Array = []) -> void:
 	GameFont.apply()
 	_seed = seed_value
+	if _hud != null:
+		_reset_for_level()
+	else:
+		_build_once()
+	_apply_events()
+	_sync_views()
+	_update_hud()
+	if story.is_empty():
+		_start_intro(seed_value)
+	else:
+		play_story(story, _start_intro.bind(seed_value))
+	if print_ready:
+		print_ready = false
+		print("AstroLex ready: %d tiles" % game_round.tiles.size())
+
+
+func _build_once() -> void:
 	_scale = view_size.x
 	# One uniform scale for x and y: the field fits between Babel's band and the bottom HUD and is
 	# centred sideways (the backdrop still fills the screen). Layout maths assume at least 1600 high.
@@ -244,12 +280,126 @@ func _start(seed_value: int) -> void:
 		sfx.name = "Sfx"
 		add_child(sfx)
 	sfx.volume_db = _n("sfx.volumeDb")
-	_apply_events()
-	_sync_views()
-	_update_hud()
-	_start_intro(seed_value)
-	if print_ready:
-		print("AstroLex ready: %d tiles" % game_round.tiles.size())
+
+
+## The next level (or a retry) on the same screen: what the last level left behind goes, the chips
+## cross-fade to the new name and number, the slots pop in empty and the clock bar refills.
+func _reset_for_level() -> void:
+	_cleared = false
+	_intro_on = false
+	if _rift != null:
+		_rift.queue_free()
+		_rift = null
+	for id in _views.keys():
+		(_views[id] as Node).queue_free()
+	_views.clear()
+	for id in _thief_views.keys():
+		(_thief_views[id] as Node).queue_free()
+	_thief_views.clear()
+	for f in _floats:
+		(f[0] as Node).queue_free()
+	_floats.clear()
+	for p in _pops:
+		(p[0] as Node).queue_free()
+	_pops.clear()
+	_pending.clear()
+	_fly_keys.clear()
+	_item_deck.clear()
+	_view_word = 0
+	_active_key = ""
+	_preview_key = ""
+	_end_t = -1.0
+	finished = false
+	_beat_sec = -1
+	_shake_t = 0.0
+	_banner_t = 99.0
+	_banner.visible = false
+	_world.offset = Vector2.ZERO
+	_toast_t = 0.0
+	_toast.modulate.a = 0.0
+	_tether.visible = false
+	_tether_fade = 0.0
+	_tiles_root.visible = true
+	if _low:
+		_low = false
+		_time_bar.add_theme_stylebox_override("fill", _fill_coral)
+		_clock_label.add_theme_color_override("font_color", CLOCK_TEXT)
+		_clock_label.scale = Vector2.ONE
+	_launcher.position = to_screen(game_round.origin())
+	_level_label.text = _level_title
+	_fit_title()
+	_counter_label.text = level_counter
+	_chip_t = 0.0
+	_slots_in_t = 0.0
+	_refill_from = _time_bar.value
+	_refill_t = 0.0 if not settings.reduced_motion else -1.0
+	if _card != null and is_instance_valid(_card):
+		_card.call("dismiss")
+	_card = null
+
+
+## The crew's chatter on this screen; the letters wait until it ends (or is skipped), then `then`.
+func play_story(messages: Array, then: Callable) -> void:
+	_story_on = true
+	_tiles_root.visible = false
+	var s: Control = StoryStrip.new()
+	s.name = "StoryStrip"
+	s.messages = messages
+	s.reduced_motion = settings.reduced_motion
+	s.read_sec = _n("flow.storyReadSec")
+	s.cps = _n("flow.storyCps")
+	s.sfx = sfx
+	s.position = Vector2(0.0, FIELD_TOP)
+	s.size = Vector2(view_size.x, view_size.y - FIELD_BOTTOM_UP - FIELD_TOP)
+	s.babel_line.connect(func(text: String) -> void:
+		last_babel = text
+		_babel_t = 0.0)
+	s.finished.connect(func() -> void:
+		_story_on = false
+		_story = null
+		_tiles_root.visible = true
+		then.call())
+	_story = s
+	_hud.add_child(s)
+
+
+## True while the crew are talking between levels; the rules do not step meanwhile.
+func story_active() -> bool:
+	return _story_on
+
+
+## The level card (WP-3.O) over the play field, above the HUD. The flow builds it; the field places
+## it and tells it where the stars come from (the clock bar, where the time left ends).
+func show_card(card: Control) -> void:
+	if _card_layer == null:
+		_card_layer = CanvasLayer.new()
+		_card_layer.name = "CardLayer"
+		_card_layer.layer = 12
+		add_child(_card_layer)
+	if _card != null and is_instance_valid(_card):
+		_card.queue_free()
+	var bar := _time_bar.get_rect()
+	var share := clampf(_time_bar.value / maxf(0.01, _time_bar.max_value), 0.0, 1.0)
+	card.set("star_from", Vector2(bar.position.x + maxf(TIMER_H * 0.5, bar.size.x * share - TIMER_H * 0.5), bar.get_center().y))
+	card.set("centre", Vector2(view_size.x * 0.5, (FIELD_TOP + view_size.y - FIELD_BOTTOM_UP) * 0.5))
+	card.set("reduced_motion", settings.reduced_motion)
+	card.set("star_sec", _n("flow.starSec"))
+	card.set("star_gap", _n("flow.starGapSec"))
+	card.set("sfx", sfx)
+	_card = card
+	_card_layer.add_child(card)
+
+
+## The level card now up, or null.
+func card() -> Control:
+	return _card if _card != null and is_instance_valid(_card) else null
+
+
+func _fit_title() -> void:
+	var fs := 42
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
+		fs -= 2
+	_level_label.add_theme_font_size_override("font_size", fs)
 
 
 func to_screen(p: Vector2) -> Vector2:
@@ -267,6 +417,8 @@ func tap(screen_pos: Vector2) -> int:
 		return -1
 	if _intro_on:
 		skip_intro()
+		return -1
+	if _story_on:
 		return -1
 	if game_round == null or game_round.state != "play":
 		return -1
@@ -327,8 +479,13 @@ func advance(delta: float) -> void:
 	if game_round == null or paused:
 		return
 	_time += delta
-	if _intro_on:
-		_tick_intro(delta)
+	if _story_on or _intro_on:
+		if _story != null:
+			_story.call("tick", delta)
+		if _intro_on:
+			_tick_intro(delta)
+		_update_hud()
+		_tick_hud(delta)
 		return
 	if autoplay:
 		_autoplay_tick(delta)
@@ -550,10 +707,10 @@ func _build_world() -> void:
 	_fly_layer.name = "Fly"
 	_fly_layer.layer = 11
 	add_child(_fly_layer)
-	var launcher := Launcher.new()
-	launcher.name = "Launcher"
-	launcher.position = to_screen(game_round.origin())
-	_fx_layer.add_child(launcher)
+	_launcher = Launcher.new()
+	_launcher.name = "Launcher"
+	_launcher.position = to_screen(game_round.origin())
+	_fx_layer.add_child(_launcher)
 
 
 class Launcher extends Node2D:
@@ -597,6 +754,8 @@ func _next_item() -> String:
 
 
 func _sync_views() -> void:
+	if _cleared:
+		return  # the level is over: the leftover letters are drifting off
 	var live: Dictionary = {}
 	for t in game_round.tiles:
 		live[t.id] = true
@@ -613,6 +772,8 @@ func _sync_views() -> void:
 func _tick_views(delta: float) -> void:
 	for tv in _thief_views.values():
 		(tv as ThiefViewScript).tick(delta)
+		if (tv as Node2D).has_meta("fade"):
+			(tv as Node2D).modulate.a = maxf(0.0, (tv as Node2D).modulate.a - delta / maxf(0.01, _n("flow.clearSec") * 0.5))
 	for i in range(_floats.size() - 1, -1, -1):
 		_floats[i][1] += delta
 		var lab: Label = _floats[i][0]
@@ -746,8 +907,31 @@ func _apply_events() -> void:
 				_babel_t = 0.0
 			"round_end":
 				_end_t = 0.0
+				_clear_field()
 				if bool(e["won"]):
 					print("AstroLex round won: score=%d" % int(round(game_round.score)))
+
+
+## The level is over: every letter and item still drifting lets go and floats out of the field, and
+## the drones fade, so the level card has a clear sky to rise into.
+func _clear_field() -> void:
+	_cleared = true
+	var mid := Vector2(view_size.x * 0.5, (_ft + panel_top()) * 0.5)
+	var sec := _n("flow.clearSec")
+	for id in _views.keys():
+		var v: TileViewScript = _views[id]
+		if v.anim != "":
+			continue
+		if settings.reduced_motion:
+			v.dissolve(sec * 0.5)
+			continue
+		var away := v.position - mid
+		if away.length() < 1.0:
+			away = Vector2.from_angle(float(id) * 2.4)
+		var k := 0.85 + 0.3 * fposmod(float(id) * 0.618, 1.0)
+		v.scatter(away.normalized() * view_size.y * 0.55 + Vector2(0.0, -80.0), sec * k)
+	for tv in _thief_views.values():
+		(tv as Node2D).set_meta("fade", 1.0)
 
 
 func _on_catch(e: Dictionary) -> void:
@@ -1047,13 +1231,9 @@ func _build_hud() -> void:
 	var mid := _chip("LevelChip", "LevelLabel", _level_title, CHIP_MID_W)
 	mid.size.x = CHIP_MID_W
 	mid.position = Vector2((w - CHIP_MID_W) * 0.5, CHIP_Y)
-	var title := mid.get_node("LevelLabel") as Label
-	var fs := 42
-	while fs > 24 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
-		fs -= 2
-	title.add_theme_font_size_override("font_size", fs)
 	_hud.add_child(mid)
-	_level_label = title
+	_level_label = mid.get_node("LevelLabel") as Label
+	_fit_title()
 	_score_row = HBoxContainer.new()
 	_score_row.name = "ScoreRow"
 	_score_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1170,7 +1350,7 @@ func _build_hud() -> void:
 
 ## Hint button: asks the rules for a hint. Returns the tile id, or -1 (the button flashes).
 func request_hint() -> int:
-	if paused or _intro_on or game_round == null or game_round.state != "play":
+	if paused or _intro_on or _story_on or game_round == null or game_round.state != "play":
 		return -1
 	var id: int = game_round.use_hint()
 	if id < 0:
@@ -1244,12 +1424,16 @@ func _update_hud() -> void:
 	var share := restored_share()
 	if _backdrop != null:
 		_backdrop.restore = share
-	if _night != null and not is_equal_approx(float(_night.get("lit")), share):
-		_night.set("lit", share)
+	if _night != null and share > float(_night.get("lit")):
+		_night.set("lit", share)  # lights come up at once; a new level dims them slowly (_tick_hud)
 	_score_label.text = "%d" % int(round(game_round.score))
 	_combo_label.text = "×%.1f" % game_round.combo
 	_time_bar.max_value = game_round.burst_seconds
-	_time_bar.value = game_round.time_left
+	if _refill_t >= 0.0:
+		var r := clampf(_refill_t / maxf(0.01, _n("flow.refillSec")), 0.0, 1.0)
+		_time_bar.value = lerpf(_refill_from, game_round.time_left, r * r * (3.0 - 2.0 * r))
+	else:
+		_time_bar.value = game_round.time_left
 	_clock_label.text = "%ds" % int(ceil(game_round.time_left))
 	var low: bool = game_round.time_left < LOW_TIME
 	if low != _low:
@@ -1297,6 +1481,18 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 
 
 func _tick_hud(delta: float) -> void:
+	if _refill_t >= 0.0:
+		_refill_t += delta
+		if _refill_t >= _n("flow.refillSec"):
+			_refill_t = -1.0
+	if _night != null and float(_night.get("lit")) > restored_share():
+		_night.set("lit", move_toward(float(_night.get("lit")), restored_share(), delta * 0.8))
+	if _chip_t < CHIP_SWAP_SEC:
+		_chip_t += delta
+		var c := clampf(_chip_t / CHIP_SWAP_SEC, 0.0, 1.0)
+		var a := 1.0 if settings.reduced_motion else clampf(c * 1.4, 0.0, 1.0)
+		_level_label.modulate.a = a
+		_counter_label.modulate.a = a
 	if _hint_flash_t > 0.0:
 		_hint_flash_t = maxf(0.0, _hint_flash_t - delta)
 		_hint_button.modulate = Color.WHITE.lerp(Color(1.0, 0.35, 0.35), _hint_flash_t / HINT_FLASH_SEC)
@@ -1316,5 +1512,17 @@ func _tick_hud(delta: float) -> void:
 	var k := 1.0
 	if _pulse_t < PULSE_SEC and not settings.reduced_motion:
 		k = 1.0 + 0.18 * sin(PI * _pulse_t / PULSE_SEC)
+	if _slots_in_t < 2.0 and not settings.reduced_motion:
+		# A new level: the empty slots pop in one after another.
+		_slots_in_t += delta
+		var i := 0
+		for row in [_active_row, _preview_row]:
+			for c in row.get_children():
+				var u := clampf((_slots_in_t - float(i) * SLOT_IN_STAGGER) / SLOT_IN_SEC, 0.0, 1.0)
+				var w := u - 1.0
+				var s := 1.0 + 2.7 * w * w * w + 1.7 * w * w  # back ease-out
+				(c as Control).scale = Vector2.ONE * maxf(0.0, s)
+				i += 1
+		return
 	for c in _active_row.get_children():
 		(c as Control).scale = Vector2(k, k)

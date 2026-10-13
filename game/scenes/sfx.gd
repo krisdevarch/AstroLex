@@ -54,6 +54,17 @@ func thief_down() -> void:
 	_play("thief_down", func() -> AudioStreamWAV: return _sweep(420.0, 110.0, 0.2, 0.6), 0.0)
 
 
+## Star i (0..2) lands in the level card: each one a step higher, the third rings longest.
+func star(i: int) -> void:
+	var f: float = SCALE[clampi(4 + i * 2, 0, SCALE.size() - 1)]
+	_play("star%d" % i, func() -> AudioStreamWAV: return _bell([f, f * 1.5], 0.5 + 0.2 * float(i), 0.04), 0.0)
+
+
+## A story line pops onto the screen: a soft, low blip.
+func story_line() -> void:
+	_play("story", func() -> AudioStreamWAV: return _bell([392.0], 0.18, 0.0), -9.0)
+
+
 ## One beat of the low-time heartbeat.
 func heartbeat() -> void:
 	_play("heartbeat", func() -> AudioStreamWAV: return _thump(), 2.0)

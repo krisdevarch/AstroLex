@@ -25,15 +25,18 @@ func test_start_leads_to_the_field_and_shows_the_time_bar() -> void:
 	main.free()
 
 
-func test_end_screen_lists_the_numbers() -> void:
-	var end: Control = load("res://scenes/end_screen.gd").new()
-	end.summary = {"won": true, "mode": "drift", "score": 812, "words_done": 4, "words_total": 4, "secs": 75.0, "time_left": 8.2, "stars": 2, "catches": 20, "wrong": 1, "babel": "you are not that"}
-	tree.root.add_child(end)
-	assert_eq((end.find_child("EndTitle", true, false) as Label).text, "Sector cleared")
-	assert_eq((end.find_child("ScoreStat", true, false) as Label).text, "Score  812")
-	assert_eq((end.find_child("WordsStat", true, false) as Label).text, "Words  4/4")
-	assert_eq((end.find_child("TimeStat", true, false) as Label).text, "Time left  9s")
-	assert_eq((end.find_child("StarsStat", true, false) as Label).text, "Stars  **-")
-	assert_true(end.find_child("NextButton", true, false) != null, "next after a win")
-	assert_true(end.find_child("RetryButton", true, false) != null and end.find_child("MapButton", true, false) != null, "retry and map")
-	end.free()
+func test_level_card_shows_the_stars_and_the_numbers() -> void:
+	var card: Control = load("res://scenes/level_card.gd").new()
+	card.summary = {"won": true, "score": 812, "words_done": 4, "words_total": 4, "time_left": 8.2, "stars": 2}
+	tree.root.add_child(card)
+	assert_eq((card.find_child("EndTitle", true, false) as Label).text, "Sector cleared")
+	assert_eq((card.find_child("ScoreStat", true, false) as Label).text, "Score 812   ·   9 s left")
+	assert_eq(card.stars_earned(), 2, "two stars earned")
+	assert_eq(card.stars_shown(), 0, "the stars are still to fly in")
+	for _i in 120:
+		card.tick(1.0 / 30.0)
+	assert_eq(card.stars_shown(), 2, "both stars landed")
+	assert_true(card.find_child("Star_1", true, false).get("filled") and not card.find_child("Star_2", true, false).get("filled"), "the third socket stays empty")
+	assert_true(card.find_child("NextButton", true, false) != null, "next after a win")
+	assert_true(card.find_child("RetryButton", true, false) != null and card.find_child("MapButton", true, false) != null, "retry and map")
+	card.free()

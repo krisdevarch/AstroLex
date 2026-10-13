@@ -101,10 +101,9 @@ func test_won_round_leaves_no_dead_views_or_pending_state_and_no_leak() -> void:
 		assert_eq(f.game_round.state, "won", "round %d won" % round_no)
 		for _i in 90:
 			f.advance(DT)
-		for id in f._views.keys():
-			assert_true(f.game_round.find_tile(int(id)) != null, "view %d belongs to a live tile" % id)
-		assert_eq(f._views.size(), f.game_round.tiles.size(), "one view per live tile")
-		assert_eq(_live_views(f), f.game_round.tiles.size(), "no stray tile nodes")
+		# WP-3.O: when the level ends the leftover letters drift off the field and are freed.
+		assert_eq(f._views.size(), 0, "no views left after the field clears")
+		assert_eq(_live_views(f), 0, "no stray tile nodes")
 		assert_true(f._pending.is_empty(), "_pending empty")
 		assert_true(f._fly_keys.is_empty(), "_fly_keys empty")
 		counts.append(f.get_child_count())
