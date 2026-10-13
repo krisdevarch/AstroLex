@@ -37,6 +37,7 @@
     "field.topMargin",
     "tile.size",
     "tile.minGap",
+    "tile.glyphScale",
     "plane.frontScale",
     "plane.midScale",
     "plane.backScale",
@@ -59,6 +60,12 @@
     "glass.grain",
     "glass.milk",
     "glass.bubbleScale",
+    "glass.live",
+    "glass.magnify",
+    "glass.rimBend",
+    "glass.dark",
+    "glass.film",
+    "glass.gloss",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -243,6 +250,12 @@
       "minimum": 0,
       "description": "minimum clear gap in field units between catchable (plane 0 and 1) tiles"
     },
+    "tile.glyphScale": {
+      "type": "number",
+      "minimum": 0.4,
+      "maximum": 1.0,
+      "description": "letter glyph font size as a share of the tile size (owner, 13 Oct 2026: letters a little bigger)"
+    },
     "tile.size": {
       "type": "number",
       "minimum": 0,
@@ -355,6 +368,41 @@
       "minimum": 0,
       "maximum": 1,
       "description": "glass tile: faint milky lift of the clear glass"
+    },
+    "glass.live": {
+      "type": "number",
+      "enum": [0, 1],
+      "description": "bubble look: 1 refracts the live screen (planets show magnified through the glass), 0 falls back to the baked sky"
+    },
+    "glass.magnify": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: lens magnification at the centre of the bubble (0.12 = 12 % bigger)"
+    },
+    "glass.rimBend": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "bubble look: extra magnification toward the rim, where the glass bends most"
+    },
+    "glass.dark": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: how far the inside of a bubble darkens toward night navy (owner mock v3: dark glossy bubbles)"
+    },
+    "glass.film": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: strength of the iridescent soap-film rim"
+    },
+    "glass.gloss": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: strength of the white highlight crescent and dot at the top-left"
     },
     "glass.grain": {
       "type": "number",

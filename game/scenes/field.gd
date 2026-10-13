@@ -9,11 +9,11 @@ const TileViewScript := preload("res://scenes/tile_view.gd")
 const TileViewScene: PackedScene = preload("res://scenes/tile_view.tscn")
 const LightRig := preload("res://scenes/light_rig.gd")
 const ActBackdrop := preload("res://scenes/act_backdrop.gd")
-const SkyDrifters := preload("res://scenes/sky_drifters.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
+const GameFont := preload("res://scenes/game_font.gd")
 
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const DEFAULT_ACT := "act1_low_orbit"
@@ -22,9 +22,11 @@ const FLOAT_SEC := 0.9
 const AMBER := Color("F8BC04")
 const CREAM := Color("F1ECDC")
 const INK_DARK := Color("0d1030")
-const CYAN_EDGE := Color("5fe0f5")
+const SLOT_EDGE := Color("3cbfd2")  # the mock's teal slot outline
 const CLOCK_TEXT := Color(1.0, 0.85, 0.78)
-const PERIWINKLE := Color(0.561, 0.612, 0.949)
+const PERIWINKLE := Color("7579f0")
+const TEXT_CREAM := Color("efe8d6")  # the mock's warm off-white for HUD text
+const BAND_FILL := Color(0.15, 0.15, 0.3, 0.92)
 const RED := Color(1.0, 0.3, 0.3)
 # Pure layout and pacing constants (screen pixels at 1080 wide, seconds). Bottom items are offsets
 # up from the real bottom of the visible viewport, so taller phones just add field height.
@@ -39,14 +41,14 @@ const HINT_FLASH_SEC := 0.45
 # from the real bottom of the visible viewport, so taller phones just add field height.
 const SIDE_PAD := 44.0
 const EDGE := 44.0
-const CHIP_Y := 34.0
-const CHIP_H := 86.0
-const CHIP_MID_W := 330.0  # the centre "AstroLex" chip, which also carries the points
-const BAND_Y := 150.0  # Babel's speech bubble
-const BAND_H := 104.0
-const BAND_INSET := 100.0
+const CHIP_Y := 55.0
+const CHIP_H := 80.0
+const CHIP_MID_W := 356.0  # the centre chip: the level name
+const BAND_Y := 180.0  # Babel's speech bubble
+const BAND_H := 102.0
+const BAND_INSET := 105.0
 const BAND_TAIL := 26.0
-const FIELD_TOP := 300.0  # top of the play field (below Babel's bubble)
+const FIELD_TOP := 320.0  # top of the play field (below Babel's bubble)
 const FIELD_BOTTOM_UP := 560.0  # bottom of the play field, just above Earth's rim
 const PANEL_TOP_UP := 530.0  # highest point of Earth's rim
 const PORTRAIT_X := 223.0
@@ -159,7 +161,7 @@ var _preview_n: int = 0
 
 var _world: CanvasLayer
 var _backdrop: Node2D
-var _drifters: Node2D
+var _item_deck: Array = []  # back-plane item art, dealt in a seeded order so items rarely repeat
 var _seed: int = 0
 var _night: Control
 var _tiles_root: Node2D
@@ -203,6 +205,7 @@ func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = [])
 
 
 func _start(seed_value: int) -> void:
+	GameFont.apply()
 	_seed = seed_value
 	_scale = view_size.x
 	# One uniform scale for x and y: the field fits between Babel's band and the bottom HUD and is
@@ -481,6 +484,7 @@ func _build_world() -> void:
 	_backdrop = ActBackdrop.new()
 	_backdrop.name = "ActScene"
 	_backdrop.view_size = view_size
+	_backdrop.horizon_y = view_size.y - HudArt.PANEL_H + HudArt.CREST
 	_backdrop.reduced_motion = settings.reduced_motion
 	backdrop.add_child(_backdrop)
 	if settings.show_fps or FpsMeter.fps_requested():
@@ -495,14 +499,6 @@ func _build_world() -> void:
 	rig.name = "LightRig"
 	_world.add_child(rig)
 	rig.configure(Vector2(view_size.x * 0.5, _ft + (_n("field.height") - _n("field.topMargin")) * _scale * 0.45), view_size.y * 1.1, _world.layer)
-	# Planets, rockets and comets drift just behind the letters (visual only, taps pass through).
-	_drifters = SkyDrifters.new()  # full colour always (owner, 13 Oct: planets must stay bright)
-	_drifters.name = "SkyDrifters"
-	_drifters.view_size = view_size
-	_drifters.area = Rect2(0.0, FIELD_TOP, view_size.x, panel_top() - FIELD_TOP)
-	_drifters.reduced_motion = settings.reduced_motion
-	_drifters.seed_value = _seed
-	_world.add_child(_drifters)
 	_tiles_root = Node2D.new()
 	_tiles_root.name = "Tiles"
 	_world.add_child(_tiles_root)
@@ -546,10 +542,25 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.z_index = 2 - t.plane
 	v.name = "Tile_%d" % t.id
 	if t.plane == 2:
-		v.set_back(_n("plane.backAlpha"), _n("plane.backDesaturate"))
+		v.set_back(_n("plane.backAlpha"), _next_item())
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
+
+
+## The back plane shows the owner's sticker items (owner, 13 Oct 2026: "keep the decoys in the
+## background moving"), dealt from a deck shuffled by the level seed so none shows twice at once.
+func _next_item() -> String:
+	if _item_deck.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = _seed + _view_word * 7919 + _views.size()
+		_item_deck = TileViewScript.ITEMS.duplicate()
+		for i in _item_deck.size():
+			var j := rng.randi_range(i, _item_deck.size() - 1)
+			var tmp = _item_deck[i]
+			_item_deck[i] = _item_deck[j]
+			_item_deck[j] = tmp
+	return _item_deck.pop_back()
 
 
 func _sync_views() -> void:
@@ -795,16 +806,16 @@ func _ignore(c: Control) -> Control:
 func _chip(panel_name: String, label_name: String, text: String, min_w: float = 0.0) -> Panel:
 	var p := Panel.new()
 	p.name = panel_name
-	p.add_theme_stylebox_override("panel", Ui.box(Color("1a2552"), int(CHIP_H * 0.5), Color(1, 1, 1, 0.14), 2))
-	var l := Ui.label(text, 34, Color(0.95, 0.96, 1.0))
+	p.add_theme_stylebox_override("panel", Ui.box(Color(0.13, 0.15, 0.25, 0.86), int(CHIP_H * 0.5)))
+	var l := Ui.label(text, 42, TEXT_CREAM)
 	l.name = label_name
 	l.add_theme_constant_override("outline_size", 0)
 	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	p.add_child(l)
 	# Side chips share the room left by the centre chip; long names shrink their font to fit.
 	var max_w := (view_size.x - CHIP_MID_W) * 0.5 - SIDE_PAD - 16.0
-	var fs := 34
-	while fs > 22 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0 > max_w:
+	var fs := 42
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0 > max_w:
 		fs -= 2
 	l.add_theme_font_size_override("font_size", fs)
 	p.size = Vector2(maxf(min_w, minf(max_w, ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0)), CHIP_H)
@@ -872,7 +883,7 @@ func _build_portrait() -> void:
 	pill.add_theme_stylebox_override("panel", Ui.box(Color("0f1a3e"), int(NAME_H * 0.5), tether_colour, 4))
 	pill.size = Vector2(maxf(NAME_W, ThemeDB.fallback_font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 34).x + 64.0), NAME_H)
 	pill.position = Vector2(centre.x - pill.size.x * 0.5, view_size.y - NAME_UP - NAME_H * 0.5)
-	var pl := Ui.label(nm, 34, Color(0.95, 0.97, 1.0))
+	var pl := Ui.label(nm, 38, TEXT_CREAM)
 	pl.name = "PortraitNameLabel"
 	pl.add_theme_constant_override("outline_size", 0)
 	pl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -895,38 +906,35 @@ func _build_hud() -> void:
 	_night = night
 	if character_id != "":
 		_build_portrait()
-	# Top: level name at left, AstroLex with the points in the middle, Level n / N at right.
-	var lc := _chip("LevelChip", "LevelLabel", _level_title)
-	lc.position = Vector2(SIDE_PAD, CHIP_Y)
-	lc.visible = _level_title != ""
-	_hud.add_child(lc)
-	_level_label = lc.get_node("LevelLabel")
+	# Top (owner mock v3): the level's name in the middle, Level n / N at right.
 	var cc := _chip("LevelCounterChip", "LevelCounter", level_counter)
 	cc.position = Vector2(w - SIDE_PAD - cc.size.x, CHIP_Y)
 	cc.visible = level_counter != ""
 	_hud.add_child(cc)
 	_counter_label = cc.get_node("LevelCounter")
-	var mid := _chip("TitleChip", "TitleLabel", "AstroLex", CHIP_MID_W)
+	var mid := _chip("LevelChip", "LevelLabel", _level_title, CHIP_MID_W)
 	mid.size.x = CHIP_MID_W
 	mid.position = Vector2((w - CHIP_MID_W) * 0.5, CHIP_Y)
-	var title := mid.get_node("TitleLabel") as Label
-	title.add_theme_font_size_override("font_size", 36)
-	title.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	title.size = Vector2(CHIP_MID_W, 52)
-	title.position = Vector2(0, 4)
+	var title := mid.get_node("LevelLabel") as Label
+	var fs := 42
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
+		fs -= 2
+	title.add_theme_font_size_override("font_size", fs)
 	_hud.add_child(mid)
+	_level_label = title
 	_score_row = HBoxContainer.new()
 	_score_row.name = "ScoreRow"
 	_score_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_score_row.position = Vector2(0, 46)
+	_score_row.position = Vector2(0, 50)
 	_score_row.size = Vector2(CHIP_MID_W, 34)
+	_score_row.visible = false  # the mock shows no points in play; the end screen has them
 	_score_row.add_theme_constant_override("separation", 10)
 	mid.add_child(_ignore(_score_row))
-	_score_label = Ui.label("0", 26, Color(0.8, 0.86, 1.0))
+	_score_label = Ui.label("0", 24, Color(0.8, 0.86, 1.0))
 	_score_label.name = "ScoreLabel"
 	_score_label.add_theme_constant_override("outline_size", 0)
 	_score_row.add_child(_ignore(_score_label))
-	_combo_label = Ui.label("×1.0", 26, Ui.ACCENT)
+	_combo_label = Ui.label("×1.0", 24, Ui.ACCENT)
 	_combo_label.name = "ComboLabel"
 	_combo_label.add_theme_constant_override("outline_size", 0)
 	_score_row.add_child(_ignore(_combo_label))
@@ -935,27 +943,27 @@ func _build_hud() -> void:
 	_band.name = "BabelBand"
 	_band.position = Vector2(BAND_INSET, BAND_Y)
 	_band.size = Vector2(w - 2.0 * BAND_INSET, BAND_H)
-	_band.add_theme_stylebox_override("panel", Ui.box(Color("16204a"), int(BAND_H * 0.5), PERIWINKLE, 4))
+	_band.add_theme_stylebox_override("panel", Ui.box(BAND_FILL, int(BAND_H * 0.5), PERIWINKLE, 6))
 	_band.visible = false
 	_hud.add_child(_ignore(_band))
 	var tail: Control = HudArt.BubbleTail.new()
 	tail.name = "BabelTail"
 	tail.set("colour", PERIWINKLE)
-	tail.set("fill", Color("16204a"))
+	tail.set("fill", BAND_FILL)
 	tail.size = Vector2(BAND_TAIL * 1.6, BAND_TAIL + 6.0)
 	tail.position = Vector2(cc.position.x + cc.size.x * 0.5 - BAND_INSET - tail.size.x * 0.5, -BAND_TAIL + 2.0)
 	_band.add_child(_ignore(tail))
-	var tag := Ui.label("Babel:", 34, PERIWINKLE, HORIZONTAL_ALIGNMENT_LEFT)
+	var tag := Ui.label("Babel:", 40, PERIWINKLE, HORIZONTAL_ALIGNMENT_LEFT)
 	tag.name = "BabelTag"
 	tag.add_theme_constant_override("outline_size", 0)
 	tag.position = Vector2(40, 0)
 	tag.size = Vector2(130, BAND_H)
 	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_band.add_child(_ignore(tag))
-	_band_label = Ui.label("", 34, Color(0.95, 0.96, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
+	_band_label = Ui.label("", 40, TEXT_CREAM, HORIZONTAL_ALIGNMENT_LEFT)
 	_band_label.name = "BabelText"
 	_band_label.add_theme_constant_override("outline_size", 0)
-	_band_label.position = Vector2(40 + ThemeDB.fallback_font.get_string_size("Babel: ", HORIZONTAL_ALIGNMENT_LEFT, -1, 34).x, 4)
+	_band_label.position = Vector2(40 + ThemeDB.fallback_font.get_string_size("Babel: ", HORIZONTAL_ALIGNMENT_LEFT, -1, 40).x, 4)
 	_band_label.size = Vector2(_band.size.x - _band_label.position.x - 36, BAND_H - 8)
 	_band_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_band_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -972,7 +980,7 @@ func _build_hud() -> void:
 	tray.name = "SlotTray"
 	tray.position = tr.position
 	tray.size = tr.size
-	tray.add_theme_stylebox_override("panel", Ui.box(Color("0b1433", 0.92), 34, Color(CYAN_EDGE.r, CYAN_EDGE.g, CYAN_EDGE.b, 0.45), 3))
+	tray.add_theme_stylebox_override("panel", Ui.box(Color(0.06, 0.08, 0.14, 0.9), 38, Color("2b3a58"), 6))
 	_hud.add_child(_ignore(tray))
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"
@@ -1076,8 +1084,8 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 	if filled:
 		p.add_theme_stylebox_override("panel", Ui.box(CREAM, r, Color("d9cfb0"), 3))
 	else:
-		var edge := CYAN_EDGE if where == "active" else Color(CYAN_EDGE.r, CYAN_EDGE.g, CYAN_EDGE.b, 0.55)
-		p.add_theme_stylebox_override("panel", Ui.box(Color("0f1d42"), r, edge, 4))
+		var edge := SLOT_EDGE if where == "active" else Color(SLOT_EDGE.r, SLOT_EDGE.g, SLOT_EDGE.b, 0.8)
+		p.add_theme_stylebox_override("panel", Ui.box(Color("111a29"), r, edge, 4))
 
 
 ## Share of the level's words restored so far: colour and city lights come back with it.
@@ -1156,8 +1164,8 @@ func _tick_hud(delta: float) -> void:
 	_babel_t += delta
 	_band.visible = last_babel != ""
 	if _band.visible:
-		_band_label.text = last_babel
-		_band_label.visible_characters = int(_babel_t * TYPE_CPS)
+		_band_label.text = "“%s”" % last_babel  # quoted, as in the mock
+		_band_label.visible_characters = int(_babel_t * TYPE_CPS) + 1
 	if _low and not settings.reduced_motion:
 		var cp := 1.0 + 0.12 * absf(sin(_time * TAU))
 		_clock_label.scale = Vector2(cp, cp)

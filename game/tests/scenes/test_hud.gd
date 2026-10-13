@@ -148,13 +148,12 @@ func test_hud_follows_the_owner_mock() -> void:
 		var bar := f.find_child("TimeBar", true, false) as Control
 		var counter := f.find_child("LevelCounterChip", true, false) as Control
 		var chip := f.find_child("LevelChip", true, false) as Control
-		var mid := f.find_child("TitleChip", true, false) as Control
 		var portrait := f.find_child("Portrait", true, false) as Control
 		var pill := f.find_child("PortraitName", true, false) as Control
 		for c: Control in [tray, gear, counter]:
 			assert_true(absf(c.position.x + c.size.x - right) < 0.5, "%s ends on the right margin" % c.name)
-		assert_true(absf(chip.position.x - f.EDGE) < 0.5, "level chip starts on the left margin")
-		assert_true(absf(mid.position.x + mid.size.x * 0.5 - size.x * 0.5) < 0.5, "AstroLex chip centred")
+		assert_true(absf(chip.position.x + chip.size.x * 0.5 - size.x * 0.5) < 0.5, "level name chip centred (mock v3)")
+		assert_true(f.find_child("TitleChip", true, false) == null, "no AstroLex chip in mock v3")
 		assert_true(hint.position.x + hint.size.x <= tray.position.x + tray.size.x, "Hint sits inside the tray")
 		assert_true(hint.position.y > tray.position.y and hint.position.y + hint.size.y < tray.position.y + tray.size.y, "Hint inside the tray")
 		assert_true(absf(bar.position.x - tray.position.x) < 0.5, "timer pill lines up with the tray")
@@ -190,34 +189,30 @@ func test_backdrop_regains_colour_as_words_are_restored() -> void:
 	f.free()
 
 
-func test_sky_drifters_move_behind_the_letters() -> void:
+func test_background_items_drift_behind_the_letters() -> void:
 	var f := _field("wren")
-	var sky := f.find_child("SkyDrifters", true, false)
-	assert_true(sky != null, "drifters exist")
-	var tiles := f.find_child("Tiles", true, false)
-	assert_eq(sky.get_parent(), tiles.get_parent(), "same layer as the letters")
-	assert_true(sky.get_index() < tiles.get_index(), "drawn behind the letters")
-	assert_true(sky.planet_count() >= 5, "planets present")
-	var p0: Vector2 = sky._bodies[1]["pos"]
+	assert_true(not _has(f, "SkyDrifters"), "no static background items")
+	var back: Array = []
+	var seen := {}
+	for t in f.game_round.tiles:
+		var v = f._views[t.id]
+		assert_eq(v.is_item, t.plane >= 2, "a tile is an item exactly when it is on the back plane")
+		if t.plane >= 2:
+			back.append(t)
+			assert_true(v.ITEMS.has(v.item), "item %s is from the owner's sheet" % v.item)
+			assert_true(v.body.texture != null, "item art loads")
+			assert_true(v.z_index < 1, "drawn behind the letters")
+			seen[v.item] = true
+		else:
+			assert_true(v.glyph.visible, "letters, decoys included, are bubbles with a glyph")
+	assert_true(back.size() >= 1, "the field has background items")
+	assert_eq(seen.size(), back.size(), "no item repeats on the field")
+	var t0: Object = back[0]
+	var p0: Vector2 = f._views[t0.id].position
 	for _i in 60:
-		sky.tick(1.0 / 30.0)
-	assert_true(sky._bodies[1]["pos"].distance_to(p0) > 1.0, "planets drift")
-	for _i in 600:
-		sky.tick(1.0 / 30.0)
-	for p in sky._bodies:
-		assert_true(sky.area.grow(p["r"]).has_point(p["pos"]), "planet stays around the field")
-	f.free()
-
-
-func test_sky_drifters_hold_still_under_reduced_motion() -> void:
-	var f := _field("wren")
-	var sky := f.find_child("SkyDrifters", true, false)
-	sky.reduced_motion = true
-	var p0: Vector2 = sky._bodies[1]["pos"]
-	for _i in 120:
-		sky.tick(1.0 / 30.0)
-	assert_eq(sky._bodies[1]["pos"], p0, "no drift")
-	assert_true(not sky.craft_flying(), "no rocket")
+		f.advance(1.0 / 30.0)
+	assert_true(f._views[t0.id].position.distance_to(p0) > 1.0, "items drift")
+	assert_eq(f.tap(f.to_screen(t0.pos)) == t0.id, false, "a background item cannot be tapped")
 	f.free()
 
 
@@ -227,7 +222,7 @@ func test_backdrop_has_sticker_sparkles_and_shooting_stars() -> void:
 	var tints := {}
 	for sp in bg._sparkles:
 		tints[(sp[3] as Color).to_html()] = true
-	assert_true(tints.size() >= 3, "sparkles come in the sheet's colours")
+	assert_true(tints.size() >= 3, "sparkles come in a few pale tints")
 	var seen := false
 	for i in 600:
 		bg._process(1.0 / 30.0)

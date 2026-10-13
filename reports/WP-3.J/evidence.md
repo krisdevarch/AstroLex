@@ -1,0 +1,25 @@
+# WP-3.J evidence
+
+Branch `claude/project-thread-4bg9x3`, 13 Oct 2026.
+
+| AC | Result | Check | Artefact |
+|---|---|---|---|
+| AC1 | pass | `python -m astrolex_tools.validate_data` → ok; `python -m astrolex_tools.export_game_data` leaves no diff | `data/tunables/game.json` |
+| AC2 | pass | `test_spawn_never_overlaps_catchable_tiles` (200 seeds), `test_catchable_tiles_keep_their_gap_while_drifting` (30 seeds × 20 s) | log |
+| AC3 | pass | `test_bubble_glass_magnifies_the_live_screen`, `test_tile_view_bubble_is_round_and_untilted` | `phone-393x852-liquid-glass.jpg` |
+| AC3b | pass | `test_background_items_drift_behind_the_letters`, `test_back_plane_is_a_tumbling_sticker_item`, `test_hud_follows_the_owner_mock`, `test_the_game_font_is_fredoka` | `mock-v3-round6.jpg`, `background-items.jpg` |
+| AC4 | pass | `scripts/godot/test.sh` 161 passed, 0 failed, no SCRIPT ERROR; `scripts/godot/export.sh web` exit 0; `node smoke.cjs ../../../build/web` → "ok: main scene ran"; `pytest tools` passes | — |
+
+Notes
+- At `tile.size` 0.15 the old spawner (64 tries, keep the last) overlapped on 2 of 200 seeds and drifting clusters stayed squeezed (slack −0.03). Keeping the roomiest try, 256 tries and a few separation passes fixed both. 0.16 still failed 2 spawn seeds, so 0.15 is the largest size that keeps the guarantee for act 1 round 1.
+- The live screen read is new for the web build. The earlier attempt (screen copy plus mipmaps) came out black and slow on iPhone Safari; this one has no mipmaps. It renders correctly in headless Chromium (SwiftShader); iPhone Safari is untested here. If it misbehaves there, `glass.live` 0 restores the baked-sky glass.
+- Screenshots: local web export in headless Chromium at `?autoplay=1` with a temporary character override that is not committed.
+- An earlier version of this branch tinted the bubbles in soft colours; the owner chose clear bubbles, so that was removed.
+- Owner, 14:22: "reduce the circles for like 4-5 px": `glass.bubbleScale` 1.2 → 1.12 (about 5 CSS px less on a 393-px-wide phone). Letters and spacing are unchanged.
+- Owner, 14:34 to 14:42: new item sheet, no planets, mock v3, painted backdrop and the Libre Caslon Condensed font. The backdrop image is 572×1024, so it is upscaled about 1.9× on a 1080-wide screen and looks a little soft; a larger export would sharpen it. The item stickers are 60 to 150 px, shown at 70 to 124 px.
+- Owner, 14:54 and 15:00: matched mock v3 by side-by-side screenshots (`mock-v3-side-by-side.jpg`, five rounds). Remaining differences: the mock's letters are a bold sans while the owner asked for Libre Caslon Condensed everywhere; the mock shows 8 larger bubbles, while act 1 round 1 has about 14 catchable letters, so bubbles stay at the size that keeps them apart.
+- CI failure on 61c12f6 ("Godot import and headless tests"): `Parse Error: [ext_resource] referenced non-existent resource at: res://fonts/LibreCaslonCondensed.ttf` during the first import. Reproduced the cause, moved the font to a runtime setting, and re-ran `scripts/godot/test.sh` from a deleted `game/.godot`: 161 passed, 0 failed, no parse error.
+- Owner, 15:13: "you are again far from it", preferring the mock's letters and font, with a design brief. Round 6 (see the WP): Fredoka font, mock-size bubbles with a film rim, household items only, metal porthole, mock HUD colours and placement. Compared at 9:16 (405×720, the mock's shape) and on a phone (393×852): `mock-v3-round6.jpg` shows ours at 9:16, the mock, and ours on the phone. On a phone the screen is taller than the mock, so the field gets more height and the bubbles are a little larger relative to the width.
+- `spawner.decoyRatio` 1.0 → 0.5 is a feel change: random taps hit a needed letter more often (about 2 in 3 instead of 1 in 2). `test_decoy_ratio_keeps_decoys_level_with_real_letters` asserted a ratio of at least 1, so it is now `test_decoy_ratio_sets_decoys_per_real_letter`, which checks the count against the tunable. At `tile.size` 0.2 the 8 fixed separation passes after a refill left overlaps on 24 of 200 seeds; running until nothing moves (at most 64 passes) fixes all 200. Tests: 161 passed, 0 failed, from a fresh import.
+- Owner, 15:32: chose "Fewer decoys" (`spawner.decoyRatio` 0.5). Owner, 15:35: the sticker items become the decoys and move with the letters. (superseded at 15:48, below). A ratio of 1.0 with items was tried and broke the no-overlap guarantee on 34 of 200 spawn seeds at the mock's bubble size, so 0.5 stays. Tests: 161 passed, 0 failed.
+- Owner, 15:48: "keep the decoys in the background moving and increase the letters as they were to 12 or 14 bubbles". The items moved to the back plane (behind the letters, taps pass through), decoy letters are bubbles again, and `spawner.decoyRatio` 0.75 gives 13 to 14 bubbles in act 1 round 1. At 0.75, 64 settle passes left overlaps on 8 of 200 spawn seeds; 256 passes fix all of them. `background-items.jpg`: ours at 9:16, the mock, ours on a phone. Tests: 160 passed, 0 failed (the item-tap test went with the change).

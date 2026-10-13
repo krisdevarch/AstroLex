@@ -166,7 +166,7 @@ func test_ramp_numbers() -> void:
 	assert_eq(decoys, 14)
 
 
-func test_decoy_ratio_keeps_decoys_level_with_real_letters() -> void:
+func test_decoy_ratio_sets_decoys_per_real_letter() -> void:
 	for seed_value in 50:
 		var r := _make(seed_value, 1 + seed_value % 5, ["act1_low_orbit", "act2_nebula", "act3_tower", "act4_core"][seed_value % 4])
 		var real := 0
@@ -179,7 +179,6 @@ func test_decoy_ratio_keeps_decoys_level_with_real_letters() -> void:
 					real += 1
 		var cap := int(_tun["ramp.decoyMax"])
 		assert_eq(decoys, maxi(r.ramp()["decoys"], mini(cap, ceili(float(_tun["spawner.decoyRatio"]) * real))), "decoys seed %d" % seed_value)
-		assert_true(decoys >= mini(cap, real), "decoys >= real (capped)")
 		_assert_no_word_letter_decoys(r)
 
 
@@ -808,8 +807,8 @@ func _min_slack(r: Round) -> float:
 
 func test_spawn_never_overlaps_catchable_tiles() -> void:
 	for seed_value in 200:
-		# Act 1 round 1 is sparse enough that 24 tries always find room; denser rounds may keep the
-		# last try and rely on the tick separation (covered by the drifting test).
+		# Act 1 round 1: a spawn that finds no free spot is settled by the separation passes after
+		# each refill; denser rounds also rely on the tick separation (covered by the drifting test).
 		var r := _make(seed_value, 1, "act1_low_orbit")
 		assert_true(_min_slack(r) >= -1e-6, "overlap at spawn, seed %d" % seed_value)
 

@@ -319,10 +319,18 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	tile.radius = _num("tile.size") * _scale_of(plane) / 2.0
 	var r := tile.radius
 	var gap := _num("tile.minGap")
-	for _try in 64:
-		tile.pos = Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
-		if plane >= 2 or not _overlaps_catchable(tile.pos, r, gap):
+	# Rejection-sample a free spot; if none turns up, keep the roomiest try (separation does the rest).
+	var best_slack := -INF
+	var best_pos := Vector2.ZERO
+	for _try in 256:
+		var p := Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
+		var slack := INF if plane >= 2 else _catchable_slack(p, r, gap)
+		if slack > best_slack:
+			best_slack = slack
+			best_pos = p
+		if slack >= 0.0:
 			break
+	tile.pos = best_pos
 	var angle := _rng.randf() * TAU
 	var var_frac := _num("drift.speedVariation")
 	var speed := _num("drift.speed") * float(ramp()["drift"]) * (1.0 + _rng.randf_range(-var_frac, var_frac))
@@ -336,17 +344,19 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 
 
 ## A weighted-random letter that is not in `excluded` (an Array of single-character strings).
-func _overlaps_catchable(p: Vector2, r: float, gap: float) -> bool:
+## The smallest clearance between a tile of radius r at p and any live catchable tile (negative: overlap).
+func _catchable_slack(p: Vector2, r: float, gap: float) -> float:
+	var worst := INF
 	for o: Tile in tiles:
 		if o.alive and o.plane < 2:
-			var need := r + o.radius + gap
-			if p.distance_squared_to(o.pos) < need * need:
-				return true
-	return false
+			worst = minf(worst, p.distance_to(o.pos) - (r + o.radius + gap))
+	return worst
 
 
 ## Pushes overlapping catchable tiles apart and bounces them (equal masses), in list order.
-func _separate_tiles() -> void:
+## Returns true when it moved any tile.
+func _separate_tiles() -> bool:
+	var moved := false
 	var gap := _num("tile.minGap")
 	var n := tiles.size()
 	for i in n:
@@ -367,6 +377,7 @@ func _separate_tiles() -> void:
 			if dist > 1e-6:
 				normal = d / dist
 			var push := (need - dist) * 0.5
+			moved = true
 			a.pos -= normal * push
 			b.pos += normal * push
 			_clamp_to_field(a)
@@ -375,6 +386,7 @@ func _separate_tiles() -> void:
 			if rel < 0.0:
 				a.vel += normal * rel
 				b.vel -= normal * rel
+	return moved
 
 
 func _clamp_to_field(t: Tile) -> void:
@@ -429,6 +441,9 @@ func _refill() -> void:
 	_spawn_needed()
 	_trim_surplus()
 	_ensure_decoys()
+	for _pass in 256:  # settle any spawn that found no free spot; stop once nothing moves
+		if not _separate_tiles():
+			break
 
 
 func _spawn_needed() -> void:
@@ -501,7 +516,8 @@ func _tick(h: float) -> void:
 	for t: Tile in tiles:
 		if t.carried_by < 0:
 			_drift(t, h)
-	_separate_tiles()
+	for _pass in 4:  # a few passes settle crowded clusters
+		_separate_tiles()
 	_tick_thieves(h)
 	if not shot.is_empty():
 		shot["elapsed"] = float(shot["elapsed"]) + h

@@ -1,27 +1,31 @@
 extends Node2D
-## The sky behind the play field (owner references, 13 Oct 2026): just stars, a deep blue night
-## with small white dots, twinkling sticker sparkles in the sheet's colours (ink outline, white
-## glint) and now and then a shooting star (owner: "make the stars a bit more interesting"). Planets, the sun, asteroids, rockets, a
-## satellite and meteors move through the field in sky_drifters.gd. Colour story: the scene starts drained and its
+## The sky behind the play field: the owner's painted Low Orbit backdrop (13 Oct 2026, mock v3): a
+## blue night with the Milky Way, a crescent moon and Earth's night side with its city lights at the
+## bottom, lined up so Earth's rim sits under the HUD's curve (`horizon_y`). Over it, a few twinkling
+## sticker sparkles and now and then a shooting star (owner: "make the stars a bit more interesting"). The owner's sticker
+## items are the decoys, drawn by tile_view.gd. Colour story: the scene starts drained and its
 ## colour comes back as words are restored (`restore` 0..1). Placeholder art (O-14).
 
-const TileTextures := preload("res://scenes/tile_textures.gd")
 
 const GREY_SAT := 0.8  # saturation before any word is restored
 const RESTORE_RATE := 0.8  # per second, how fast colour eases back
-const SPARKLES := 22
-const SPARKLE_TINTS := [Color("ffd84a"), Color("fff6d8"), Color("7fe8ff"), Color("ff9bd2"), Color("ffd84a"), Color("fff6d8")]
+const BACKDROP := "res://art/backdrop/low_orbit.jpg"
+const BACKDROP_HORIZON := 750.0  # Earth's crest in the backdrop image, image px from the top
+const SPARKLES := 12
+const SPARKLE_TINTS := [Color("ffffff"), Color("fff6d8"), Color("dceeff"), Color("ffffff"), Color("cfe6ff"), Color("fff6d8")]
 const INK := Color(0.04, 0.06, 0.18)
 const SHOOT_EVERY := 5.0  # seconds between shooting stars, give or take
 const SHOOT_SPEED := 1500.0  # px/s at 1080 wide
 const SHOOT_TAIL := 260.0
-const SAT_SHADER := "shader_type canvas_item;\nuniform float sat = 1.0;\nvoid fragment() {\n\tvec4 c = texture(TEXTURE, UV) * COLOR;\n\tfloat g = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n\tCOLOR = vec4(mix(vec3(g), c.rgb, sat), c.a);\n}\n"
+const SAT_SHADER := "shader_type canvas_item;\nuniform float sat = 1.0;\nvoid fragment() {\n\tvec4 c = COLOR;  // already the texture times the modulate\n\tfloat g = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n\tCOLOR = vec4(mix(vec3(g), c.rgb, sat), c.a);\n}\n"
 
 var view_size: Vector2 = Vector2(1080, 1920)
 ## Share of the level's words restored; the flow sets it, the scene eases toward it.
 var restore: float = 0.0
 ## Reduced motion: steady sparkles.
 var reduced_motion: bool = false
+## Screen y where Earth's rim crests (the field sets it to the HUD panel's curve).
+var horizon_y: float = 1920.0 - 560.0
 
 var _shown: float = 0.0
 var _t: float = 0.0
@@ -39,15 +43,14 @@ func _ready() -> void:
 	sh.code = SAT_SHADER
 	_mat = ShaderMaterial.new()
 	_mat.shader = sh
-	for pair in [["Sky", TileTextures.sky()], ["Stars", TileTextures.stars()]]:
-		var s := Sprite2D.new()
-		s.name = pair[0]
-		s.texture = pair[1]
-		s.centered = false
-		s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		s.scale = view_size / Vector2((pair[1] as Texture2D).get_size())
-		s.material = _mat
-		add_child(s)
+	var sky := Sprite2D.new()
+	sky.name = "Sky"
+	sky.texture = load(BACKDROP)
+	sky.centered = false
+	sky.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sky.material = _mat
+	add_child(sky)
+	fit_sky(sky)
 	_live = Live.new()
 	_live.name = "Live"
 	_live.set("owner_bg", self)
@@ -56,11 +59,20 @@ func _ready() -> void:
 	_rng.seed = 7
 	var k := view_size.x / 1080.0
 	for i in SPARKLES:
-		var p := Vector2(_rng.randf_range(0.03, 0.97) * view_size.x, _rng.randf_range(0.02, 0.8) * view_size.y)
+		var p := Vector2(_rng.randf_range(0.03, 0.97) * view_size.x, _rng.randf_range(0.02, 0.62) * view_size.y)
 		var big := i % 4 == 0
-		var sz := (_rng.randf_range(28.0, 40.0) if big else _rng.randf_range(14.0, 22.0)) * k
+		var sz := (_rng.randf_range(12.0, 16.0) if big else _rng.randf_range(6.0, 9.0)) * k
 		_sparkles.append([p, sz, _rng.randf() * TAU, SPARKLE_TINTS[i % SPARKLE_TINTS.size()], _rng.randf_range(-0.4, 0.4)])
 	_apply_sat()
+
+
+## Covers the screen with the backdrop, scaled so its Earth crest lands on horizon_y and centred.
+func fit_sky(sky: Sprite2D) -> void:
+	var size := sky.texture.get_size()
+	var k := maxf(view_size.x / size.x * 1.03, horizon_y / BACKDROP_HORIZON)
+	k = maxf(k, (view_size.y - horizon_y) / (size.y - BACKDROP_HORIZON))
+	sky.scale = Vector2(k, k)
+	sky.position = Vector2((view_size.x - size.x * k) * 0.5, horizon_y - BACKDROP_HORIZON * k)
 
 
 func _process(delta: float) -> void:
@@ -121,7 +133,7 @@ class Live extends Node2D:
 	## A sticker sparkle as on the owner's sheet: a four-point star with concave sides, a dark ink
 	## outline and a white glint.
 	func _sparkle(p: Vector2, s: float, rot: float, c: Color) -> void:
-		draw_colored_polygon(_star(p, s + 4.0, rot), INK)
+		draw_colored_polygon(_star(p, s + 2.0, rot), INK)
 		draw_colored_polygon(_star(p, s, rot), c)
 		draw_circle(p + Vector2(-s * 0.12, -s * 0.16), maxf(1.2, s * 0.1), Color(1, 1, 1, 0.9))
 

@@ -30,7 +30,7 @@ func _glass_view(back: bool = false, look: String = "glass") -> Node2D:
 	tree.root.add_child(v)
 	v.setup("q", 130.0, 1.0, 2 if back else 0, look, false, tun, 0.3)
 	if back:
-		v.set_back(0.28, 0.7)
+		v.set_back(0.28, "teacup")
 	v.place(Vector2(200, 300), 1.0, 0.4)
 	return v
 
@@ -58,21 +58,22 @@ func test_tile_view_bubble_is_round_and_untilted() -> void:
 	assert_eq(float(mat.get_shader_parameter("corner")), 61.0, "corner = half width, a circle")
 	assert_eq(v.current_tilt, Vector2.ZERO, "a bubble does not tilt")
 	assert_true(v.body.scale.x > 130.0 / 128.0 * 1.1, "the ball is bigger than a tile")
-	assert_eq(v.glyph.get_theme_font_size("font_size"), int(130.0 * 0.68), "the letter keeps its size")
+	assert_eq(v.glyph.get_theme_font_size("font_size"), int(130.0 * float(GameData.load_tunables()["tile.glyphScale"])), "the letter keeps its size")
 	assert_eq(v.glyph.get_theme_color("font_color"), Color.WHITE, "glyph is white")
 	v.free()
 
 
-func test_back_plane_is_a_glyphless_sticker_star() -> void:
+func test_back_plane_is_a_tumbling_sticker_item() -> void:
 	var v := _glass_view(true)
+	assert_true(v.is_back and v.is_item, "a back-plane item")
+	assert_eq(v.item, "teacup")
 	assert_false(v.glyph.visible, "no glyph on the back plane")
 	assert_eq(v.current_tilt, Vector2.ZERO, "no tilt")
 	assert_true(v.body.material == null, "a flat sticker, not glass")
-	assert_true(v.body.self_modulate != Color.WHITE, "tinted in a sheet colour")
-	var s0: Vector2 = v.body.scale
+	assert_true(absf(v.modulate.a - 0.28) < 1e-4, "back-plane alpha")
 	var r0: float = v.body.rotation
 	v.place(Vector2(200, 300), 1.7, 0.4)
-	assert_true(v.body.scale != s0 or v.body.rotation != r0, "the star twinkles")
+	assert_true(v.body.rotation != r0, "the item tumbles")
 	v.free()
 
 
@@ -156,3 +157,20 @@ func test_settings_screen_has_two_glass_looks_fps_and_bench() -> void:
 	bench.pressed.emit()
 	assert_true(hit[0], "bench signal")
 	s.free()
+
+
+
+func test_bubble_glass_magnifies_the_live_screen() -> void:
+	var tun := GameData.load_tunables()
+	var v := _glass_view(false, "bubble")
+	var mat := v.body.material as ShaderMaterial
+	assert_true(bool(mat.get_shader_parameter("live")), "the bubble reads the live screen")
+	assert_true(float(mat.get_shader_parameter("magnify")) > 0.0, "and magnifies it")
+	assert_eq(float(mat.get_shader_parameter("rim_bend")), float(tun["glass.rimBend"]), "rim bend is the tunable")
+	v.free()
+
+
+func test_the_game_font_is_fredoka() -> void:
+	var f: Font = ThemeDB.fallback_font
+	var base: Font = f.base_font if f is FontVariation else f
+	assert_true(base != null and base.resource_path.ends_with("Fredoka.ttf"), "default font is Fredoka (%s)" % (base.resource_path if base else "none"))
