@@ -30,7 +30,7 @@ func _glass_view(back: bool = false, look: String = "glass") -> Node2D:
 	tree.root.add_child(v)
 	v.setup("q", 130.0, 1.0, 2 if back else 0, look, false, tun, 0.3)
 	if back:
-		v.set_back(0.28, 0.7)
+		v.set_back(0.28, "teacup")
 	v.place(Vector2(200, 300), 1.0, 0.4)
 	return v
 
@@ -63,16 +63,17 @@ func test_tile_view_bubble_is_round_and_untilted() -> void:
 	v.free()
 
 
-func test_back_plane_is_a_glyphless_sticker_star() -> void:
+func test_back_plane_is_a_tumbling_sticker_item() -> void:
 	var v := _glass_view(true)
+	assert_true(v.is_back and v.is_item, "a back-plane item")
+	assert_eq(v.item, "teacup")
 	assert_false(v.glyph.visible, "no glyph on the back plane")
 	assert_eq(v.current_tilt, Vector2.ZERO, "no tilt")
 	assert_true(v.body.material == null, "a flat sticker, not glass")
-	assert_true(v.STAR_TINTS.has(v.body.self_modulate), "tinted in one of the pale star tints")
-	var s0: Vector2 = v.body.scale
+	assert_true(absf(v.modulate.a - 0.28) < 1e-4, "back-plane alpha")
 	var r0: float = v.body.rotation
 	v.place(Vector2(200, 300), 1.7, 0.4)
-	assert_true(v.body.scale != s0 or v.body.rotation != r0, "the star twinkles")
+	assert_true(v.body.rotation != r0, "the item tumbles")
 	v.free()
 
 

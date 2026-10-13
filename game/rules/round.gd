@@ -441,7 +441,7 @@ func _refill() -> void:
 	_spawn_needed()
 	_trim_surplus()
 	_ensure_decoys()
-	for _pass in 64:  # settle any spawn that found no free spot; stop once nothing moves
+	for _pass in 256:  # settle any spawn that found no free spot; stop once nothing moves
 		if not _separate_tiles():
 			break
 

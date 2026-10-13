@@ -189,46 +189,30 @@ func test_backdrop_regains_colour_as_words_are_restored() -> void:
 	f.free()
 
 
-func test_decoys_are_drifting_items() -> void:
+func test_background_items_drift_behind_the_letters() -> void:
 	var f := _field("wren")
-	assert_true(not _has(f, "SkyDrifters"), "no background items: the items are the decoys")
-	var decoys: Array = []
+	assert_true(not _has(f, "SkyDrifters"), "no static background items")
+	var back: Array = []
 	var seen := {}
 	for t in f.game_round.tiles:
-		if t.plane >= 2:
-			continue
 		var v = f._views[t.id]
-		assert_eq(v.is_item, t.decoy, "a tile is an item exactly when it is a decoy")
-		if t.decoy:
-			decoys.append(t)
+		assert_eq(v.is_item, t.plane >= 2, "a tile is an item exactly when it is on the back plane")
+		if t.plane >= 2:
+			back.append(t)
 			assert_true(v.ITEMS.has(v.item), "item %s is from the owner's sheet" % v.item)
-			assert_true(not v.glyph.visible, "an item shows no letter")
 			assert_true(v.body.texture != null, "item art loads")
+			assert_true(v.z_index < 1, "drawn behind the letters")
 			seen[v.item] = true
 		else:
-			assert_true(v.glyph.visible, "a letter shows its glyph")
-	assert_true(decoys.size() >= 1, "the field has decoys")
-	assert_eq(seen.size(), decoys.size(), "no item repeats on the field")
-	var t0: Object = decoys[0]
+			assert_true(v.glyph.visible, "letters, decoys included, are bubbles with a glyph")
+	assert_true(back.size() >= 1, "the field has background items")
+	assert_eq(seen.size(), back.size(), "no item repeats on the field")
+	var t0: Object = back[0]
 	var p0: Vector2 = f._views[t0.id].position
-	for _i in 30:
-		f.advance(1.0 / 30.0)
-	assert_true(f._views[t0.id].position.distance_to(p0) > 1.0, "items drift like letters")
-	f.free()
-
-
-func test_tapping_an_item_is_a_miss() -> void:
-	var f := _field("wren")
-	var decoy: Object = null
-	for t in f.game_round.tiles:
-		if t.decoy and t.plane < 2:
-			decoy = t
-			break
-	var wrong0 := int(f.game_round.stats["wrong"])
-	assert_eq(f.tap(f.to_screen(decoy.pos)), decoy.id, "the item can be tapped")
 	for _i in 60:
-		f.advance(1.0 / 60.0)
-	assert_eq(int(f.game_round.stats["wrong"]), wrong0 + 1, "tapping an item counts as a wrong catch")
+		f.advance(1.0 / 30.0)
+	assert_true(f._views[t0.id].position.distance_to(p0) > 1.0, "items drift")
+	assert_eq(f.tap(f.to_screen(t0.pos)) == t0.id, false, "a background item cannot be tapped")
 	f.free()
 
 

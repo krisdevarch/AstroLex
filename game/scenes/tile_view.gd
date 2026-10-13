@@ -108,8 +108,8 @@ func _shadow_corner() -> float:
 	return TileTextures.GLASS_CORNER
 
 
-## Decoy items: every sticker cut from the owner's sheet (docs/design/space-items-sheet.jpg). A decoy
-## drifts and bounces like a letter, and tapping it is a miss.
+## Background items: every sticker cut from the owner's sheet (docs/design/space-items-sheet.jpg).
+## They ride the back plane, drifting behind the letters.
 const ITEMS := ["teacup", "bread", "spoon", "key", "desk_lamp", "door", "envelope", "chair", "tv", "satellite", "solar_panel", "gears", "cable_tangle", "helmet", "power_cable", "battery", "wrench", "gear_tag", "backpack", "glove", "camera", "thermos", "asteroid_purple", "asteroid_teal", "asteroid_brown", "asteroid_small", "comet_small", "comet_mid", "comet_big", "rocket", "sputnik"]
 const ITEM_ART := "res://art/space/%s.png"
 const ITEM_FILL := 0.95  # the item's longest side as a share of the bubble's diameter
@@ -117,8 +117,8 @@ const ITEM_TUMBLE := 0.25  # radians per second, alternating direction
 const ITEM_FLASH := Color(1.0, 0.35, 0.3)
 
 
-## Shows this decoy as a sticker item: no bubble, no letter, no shadow. It keeps its colour (it is a
-## play piece now, not background) and tumbles slowly unless reduced motion is on.
+## Shows this tile as a sticker item: no bubble, no letter, no shadow, lightly tinted toward the night.
+## It tumbles slowly unless reduced motion is on.
 func set_item(art: String) -> void:
 	is_item = true
 	item = art
@@ -136,25 +136,12 @@ func set_item(art: String) -> void:
 	body.self_modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0) * Color(0.82, 0.86, 0.95)
 
 
-## Star tints for the back plane: pale, as the small white stars in the owner's mock v3.
-const STAR_TINTS := [Color("fff6d8"), Color("dceeff"), Color("ffffff"), Color("cfe6ff"), Color("fff6d8")]
-
-
-## Back plane: debris drawn as a sticker star (no letter), shadowless and never tilted. It twinkles
-## (a slow turn and a scale pulse) unless reduced motion is on. The desaturate argument is unused
-## since the opaque looks went; kept so callers need no change.
-func set_back(alpha: float, _desaturate: float = 0.0) -> void:
+## Back plane: one of the owner's sticker items drifting slowly behind the letters (owner, 13 Oct
+## 2026: "keep the decoys in the background moving"). It cannot be tapped.
+func set_back(alpha: float, art: String) -> void:
+	set_item(art)
 	is_back = true
 	modulate = Color(1.0, 1.0, 1.0, alpha)
-	glyph.visible = false
-	body.rotation = fposmod(_phase, TAU)
-	shadow.visible = false
-	body.light_mask = 2
-	body.texture = TileTextures.shard()
-	body.material = null  # a flat sticker, not glass
-	body.self_modulate = STAR_TINTS[int(absf(_phase) * 7.0) % STAR_TINTS.size()]
-	current_tilt = Vector2.ZERO
-	_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 
 
 ## Places the tile and tilts it toward the lamp, plus a slow sway. nx is the tile's x in 0..1.
@@ -166,12 +153,6 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 	if is_item:
 		if not reduced_motion:
 			body.rotation = (fposmod(_phase, TAU) - PI) * 0.2 + time * ITEM_TUMBLE * (1.0 if int(_phase * 10.0) % 2 == 0 else -1.0)
-		return
-	if is_back:
-		if not reduced_motion:
-			var tw := 1.0 + 0.18 * sin(time * 2.1 + _phase * 3.0)
-			body.scale = _body_scale * tw
-			body.rotation = fposmod(_phase + time * 0.25 * (1.0 if _phase > PI else -1.0), TAU)
 		return
 	if treatment == "bubble":
 		# A sphere looks the same from any angle, so no tilt: the bubble wobbles instead, and

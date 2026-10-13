@@ -161,7 +161,7 @@ var _preview_n: int = 0
 
 var _world: CanvasLayer
 var _backdrop: Node2D
-var _item_deck: Array = []  # decoy item art, dealt in a seeded order so items rarely repeat
+var _item_deck: Array = []  # back-plane item art, dealt in a seeded order so items rarely repeat
 var _seed: int = 0
 var _night: Control
 var _tiles_root: Node2D
@@ -542,16 +542,14 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.z_index = 2 - t.plane
 	v.name = "Tile_%d" % t.id
 	if t.plane == 2:
-		v.set_back(_n("plane.backAlpha"), _n("plane.backDesaturate"))
-	elif t.decoy:
-		v.set_item(_next_item())
+		v.set_back(_n("plane.backAlpha"), _next_item())
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
 
 
-## Decoys are the owner's sticker items (owner, 13 Oct 2026: "use them as decoys ... they should be
-## dynamic"), dealt from a deck shuffled by the level seed so the field rarely shows the same one twice.
+## The back plane shows the owner's sticker items (owner, 13 Oct 2026: "keep the decoys in the
+## background moving"), dealt from a deck shuffled by the level seed so none shows twice at once.
 func _next_item() -> String:
 	if _item_deck.is_empty():
 		var rng := RandomNumberGenerator.new()
