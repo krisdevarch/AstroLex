@@ -2,8 +2,8 @@ extends Node2D
 ## Lost things floating in the play field just behind the letters (owner sticker sheet and mock v3,
 ## 13 Oct 2026): Act 1's everyday items (a teacup, bread, a spoon, a key, a lamp, a door, a letter,
 ## a chair, a TV) and some orbit junk, plus a comet, a rocket or a sputnik crossing now and then. The
-## art is the owner's sheet, cut out into game/art/space/ (see its README). Items are tinted toward the
-## night sky, as in the mock, so the letters stay the brightest thing on screen. Each item loops
+## art is the owner's sheet, cut out into game/art/space/ (see its README). Items are muted toward a
+## blue-grey night, small and dim as in the mock, so the letters stay the brightest thing on screen. Each item loops
 ## slowly around its home spot and tumbles. Visual only: taps pass through and nothing here touches
 ## the rules.
 
@@ -14,19 +14,23 @@ const EVERYDAY := ["teacup", "bread", "spoon", "key", "desk_lamp", "door", "enve
 const JUNK := ["satellite", "solar_panel", "helmet", "gears", "wrench", "battery", "backpack", "glove", "camera", "thermos", "cable_tangle", "gear_tag"]
 ## Home spots from the owner's mock v3, as shares of the drift area, with display sizes in px at 1080
 ## wide; the last JUNK_SPOTS spots take junk, the rest everyday items.
-const SPOTS := [[Vector2(0.12, 0.30), 120.0], [Vector2(0.90, 0.40), 120.0], [Vector2(0.09, 0.53), 120.0], [Vector2(0.90, 0.60), 96.0], [Vector2(0.11, 0.80), 110.0], [Vector2(0.37, 0.82), 120.0], [Vector2(0.58, 0.88), 110.0], [Vector2(0.87, 0.85), 124.0], [Vector2(0.21, 0.66), 70.0], [Vector2(0.70, 0.66), 100.0], [Vector2(0.50, 0.10), 80.0]]
+const SPOTS := [[Vector2(0.11, 0.38), 142.6], [Vector2(0.91, 0.47), 133.4], [Vector2(0.09, 0.60), 142.6], [Vector2(0.89, 0.64), 110.4], [Vector2(0.12, 0.84), 128.8], [Vector2(0.36, 0.85), 142.6], [Vector2(0.58, 0.89), 128.8], [Vector2(0.86, 0.88), 147.2], [Vector2(0.22, 0.72), 80.5], [Vector2(0.71, 0.70), 119.6], [Vector2(0.52, 0.18), 87.4]]
 const JUNK_SPOTS := 3
 ## Craft that cross the field now and then: [art, speed px/s, heading of the art's nose in radians
 ## (NAN: no nose to point)]. The comets' heads point down-left in the art.
 const CRAFT := [["comet_big", 260.0, PI * 0.82], ["rocket", 170.0, -PI * 0.35], ["sputnik", 110.0, NAN], ["comet_mid", 220.0, PI * 0.75]]
-## Night-sky tint over the items (the mock's muted, blue-grey look).
-const ITEM_TINT := Color(0.66, 0.74, 0.88, 0.92)
-const CRAFT_TINT := Color(0.85, 0.88, 0.95, 1.0)
+## The mock's muted look: items keep a little of their colour, take a blue-grey night tint and stay
+## dimmer than the letters.
+const MUTE_SHADER := "shader_type canvas_item;\nuniform float keep = 0.3;\nuniform vec3 night = vec3(0.78, 0.84, 0.94);\nvoid fragment() {\n\tvec4 c = COLOR;\n\tfloat g = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n\tCOLOR = vec4(mix(vec3(g), c.rgb, keep) * night, c.a);\n}\n"
+const ITEM_TINT := Color(1, 1, 1, 1)
+const CRAFT_TINT := Color(1, 1, 1, 0.95)
+const ITEM_KEEP := 0.4  # share of an item's own colour that stays
+const CRAFT_KEEP := 0.55
 const WANDER_PX := 30.0  # how far an item strays from its home spot
 const TUMBLE := 0.12  # item rotation, radians per second (alternating direction)
 const BOB_PX := 6.0
 const CRAFT_EVERY := 8.0
-const CRAFT_D := 150.0
+const CRAFT_D := 120.0
 
 var view_size: Vector2 = Vector2(1080, 1920)
 ## The box the home spots are laid out in (the play field between the top band and the HUD).
@@ -41,6 +45,7 @@ var _rng := RandomNumberGenerator.new()
 var _craft: Dictionary = {}  # the craft now crossing: {node, vel}
 var _craft_wait: float = 3.0
 var _craft_n: int = 0
+var _mute: Shader
 
 
 func _ready() -> void:
@@ -68,8 +73,15 @@ func _shuffled(list: Array) -> Array:
 	return pool
 
 
-func _sprite(art: String, d: float, tint: Color) -> Sprite2D:
+func _sprite(art: String, d: float, tint: Color, keep: float = ITEM_KEEP) -> Sprite2D:
 	var s := Sprite2D.new()
+	if _mute == null:
+		_mute = Shader.new()
+		_mute.code = MUTE_SHADER
+	var m := ShaderMaterial.new()
+	m.shader = _mute
+	m.set_shader_parameter("keep", keep)
+	s.material = m
 	s.name = art.capitalize().replace(" ", "")
 	s.texture = load(ART % art)
 	s.light_mask = 0
@@ -138,7 +150,7 @@ func _tick_craft(delta: float) -> void:
 				var rise := -_rng.randf_range(0.2, 0.6) if art == "rocket" else _rng.randf_range(-0.15, 0.15)
 				dir = Vector2(1.0 if from_left else -1.0, rise).normalized()
 				start = Vector2(area.position.x - 120.0 if from_left else area.end.x + 120.0, area.position.y + area.size.y * _rng.randf_range(0.2, 0.9))
-			var s := _sprite(art, CRAFT_D * (view_size.x / 1080.0), CRAFT_TINT)
+			var s := _sprite(art, CRAFT_D * (view_size.x / 1080.0), CRAFT_TINT, CRAFT_KEEP)
 			s.position = start
 			if not is_nan(float(c[2])):
 				s.rotation = dir.angle() - float(c[2])  # point the head along the flight

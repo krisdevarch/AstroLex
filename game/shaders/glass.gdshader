@@ -39,6 +39,9 @@ uniform sampler2D screen_tex : hint_screen_texture, filter_linear, repeat_disabl
 uniform bool live = true;          // bubble look: refract the live screen (planets too), else the baked sky
 uniform float magnify = 0.12;      // bubble look: lens magnification at the centre (0.12 = 12 % bigger)
 uniform float rim_bend = 0.9;      // bubble look: extra magnification toward the rim, where the glass bends most
+uniform float dark : hint_range(0.0, 1.0) = 0.0;   // bubble look: how much the inside darkens toward night navy (mock v3)
+uniform float film : hint_range(0.0, 1.0) = 0.1;   // bubble look: strength of the iridescent rim
+uniform float gloss : hint_range(0.0, 1.0) = 0.0;  // bubble look: the white highlight crescent and dot, top-left
 uniform bool bubble = false;      // soap bubble: whole-ball lens, thin-film rainbow rim, highlight spot
 uniform float bubble_time = 0.0;
 
@@ -103,6 +106,7 @@ void fragment() {
 		col = vec3(texture(screen_tex, SCREEN_UV - off * (k + split)).r, texture(screen_tex, SCREEN_UV - off * k).g, texture(screen_tex, SCREEN_UV - off * (k - split)).b);
 		col /= max(unlit_gain, vec3(0.01));  // the screen is already lit; undo the gain applied at the end
 		col = mix(col, vec3(0.9, 0.94, 1.0), milk * 0.5 + 0.1 * pow(rr, 6.0));
+		col = mix(col, vec3(0.04, 0.08, 0.2), dark * (1.0 - 0.55 * pow(rr, 4.0)));
 	} else {
 		col = vec3(textureLod(sky_tex, uv + fringe, lod).r, textureLod(sky_tex, uv, lod).g, textureLod(sky_tex, uv - fringe, lod).b);
 		vec4 st = textureLod(stars_tex, uv, lod * 0.5);
@@ -128,14 +132,19 @@ void fragment() {
 	col += rim_col * (ring * (0.35 + 0.55 * diag) + ring_soft * 0.12) * (0.5 + specular * 0.7);
 	col += accent * edge_tint * lens * 0.5;
 	if (bubble && !shard) {
-		// A thin bright rim, brightest top-left and bottom-right, with a faint iridescent tint that
-		// drifts slowly, as on the owner's "+" disc. No highlight spot: the middle stays clear.
+		// Soap-bubble rim (owner mock v3): a thin iridescent band that drifts slowly, a bright line
+		// top-left and bottom-right, and a white highlight crescent with a dot, top-left.
 		float ang = atan(g.y, g.x) + bubble_time * 0.4;
-		vec3 film = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0);
-		float edge = smoothstep(5.0, 0.0, -d);
-		col += film * edge * 0.08;
+		vec3 irid = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0);
+		float edge = smoothstep(9.0, 0.0, -d);
+		col += irid * edge * film;
 		float arc = smoothstep(3.0, 0.5, abs(-d - 2.0)) * pow(abs(dot(g, normalize(vec2(-1.0, -1.0)))), 2.0);
 		col += vec3(1.0) * arc * 0.55 * specular;
+		vec2 pn = p / HALF;
+		float a2 = atan(pn.y, pn.x);
+		float crescent = smoothstep(0.07, 0.0, abs(length(pn) - 0.74)) * smoothstep(0.75, 0.0, abs(a2 + 2.25));
+		float dot_hl = smoothstep(0.1, 0.03, length(pn - vec2(-0.3, -0.62)));
+		col += vec3(1.0) * (crescent * 0.75 + dot_hl * 0.85) * gloss;
 	}
 	col = mix(col, flash_color, flash * 0.75);
 	COLOR = vec4(col * unlit_gain, body.a);

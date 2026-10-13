@@ -4,6 +4,7 @@ extends Node
 ## Autoplay (--autoplay, or ?autoplay=1 on the web) skips every menu and plays level 1-01 with a fake save.
 
 const AppSettings := preload("res://scenes/app_settings.gd")
+const GameFont := preload("res://scenes/game_font.gd")
 const StartScreen := preload("res://scenes/start_screen.gd")
 const SettingsScreen := preload("res://scenes/settings_screen.gd")
 const GlassBench := preload("res://scenes/glass_bench.gd")
@@ -50,6 +51,7 @@ static func autoplay_requested() -> bool:
 
 
 func _ready() -> void:
+	GameFont.apply()
 	telemetry = Telemetry.new()
 	autoplay = autoplay_requested()
 	var offline: bool = autoplay or DisplayServer.get_name() == "headless"

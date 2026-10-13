@@ -232,7 +232,7 @@ func test_backdrop_has_sticker_sparkles_and_shooting_stars() -> void:
 	var tints := {}
 	for sp in bg._sparkles:
 		tints[(sp[3] as Color).to_html()] = true
-	assert_true(tints.size() >= 3, "sparkles come in the sheet's colours")
+	assert_true(tints.size() >= 3, "sparkles come in a few pale tints")
 	var seen := false
 	for i in 600:
 		bg._process(1.0 / 30.0)

@@ -76,6 +76,9 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_mat.set_shader_parameter("live", float(_tun.get("glass.live", 0)) > 0.5)
 	_mat.set_shader_parameter("magnify", float(_tun.get("glass.magnify", 0.0)))
 	_mat.set_shader_parameter("rim_bend", float(_tun.get("glass.rimBend", 0.0)))
+	_mat.set_shader_parameter("dark", float(_tun.get("glass.dark", 0.0)))
+	_mat.set_shader_parameter("film", float(_tun.get("glass.film", 0.1)))
+	_mat.set_shader_parameter("gloss", float(_tun.get("glass.gloss", 0.0)))
 	shadow.modulate.a = 0.45  # clear glass casts a faint shadow
 	_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
 	body.light_mask = 2
@@ -103,8 +106,8 @@ func _shadow_corner() -> float:
 	return TileTextures.GLASS_CORNER
 
 
-## Sticker-star tints for the back plane (owner's sheet: gold, white, cyan, pink).
-const STAR_TINTS := [Color("ffd84a"), Color("fff6d8"), Color("7fe8ff"), Color("ff9bd2"), Color("ffd84a")]
+## Star tints for the back plane: pale, as the small white stars in the owner's mock v3.
+const STAR_TINTS := [Color("fff6d8"), Color("dceeff"), Color("ffffff"), Color("cfe6ff"), Color("fff6d8")]
 
 
 ## Back plane: debris drawn as a sticker star (no letter), shadowless and never tilted. It twinkles

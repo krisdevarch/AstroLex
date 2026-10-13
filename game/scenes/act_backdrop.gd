@@ -12,12 +12,12 @@ const RESTORE_RATE := 0.8  # per second, how fast colour eases back
 const BACKDROP := "res://art/backdrop/low_orbit.jpg"
 const BACKDROP_HORIZON := 750.0  # Earth's crest in the backdrop image, image px from the top
 const SPARKLES := 12
-const SPARKLE_TINTS := [Color("ffd84a"), Color("fff6d8"), Color("7fe8ff"), Color("ff9bd2"), Color("ffd84a"), Color("fff6d8")]
+const SPARKLE_TINTS := [Color("ffffff"), Color("fff6d8"), Color("dceeff"), Color("ffffff"), Color("cfe6ff"), Color("fff6d8")]
 const INK := Color(0.04, 0.06, 0.18)
 const SHOOT_EVERY := 5.0  # seconds between shooting stars, give or take
 const SHOOT_SPEED := 1500.0  # px/s at 1080 wide
 const SHOOT_TAIL := 260.0
-const SAT_SHADER := "shader_type canvas_item;\nuniform float sat = 1.0;\nvoid fragment() {\n\tvec4 c = texture(TEXTURE, UV) * COLOR;\n\tfloat g = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n\tCOLOR = vec4(mix(vec3(g), c.rgb, sat), c.a);\n}\n"
+const SAT_SHADER := "shader_type canvas_item;\nuniform float sat = 1.0;\nvoid fragment() {\n\tvec4 c = COLOR;  // already the texture times the modulate\n\tfloat g = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n\tCOLOR = vec4(mix(vec3(g), c.rgb, sat), c.a);\n}\n"
 
 var view_size: Vector2 = Vector2(1080, 1920)
 ## Share of the level's words restored; the flow sets it, the scene eases toward it.
@@ -61,7 +61,7 @@ func _ready() -> void:
 	for i in SPARKLES:
 		var p := Vector2(_rng.randf_range(0.03, 0.97) * view_size.x, _rng.randf_range(0.02, 0.62) * view_size.y)
 		var big := i % 4 == 0
-		var sz := (_rng.randf_range(18.0, 26.0) if big else _rng.randf_range(9.0, 14.0)) * k
+		var sz := (_rng.randf_range(12.0, 16.0) if big else _rng.randf_range(6.0, 9.0)) * k
 		_sparkles.append([p, sz, _rng.randf() * TAU, SPARKLE_TINTS[i % SPARKLE_TINTS.size()], _rng.randf_range(-0.4, 0.4)])
 	_apply_sat()
 
@@ -133,7 +133,7 @@ class Live extends Node2D:
 	## A sticker sparkle as on the owner's sheet: a four-point star with concave sides, a dark ink
 	## outline and a white glint.
 	func _sparkle(p: Vector2, s: float, rot: float, c: Color) -> void:
-		draw_colored_polygon(_star(p, s + 4.0, rot), INK)
+		draw_colored_polygon(_star(p, s + 2.0, rot), INK)
 		draw_colored_polygon(_star(p, s, rot), c)
 		draw_circle(p + Vector2(-s * 0.12, -s * 0.16), maxf(1.2, s * 0.1), Color(1, 1, 1, 0.9))
 

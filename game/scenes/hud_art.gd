@@ -80,25 +80,16 @@ class NightPanel extends Control:
 class PortraitArt extends Control:
 	var colour: Color = Color(0.55, 0.9, 1.0)
 
-	## A porthole as in the owner's mock: a glow in the suit colour, a thick metal ring with bolts,
-	## a thin coloured inner ring and a pale sky behind the Catcher.
+	## A porthole as in the owner's mock v3: a soft glow in the suit colour, a thick dark ring outlined
+	## in that colour, and a pale sky behind the Catcher.
 	func _draw() -> void:
 		var c := size * 0.5
-		for i in 8:
-			draw_circle(c, RIM_R + 26.0 - float(i) * 3.5, Color(colour.r, colour.g, colour.b, 0.08))
+		for i in 10:
+			draw_circle(c, RIM_R + 30.0 - float(i) * 3.0, Color(colour.r, colour.g, colour.b, 0.06))
 		draw_circle(c, RIM_R + 2.0, Color("0b1433"))
-		var segs := 64
-		for i in segs:
-			var a0 := TAU * float(i) / float(segs)
-			var a1 := TAU * float(i + 1) / float(segs) + 0.02
-			var shade := 0.6 + 0.3 * cos(a0 + 0.8 + PI)
-			draw_arc(c, RIM_R - 9.0, a0, a1, 4, Color(shade, shade + 0.03, shade + 0.08), 20.0)
-		draw_arc(c, RIM_R + 1.0, 0.0, TAU, 96, Color("0b1433"), 3.0, true)
-		for i in 8:
-			var p := c + Vector2.from_angle(TAU * float(i) / 8.0 + PI / 8.0) * (RIM_R - 9.0)
-			draw_circle(p, 6.0, Color(0.32, 0.36, 0.45))
-			draw_circle(p + Vector2(-1.2, -1.2), 3.6, Color(0.88, 0.9, 0.95))
-		draw_arc(c, DISC_R + 1.0, 0.0, TAU, 96, colour, 6.0, true)
+		draw_arc(c, RIM_R - 1.0, 0.0, TAU, 128, colour, 5.0, true)
+		draw_arc(c, RIM_R - 14.0, 0.0, TAU, 128, Color(1, 1, 1, 0.06), 14.0, true)
+		draw_arc(c, DISC_R + 3.0, 0.0, TAU, 128, colour, 5.0, true)
 		draw_circle(c, DISC_R - 2.0, Color("bfe4ff"))
 		for i in 6:
 			draw_circle(c + Vector2(0, 40), 120.0 - float(i) * 16.0, Color(1, 1, 1, 0.06))

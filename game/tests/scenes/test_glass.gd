@@ -68,7 +68,7 @@ func test_back_plane_is_a_glyphless_sticker_star() -> void:
 	assert_false(v.glyph.visible, "no glyph on the back plane")
 	assert_eq(v.current_tilt, Vector2.ZERO, "no tilt")
 	assert_true(v.body.material == null, "a flat sticker, not glass")
-	assert_true(v.body.self_modulate != Color.WHITE, "tinted in a sheet colour")
+	assert_true(v.STAR_TINTS.has(v.body.self_modulate), "tinted in one of the pale star tints")
 	var s0: Vector2 = v.body.scale
 	var r0: float = v.body.rotation
 	v.place(Vector2(200, 300), 1.7, 0.4)

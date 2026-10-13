@@ -14,6 +14,7 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 const Ui := preload("res://scenes/ui.gd")
 const FpsMeter := preload("res://scenes/fps_meter.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
+const GameFont := preload("res://scenes/game_font.gd")
 
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const DEFAULT_ACT := "act1_low_orbit"
@@ -203,6 +204,7 @@ func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = [])
 
 
 func _start(seed_value: int) -> void:
+	GameFont.apply()
 	_seed = seed_value
 	_scale = view_size.x
 	# One uniform scale for x and y: the field fits between Babel's band and the bottom HUD and is
@@ -796,16 +798,16 @@ func _ignore(c: Control) -> Control:
 func _chip(panel_name: String, label_name: String, text: String, min_w: float = 0.0) -> Panel:
 	var p := Panel.new()
 	p.name = panel_name
-	p.add_theme_stylebox_override("panel", Ui.box(Color("1a2552"), int(CHIP_H * 0.5), Color(1, 1, 1, 0.14), 2))
-	var l := Ui.label(text, 34, Color(0.95, 0.96, 1.0))
+	p.add_theme_stylebox_override("panel", Ui.box(Color(0.1, 0.14, 0.24, 0.88), int(CHIP_H * 0.5)))
+	var l := Ui.label(text, 42, Color(0.95, 0.96, 1.0))
 	l.name = label_name
 	l.add_theme_constant_override("outline_size", 0)
 	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	p.add_child(l)
 	# Side chips share the room left by the centre chip; long names shrink their font to fit.
 	var max_w := (view_size.x - CHIP_MID_W) * 0.5 - SIDE_PAD - 16.0
-	var fs := 34
-	while fs > 22 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0 > max_w:
+	var fs := 42
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0 > max_w:
 		fs -= 2
 	l.add_theme_font_size_override("font_size", fs)
 	p.size = Vector2(maxf(min_w, minf(max_w, ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0)), CHIP_H)
@@ -906,27 +908,27 @@ func _build_hud() -> void:
 	mid.size.x = CHIP_MID_W
 	mid.position = Vector2((w - CHIP_MID_W) * 0.5, CHIP_Y)
 	var title := mid.get_node("LevelLabel") as Label
-	var fs := 34
-	while fs > 22 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
+	var fs := 42
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
 		fs -= 2
 	title.add_theme_font_size_override("font_size", fs)
 	title.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	title.size = Vector2(CHIP_MID_W, 52)
-	title.position = Vector2(0, 4)
+	title.size = Vector2(CHIP_MID_W, 54)
+	title.position = Vector2(0, 2)
 	_hud.add_child(mid)
 	_level_label = title
 	_score_row = HBoxContainer.new()
 	_score_row.name = "ScoreRow"
 	_score_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_score_row.position = Vector2(0, 46)
+	_score_row.position = Vector2(0, 50)
 	_score_row.size = Vector2(CHIP_MID_W, 34)
 	_score_row.add_theme_constant_override("separation", 10)
 	mid.add_child(_ignore(_score_row))
-	_score_label = Ui.label("0", 26, Color(0.8, 0.86, 1.0))
+	_score_label = Ui.label("0", 24, Color(0.8, 0.86, 1.0))
 	_score_label.name = "ScoreLabel"
 	_score_label.add_theme_constant_override("outline_size", 0)
 	_score_row.add_child(_ignore(_score_label))
-	_combo_label = Ui.label("×1.0", 26, Ui.ACCENT)
+	_combo_label = Ui.label("×1.0", 24, Ui.ACCENT)
 	_combo_label.name = "ComboLabel"
 	_combo_label.add_theme_constant_override("outline_size", 0)
 	_score_row.add_child(_ignore(_combo_label))
@@ -935,27 +937,27 @@ func _build_hud() -> void:
 	_band.name = "BabelBand"
 	_band.position = Vector2(BAND_INSET, BAND_Y)
 	_band.size = Vector2(w - 2.0 * BAND_INSET, BAND_H)
-	_band.add_theme_stylebox_override("panel", Ui.box(Color("16204a"), int(BAND_H * 0.5), PERIWINKLE, 4))
+	_band.add_theme_stylebox_override("panel", Ui.box(Color(0.12, 0.15, 0.32, 0.9), int(BAND_H * 0.5), PERIWINKLE, 4))
 	_band.visible = false
 	_hud.add_child(_ignore(_band))
 	var tail: Control = HudArt.BubbleTail.new()
 	tail.name = "BabelTail"
 	tail.set("colour", PERIWINKLE)
-	tail.set("fill", Color("16204a"))
+	tail.set("fill", Color(0.12, 0.15, 0.32, 0.9))
 	tail.size = Vector2(BAND_TAIL * 1.6, BAND_TAIL + 6.0)
 	tail.position = Vector2(cc.position.x + cc.size.x * 0.5 - BAND_INSET - tail.size.x * 0.5, -BAND_TAIL + 2.0)
 	_band.add_child(_ignore(tail))
-	var tag := Ui.label("Babel:", 34, PERIWINKLE, HORIZONTAL_ALIGNMENT_LEFT)
+	var tag := Ui.label("Babel:", 40, PERIWINKLE, HORIZONTAL_ALIGNMENT_LEFT)
 	tag.name = "BabelTag"
 	tag.add_theme_constant_override("outline_size", 0)
 	tag.position = Vector2(40, 0)
 	tag.size = Vector2(130, BAND_H)
 	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_band.add_child(_ignore(tag))
-	_band_label = Ui.label("", 34, Color(0.95, 0.96, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
+	_band_label = Ui.label("", 40, Color(0.95, 0.96, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
 	_band_label.name = "BabelText"
 	_band_label.add_theme_constant_override("outline_size", 0)
-	_band_label.position = Vector2(40 + ThemeDB.fallback_font.get_string_size("Babel: ", HORIZONTAL_ALIGNMENT_LEFT, -1, 34).x, 4)
+	_band_label.position = Vector2(40 + ThemeDB.fallback_font.get_string_size("Babel: ", HORIZONTAL_ALIGNMENT_LEFT, -1, 40).x, 4)
 	_band_label.size = Vector2(_band.size.x - _band_label.position.x - 36, BAND_H - 8)
 	_band_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_band_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -972,7 +974,7 @@ func _build_hud() -> void:
 	tray.name = "SlotTray"
 	tray.position = tr.position
 	tray.size = tr.size
-	tray.add_theme_stylebox_override("panel", Ui.box(Color("0b1433", 0.92), 34, Color(CYAN_EDGE.r, CYAN_EDGE.g, CYAN_EDGE.b, 0.45), 3))
+	tray.add_theme_stylebox_override("panel", Ui.box(Color(0.03, 0.06, 0.15, 0.82), 34, Color(CYAN_EDGE.r, CYAN_EDGE.g, CYAN_EDGE.b, 0.35), 3))
 	_hud.add_child(_ignore(tray))
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"

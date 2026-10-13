@@ -24,10 +24,6 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
-[gui]
-
-theme/custom_font="res://fonts/ui_font.tres"
-
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

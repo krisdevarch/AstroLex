@@ -63,6 +63,9 @@
     "glass.live",
     "glass.magnify",
     "glass.rimBend",
+    "glass.dark",
+    "glass.film",
+    "glass.gloss",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
     "hud.hintAlpha",
@@ -382,6 +385,24 @@
       "minimum": 0,
       "maximum": 3,
       "description": "bubble look: extra magnification toward the rim, where the glass bends most"
+    },
+    "glass.dark": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: how far the inside of a bubble darkens toward night navy (owner mock v3: dark glossy bubbles)"
+    },
+    "glass.film": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: strength of the iridescent soap-film rim"
+    },
+    "glass.gloss": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: strength of the white highlight crescent and dot at the top-left"
     },
     "glass.grain": {
       "type": "number",
