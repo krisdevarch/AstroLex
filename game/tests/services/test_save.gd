@@ -118,7 +118,7 @@ func test_main_continues_to_the_map_with_unlocked_levels() -> void:
 	assert_false((main.find_child("Level_1-05", true, false) as Button).disabled, "1-05 open")
 	assert_true((main.find_child("Level_1-06", true, false) as Button).disabled, "1-06 locked")
 	Flow.press(main, "Level_1-05")
-	if Flow.has(main, "CommsScreen"):
+	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
 	assert_eq(main.level_index, 4)
 	assert_true(Flow.has(main, "Field"), "field is up")

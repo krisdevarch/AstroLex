@@ -128,9 +128,9 @@ func test_issue_url_stays_under_6000_for_a_long_session() -> void:
 	assert_eq(JSON.parse_string(t.clipboard_text)["events"].size() > 0, true)
 
 
-func test_end_screen_buttons_send_and_copy_with_a_toast() -> void:
+func test_level_card_buttons_send_and_copy_with_a_toast() -> void:
 	var t: RefCounted = Telemetry.fake()
-	var end: Control = load("res://scenes/end_screen.gd").new()
+	var end: Control = load("res://scenes/level_card.gd").new()
 	end.summary = {"won": true, "mode": "drift", "score": 1}
 	end.telemetry = t
 	tree.root.add_child(end)

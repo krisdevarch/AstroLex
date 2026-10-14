@@ -1,14 +1,19 @@
 extends Node
-## App root. Flow: Start -> (first time: Character -> Difficulty) -> Level map -> level comms -> field
-## -> End screen -> Next / Retry / Map. Pause overlay on the field. Settings from Start and the map.
-## Autoplay (--autoplay, or ?autoplay=1 on the web) skips every menu and plays level 1-01 with a fake save.
+## App root. Flow: Start -> (first time: Character -> Difficulty) -> Level map -> field. From there
+## one game screen carries the whole act (WP-3.O): the crew's chatter plays on it, Babel throws the
+## letters, and at the end the level card rises on it with the stars; Next plays the chatter between
+## levels and the next level's throw on the same screen, Retry replays in place, Map leaves.
+## Pause overlay on the field. Settings from Start and the map.
+## Autoplay (--autoplay, or ?autoplay=1 on the web) skips every menu and the chatter and plays level
+## 1-01 with a fake save. Demo (?demo=1, for clips) is autoplay with a Catcher, the chatter and a
+## Next press a few seconds after each win.
 
 const AppSettings := preload("res://scenes/app_settings.gd")
 const GameFont := preload("res://scenes/game_font.gd")
 const StartScreen := preload("res://scenes/start_screen.gd")
 const SettingsScreen := preload("res://scenes/settings_screen.gd")
 const GlassBench := preload("res://scenes/glass_bench.gd")
-const EndScreen := preload("res://scenes/end_screen.gd")
+const LevelCard := preload("res://scenes/level_card.gd")
 const CharacterSelect := preload("res://scenes/character_select.gd")
 const DifficultySelect := preload("res://scenes/difficulty_select.gd")
 const LevelMap := preload("res://scenes/level_map.gd")
@@ -18,10 +23,10 @@ const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
 const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
-const CommsScreen := preload("res://scenes/comms_screen.gd")
 
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const SAVETEST_PATH := "user://save_test.json"
+const DEMO_NEXT_SEC := 3.5
 
 ## The act being played, its levels (from the dictionary) and the level in play.
 var act: String = "act1_low_orbit"
@@ -31,6 +36,7 @@ var level_index: int = 0
 var settings: AppSettings = AppSettings.new()
 var round_no: int = 1
 var autoplay: bool = false
+var demo: bool = false
 var screen: Node
 var telemetry: RefCounted
 ## Progress save. Tests may set a Save.fake() before _ready; autoplay always uses a fake.
@@ -46,14 +52,23 @@ static func autoplay_requested() -> bool:
 		return true
 	if OS.has_feature("web"):
 		var q: Variant = JavaScriptBridge.eval("window.location.search")
-		return str(q).contains("autoplay=1")
+		return str(q).contains("autoplay=1") or str(q).contains("demo=1")
+	return false
+
+
+static func demo_requested() -> bool:
+	if OS.get_cmdline_user_args().has("--demo"):
+		return true
+	if OS.has_feature("web"):
+		return str(JavaScriptBridge.eval("window.location.search")).contains("demo=1")
 	return false
 
 
 func _ready() -> void:
 	GameFont.apply()
 	telemetry = Telemetry.new()
-	autoplay = autoplay_requested()
+	demo = demo_requested()
+	autoplay = demo or autoplay_requested()
 	var offline: bool = autoplay or DisplayServer.get_name() == "headless"
 	if dictionary == null:
 		dictionary = DictService.bundled(not offline)
@@ -67,6 +82,8 @@ func _ready() -> void:
 	if save == null:
 		if offline:
 			save = Save.fake()
+			if demo:
+				save.set_profile("wren", "they", _default_difficulty())
 		elif _savetest_query() != "":
 			save = Save.real(SAVETEST_PATH)  # never the real player's save
 		else:
@@ -77,7 +94,7 @@ func _ready() -> void:
 	if GlassBench.bench_requested():
 		_show_bench(GlassBench.auto_requested())
 	elif autoplay:
-		_start_level()
+		_begin_level_with_comms()
 	else:
 		_show_start()
 	telemetry.mark_ready()
@@ -268,54 +285,70 @@ func _comms_of(index: int, key: String) -> Array:
 	return (levels[index] as Dictionary).get(key, [])
 
 
-## Shows a comms exchange, then calls `then`. An empty exchange is skipped.
-func _show_comms(messages: Array, then: Callable) -> void:
-	if messages.is_empty():
+## The chatter to play: none in autoplay (the CI smoke), all of it otherwise and in the demo.
+func _story(messages: Array) -> Array:
+	return [] if autoplay and not demo else messages
+
+
+func _field() -> Node:
+	if screen != null and is_instance_valid(screen) and screen.name == "Field":
+		return screen
+	return null
+
+
+## Plays `messages` on the game screen, then calls `then` (at once when there is nothing to play).
+func _story_then(messages: Array, then: Callable) -> void:
+	var f := _field()
+	var m := _story(messages)
+	if f == null or m.is_empty():
 		then.call()
 		return
-	var c: Control = CommsScreen.new()
-	c.name = "CommsScreen"
-	c.messages = messages
-	c.reduced_motion = settings.reduced_motion
-	c.finished.connect(then)
-	_swap(c)
+	f.play_story(m, then)
 
 
-## The current level's comms, then play.
+## The current level's chatter, then play.
 func _begin_level_with_comms() -> void:
-	_show_comms(_comms_of(level_index, "commsBefore"), _start_level)
+	_start_level(_comms_of(level_index, "commsBefore"))
 
 
-func _start_level() -> void:
+## Plays the current level. The game screen stays up when it already is (next level, retry,
+## restart) and changes over in place; `story` plays on it before Babel throws the letters.
+func _start_level(story: Array = []) -> void:
 	if levels.is_empty():
 		push_error("main: no levels for %s; back to the map" % act)
 		_show_map()
 		return
 	var level: Dictionary = levels[level_index]
-	var f: Node2D = FieldScene.instantiate()
-	f.name = "Field"
-	f.settings = settings
-	f.autoplay = autoplay
-	f.view_size = get_viewport().get_visible_rect().size
-	f.print_ready = not _ready_printed
-	_ready_printed = true
 	var ch := _profile_character()
-	if not autoplay and ch.has("colour"):
-		f.tether_colour = Color(str(ch["colour"]))
-	if not autoplay and ch.has("id"):
-		f.character_id = str(ch["id"])
-		f.character_name = str(ch.get("name", ch["id"]))
+	var cosmetic := not autoplay or demo
+	_close_pause()
+	var f: Node = _field()
+	if f == null:
+		f = FieldScene.instantiate()
+		f.name = "Field"
+		f.settings = settings
+		f.autoplay = autoplay
+		f.view_size = get_viewport().get_visible_rect().size
+		f.print_ready = not _ready_printed
+		_ready_printed = true
+		if cosmetic and ch.has("colour"):
+			f.tether_colour = Color(str(ch["colour"]))
+		if cosmetic and ch.has("id"):
+			f.character_id = str(ch["id"])
+			f.character_name = str(ch.get("name", ch["id"]))
+		f.content_override = dictionary.content()
+		f.round_finished.connect(_on_level_finished)
+		f.pause_requested.connect(func() -> void: _show_pause(f))
+		f.settings_requested.connect(func() -> void: _show_field_settings(f))
+		_swap(f)
+	else:
+		f.set_paused(false)
 	f.level_counter = "Level %d / %d" % [level_index + 1, levels.size()]
-	f.content_override = dictionary.content()
-	f.round_finished.connect(_on_level_finished.bind(level))
-	f.pause_requested.connect(_show_pause.bind(f))
-	f.settings_requested.connect(_show_field_settings.bind(f))
-	_swap(f)
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
 	var char_id := "" if autoplay else str(ch.get("id", ""))
 	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), act, char_id, diff_id)
-	f.begin_level(level, act, _mods())
+	f.begin_level(level, act, _mods(), _story(story))
 
 
 func _is_final_level() -> bool:
@@ -323,41 +356,49 @@ func _is_final_level() -> bool:
 	return not order.is_empty() and act == str(order[order.size() - 1]) and level_index >= levels.size() - 1
 
 
-func _on_level_finished(summary: Dictionary, level: Dictionary) -> void:
+func _on_level_finished(summary: Dictionary, level: Dictionary = {}) -> void:
+	if level.is_empty():
+		level = levels[level_index]
 	summary["level"] = str(level["id"])
 	summary["act"] = act
 	var won: bool = summary.get("won", false)
 	var stars: int = int(summary.get("stars", 1 if won else 0))
 	save.record_level(act, str(level["id"]), level_index, won, int(summary.get("score", 0)), stars)
-	if not won:
-		_show_end(summary)
-	elif autoplay:
-		_show_end(summary)
-	else:
-		_show_comms(level.get("commsAfter", []), func() -> void: _show_end(summary))
+	_show_card(summary)
 
 
-func _show_end(summary: Dictionary) -> void:
-	var s: Control = EndScreen.new()
-	s.name = "EndScreen"
-	s.summary = summary
-	s.telemetry = telemetry
-	s.next.connect(_go_next)
-	s.retry.connect(_start_level)
-	s.map.connect(_show_map)
-	_swap(s)
+## The level card on the game screen: the stars fly in; Next, Retry or Map.
+func _show_card(summary: Dictionary) -> void:
+	var f := _field()
+	if f == null:
+		_show_map()
+		return
+	var c: Control = LevelCard.new()
+	c.name = "LevelCard"
+	c.summary = summary
+	c.telemetry = telemetry
+	c.next.connect(_go_next)
+	c.retry.connect(_start_level)
+	c.map.connect(_show_map)
+	f.show_card(c)
+	if demo and bool(summary.get("won", false)) and is_inside_tree():
+		get_tree().create_timer(DEMO_NEXT_SEC).timeout.connect(func() -> void:
+			if is_instance_valid(c) and c.is_inside_tree():
+				c.call("choose", "next"))
 
 
-## Next after a win: the next level, or the act-complete screen after the last level of an act
-## (the beta-complete screen after the very last level).
+## Next after a win: the level's closing chatter and the next level's opening chatter on the game
+## screen, then its letters; after the last level of an act, the closing chatter, then the
+## act-complete screen (the beta-complete screen after the very last level).
 func _go_next() -> void:
+	var after: Array = _comms_of(level_index, "commsAfter")
 	if _is_final_level():
-		_show_complete(true)
+		_story_then(after, _show_complete.bind(true))
 	elif level_index < levels.size() - 1:
 		level_index += 1
-		_begin_level_with_comms()
+		_start_level(after + _comms_of(level_index, "commsBefore"))
 	else:
-		_show_complete(false)
+		_story_then(after, _show_complete.bind(false))
 
 
 func _show_complete(final: bool) -> void:

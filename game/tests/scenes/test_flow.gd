@@ -73,14 +73,16 @@ func test_last_level_of_an_act_unlocks_the_next_act() -> void:
 	var main: Node = Flow.returning(tree, s)
 	Flow.to_field(main, "1-12")
 	main.call("_on_level_finished", {"won": true, "stars": 2, "score": 99}, _level("act1_low_orbit", 11))
-	if Flow.has(main, "CommsScreen"):
+	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
-	assert_true(Flow.has(main, "NextButton"), "end screen")
+	assert_true(Flow.has(main, "NextButton"), "level card")
 	assert_true(s.unlocked("act2_nebula", 0), "act 2 open")
 	Flow.press(main, "NextButton")
+	assert_true(Flow.has(main, "StoryStrip"), "1-12's closing chatter plays on the game screen")
+	Flow.press(main, "SkipButton")
 	assert_true(Flow.has(main, "ActComplete"), "act complete screen")
 	Flow.press(main, "NextActButton")
-	if Flow.has(main, "CommsScreen"):
+	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
 	var f := main.find_child("Field", true, false)
 	assert_true(f != null and f.game_round.level_id == "2-01", "act 2 starts at 2-01")
@@ -95,11 +97,13 @@ func test_winning_4_12_shows_beta_complete() -> void:
 	var main: Node = Flow.returning(tree, s)
 	Flow.to_field(main, "4-12")
 	main.call("_on_level_finished", {"won": true, "stars": 3, "score": 99}, _level("act4_core", 11))
-	if Flow.has(main, "CommsScreen"):
+	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
-	assert_true(Flow.has(main, "EndScreen"), "end screen first")
+	assert_true(Flow.has(main, "LevelCard"), "level card first")
 	assert_false(Flow.has(main, "BetaComplete"), "not yet")
 	Flow.press(main, "NextButton")
+	if Flow.has(main, "StoryStrip"):
+		Flow.press(main, "SkipButton")
 	assert_true(Flow.has(main, "BetaComplete"), "beta complete screen")
 	assert_eq((main.find_child("BetaMessage", true, false) as Label).text, "You restored every word in the beta. Story, art and music are on the way.")
 	assert_eq((main.find_child("TotalStars", true, false) as Label).text, "Total stars  %d" % s.total_stars())

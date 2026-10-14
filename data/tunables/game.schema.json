@@ -78,6 +78,12 @@
     "fx.shakeSec",
     "fx.bannerSec",
     "fx.heartbeatSec",
+    "flow.clearSec",
+    "flow.starSec",
+    "flow.starGapSec",
+    "flow.storyReadSec",
+    "flow.storyCps",
+    "flow.refillSec",
     "sfx.volumeDb",
     "hud.hintAlpha",
     "autoplay.tapInterval",
@@ -426,7 +432,10 @@
     },
     "glass.live": {
       "type": "number",
-      "enum": [0, 1],
+      "enum": [
+        0,
+        1
+      ],
       "description": "bubble look: 1 refracts the live screen (planets show magnified through the glass), 0 falls back to the baked sky"
     },
     "glass.magnify": {
@@ -502,6 +511,36 @@
       "type": "number",
       "minimum": 0,
       "description": "a heartbeat sounds once a second while the clock is below this many seconds"
+    },
+    "flow.clearSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds the leftover letters take to drift out of the field when a level ends"
+    },
+    "flow.starSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds one earned star takes to fly from the clock bar into the level card"
+    },
+    "flow.starGapSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds between one star's flight and the next"
+    },
+    "flow.storyReadSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds a story line stays before the next one, before adding reading time"
+    },
+    "flow.storyCps": {
+      "type": "number",
+      "minimum": 0,
+      "description": "reading speed for story lines (characters per second), added to flow.storyReadSec"
+    },
+    "flow.refillSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds the clock bar takes to refill for the next level"
     },
     "sfx.volumeDb": {
       "type": "number",

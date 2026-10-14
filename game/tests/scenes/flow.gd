@@ -30,6 +30,6 @@ static func returning(tree: SceneTree, save: RefCounted = null) -> Node:
 static func to_field(main: Node, id: String = "1-01") -> Node:
 	press(main, "StartButton")
 	press(main, "Level_%s" % id)
-	if has(main, "CommsScreen"):
+	if has(main, "StoryStrip"):
 		press(main, "SkipButton")
 	return main.find_child("Field", true, false)
