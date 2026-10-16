@@ -304,6 +304,8 @@ func _build_once() -> void:
 ## cross-fade to the new name and number, the slots pop in empty and the clock bar refills.
 func _reset_for_level() -> void:
 	_drop_story()  # a Restart from the pause menu during the chatter
+	if _backdrop != null:
+		_backdrop.set_act(game_round.act)
 	last_babel = ""  # a new level: Babel has not spoken yet
 	_babel_t = 99.0
 	_cleared = false
@@ -718,6 +720,7 @@ func _build_world() -> void:
 	add_child(backdrop)
 	_backdrop = ActBackdrop.new()
 	_backdrop.name = "ActScene"
+	_backdrop.act = game_round.act
 	_backdrop.view_size = view_size
 	_backdrop.horizon_y = view_size.y - HudArt.PANEL_H + HudArt.CREST
 	_backdrop.reduced_motion = settings.reduced_motion

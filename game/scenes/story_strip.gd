@@ -8,6 +8,7 @@ extends Control
 ## Covers only the play field, so the HUD buttons under it still work.
 
 const Ui := preload("res://scenes/ui.gd")
+const CrewArt := preload("res://scenes/crew_art.gd")
 
 signal finished
 ## A line of Babel's: the field shows it in Babel's own bubble.
@@ -146,10 +147,10 @@ func _show(i: int) -> void:
 	p.size = Vector2(w, h)
 	p.pivot_offset = Vector2(0, h)
 	p.position = Vector2(INSET, size.y - BOTTOM_PAD - h + (0.0 if reduced_motion else 60.0))
-	var av := Avatar.new()
+	var av := CrewArt.new()
 	av.name = "Avatar"
 	av.colour = col
-	av.initial = who.substr(0, 1).to_upper()
+	av.who = who
 	av.size = Vector2(AVATAR_D, AVATAR_D)
 	av.position = Vector2(PAD - 6.0, PAD - 6.0)
 	av.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -235,20 +236,3 @@ func _finish() -> void:
 		queue_free()
 	else:
 		_out_t = 0.0
-
-
-## The speaker's disc: their colour with their initial, until the crew have portraits.
-class Avatar extends Control:
-	var colour: Color = Color.WHITE
-	var initial: String = ""
-
-	func _draw() -> void:
-		var c := size * 0.5
-		var r := size.x * 0.5
-		draw_circle(c, r, Color(0.06, 0.08, 0.16))
-		draw_circle(c, r - 5.0, colour.darkened(0.15))
-		draw_arc(c, r - 2.0, 0.0, TAU, 40, colour, 4.0, true)
-		var font := ThemeDB.fallback_font
-		var fs := int(r * 1.05)
-		var tw := font.get_string_size(initial, HORIZONTAL_ALIGNMENT_LEFT, -1, fs)
-		draw_string(font, Vector2(c.x - tw.x * 0.5, c.y + fs * 0.36), initial, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0.06, 0.08, 0.16))
