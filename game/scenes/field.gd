@@ -18,6 +18,7 @@ const GameFont := preload("res://scenes/game_font.gd")
 const BabelViewScript := preload("res://scenes/babel_view.gd")
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const Sfx := preload("res://scenes/sfx.gd")
+const Coach := preload("res://scenes/coach.gd")
 const StoryStrip := preload("res://scenes/story_strip.gd")
 const DEFAULT_ACT := "act1_low_orbit"
 const LOW_TIME := 5.0
@@ -121,6 +122,10 @@ var last_babel: String = ""
 var finished: bool = false
 ## Babel flies in, speaks and shoots the round's letters before play starts (visual only).
 var intro_enabled: bool = true
+## First-play coach (WP-3.Q): main turns it on for a save with no win yet, and the drone hint for a
+## player who has not got past level 1-03. Never in autoplay.
+var coach_enabled: bool = false
+var coach_drones: bool = false
 
 var _intro_on: bool = false
 var _settle_t: float = 99.0  # time since the throw ended, while the letters ease into their drift
@@ -133,6 +138,11 @@ var _intro_throw_at: float = 0.0  # intro time the first letter leaves
 var _intro_exiting: bool = false
 var _spawn_grow: bool = false  # letters made mid-play grow in
 var _babel: Node2D
+var _coach: Coach
+var _coach_stage: int = 0  # 0 waiting for the throw, 1 pointing at a letter, 2 slot caption, 3 done
+var _coach_left: float = 0.0
+var _coach_drone_seen: bool = false  # the drone hint is shown once per screen
+var _coach_drone_on: bool = false
 
 var _level_title: String = ""
 var _level_label: Label
@@ -298,6 +308,7 @@ func _reset_for_level() -> void:
 	_babel_t = 99.0
 	_cleared = false
 	_intro_on = false
+	_coach_reset()
 	if _babel != null:
 		_babel.hide_now()
 	for id in _views.keys():
@@ -492,6 +503,8 @@ func _notification(what: int) -> void:
 ## Freezes or resumes everything: rules, intro, effects; taps are ignored while paused.
 func set_paused(on: bool) -> void:
 	paused = on
+	if _coach != null:
+		_coach.modulate.a = 0.0 if on else 1.0
 	if _pause_icon != null:
 		_pause_icon.set("kind", "play" if on else "pause")
 
@@ -530,6 +543,7 @@ func advance(delta: float) -> void:
 	_update_hud()
 	_tick_hud(delta)
 	_tick_feel(delta)
+	_tick_coach(delta)
 	if _end_t >= 0.0 and not finished:
 		_end_t += delta
 		if _end_t >= END_DELAY:
@@ -567,6 +581,7 @@ func intro_active() -> bool:
 func _start_intro(seed_value: int) -> void:
 	if not intro_enabled:
 		_spawn_grow = true
+		_coach_begin()
 		return
 	_ensure_babel()
 	_babel.hide_now()
@@ -619,6 +634,7 @@ func _end_intro(babel_leaves_now: bool) -> void:
 	if not _intro_on:
 		return
 	_intro_on = false
+	_coach_begin()
 	_spawn_grow = true
 	_settle_t = 0.0 if not settings.reduced_motion else 99.0
 	if _babel != null and babel_leaves_now:
@@ -941,6 +957,8 @@ func _apply_events() -> void:
 				_babel_t = 0.0
 			"round_end":
 				_end_t = 0.0
+				_coach_reset()
+				_coach_stage = 3
 				_clear_field()
 				if bool(e["won"]):
 					print("AstroLex round won: score=%d" % int(round(game_round.score)))
@@ -969,6 +987,7 @@ func _clear_field() -> void:
 
 
 func _on_catch(e: Dictionary) -> void:
+	_coach_caught()
 	var id := int(e["tile_id"])
 	var v: TileViewScript = _views.get(id)
 	var where: String = e["where"]
@@ -1380,6 +1399,71 @@ func _build_hud() -> void:
 	_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_clock_label.pivot_offset = Vector2(CLOCK_LABEL_W, 24)
 	_hud.add_child(_ignore(_clock_label))
+	_coach = Coach.new()
+	_coach.setup(_tun, settings.reduced_motion, view_size)
+	_hud.add_child(_coach)
+
+
+# --- first-play coach ------------------------------------------------------------------
+
+func _coach_active() -> bool:
+	return (coach_enabled or coach_drones) and not autoplay and _coach != null
+
+
+func _coach_reset() -> void:
+	_coach_stage = 0
+	_coach_left = 0.0
+	_coach_drone_on = false
+	if _coach != null:
+		_coach.clear()
+
+
+## The throw is over and play starts: the letter hint begins (only when the coach is on).
+func _coach_begin() -> void:
+	if coach_enabled and _coach_active() and _coach_stage == 0:
+		_coach_stage = 1
+
+
+func _coach_caught() -> void:
+	if _coach_stage == 1:
+		_coach_stage = 2
+		_coach_left = _n("coach.afterCatchSec")
+		_coach.clear()
+
+
+func _tick_coach(delta: float) -> void:
+	if not _coach_active() or finished or _cleared:
+		return
+	# A drone beats the letter hint: point at the first one, until it is gone.
+	var thief: ThiefViewScript = null
+	if not _coach_drone_seen or _coach_drone_on:
+		for th in game_round.thieves:
+			thief = _thief_views.get(th.id)
+			if thief != null:
+				break
+	if thief != null:
+		_coach_drone_on = true
+		_coach_drone_seen = true
+		_coach.show_at(thief.position, "Tap the drone to save the letter")
+		return
+	if _coach_drone_on:
+		_coach_drone_on = false
+		_coach.clear()
+	if _coach_stage == 1:
+		var id := Targeting.letter_target(game_round)
+		var v: TileViewScript = _views.get(id)
+		if v != null:
+			_coach.show_at(v.position, "Tap a letter you need")
+		else:
+			_coach.clear()
+	elif _coach_stage == 2:
+		_coach_left -= delta
+		if _coach_left <= 0.0:
+			_coach_stage = 3
+			_coach.clear()
+		else:
+			var tray := _tray_rect()
+			_coach.show_at(Vector2(tray.position.x + tray.size.x * 0.5, tray.position.y - 70.0), "Fill every slot before the clock runs out", false)
 
 
 ## Hint button: asks the rules for a hint. Returns the tile id, or -1 (the button flashes).
