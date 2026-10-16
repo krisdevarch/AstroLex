@@ -34,6 +34,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-26 | Backgrounds | **A painted-sky scene per act**: gradient sky, a glowing band of stars, one landmark (grey Earth, Earth's night side, nebula, the Tower, Babel's core) and layered horizons, within the four `Parallax2D` layers. One palette per act; the Daily Signal follows the owner's reference image. The core rule is that silence is grey and each restored word brings a colour back (design doc §9, §11) | answered by owner (9 Oct 2026) |
 | O-27 | Character colours | **One signature colour per character** (from Hades): Catcher cyan, Rhee amber, Tomas coral, Babel periwinkle, Ade seafoam, Kit pink, VANTA crimson; used on bubbles, names, portrait rims and leitmotifs (design doc §9) | answered by owner (9 Oct 2026) |
 | O-28 | Prologue | **Wordless Prologue** (from Ori): painted stills with no text, and *water* is the first word on screen in the game. Built first as a cheap animatic in WP-3.4; story-writer drafts the beats, and the owner approves them (design doc §3) | answered by owner (9 Oct 2026) |
+| O-29 | Finish milestone approvals | **Owner approved every decision** in `wps/MILESTONE-finish.md` (16 Oct 2026, project thread): all drafted text ships as `approved`, placeholder art and audio ship until human-made assets replace them | answered by owner (16 Oct 2026) |
 
 ## Work packages
 
@@ -75,11 +76,11 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 
 ## Review queue (cap 4)
 
-1. WP-1.3 act word lists: skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
+1. ~~WP-1.3 act word lists~~ (approved under O-29): skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
 2. WP-1.5 feasibility report: O-13 `level` scope applies by default; say so if you disagree.
 3. Phase 2 loop 1: share the toy link with the first 5–7 outside testers per `playtests/P2/protocol.md`; paste each tester's Copy results output into `playtests/P2/results/loop-1/`.
 4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the layout sketches (where the slots, comms and HUD sit), so the colours and glass tiles can be mapped onto them.
-5. WP-3.7 story bible (owner asked for it on 9 Oct 2026, over the cap of 4): read `docs/story-bible.md`, `docs/story/prologue.md`, `docs/story/samples.md`; answer the open questions in `reports/WP-3.7/evidence.md`; flip `status: draft` to `approved`.
+5. ~~WP-3.7 story bible~~ (approved under O-29) (owner asked for it on 9 Oct 2026, over the cap of 4): read `docs/story-bible.md`, `docs/story/prologue.md`, `docs/story/samples.md`; answer the open questions in `reports/WP-3.7/evidence.md`; flip `status: draft` to `approved`.
 
 ## Backlog (found while building, not in scope of any current WP)
 

@@ -1,6 +1,6 @@
 {
   "$schema": "./characters.schema.json",
-  "status": "draft",
+  "status": "approved",
   "characters": [
     {"id": "wren", "role": "The courier", "name": "Wren", "colour": "#4fd8eb", "perk": "Quick line: the tether flies 15% faster", "mod": {"mul": {"tether.travelTime": 0.85}}},
     {"id": "juno", "role": "The salvager", "name": "Juno", "colour": "#f2b544", "perk": "Wide grip: catches forgive a 25% wider miss", "mod": {"mul": {"tether.hitTolerance": 1.25}}},

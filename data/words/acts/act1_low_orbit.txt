@@ -1,5 +1,5 @@
 # Act I, Low Orbit: concrete nouns. Everyday things drifting in a debris field.
-# status: draft (owner approves by changing to "approved")
+# status: approved (owner, 16 Oct 2026)
 water
 bread
 home

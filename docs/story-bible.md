@@ -1,6 +1,6 @@
 # AstroLex Story Bible v1
 
-status: draft
+status: approved
 
 Owner approval pending. Source: plan v3 Part 1, plan v4 Part 2, design direction sections 1-4 and 8-9, WP-3.7. Where this bible and v3 Part 1 agree, v3 stands. Linked files: [Prologue](story/prologue.md) and [samples](story/samples.md) (both drafted separately).
 

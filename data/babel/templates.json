@@ -1,6 +1,6 @@
 {
   "$schema": "./templates.schema.json",
-  "status": "draft",
+  "status": "approved",
   "notes": "Babel speaks only in letters the player has caught. Every token, literal or slot, must be spelled from the level's letter pool. Slots: {T} a restored word of this level, {ANAGRAM_T} a dictionary anagram of a restored word, {W} any lexicon word, {N} noun, {V} verb, {A} adjective, {THEME} a thematic word (silence, listening, noise). Uppercase literals are fixed glue words.",
   "templates": [
     {"id": "signature", "pattern": "{ANAGRAM_T}.", "note": "The pure rearrangement. SILENT -> LISTEN."},

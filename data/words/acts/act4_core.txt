@@ -1,5 +1,5 @@
 # Act IV, Babel Core: all kinds, mixed. The finale words LISTEN and SILENT live here.
-# status: draft
+# status: approved (owner, 16 Oct 2026)
 listen
 silent
 name

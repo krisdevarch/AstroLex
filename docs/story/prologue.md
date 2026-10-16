@@ -1,6 +1,6 @@
 # Prologue: wordless (decision O-28)
 
-status: draft
+status: approved
 
 Source: plan v3 §1.5 (Prologue row), Design Direction §3 (wordless Prologue), §8 (Hades: signature colours), §9 (colour story).
 Rule: NO text in any still. No captions, no subtitles, no signs, no lips-synced speech bubbles. The only words in the whole sequence are the HUD slot letters and the word WATER, in play.

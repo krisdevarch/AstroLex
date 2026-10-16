@@ -1,6 +1,6 @@
 # Story samples: Babel lines and chat comms
 
-status: draft
+status: approved
 
 Babel speaks only in letters the player has caught. For each line, the pool is every letter of the level's target words, with multiplicity. Tallies show pool vs used; used never exceeds pool. Punctuation and spaces are ignored.
 
