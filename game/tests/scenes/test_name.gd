@@ -137,5 +137,6 @@ func test_ending_reduced_motion_has_no_sweep() -> void:
 	var e: Control = Ending.new()
 	e.reduced_motion = true
 	tree.root.add_child(e)
-	assert_eq((e.find_child("Band_1", true, false) as Control).position.x, 0.0)
+	var b := e.find_child("Band_1", true, false) as Control
+	assert_eq(b.position.x, float(b.get_meta("rest_x")), "the aurora sits at rest, no sweep")
 	e.free()

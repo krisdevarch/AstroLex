@@ -137,7 +137,8 @@ func _sync_level_index() -> void:
 	level_index = clampi(save.next_level(act), 0, maxi(levels.size() - 1, 0))
 
 
-## Web-only test hook: ?savetest=1 (own save file) prints the saved next level, &win=1 first records 1-01 as won.
+## Web-only test hook: ?savetest=1 (own save file) prints the saved next level, &win=1 first records 1-01 as won,
+## &ending=1 opens the ending screen straight away (a preview for the owner; no save is changed).
 func _save_debug_hook() -> void:
 	var q := _savetest_query()
 	if q == "" or autoplay or levels.is_empty():
@@ -145,6 +146,10 @@ func _save_debug_hook() -> void:
 	if q.contains("win=1"):
 		save.record_level(act, str((levels[0] as Dictionary)["id"]), 0, true, 100, 1)
 		_sync_level_index()
+	if q.contains("ending=1"):
+		if save.player_name() == "":
+			save.set_profile("wren", "they", _default_difficulty(), "KIT")
+		_show_ending.call_deferred()
 	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
 
 

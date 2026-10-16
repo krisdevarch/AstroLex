@@ -1,6 +1,6 @@
 extends Control
-## The ending (WP-F.2), after 4-12. The painted sky at full colour, the four act tones sweeping in
-## as bands, Earth's lights up, and a few cards you tap through: Rhee, Tomas (naming the Catcher),
+## The ending (WP-F.2), after 4-12. The painted sky at full colour, the four act tones drifting in
+## as soft auroras (one radial glow per act), Earth's lights up, and a few cards you tap through: Rhee, Tomas (naming the Catcher),
 ## "Every word is home.", then total stars, credits and Back to map. A tap advances; Skip jumps to the
 ## last card. Reduced motion: the bands and the lights are still.
 
@@ -12,7 +12,10 @@ signal back_to_map
 signal credits_pressed
 
 const BAND_TONES := [Color("4fd8eb"), Color("f27fb2"), Color("F8BC04"), Color("8f93ff")]  # acts I to IV (level_map.gd)
-const BAND_ALPHA := 0.26
+const BAND_ALPHA := 0.42
+## Each aurora: its centre as a share of the view and its size in view widths (ellipse).
+const BAND_PLACE := [Vector2(0.25, 0.14), Vector2(0.78, 0.26), Vector2(0.3, 0.40), Vector2(0.72, 0.52)]
+const BAND_SIZE := Vector2(1.5, 0.55)
 const BAND_SWEEP_SEC := 1.6
 const BAND_STAGGER_SEC := 0.7
 const LIGHTS := 70
@@ -44,12 +47,17 @@ func _ready() -> void:
 	Ui.add_sky(self, view, 0.3)
 	cards = build_cards(player_name)
 	for i in BAND_TONES.size():
-		var b := ColorRect.new()
+		var b := TextureRect.new()
 		b.name = "Band_%d" % (i + 1)
-		b.color = Color(BAND_TONES[i], BAND_ALPHA)
+		b.texture = _glow(Color(BAND_TONES[i], BAND_ALPHA))
+		b.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		b.stretch_mode = TextureRect.STRETCH_SCALE
 		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.size = Vector2(view.x, view.y * 0.075)
-		b.position = Vector2(0.0 if reduced_motion else -view.x, view.y * (0.1 + 0.115 * i))
+		b.size = BAND_SIZE * view.x
+		var at: Vector2 = BAND_PLACE[i]
+		var rest_x := at.x * view.x - b.size.x * 0.5
+		b.position = Vector2(rest_x if reduced_motion else -view.x, at.y * view.y - b.size.y * 0.5)
+		b.set_meta("rest_x", rest_x)
 		add_child(b)
 		_bands.append(b)
 	_lights = Lights.new()
@@ -96,6 +104,21 @@ func _ready() -> void:
 	_skip.pressed.connect(show_credits)
 	add_child(_skip)
 	_show_card()
+
+
+## A soft radial glow in `tone`, clear at the edge: the act's colour flooding back into the sky.
+static func _glow(tone: Color) -> Texture2D:
+	var g := Gradient.new()
+	g.set_color(0, tone)
+	g.set_color(1, Color(tone, 0.0))
+	var t := GradientTexture2D.new()
+	t.gradient = g
+	t.fill = GradientTexture2D.FILL_RADIAL
+	t.fill_from = Vector2(0.5, 0.5)
+	t.fill_to = Vector2(1.0, 0.5)
+	t.width = 256
+	t.height = 256
+	return t
 
 
 ## Rhee's, Tomas's and the closing card. Tomas names the Catcher (his full message, bible: Act IV).
@@ -182,7 +205,8 @@ func _process(delta: float) -> void:
 	for i in _bands.size():
 		var u := clampf((_t - BAND_STAGGER_SEC * i) / BAND_SWEEP_SEC, 0.0, 1.0)
 		u = u * u * (3.0 - 2.0 * u)
-		(_bands[i] as Control).position.x = lerpf(-size.x, 0.0, u)
+		var b := _bands[i] as Control
+		b.position.x = lerpf(-size.x, float(b.get_meta("rest_x", 0.0)), u)
 	_lights.queue_redraw()
 
 
