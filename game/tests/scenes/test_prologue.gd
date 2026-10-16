@@ -12,6 +12,7 @@ func _new_player() -> Node:
 	tree.root.add_child(main)
 	Flow.press(main, "StartButton")
 	Flow.press(main, "Character_wren")
+	(main.find_child("NameInput", true, false) as LineEdit).text_changed.emit("Kit")
 	Flow.press(main, "ConfirmButton")
 	Flow.press(main, "Difficulty_normal")
 	Flow.press(main, "ConfirmButton")
@@ -41,7 +42,7 @@ func test_new_player_sees_the_prologue_once_then_the_map() -> void:
 	main.free()
 	# A returning player with the flag never sees it, even when picking a difficulty again.
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal")
+	s.set_profile("wren", "they", "normal", "Kit")
 	s.set_flag("prologue_seen")
 	var again: Node = Flow.returning(tree, s)
 	main = again
@@ -100,7 +101,7 @@ func test_tapping_the_water_tile_ends_the_prologue() -> void:
 
 func test_flashback_plays_before_3_06_once_and_skips() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal")
+	s.set_profile("wren", "they", "normal", "Kit")
 	s.set_flag("prologue_seen")
 	var main: Node = Flow.returning(tree, s)
 	main.act = "act3_tower"
