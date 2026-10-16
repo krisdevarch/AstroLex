@@ -9,11 +9,14 @@
       "pacing": "teach", "words": ["bread", "cup", "milk"], "seed": 1101, "babel": true, "babelIntro": "Breakfast? Adorable. Show me how you chew.",
       "tuning": {"spawner.decoys": 1, "drift.speed": 0.1, "oxygen.drainPerSec": 0.6, "plane.backTiles": 4},
       "commsBefore": [
-        {"who": "ade", "text": "ok ok ok, so the debris field is basically a buffet. Nobody ordered it, everything is stale."},
-        {"who": "kit", "text": "Wait, why are we catching words? What does the Corps pay in?"}
+        {"who": "ade", "text": "ok ok ok, the debris field is basically a buffet. Nobody ordered it and everything is stale."},
+        {"who": "kit", "text": "Wait, why are we catching words? What does the Corps pay in?"},
+        {"who": "rhee", "text": "In words, Kit. Eventually. Shape first."},
+        {"who": "rhee", "text": "Catcher, tap a tile you need. The line pulls it in. Fill the slots before your air runs out."}
       ],
       "commsAfter": [
-        {"who": "rhee", "text": "In words, Kit, eventually. Shape first. Catch what you can name, and the pantry shelf is next."}
+        {"who": "rhee", "text": "Good catch. Your tether is a little eager. It will learn manners."},
+        {"who": "ade", "text": "A cup of milk in orbit. I feel so fancy."}
       ]
     },
     {
@@ -29,10 +32,10 @@
     },
     {
       "id": "1-03", "order": 3, "title": "Hull Sweet Hull", "beat": "Mid: bread, home, door done. Kit asks how Rhee knows the shapes; Rhee: I wrote them down.",
-      "pacing": "core", "words": ["home", "door", "lamp"], "seed": 1103, "babel": true, "babelIntro": "Sweet, is it? Let us see how long it lasts.",
+      "pacing": "core", "words": ["home", "door", "lamp"], "seed": 1103, "babel": true, "babelIntro": "Hull sweet hull. How domestic. I almost envy you.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.11, "oxygen.drainPerSec": 0.8, "plane.backTiles": 5},
       "commsBefore": [
-        {"who": "rhee", "text": "Small words, but they hold a whole house together. Easy ones. They matter."}
+        {"who": "rhee", "text": "Small words, but they hold a whole house together. Treat them kindly."}
       ],
       "commsAfter": [
         {"who": "kit", "text": "Rhee, how do you know what each one looks like? You never look them up."},
@@ -40,11 +43,13 @@
       ]
     },
     {
-      "id": "1-04", "order": 4, "title": "Get Dressed", "beat": "Rhee hums while she works (foreshadowing 1).",
-      "pacing": "core", "words": ["hat", "coat", "shoe"], "seed": 1104, "babel": true, "babelIntro": "Dressed up for this? Bold. Let us see the aim.",
+      "id": "1-04", "order": 4, "title": "Get Dressed", "beat": "Babel's thief drones appear. Rhee hums while she works (foreshadowing 1).",
+      "pacing": "core", "words": ["hat", "coat", "shoe"], "seed": 1104, "babel": true, "babelIntro": "Dressed for it? Bold. My drones adore a bold target.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "oxygen.drainPerSec": 0.8, "plane.backTiles": 5, "thief.interval": 12},
       "commsBefore": [
-        {"who": "ade", "text": "Somebody's wardrobe exploded out here. Please do not wear anything we catch."}
+        {"who": "ade", "text": "A wardrobe exploded out here. Please do not wear anything we catch."},
+        {"who": "kit", "text": "Wait, why are those little drones flying at us?"},
+        {"who": "rhee", "text": "Babel sent them. They carry off tiles you need. Tap a drone and the tether frees the tile."}
       ],
       "commsAfter": [
         {"who": "kit", "text": "Is that humming? It is slow, and it keeps stopping. For science, what is the song?"},
@@ -56,7 +61,7 @@
       "pacing": "core", "words": ["bed", "pillow", "blanket"], "seed": 1105, "babel": true, "babelIntro": "Sleepy yet? I never sleep. It is a lot of free time.",
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "oxygen.drainPerSec": 0.9, "plane.backTiles": 5, "thief.interval": 11},
       "commsBefore": [
-        {"who": "rhee", "text": "Bedtime words, and one of them is long. Same rule as always. Shape first."}
+        {"who": "rhee", "text": "Soft words tonight. Two are long, so go slowly. Shape first."}
       ],
       "commsAfter": [
         {"who": "ade", "text": "I could nap on that pillow for a week. Do not tell Rhee. She will make a schedule."}
@@ -67,7 +72,7 @@
       "pacing": "rest", "words": ["cat", "dog", "bird"], "seed": 1106, "babel": true, "babelIntro": "Quiet, finally. Do not get used to it.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.11, "oxygen.drainPerSec": 0.7, "plane.backTiles": 5, "thief.interval": 11},
       "commsBefore": [
-        {"who": "kit", "text": "A quiet one. Three words, all of them friendly, and none of them bite. I like this one."}
+        {"who": "kit", "text": "A calm one. Three friendly words, and none of them bite. For science, I am staying right here."}
       ],
       "commsAfter": [
         {"who": "ade", "text": "Fine, I admit it. The dog drifted past and I said hi out loud."}
@@ -78,10 +83,11 @@
       "pacing": "core", "words": ["pen", "book", "paper"], "seed": 1107, "babel": true, "babelIntro": "Rummaging through drawers? Same hobby, actually.",
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "oxygen.drainPerSec": 0.9, "plane.backTiles": 6, "thief.interval": 10},
       "commsBefore": [
-        {"who": "rhee", "text": "Desk words. These I know best. Careful, the decoys look a lot alike."}
+        {"who": "rhee", "text": "Desk words. These I know best. The decoys look alike, so check every tile."}
       ],
       "commsAfter": [
-        {"who": "tomas", "text": "I ___ to tell ___ about the ___. It is ... quiet here. Thank you."}
+        {"who": "tomas", "text": "Gran. I ___ to tell ___ about the ___. It is ... quiet here. Thank you."},
+        {"who": "rhee", "text": "Hm. Keep going. Please."}
       ]
     },
     {
@@ -89,7 +95,7 @@
       "pacing": "core", "words": ["table", "chair", "plate", "knife"], "seed": 1108, "babel": true, "babelIntro": "Four courses. Try not to drop the soup.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.16, "oxygen.drainPerSec": 1.0, "plane.backTiles": 6, "thief.interval": 10},
       "commsBefore": [
-        {"who": "ade", "text": "Dinner is served, and it is travelling at speed. Four pieces this time."}
+        {"who": "ade", "text": "ok ok ok, dinner for four, and it is moving at speed. Nobody sit down."}
       ],
       "commsAfter": [
         {"who": "kit", "text": "Wait, we keep restoring things for a home nobody lives in. Who is it for?"}
@@ -100,7 +106,7 @@
       "pacing": "core", "words": ["window", "mirror", "clock"], "seed": 1109, "babel": true, "babelIntro": "Mind the corridor. Things get fast in here.",
       "tuning": {"spawner.decoys": 5, "drift.speed": 0.18, "oxygen.drainPerSec": 1.1, "plane.backTiles": 7, "thief.interval": 9},
       "commsBefore": [
-        {"who": "rhee", "text": "Longer words now, from the hallway of an old house. Do not rush them."}
+        {"who": "rhee", "text": "Longer words now. They come from the hallway of an old house. Take them slowly."}
       ],
       "commsAfter": [
         {"who": "ade", "text": "I looked in the mirror tile and it looked back. Rude."}
@@ -111,31 +117,34 @@
       "pacing": "rest", "words": ["garden", "tree", "apple"], "seed": 1110, "babel": true, "babelIntro": "Green things, how nice. I wonder who planted them.",
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "oxygen.drainPerSec": 0.8, "plane.backTiles": 6, "thief.interval": 8},
       "commsBefore": [
-        {"who": "kit", "text": "Something green out there for once. Three for the price of one. Take your time."}
+        {"who": "kit", "text": "Green, for once. Leaves, roots, fruit. I want all three, for science. Take your time."}
       ],
       "commsAfter": [
-        {"who": "rhee", "text": "Hm. I used to keep one of these. Never mind. Good catching."}
+        {"who": "rhee", "text": "Hm. I used to keep a garden. Never mind. Good work, Catcher."}
       ]
     },
     {
-      "id": "1-11", "order": 11, "title": "Lost and Found", "beat": "Late: counterfeits appear; Rhee warns, short.",
-      "pacing": "core", "words": ["key", "letter", "phone", "sign"], "seed": 1111, "babel": true, "babelIntro": "Lost something? Everyone out here has.",
+      "id": "1-11", "order": 11, "title": "Lost and Found", "beat": "Late: the drones grow bolder and Babel grows louder; Rhee warns, short.",
+      "pacing": "core", "words": ["key", "letter", "phone", "sign"], "seed": 1111, "babel": true, "babelIntro": "Lost something? My drones found it first.",
       "tuning": {"spawner.decoys": 6, "drift.speed": 0.19, "oxygen.drainPerSec": 1.2, "plane.backTiles": 7, "thief.interval": 8},
       "commsBefore": [
-        {"who": "kit", "text": "Four words, and every one of them is for somebody. Let us find who."}
+        {"who": "kit", "text": "Four words, and every one of them is for somebody. Let us find who."},
+        {"who": "ade", "text": "The drones are circling. One looked at my sandwich. ok ok ok, it is fine."}
       ],
       "commsAfter": [
-        {"who": "rhee", "text": "Listen. Some tiles are counterfeits, close but wrong. Check every letter."}
+        {"who": "rhee", "text": "Babel is getting louder, and the drones are getting bolder. Tap fast and watch the slots."}
       ]
     },
     {
-      "id": "1-12", "order": 12, "title": "The Crossing", "beat": "Encounter: counterfeits close in. Closing: Tomas says water.",
-      "pacing": "encounter", "words": ["road", "bridge", "river", "stone"], "seed": 1112, "babel": true, "babelIntro": "Crossing over, are we? Watch your step, friend.",
+      "id": "1-12", "order": 12, "title": "The Crossing", "beat": "Encounter: the drones crowd in. Closing: Tomas says water.",
+      "pacing": "encounter", "words": ["road", "bridge", "river", "stone"], "seed": 1112, "babel": true, "babelIntro": "Almost across. My drones are feeling brave tonight.",
       "tuning": {"spawner.decoys": 7, "drift.speed": 0.22, "oxygen.drainPerSec": 1.4, "plane.backTiles": 8, "thief.interval": 7},
       "commsBefore": [
-        {"who": "ade", "text": "Counterfeits. Great. Ok ok ok, I am fine, I am a very calm person holding a very loud snack."}
+        {"who": "rhee", "text": "Last one for this ring. Tap fast, and the line will hold."},
+        {"who": "ade", "text": "ok ok ok, the drones are doing laps. I am calm. I am a very calm person holding a very loud snack."}
       ],
       "commsAfter": [
+        {"who": "rhee", "text": "That is the ring clear. A message just came through."},
         {"who": "tomas", "text": "Water. I can say water."}
       ]
     }

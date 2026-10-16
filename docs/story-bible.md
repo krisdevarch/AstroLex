@@ -27,10 +27,8 @@ Babel pulled the words out of the Signal. The links broke. The paths in people's
 
 **Why restoring brings it back.** When the Catcher completes a word, the Scriptorium files it and the link is whole again. The old paths work. The person remembers the word as if it had been on the tip of the tongue the whole time. This is why Tomas's messages fill in only as words are restored, and why a word comes back to everyone at once.
 
-**Rule 2. How the Catcher's oxygen is resupplied.**
-The Scriptorium's systems are addressed in language too. Its pressure line to the Catcher's suit opens only when a record is complete. A restored word is the key. Restoring a word vents the pressure line to the suit, and the air counter refills. A wrong catch leaks air because a forged or false record is a bad key and the valve flutters.
-- *Pressure mode:* the suit runs on its own supply. The line is the lifeline.
-- *Drift mode:* the sector is quiet, and the suit recycles air. The same words, less at stake, stars tracked apart.
+**Rule 2. The burst clock is one charge of suit air.**
+Every level is a timed burst. The clock is one charge of suit air, and the Scriptorium refills it at the start of each level. Restoring a word completes a record and keeps the line open. A wrong catch costs 1 s because a false record is a bad key and the valve flutters. A tile carried off by one of Babel's drones costs 2 s. There is no separate oxygen meter and no Pressure or Drift mode.
 
 **Rule 3. Why words pool by kind in each zone.**
 Babel did not scatter words at random. It sorted by meaning, because it thinks in meaning. When it flung the words out, each kind fell into its own region, like iron filings on a magnet. Things you can touch drifted low. Feelings pooled in gas. Ideas drifted to the old coalition station. This is a fact about Babel's mind, and it is also why the story moves in acts.
@@ -39,9 +37,9 @@ Babel did not scatter words at random. It sorted by meaning, because it thinks i
 - Babel has no voice of its own. It holds no words. It can speak only by rearranging letters the Catcher has already restored in the current level. The pool is the letters on the board, with multiplicity.
 - It cannot use a letter you have not caught. This is the game's signature moment, and it is why Babel cannot say your name until you do.
 - One exception (owner, 16 Oct 2026): when Babel flies in at the start of a level, he says one short line of his own in a bubble (`babelIntro` in the level files, owner-approved like all text). Everything he says during play still follows this rule.
-- It can forge fragments (counterfeits), rearrange fragments into its own counter-words (anagram traps), and jam the visor's colour channel (Stroop). It cannot change shape or pattern. Those stay honest.
-- It cannot lie in a way the player cannot catch. A forgery shimmers.
-- It opens every round by throwing that round's letters out of a periwinkle rift into the field. It is showing off, and it is also proof that it holds the words. It throws in silence: no letter is restored yet, so it has nothing to say.
+- Built today: from level 1-04 on, Babel's thief drones fly at tiles the player needs and carry them off. Tapping (tethering) a drone frees the tile. Not built yet, kept as later ideas: counterfeits, anagram traps and Stroop jamming of the visor. Shape and pattern would stay honest.
+- It cannot lie in a way the player cannot catch.
+- At the start of every level Babel flies in, says his `babelIntro` line, and shoots that level's letters out of his gun into the field. It is showing off, and it is also proof that it holds the words.
 - Babel is deterministic. Its lines come from owner-approved templates and the level's letter pool, pass a blocklist and a family-safe filter, and no language model runs at runtime.
 
 ## 3. Characters
@@ -193,7 +191,7 @@ The principle: silence is not peace, and listening is. The tone is hopeful. It l
 - **Warm, funny, sincere.** Never preachy. The theme is shown through play and character, never lectured.
 - **Babel.** Dry wit, never cruel. It teases play, not people. No insults to looks, family or name. Its output passes a blocklist and family-safe filter before it is shown.
 - **Melancholy** only in the Prologue and Act III. Everywhere else the crew banter keeps it light.
-- **A lost round still moves the story on.** A lost Pressure round earns a Babel line or a comms beat (Hades). Babel's line after a loss is teasing, not crushing. Nothing is locked behind winning a single round.
+- **A lost round still moves the story on.** A lost burst earns a Babel line or a comms beat (Hades). Babel's line after a loss is teasing, not crushing. Nothing is locked behind winning a single round.
 - **Comms.** 30 seconds or less to read. Skippable. Between levels only, never during play. No exposition dumps. One idea per bubble.
 - **Words and slang.** Timeless words in the campaign. Current slang only in seasonal Transmissions. Nothing in the main campaign references the player's generation.
 - **No violence.** The Catcher never destroys anything. They restore. Costume pieces stay costume: Juno's pirate gear is salvage, not plunder from people, and Ash's blades are never drawn on anyone and only cut a snagged tether.
@@ -211,6 +209,8 @@ The principle: silence is not peace, and listening is. The tone is hopeful. It l
 7. **New (owner):** Babel speaks in Act I too; it is never silent for a whole act.
 
 The bible as a whole stays `status: draft` until the owner flips it to `approved`.
+
+Update, 16 Oct 2026 (draft, owner to approve): rule 2 now describes the burst clock as one charge of suit air; rule 4 now describes the drones and Babel shooting the letters from his gun; the tone rule says "lost burst". Counterfeits, anagram traps, Stroop, ghost races and the Codex are marked as not built. The Act I-IV comms and Babel intros in `data/levels/` were rewritten to match.
 
 ## 9. Open questions (answered above)
 

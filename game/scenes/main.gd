@@ -458,12 +458,13 @@ func _show_field_settings(f: Node) -> void:
 	layer.name = "FieldSettings"
 	layer.layer = 45
 	var back := ColorRect.new()
-	back.color = Color(0.02, 0.03, 0.08, 0.96)
+	back.color = Color(0.03, 0.05, 0.12, 0.94)
 	back.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(back)
 	var s: Control = SettingsScreen.new()
 	s.name = "SettingsScreen"
 	s.settings = settings
+	s.show_sky = false
 	s.closed.connect(func() -> void:
 		layer.queue_free()
 		if pause_menu != null:

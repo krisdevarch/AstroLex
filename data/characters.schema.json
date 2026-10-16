@@ -18,6 +18,7 @@
           "id": {"type": "string", "pattern": "^[a-z]+$"},
           "name": {"type": "string", "minLength": 1},
           "colour": {"type": "string", "pattern": "^#[0-9a-f]{6}$"},
+          "role": {"type": "string", "minLength": 1, "maxLength": 24, "description": "one or two words under the name on the suit card (story bible §3)"},
           "perk": {"type": "string", "minLength": 1, "maxLength": 80},
           "mod": {"$ref": "#/$defs/mod"}
         }
