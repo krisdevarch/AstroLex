@@ -6,10 +6,12 @@ const Ui := preload("res://scenes/ui.gd")
 
 signal next_act
 signal back_to_map
+signal open_inbox
 
 var title_text: String = "Act complete"
 var total_stars: int = 0
 var final: bool = false
+var new_message: bool = false
 
 
 func _ready() -> void:
@@ -50,6 +52,14 @@ func _ready() -> void:
 	var s := Ui.text("Total stars  %d" % total_stars, 60, Ui.GOLD_LIGHT)
 	s.name = "TotalStars"
 	srow.add_child(s)
+	if new_message:
+		var nm := Ui.text("New message from Tomas", 44, Color("ff7f6e"))
+		nm.name = "NewMessage"
+		box.add_child(nm)
+		var ob := Ui.secondary("Read it", 46, Vector2(640, 118))
+		ob.name = "InboxButton"
+		ob.pressed.connect(func() -> void: open_inbox.emit())
+		box.add_child(ob)
 	if not final:
 		var n := Ui.primary("Next act", 56, Vector2(640, 140))
 		n.name = "NextActButton"

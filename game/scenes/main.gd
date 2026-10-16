@@ -21,6 +21,9 @@ const PauseMenu := preload("res://scenes/pause_menu.gd")
 const ActComplete := preload("res://scenes/act_complete.gd")
 const Ending := preload("res://scenes/ending.gd")
 const PlayerName := preload("res://rules/player_name.gd")
+const CodexScreen := preload("res://scenes/codex.gd")
+const InboxScreen := preload("res://scenes/inbox.gd")
+const StoryData := preload("res://rules/story_data.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
 const DictService := preload("res://services/dictionary.gd")
@@ -267,6 +270,8 @@ func _show_map() -> void:
 	m.character_pressed.connect(_show_character.bind(true, _show_map))
 	m.difficulty_pressed.connect(_show_difficulty.bind(true, _show_map))
 	m.settings_pressed.connect(_show_settings.bind(_show_map))
+	m.codex_pressed.connect(_show_codex.bind(_show_map))
+	m.inbox_pressed.connect(_show_inbox.bind(_show_map))
 	m.back_pressed.connect(_show_start)
 	_swap(m)
 
@@ -280,7 +285,27 @@ func _show_settings(back: Callable) -> void:
 	s.character_pressed.connect(func() -> void: _show_character(true, _show_settings.bind(back)))
 	s.difficulty_pressed.connect(func() -> void: _show_difficulty(true, _show_settings.bind(back)))
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
+	s.codex_pressed.connect(_show_codex.bind(_show_settings.bind(back)))
 	_swap(s)
+
+
+func _show_codex(back: Callable) -> void:
+	var c: Control = CodexScreen.new()
+	c.name = "CodexScreen"
+	c.save = save
+	c.dictionary = dictionary
+	c.closed.connect(back)
+	_swap(c)
+
+
+func _show_inbox(back: Callable) -> void:
+	var c: Control = InboxScreen.new()
+	c.name = "InboxScreen"
+	c.save = save
+	c.dictionary = dictionary
+	c.reduced_motion = settings.reduced_motion
+	c.closed.connect(back)
+	_swap(c)
 
 
 func _show_bench(auto: bool) -> void:
@@ -461,6 +486,8 @@ func _show_complete(final: bool) -> void:
 		else:
 			_show_map())
 	c.back_to_map.connect(_show_map)
+	c.new_message = StoryData.unread(save, dictionary) > 0
+	c.open_inbox.connect(_show_inbox.bind(_show_map))
 	_swap(c)
 
 
