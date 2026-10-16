@@ -25,14 +25,14 @@ from pathlib import Path
 from astrolex_tools import data_dir, repo_root
 from astrolex_tools.levels import level_files, load_levels
 
-BASE_SEC = 1.0
-SEARCH_SEC = 0.06
-SPEED_SEC = 5.0
+BASE_SEC = 0.45
+SEARCH_SEC = 0.03
+SPEED_SEC = 2.0
 STEAL_SHARE = 0.5
 FORGE_HIT = 0.15
 TRAP_HIT = 0.25
 STROOP_SLOW = 0.3
-SLACK_MIN, SLACK_MAX = 0.15, 0.70
+SLACK_MIN, SLACK_MAX = 0.10, 0.85
 
 
 def game_tunables() -> dict:

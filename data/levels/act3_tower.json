@@ -7,7 +7,7 @@
     {
       "id": "3-01", "order": 1, "title": "Tower Door", "beat": "Opening: Rhee goes quiet; Kit notes the door code matches her handwriting.",
       "pacing": "teach", "words": ["law", "vow", "oath"], "seed": 3101, "babel": true, "babelIntro": "Knock all you like. The tower answers to me.",
-      "tuning": {"burst.seconds": 60, "spawner.decoys": 2, "drift.speed": 0.16, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.16, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
       "commsBefore": [
         {"who": "ade", "text": "Rhee has been quiet since the nebula. Is she ok?"},
         {"who": "kit", "text": "The door code is handwriting. It looks like Rhee. Wait, why?"},
@@ -20,7 +20,7 @@
     {
       "id": "3-02", "order": 2, "title": "Ledger", "beat": "Teach: small abstract words.",
       "pacing": "core", "words": ["debt", "fate", "duty"], "seed": 3102, "babel": true, "babelIntro": "Count it up, Catcher. Someone always owes.",
-      "tuning": {"burst.seconds": 70, "spawner.decoys": 2, "drift.speed": 0.16, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.16, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
       "commsBefore": [
         {"who": "kit", "text": "Why does the Tower keep a ledger? Who owes who?"},
         {"who": "rhee", "text": "Count what you catch. Nothing else."}
@@ -32,7 +32,7 @@
     {
       "id": "3-03", "order": 3, "title": "Fair Play", "beat": "Core: right and wrong.",
       "pacing": "core", "words": ["right", "wrong", "blame"], "seed": 3103, "babel": true, "babelIntro": "Fair play? Words never played fair with anyone.",
-      "tuning": {"burst.seconds": 90, "spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
       "commsBefore": [
         {"who": "kit", "text": "Every corridor here has a door, and every door says a different no."},
         {"who": "rhee", "text": "Slow down. These words slip."}
@@ -42,7 +42,7 @@
     {
       "id": "3-04", "order": 4, "title": "Burden", "beat": "Core: proof and logic. Kit finds the handwriting proof.",
       "pacing": "core", "words": ["proof", "logic", "faith"], "seed": 3104, "babel": true, "babelIntro": "Heavy load, this. Who asked you to carry it?",
-      "tuning": {"burst.seconds": 85, "spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
       "commsBefore": [
         {"who": "kit", "text": "Catcher, the door code is bothering me. I need to check something. Stay on channel."},
         {"who": "rhee", "text": "Hm. Three small words. One at a time."}
@@ -55,7 +55,7 @@
     {
       "id": "3-05", "order": 5, "title": "Plain Words", "beat": "Core: honest words. Rhee asks the Catcher to finish first, then ask.",
       "pacing": "core", "words": ["truth", "honor", "power"], "seed": 3105, "babel": true, "babelIntro": "Plain words still hurt people. Ask around.",
-      "tuning": {"burst.seconds": 80, "spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
       "commsBefore": [
         {"who": "kit", "text": "Rhee, I am sorry. I do not keep things from the Catcher."},
         {"who": "rhee", "text": "I know. Finish this level, Catcher. Then ask me. I will answer."}
@@ -65,7 +65,7 @@
     {
       "id": "3-06", "order": 6, "title": "The Hall", "beat": "Rest and mid: justice, truce, promise; Babel argues through the pool; wordless Loud Wars flashback.",
       "pacing": "rest", "words": ["justice", "truce", "promise"], "seed": 3106, "babel": true, "babelIntro": "Argue with me, then. I have nothing but time.",
-      "tuning": {"burst.seconds": 105, "spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.17, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 14, "hazard.stroopSec": 2.5},
       "commsBefore": [
         {"who": "ade", "text": "Big hall. Big echo. Hello? ... ok, it said nothing back. Rude."},
         {"who": "rhee", "text": "Three hard words. Take them one by one."}
@@ -78,7 +78,7 @@
     {
       "id": "3-07", "order": 7, "title": "Fine Print", "beat": "Core: first four-word level. Ade freezes, then comes through.",
       "pacing": "core", "words": ["order", "value", "chance", "choice"], "seed": 3107, "babel": true, "babelIntro": "Read the small letters. Everything hides in them.",
-      "tuning": {"burst.seconds": 115, "spawner.decoys": 4, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "This whole room is small print. Read twice, catch once, for science."},
         {"who": "rhee", "text": "Four words now. Check each letter, then pull."}
@@ -91,7 +91,7 @@
     {
       "id": "3-08", "order": 8, "title": "The Turn", "beat": "Twist: the Act III twist lands; the Catcher is alone with the choice.",
       "pacing": "twist", "words": ["secret", "belief", "custom", "ritual"], "seed": 3108, "babel": true, "babelIntro": "Now you know whose hand built this. Still playing?",
-      "tuning": {"burst.seconds": 120, "spawner.decoys": 4, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "Rhee, the Catcher is asking. Tell the truth."},
         {"who": "rhee", "text": "I wrote the first word. It was quiet."},
@@ -105,7 +105,7 @@
     {
       "id": "3-09", "order": 9, "title": "Signing Room", "beat": "Core: agreements and mercy. VANTA is angry for the Catcher.",
       "pacing": "core", "words": ["treaty", "accord", "pardon", "virtue"], "seed": 3109, "babel": true, "babelIntro": "Ink dries fast. Good intentions dry faster.",
-      "tuning": {"burst.seconds": 115, "spawner.decoys": 4, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "vanta", "text": "Rhee wrote the first word. The Catcher found out in a tower. I am angry for them."},
         {"who": "rhee", "text": "You are right to be. I will answer to anyone who asks."}
@@ -117,7 +117,7 @@
     {
       "id": "3-10", "order": 10, "title": "Archive", "beat": "Core: memory and silence.",
       "pacing": "core", "words": ["reason", "memory", "silence", "wisdom"], "seed": 3110, "babel": true, "babelIntro": "Dusty shelves. Every page here was once shouted.",
-      "tuning": {"burst.seconds": 130, "spawner.decoys": 4, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"burst.seconds": 55, "spawner.decoys": 4, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "Wait, why does Babel keep the whole archive?"},
         {"who": "rhee", "text": "It could not bear to lose one page. It is thorough. So am I."}
@@ -127,7 +127,7 @@
     {
       "id": "3-11", "order": 11, "title": "Open Window", "beat": "Late: Babel states what it believes in the Catcher letters.",
       "pacing": "core", "words": ["dignity", "liberty", "consent", "purpose"], "seed": 3111, "babel": true, "babelIntro": "Look closely. My whole case is in your letters.",
-      "tuning": {"burst.seconds": 140, "spawner.decoys": 5, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"burst.seconds": 60, "spawner.decoys": 5, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "Babel talks in your letters now. It is not cruel. That is the worrying part."},
         {"who": "rhee", "text": "Read it. Argue with it if you want. Do not look away."}
@@ -140,7 +140,7 @@
     {
       "id": "3-12", "order": 12, "title": "The Choice", "beat": "Encounter: keep going or stop. Tomas: you kept your promise.",
       "pacing": "encounter", "words": ["freedom", "meaning"], "seed": 3112, "babel": true, "babelIntro": "Go on, or stop. Either way I will be here.",
-      "tuning": {"burst.seconds": 70, "spawner.decoys": 5, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "Two words left, Catcher. We are all with you."},
         {"who": "rhee", "text": "Whatever you choose, I will not stand in your way."}

@@ -127,11 +127,12 @@ def test_comms_after_may_name_caught_words_but_not_later_ones(doc, words):
 
 
 def test_act_tuning_merges_under_level_tuning():
-    """Act keys apply to every level of the act; level keys win over them. WP-F.9 sets burst.seconds per
-    level from the curve model (tools/astrolex_tools/curve.py), so the clock follows the words, not the act."""
+    """Act keys apply to every level of the act; level keys win over them. The act clock (burst.seconds)
+    is the default; a level overrides it only where the curve model (tools/astrolex_tools/curve.py) needs
+    more room (or less, for the finale), so every merged level carries a 30 s clock or more."""
     import json
     doc = json.loads((L.levels_dir() / "act1_low_orbit.json").read_text())
     assert doc["tuning"]["burst.seconds"] == 60
     merged = L.load_levels("act1_low_orbit")
-    assert all(m["tuning"]["burst.seconds"] == raw["tuning"]["burst.seconds"] for m, raw in zip(merged, doc["levels"]))
+    assert all(m["tuning"]["burst.seconds"] == 60 for m in merged)
     assert all(m["tuning"]["burst.seconds"] >= 30 for a in ("act2_nebula", "act3_tower", "act4_core") for m in L.load_levels(a))
