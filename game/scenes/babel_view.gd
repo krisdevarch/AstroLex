@@ -1,6 +1,6 @@
 extends Node2D
-## Babel on the field (WP-3.P): flies in from off-screen top right, perches, says a line in a speech
-## bubble beside him, recoils and flashes at each shot, then flies back out. Always: hover bob,
+## Babel on the field (WP-3.P): flies in from off-screen left at mid-screen (he faces right, gun
+## in his right hand), perches on the left, says a line in a speech bubble above him, recoils and flashes at each shot, then flies back out. Always: hover bob,
 ## breathing, a slight tilt and a cape sway (shader). Reduced motion: no flight, bob or sway; he
 ## fades in and out. The view sits at the origin of its canvas layer, so its local space is screen space.
 
@@ -58,9 +58,9 @@ func setup(view_size: Vector2, tun: Dictionary, p_reduced: bool) -> void:
 	reduced_motion = p_reduced
 	var h := float(tun["babel.heightShare"]) * view_size.x
 	_k = h / float(TEX.get_height())
-	_perch = Vector2(float(tun["babel.perchX"]) * view_size.x, float(tun["babel.perchY"]) * view_size.x)
+	_perch = Vector2(float(tun["babel.perchX"]) * view_size.x, float(tun["babel.perchY"]) * view_size.y)
 	var w := TEX.get_width() * _k
-	_off = Vector2(view_size.x + w * 0.8, -h * 0.8)
+	_off = Vector2(-w * 0.8, _perch.y - h * 0.1)  # off the left edge, at his perch height
 	_enter_sec = maxf(0.01, float(tun["babel.enterSec"]))
 	_exit_sec = maxf(0.01, float(tun["babel.exitSec"]))
 	_bob_px = float(tun["babel.bobPx"])
@@ -179,10 +179,11 @@ func quote_text() -> String:
 	return _bubble_label.text
 
 
-## Opens the bubble to Babel's left and types the line in.
+## Opens the bubble above Babel, running right from his head, and types the line in.
 func say(text: String) -> void:
 	var font := _bubble_label.get_theme_font("font")
-	var w := minf(BUBBLE_MAX_W, _perch.x - TEX.get_width() * _k * 0.5 - BUBBLE_GAP - 40.0)
+	var left := maxf(40.0, _perch.x - TEX.get_width() * _k * 0.3)
+	var w := minf(BUBBLE_MAX_W, _view.x - left - 40.0)
 	var tw := w - 2.0 * BUBBLE_PAD
 	# Width first, then the text: an autowrapped label sized after its text grows to one word per
 	# line, and the line then sat far below the bubble.
@@ -193,12 +194,11 @@ func say(text: String) -> void:
 	var h := sz.y + BUBBLE_PAD * 1.2
 	_bubble_label.size = Vector2(tw, sz.y)
 	_bubble.size = Vector2(w, h)
-	var right := _perch.x - TEX.get_width() * _k * 0.5 - BUBBLE_GAP
-	var cy := _perch.y - TEX.get_height() * _k * 0.12
-	_bubble.position = Vector2(right - w, cy - h * 0.5)
-	# The tail points right, at Babel.
-	var m := h * 0.5
-	_tail.polygon = PackedVector2Array([Vector2(w - 8, m - 20), Vector2(w + BUBBLE_GAP + 12, m + 8), Vector2(w - 8, m + 24)])
+	var bottom := _perch.y - TEX.get_height() * _k * 0.5 - BUBBLE_GAP
+	_bubble.position = Vector2(left, bottom - h)
+	# The tail points down at his helmet.
+	var tx := clampf(_perch.x - left, 60.0, w - 60.0)
+	_tail.polygon = PackedVector2Array([Vector2(tx - 24, h - 8), Vector2(tx + 4, h + BUBBLE_GAP + 12), Vector2(tx + 22, h - 8)])
 	_bubble_label.visible_characters = 0
 	_typed_t = 0.0
 	_talking = true
@@ -276,7 +276,7 @@ func _apply_pose() -> void:
 			alpha = 1.0 - u
 		else:
 			pos = _perch.lerp(_off, u * u)
-			lean = LEAN_RAD * u
+			lean = -LEAN_RAD * u  # faces left now (flipped), leaning into the flight
 			flying = true
 	_rig.position = pos
 	modulate.a = alpha
@@ -289,8 +289,9 @@ func _apply_pose() -> void:
 		tilt = 0.035 * sin(_clock * 0.9 + 1.0)
 	var kick := _recoil * pow(_recoil_t / RECOIL_SEC, 2.0) if _recoil_t > 0.0 else Vector2.ZERO
 	_body.position = bob + kick
-	_body.rotation = tilt - lean + (kick.y * 0.0006 if kick != Vector2.ZERO else 0.0)
-	_body.scale = Vector2(1.0 / breathe, breathe)
+	_body.rotation = tilt + lean + (kick.y * 0.0006 if kick != Vector2.ZERO else 0.0)
+	var face := -1.0 if state == "exit" and not reduced_motion else 1.0  # turns round to fly back out
+	_body.scale = Vector2(face / breathe, breathe)
 	_puff_emit = flying and not reduced_motion
 
 

@@ -64,6 +64,7 @@
     "tile.pulseHz",
     "tile.shadowOffset",
     "tile.spawnInSec",
+    "babel.settleSec",
     "glass.blur",
     "glass.refractPx",
     "glass.frost",
@@ -278,7 +279,7 @@
     "babel.perchY": {
       "type": "number",
       "minimum": 0,
-      "description": "perch y of the sprite centre, from the top of the screen, as a share of screen width (the top HUD is laid out in pixels at 1080 wide, so this keeps him just under the chips on any phone)"
+      "description": "perch y of the sprite centre as a share of screen height (owner, 16 Oct 2026: he comes in at the middle of the screen)"
     },
     "babel.heightShare": {
       "type": "number",
@@ -424,6 +425,11 @@
       "type": "number",
       "minimum": 0,
       "description": "screen px drop-shadow offset on the front plane"
+    },
+    "babel.settleSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds over which the letters ease from still (after Babel's throw) to their full drift, so they do not all start moving at once"
     },
     "tile.spawnInSec": {
       "type": "number",

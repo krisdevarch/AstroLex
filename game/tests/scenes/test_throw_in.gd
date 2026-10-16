@@ -95,11 +95,13 @@ func test_autoplay_waits_for_the_throw_and_babel_leaves() -> void:
 	f.free()
 
 
-func test_babel_flies_in_from_the_top_right_and_leaves() -> void:
+func test_babel_flies_in_from_the_left_at_mid_screen_and_leaves() -> void:
 	var f := _make_level()
 	var b: Node2D = f._babel
 	var p0: Vector2 = b.body_position()
-	assert_true(p0.x > f.view_size.x and p0.y < 0.0, "starts off-screen top right")
+	assert_true(p0.x < 0.0, "starts off-screen left")
+	assert_true(absf(p0.y - f.view_size.y * 0.5) < f.view_size.y * 0.2, "at mid-screen height")
+	assert_true(b.perch_position().x < f.view_size.x * 0.5, "perches on the left")
 	for _i in 6:
 		f.advance(1.0 / 60.0)
 	assert_true(b.body_position().distance_to(b.perch_position()) > 100.0, "still in flight")
@@ -136,7 +138,8 @@ func test_babel_says_the_level_quote() -> void:
 			break
 	assert_true(label.visible_characters >= quote.length(), "typed in full")
 	var bubble: Control = b.get_node("Bubble")
-	assert_true(bubble.position.x + bubble.size.x < b.perch_position().x, "bubble sits to Babel's left")
+	assert_true(bubble.position.y + bubble.size.y < b.perch_position().y, "bubble sits above Babel")
+	assert_true(bubble.position.x + bubble.size.x <= f.view_size.x, "bubble stays on screen")
 	assert_true(label.position.y + label.size.y <= bubble.size.y + 1.0, "the line stays inside the bubble")
 	assert_true(bubble.position.y > 140.0, "the bubble sits below the top chips")
 	# The endless rounds have no quote.
@@ -161,7 +164,7 @@ func test_letters_leave_from_the_muzzle() -> void:
 				var origin: Vector2 = f._intro_origin[id]
 				assert_true(v.position.distance_to(origin) < 0.3 * origin.distance_to(real), "a fresh letter is still near the muzzle")
 				assert_true(origin.distance_to(b.muzzle_position()) < 60.0, "the origin is the muzzle")
-				assert_true(origin.x > f.view_size.x * 0.5, "the muzzle is on the right")
+				assert_true(origin.x > b.perch_position().x, "the muzzle is on his right, the side he faces")
 				checked += 1
 	assert_true(checked > 0, "launches observed")
 	f.free()
@@ -195,4 +198,21 @@ func test_new_letters_grow_in() -> void:
 		f.advance(1.0 / 60.0)
 	assert_true(absf(fresh.scale.x - 1.0) < 0.001, "full size after the grow")
 	assert_true(fresh.modulate.a > 0.99, "fully visible after the grow")
+	f.free()
+
+
+func test_letters_ease_into_their_drift_after_the_throw() -> void:
+	var f := _make()
+	_run_intro(f)
+	assert_false(f.intro_active(), "intro ended")
+	var t: Object = f.game_round.tiles[0]
+	var p0: Vector2 = t.pos
+	for _i in 6:
+		f.advance(1.0 / 60.0)
+	var early: float = t.pos.distance_to(p0)
+	assert_true(f.game_round.drift_scale < 0.2, "barely drifting just after the throw")
+	for _i in 60:
+		f.advance(1.0 / 60.0)
+	assert_eq(f.game_round.drift_scale, 1.0, "full drift once settled")
+	assert_true(early < t.base_speed * 0.1 * 0.5, "the first frames move only a little")
 	f.free()

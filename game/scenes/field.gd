@@ -87,8 +87,6 @@ const CLOCK_LABEL_W := 110.0
 const COST_FLOAT_UP := 600.0
 # Babel's throw: look of a single flight (timing and perch are tunables under babel.*).
 const THROW_START_SCALE := 0.15
-const THROW_WOBBLE := 0.12
-const THROW_WOBBLE_HZ := 40.0
 const INTRO_MAX_STEP := 0.1  # a load hitch (up to 0.25 s) must not skip the first launches; slow phones still run at speed
 const EXIT_LEAD := 0.12  # Babel leaves this long after the last launch
 
@@ -125,6 +123,7 @@ var finished: bool = false
 var intro_enabled: bool = true
 
 var _intro_on: bool = false
+var _settle_t: float = 99.0  # time since the throw ended, while the letters ease into their drift
 var _intro_t: float = 0.0
 var _intro_dur: float = 0.0
 var _intro_order: Dictionary = {}  # tile_id -> launch index
@@ -513,6 +512,14 @@ func advance(delta: float) -> void:
 		return
 	if autoplay:
 		_autoplay_tick(delta)
+	# After the throw the letters ease from still into their drift (babel.settleSec) rather than
+	# all starting to move on one frame.
+	var settle := _n("babel.settleSec")
+	if _settle_t < settle:
+		_settle_t += delta
+		game_round.drift_scale = smoothstep(0.0, settle, _settle_t)
+	else:
+		game_round.drift_scale = 1.0
 	game_round.step(delta)
 	_apply_events()
 	_sync_views()
@@ -613,6 +620,7 @@ func _end_intro(babel_leaves_now: bool) -> void:
 		return
 	_intro_on = false
 	_spawn_grow = true
+	_settle_t = 0.0 if not settings.reduced_motion else 99.0
 	if _babel != null and babel_leaves_now:
 		_babel.hide_now()
 	for id in _views.keys():
@@ -665,9 +673,10 @@ func _pose_intro() -> void:
 		var e := 1.0 + (s + 1.0) * w * w * w + s * w * w  # back ease-out
 		v.position = (_intro_origin[id] as Vector2).lerp(real, e)
 		var grow := clampf(u * 2.0, 0.0, 1.0)
-		var wobble := THROW_WOBBLE * sin(PI * clampf((u - 0.7) / 0.3, 0.0, 1.0)) * sin(u * THROW_WOBBLE_HZ)
-		v.scale = Vector2.ONE * lerpf(THROW_START_SCALE, 1.0, grow) * (1.0 + wobble)
-		v.modulate.a = base_a * clampf(u * 4.0, 0.0, 1.0)
+		# One smooth flight: a gentle overshoot on the landing, no shake (the old 40 Hz wobble
+		# flickered at phone frame rates and read as a glitch).
+		v.scale = Vector2.ONE * lerpf(THROW_START_SCALE, 1.0, grow * grow * (3.0 - 2.0 * grow))
+		v.modulate.a = base_a * clampf(u * 6.0, 0.0, 1.0)
 
 
 # --- autoplay --------------------------------------------------------------------------
