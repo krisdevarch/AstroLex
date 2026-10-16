@@ -19,6 +19,8 @@ const DifficultySelect := preload("res://scenes/difficulty_select.gd")
 const LevelMap := preload("res://scenes/level_map.gd")
 const PauseMenu := preload("res://scenes/pause_menu.gd")
 const ActComplete := preload("res://scenes/act_complete.gd")
+const Ending := preload("res://scenes/ending.gd")
+const PlayerName := preload("res://rules/player_name.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
 const DictService := preload("res://services/dictionary.gd")
@@ -83,7 +85,7 @@ func _ready() -> void:
 		if offline:
 			save = Save.fake()
 			if demo:
-				save.set_profile("wren", "they", _default_difficulty())
+				save.set_profile("wren", "they", _default_difficulty(), "ADA")
 		elif _savetest_query() != "":
 			save = Save.real(SAVETEST_PATH)  # never the real player's save
 		else:
@@ -214,9 +216,11 @@ func _show_character(can_cancel: bool, then: Callable) -> void:
 	s.selected = str(save.profile().get("character", ""))
 	s.pronouns = str(save.profile().get("pronouns", "they"))
 	s.can_cancel = can_cancel
-	s.confirmed.connect(func(id: String, pron: String) -> void:
+	s.player_name = save.player_name()
+	s.blocklist = dictionary.content().get("blocklist", [])
+	s.confirmed.connect(func(id: String, pron: String, nm: String) -> void:
 		var diff: String = str(save.profile().get("difficulty", ""))
-		save.set_profile(id, pron, diff if diff != "" else _default_difficulty())
+		save.set_profile(id, pron, diff if diff != "" else _default_difficulty(), nm)
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
@@ -231,13 +235,17 @@ func _show_difficulty(can_cancel: bool, then: Callable) -> void:
 	s.can_cancel = can_cancel
 	s.confirmed.connect(func(id: String) -> void:
 		var p: Dictionary = save.profile()
-		save.set_profile(str(p.get("character", "")), str(p.get("pronouns", "they")), id)
+		save.set_profile(str(p.get("character", "")), str(p.get("pronouns", "they")), id, str(p.get("name", "")))
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
 
 
 func _show_map() -> void:
+	if save.has_profile() and save.player_name() == "" and not autoplay:
+		# An older save, or a profile without a name: ask for it before the map (WP-F.2).
+		_show_character(false, _show_map)
+		return
 	_sync_layout()
 	var m: Control = LevelMap.new()
 	m.name = "LevelMap"
@@ -319,6 +327,8 @@ func _start_level(story: Array = []) -> void:
 		_show_map()
 		return
 	var level: Dictionary = levels[level_index]
+	if _is_final_level():
+		level = finale_level(level, save.player_name())
 	var ch := _profile_character()
 	var cosmetic := not autoplay or demo
 	_close_pause()
@@ -351,6 +361,17 @@ func _start_level(story: Array = []) -> void:
 	f.coach_enabled = not autoplay and save.total_stars() == 0  # first-play coach (WP-3.Q)
 	f.coach_drones = not autoplay and save.next_level(act) <= 3  # nobody past 1-03 has met the drones
 	f.begin_level(level, act, _mods(), _story(story))
+
+
+## 4-12: the level's words become LISTEN, then the Catcher's name (the file keeps a placeholder).
+## Without a name (autoplay) the placeholder stays.
+static func finale_level(level: Dictionary, player_name: String) -> Dictionary:
+	var l: Dictionary = level.duplicate(true)
+	var w: Array = l["words"]
+	if player_name != "":
+		w[w.size() - 1] = PlayerName.clean(player_name).to_lower()
+	l["finale"] = true
+	return l
 
 
 func _is_final_level() -> bool:
@@ -391,16 +412,26 @@ func _show_card(summary: Dictionary) -> void:
 
 ## Next after a win: the level's closing chatter and the next level's opening chatter on the game
 ## screen, then its letters; after the last level of an act, the closing chatter, then the
-## act-complete screen (the beta-complete screen after the very last level).
+## act-complete screen (the ending after the very last level).
 func _go_next() -> void:
 	var after: Array = _comms_of(level_index, "commsAfter")
 	if _is_final_level():
-		_story_then(after, _show_complete.bind(true))
+		_show_ending()  # the ending carries Rhee's and Tomas's closing lines itself
 	elif level_index < levels.size() - 1:
 		level_index += 1
 		_start_level(after + _comms_of(level_index, "commsBefore"))
 	else:
 		_story_then(after, _show_complete.bind(false))
+
+
+func _show_ending() -> void:
+	var e: Control = Ending.new()
+	e.name = "Ending"
+	e.player_name = save.player_name()
+	e.total_stars = save.total_stars()
+	e.reduced_motion = settings.reduced_motion
+	e.back_to_map.connect(_show_map)
+	_swap(e)
 
 
 func _show_complete(final: bool) -> void:

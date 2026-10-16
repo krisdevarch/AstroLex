@@ -122,7 +122,7 @@ func test_main_enables_it_only_for_a_save_without_a_win() -> void:
 	assert_true(f != null and f.coach_enabled and f.coach_drones, "fresh save is coached")
 	main.free()
 	var s := Save.fake()
-	s.set_profile("wren", "they", "normal")
+	s.set_profile("wren", "they", "normal", "ADA")
 	s.record_level("act1_low_orbit", "1-01", 0, true, 100, 1)
 	var m2 := Flow.returning(tree, s)
 	var g := Flow.to_field(m2, "1-02")

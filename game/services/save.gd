@@ -1,11 +1,11 @@
 extends RefCounted
 ## Progress save (WP-3.5a). The only code that reads or writes the save file.
-## Format v2: {version, player_id, updated_at, profile: {character, pronouns, difficulty},
+## Format v3: {version, player_id, updated_at, profile: {character, pronouns, difficulty, name},
 ##   progress: {act: {next, levels: {id: {best_score, best_stars, won, plays}}}}}.
-## v1 had no profile and `won` was a per-mode dictionary; it migrates on load (a win becomes 1 star).
+## v3 added the Catcher's name ("" in migrated saves). v1 had no profile and `won` was a per-mode dictionary; it migrates on load (a win becomes 1 star).
 ## On the web Godot keeps user:// in the browser's IndexedDB. Save.fake() is in-memory and touches no disk.
 
-const VERSION := 2
+const VERSION := 3
 const ACT_ORDER := ["act1_low_orbit", "act2_nebula", "act3_tower", "act4_core"]
 const DEFAULT_ACT_SIZE := 12
 const DEFAULT_PATH := "user://save.json"
@@ -143,6 +143,10 @@ func total_stars() -> int:
 	return n
 
 
+func player_name() -> String:
+	return str(profile().get("name", ""))
+
+
 func has_profile() -> bool:
 	return str(profile().get("character", "")) != ""
 
@@ -151,8 +155,8 @@ func profile() -> Dictionary:
 	return _d["profile"]
 
 
-func set_profile(character: String, pronouns: String, difficulty: String) -> void:
-	_d["profile"] = {"character": character, "pronouns": pronouns, "difficulty": difficulty}
+func set_profile(character: String, pronouns: String, difficulty: String, name: String) -> void:
+	_d["profile"] = {"character": character, "pronouns": pronouns, "difficulty": difficulty, "name": name}
 	_write()
 
 
@@ -176,7 +180,7 @@ func _act(act: String, create: bool = false) -> Dictionary:
 
 
 static func _fresh() -> Dictionary:
-	return {"version": VERSION, "player_id": _new_id(), "updated_at": 0, "profile": {"character": "", "pronouns": "they", "difficulty": ""}, "progress": {}}
+	return {"version": VERSION, "player_id": _new_id(), "updated_at": 0, "profile": {"character": "", "pronouns": "they", "difficulty": "", "name": ""}, "progress": {}}
 
 
 static func _new_id() -> String:
@@ -188,7 +192,7 @@ static func _new_id() -> String:
 	return s
 
 
-## Accepts versions 1 (migrated to 2) and 2; anything else becomes a fresh save.
+## Accepts versions 1 and 2 (migrated to 3, name "") and 3; anything else becomes a fresh save.
 static func _migrate(d: Variant) -> Dictionary:
 	if d == null:
 		return _fresh()
@@ -196,7 +200,7 @@ static func _migrate(d: Variant) -> Dictionary:
 		push_warning("save: not a dictionary; starting fresh")
 		return _fresh()
 	var dict: Dictionary = d
-	if not dict.has("version") or typeof(dict["version"]) not in [TYPE_INT, TYPE_FLOAT] or int(dict["version"]) not in [1, VERSION]:
+	if not dict.has("version") or typeof(dict["version"]) not in [TYPE_INT, TYPE_FLOAT] or int(dict["version"]) not in [1, 2, VERSION]:
 		push_warning("save: unknown version; starting fresh")
 		return _fresh()
 	if not dict.get("progress") is Dictionary or typeof(dict.get("player_id")) != TYPE_STRING or str(dict["player_id"]) == "":
@@ -205,7 +209,7 @@ static func _migrate(d: Variant) -> Dictionary:
 	dict["version"] = VERSION
 	var prof: Variant = dict.get("profile")
 	var pf: Dictionary = prof if prof is Dictionary else {}
-	dict["profile"] = {"character": str(pf.get("character", "")), "pronouns": str(pf.get("pronouns", "they")), "difficulty": str(pf.get("difficulty", ""))}
+	dict["profile"] = {"character": str(pf.get("character", "")), "pronouns": str(pf.get("pronouns", "they")), "difficulty": str(pf.get("difficulty", "")), "name": str(pf.get("name", ""))}
 	var clean: Dictionary = {}
 	for act in (dict["progress"] as Dictionary):
 		var a: Variant = dict["progress"][act]

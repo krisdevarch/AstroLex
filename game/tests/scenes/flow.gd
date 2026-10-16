@@ -19,7 +19,7 @@ static func has(main: Node, node_name: String) -> bool:
 static func returning(tree: SceneTree, save: RefCounted = null) -> Node:
 	var s: RefCounted = save if save != null else Save.fake()
 	if not s.has_profile():
-		s.set_profile("wren", "they", "normal")
+		s.set_profile("wren", "they", "normal", "ADA")
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	tree.root.add_child(main)

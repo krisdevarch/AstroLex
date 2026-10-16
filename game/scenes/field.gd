@@ -1533,8 +1533,8 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 func restored_share() -> float:
 	if game_round == null or game_round.words.is_empty():
 		return 0.0
-	if game_round.state == "won":
-		return 1.0
+	if game_round.state == "won" or (game_round.finale and game_round.word_index >= 1):
+		return 1.0  # in the finale, LISTEN brings every colour back at once
 	return clampf(float(game_round.word_index) / float(game_round.words.size()), 0.0, 1.0)
 
 
@@ -1542,6 +1542,8 @@ func _update_hud() -> void:
 	var share := restored_share()
 	if _backdrop != null:
 		_backdrop.restore = share
+		if game_round.finale and share >= 1.0 and game_round.word_index == 1:
+			_backdrop.snap()
 	if _night != null and share > float(_night.get("lit")):
 		_night.set("lit", share)  # lights come up at once; a new level dims them slowly (_tick_hud)
 	_score_label.text = "%d" % int(round(game_round.score))
@@ -1586,13 +1588,20 @@ func hint_shown(idx: int, n: int) -> bool:
 	return false
 
 
+## True for the row that holds the Catcher's name in the finale: its ghosts show in full (the player knows it).
+func _name_row(where: String) -> bool:
+	if not game_round.finale:
+		return false
+	return (where == "active" and game_round.word_index == 1) or (where == "preview" and game_round.word_index == 0)
+
+
 func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 	for i in mini(slots.size(), row.get_child_count()):
 		var p := row.get_child(i) as Panel
 		var filled := _slot_text_filled(where, i, bool(slots[i]["filled"]))
 		var g := p.get_node("Glyph") as Label
 		var ch := str(slots[i]["ch"]).to_upper()
-		g.text = ch if filled or hint_shown(i, slots.size()) else ""
+		g.text = ch if filled or hint_shown(i, slots.size()) or _name_row(where) else ""
 		g.modulate.a = 1.0 if filled else _n("hud.hintAlpha")
 		g.add_theme_color_override("font_color", TILE_INK if filled else Color.WHITE)
 		_style_slot(p, filled, where)

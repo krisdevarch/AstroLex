@@ -21,6 +21,7 @@ from astrolex_tools.babel.compose import anagrams_of, load_templates
 from astrolex_tools.babel.lexicon import load_lexicon
 from astrolex_tools.levels import level_files, load_levels
 from astrolex_tools.words.acts import ACT_FILES, load_acts
+from astrolex_tools.words.blocklist import Blocklist
 
 GENERATED = "by python -m astrolex_tools.export_game_data; do not edit"
 
@@ -38,7 +39,7 @@ def build_tunables() -> dict:
 
 ## Content version for the dictionary loader: bump (YYYYMMDDn) whenever exported words or levels change,
 ## so a cached remote copy older than the bundled data is ignored.
-CONTENT_VERSION = 202610161
+CONTENT_VERSION = 202610162
 
 
 def build_content() -> dict:
@@ -55,6 +56,7 @@ def build_content() -> dict:
         "anagrams": {w: anagrams_of(w) for words in acts.values() for w in words},
         "levels": {a: load_levels(a) for a in acts if a in level_acts},
         "characters": chars,
+        "blocklist": sorted(Blocklist.load().blocked),
         "difficulty": {"default": diff["default"], "levels": diff["levels"]},
     }
 

@@ -33,6 +33,7 @@ const THIEF_IDLE_MUL := 0.25
 ## Letter weights for decoys and back tiles: English frequency is language data, not a feel number.
 const FREQ := {"e": 127, "t": 91, "a": 82, "o": 75, "i": 70, "n": 67, "s": 63, "h": 61, "r": 60, "d": 43, "l": 40, "c": 28, "u": 28, "m": 24, "w": 24, "f": 22, "g": 20, "y": 20, "p": 19, "b": 15, "v": 10, "k": 8, "j": 2, "x": 2, "q": 1, "z": 1}
 const EPS := 1e-6
+const FINALE_SINCERE := "I hear you."
 
 var words: PackedStringArray = []
 var word_index: int = 0
@@ -57,6 +58,8 @@ var round_no: int = 1
 var seed_value: int = 0
 var level_id: String = ""
 var babel_on: bool = true
+## The finale (4-12, WP-F.2): words are LISTEN then the Catcher's name; Babel's two lines are scripted.
+var finale: bool = false
 ## Presentation only: the share of each step's drift the letters move (1.0 = full). The field eases
 ## it from 0 to 1 after Babel's throw so the letters start drifting gently. The clock, thieves and
 ## shots are unaffected, and the default keeps the rules identical to the Python reference.
@@ -96,6 +99,7 @@ static func create_level(tunables: Dictionary, content: Dictionary, act_key: Str
 	r._t = _apply_mods(t, mods)
 	r.level_id = str(level.get("id", ""))
 	r.babel_on = bool(level.get("babel", true))
+	r.finale = bool(level.get("finale", false)) and (level["words"] as Array).size() == 2
 	var w := PackedStringArray()
 	for x in (level["words"] as Array):
 		w.append(str(x))
@@ -831,7 +835,11 @@ func _restore_words() -> void:
 		for c: String in counts:
 			_pool[c] = int(_pool.get(c, 0)) + int(counts[c])
 		_emit({"type": "restore", "word": w, "score": gained})
-		if babel_on:
+		if babel_on and finale:
+			var fl := _finale_line(w)
+			if fl != "":
+				_emit({"type": "babel", "text": fl})
+		elif babel_on:
 			var lines := Babel.compose(_pool, restored_words, _content, int(_num("babel.minLineLetters")), _babel_rng)
 			var text := Babel.pick(lines, _shown, _babel_rng)
 			if text != "":
@@ -848,6 +856,15 @@ func _restore_words() -> void:
 		_refill()
 		if not _all_filled(active):
 			return
+
+
+## Babel's scripted finale. LISTEN is its own letters turned back (the pool holds them, so the
+## letters-only rule holds). Then it says the name, and one sincere line (the one allowed exception
+## to the letters-only rule, bible 3: Babel voice sheet).
+func _finale_line(w: String) -> String:
+	if restored_words.size() == 1:
+		return "SILENT. No. LISTEN."
+	return "%s. %s" % [w.to_upper(), FINALE_SINCERE]
 
 
 func _end(won: bool) -> void:

@@ -84,6 +84,13 @@ func _process(delta: float) -> void:
 	_live.queue_redraw()
 
 
+## Jumps to the target colour at once (the finale's LISTEN).
+func snap() -> void:
+	_shown = clampf(restore, 0.0, 1.0)
+	if _mat != null:
+		_apply_sat()
+
+
 func shooting() -> bool:
 	return not _shoot.is_empty()
 
