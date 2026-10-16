@@ -11,6 +11,8 @@ signal bench_pressed
 ## Change-entry buttons (shown when a save is set).
 signal character_pressed
 signal difficulty_pressed
+## The player asked for the credits and privacy screen (WP-F.9).
+signal credits_pressed
 
 var settings: AppSettings = AppSettings.new()
 var save_path: String = AppSettings.PATH
@@ -91,6 +93,19 @@ func _ready() -> void:
 	fps.name = "ShowFps"
 	fps.toggled.connect(_set_fps)
 	box.add_child(fps)
+	var lt := Ui.switch("Large text", settings.large_text)
+	lt.name = "LargeText"
+	lt.toggled.connect(func(on: bool) -> void: _comfort("large_text", on))
+	box.add_child(lt)
+	var hcb := Ui.switch("High contrast letters", settings.high_contrast)
+	hcb.name = "HighContrast"
+	hcb.toggled.connect(func(on: bool) -> void: _comfort("high_contrast", on))
+	box.add_child(hcb)
+	var cr := Ui.link("Credits and privacy", 32, Vector2(400, 70))
+	cr.name = "CreditsButton"
+	cr.pressed.connect(func() -> void: credits_pressed.emit())
+	cr.visible = show_sky  # not over the game screen: the pause menu has no way back from it
+	box.add_child(cr)
 	if save != null:
 		box.add_child(_section("Profile"))
 		var prow := HBoxContainer.new()
@@ -165,6 +180,12 @@ func _set_music(v: float) -> void:
 func _set_sound(v: float) -> void:
 	settings.sound_volume = int(v)
 	settings.apply_audio()
+	settings.save_to(save_path)
+
+
+func _comfort(key: String, on: bool) -> void:
+	settings.set(key, on)
+	settings.apply_comfort()
 	settings.save_to(save_path)
 
 

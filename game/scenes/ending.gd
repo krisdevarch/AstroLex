@@ -8,6 +8,8 @@ const Ui := preload("res://scenes/ui.gd")
 const PlayerName := preload("res://rules/player_name.gd")
 
 signal back_to_map
+## The player wants the full credits and privacy screen (WP-F.9).
+signal credits_pressed
 
 const BAND_TONES := [Color("4fd8eb"), Color("f27fb2"), Color("F8BC04"), Color("8f93ff")]  # acts I to IV (level_map.gd)
 const BAND_ALPHA := 0.26
@@ -126,6 +128,10 @@ func _build_credits() -> VBoxContainer:
 	lines.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lines.custom_minimum_size = Vector2(840, 150)
 	c.add_child(lines)
+	var cb := Ui.link("Credits and privacy", 32, Vector2(400, 70))
+	cb.name = "CreditsButton"
+	cb.pressed.connect(func() -> void: credits_pressed.emit())
+	c.add_child(cb)
 	var m := Ui.primary("Back to map", 52, Vector2(640, 124))
 	m.name = "MapButton"
 	m.pressed.connect(func() -> void: back_to_map.emit())

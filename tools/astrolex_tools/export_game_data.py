@@ -39,7 +39,26 @@ def build_tunables() -> dict:
 
 ## Content version for the dictionary loader: bump (YYYYMMDDn) whenever exported words or levels change,
 ## so a cached remote copy older than the bundled data is ignored.
-CONTENT_VERSION = 202610162
+CONTENT_VERSION = 202610163
+
+
+def build_credits() -> str:
+    """docs/story/credits.md as plain text, plus the attribution lines of data/words/LICENCES.md (WP-F.9)."""
+    lines = []
+    for raw in (repo_root() / "docs" / "story" / "credits.md").read_text().splitlines():
+        t = raw.strip().replace("**", "").replace("`", "")
+        if not t or t.startswith("#") or t.startswith("status:"):
+            continue
+        lines.append(t[2:] if t.startswith("- ") else t)
+    attrib = []
+    for raw in (repo_root() / "data" / "words" / "LICENCES.md").read_text().splitlines():
+        cells = [c.strip() for c in raw.strip().strip("|").split("|")]
+        if raw.startswith("|") and len(cells) >= 6 and cells[0] not in ("Source",) and not cells[0].startswith("---"):
+            a = cells[4]
+            if a and not a.startswith(("None", "Keep", "Attribution")):
+                attrib.append(a.strip('"').replace("plus the licence text in the app's Licences screen", "").strip())
+    attrib += ["Word list: ENABLE (public domain).", "Word difficulty: wordfreq (Apache-2.0; data CC BY-SA 4.0)."]
+    return "\n".join(lines + ["", "Word data and licences"] + attrib)
 
 
 def build_content() -> dict:
@@ -56,6 +75,7 @@ def build_content() -> dict:
         "anagrams": {w: anagrams_of(w) for words in acts.values() for w in words},
         "levels": {a: load_levels(a) for a in acts if a in level_acts},
         "characters": chars,
+        "credits": build_credits(),
         "blocklist": sorted(Blocklist.load().blocked),
         "difficulty": {"default": diff["default"], "levels": diff["levels"]},
     }

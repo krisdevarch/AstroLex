@@ -20,6 +20,7 @@ const LevelMap := preload("res://scenes/level_map.gd")
 const PauseMenu := preload("res://scenes/pause_menu.gd")
 const ActComplete := preload("res://scenes/act_complete.gd")
 const Ending := preload("res://scenes/ending.gd")
+const Credits := preload("res://scenes/credits.gd")
 const PlayerName := preload("res://rules/player_name.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
@@ -280,6 +281,7 @@ func _show_settings(back: Callable) -> void:
 	s.character_pressed.connect(func() -> void: _show_character(true, _show_settings.bind(back)))
 	s.difficulty_pressed.connect(func() -> void: _show_difficulty(true, _show_settings.bind(back)))
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
+	s.credits_pressed.connect(func() -> void: _show_credits(_show_settings.bind(back)))
 	_swap(s)
 
 
@@ -441,7 +443,15 @@ func _show_ending() -> void:
 	e.total_stars = save.total_stars()
 	e.reduced_motion = settings.reduced_motion
 	e.back_to_map.connect(_show_map)
+	e.credits_pressed.connect(func() -> void: _show_credits(_show_map))
 	_swap(e)
+
+
+func _show_credits(back: Callable) -> void:
+	var c: Control = Credits.new()
+	c.name = "Credits"
+	c.closed.connect(back)
+	_swap(c)
 
 
 func _show_complete(final: bool) -> void:

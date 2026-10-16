@@ -5,6 +5,7 @@ extends Node2D
 ## dropped on 9 Oct 2026: the owner found them too much like every other word game.
 
 const TileTextures := preload("res://scenes/tile_textures.gd")
+const GameFont := preload("res://scenes/game_font.gd")
 const GLASS_SHADER: Shader = preload("res://shaders/glass.gdshader")
 ## The ambient CanvasModulate dims anything it tints; glass is off the lamp, so undo it.
 const GLASS_GAIN := Vector3(1.55, 1.52, 1.28)
@@ -121,8 +122,10 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.add_theme_font_size_override("font_size", int(size_px * float(tun.get("tile.glyphScale", 0.68))))
 	# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 	glyph.add_theme_color_override("font_color", Color.WHITE)
-	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
-	glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
+	var hc: bool = GameFont.high_contrast
+	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 1.0 if hc else 0.6))
+	var halo := float(tun.get("tile.glyphOutline" if hc else "tile.glyphOutlineNormal", 0.1 if hc else 0.035))
+	glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * halo)))
 	glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
 
 

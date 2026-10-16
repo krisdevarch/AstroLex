@@ -33,6 +33,10 @@ jobs:
         run: python -m astrolex_tools.words.scan --boards 20000 --out reports/ci/scan.md
       - name: Babel validator over act lists (STORY-004)
         run: python -m astrolex_tools.babel.feasibility --levels 50 --out reports/ci/feasibility.md
+      - name: Level curve (WP-F.9)
+        run: python -m astrolex_tools.curve --out reports/ci/curve.md
+      - name: HUD text contrast (WP-F.9)
+        run: python -m astrolex_tools.contrast --out reports/ci/contrast.md
       - name: Upload evidence
         uses: actions/upload-artifact@v4
         with:
