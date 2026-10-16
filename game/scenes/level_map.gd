@@ -31,6 +31,7 @@ signal character_pressed
 signal difficulty_pressed
 signal settings_pressed
 signal back_pressed
+signal daily_pressed
 
 var dictionary: RefCounted
 var save: RefCounted
@@ -98,7 +99,7 @@ func _build_bar(view: Vector2) -> void:
 	stars.reset_size()
 	stars.position = Vector2(170, (BAR_H - 96.0) * 0.5)
 	var x := view.x - 30.0 - 110.0
-	for spec: Array in [["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed]]:
+	for spec: Array in [["DailyButton", "signal", daily_pressed], ["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed]]:
 		var b := _round_button(spec[0], spec[1], Vector2(x, y))
 		var sig: Signal = spec[2]
 		b.pressed.connect(func() -> void: sig.emit())
@@ -340,6 +341,10 @@ class MapIcon extends Control:
 				visor.set_corner_radius_all(12)
 				draw_style_box(visor, Rect2(c.x - 21, c.y - 13, 42, 26))
 				draw_arc(c + Vector2(-6, -2), 8.0, PI * 1.1, PI * 1.6, 8, Color(1, 1, 1, 0.6), 4.0, true)
+			"signal":
+				draw_circle(c + Vector2(0, 14), 6.0, col)
+				for k in 3:
+					draw_arc(c + Vector2(0, 14), 14.0 + 11.0 * k, PI * 1.2, PI * 1.8, 12, col, 6.0, true)
 			"settings":
 				draw_arc(c, 18.0, 0.0, TAU, 32, col, 6.0, true)
 				draw_arc(c, 6.0, 0.0, TAU, 20, col, 5.0, true)
