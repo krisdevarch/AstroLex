@@ -41,6 +41,10 @@ def build_tunables() -> dict:
 CONTENT_VERSION = 202610161
 
 
+def load_story(name: str) -> dict:
+    return json.loads((repo_root() / "data" / "story" / f"{name}.json").read_text())
+
+
 def build_content() -> dict:
     chars = json.loads((repo_root() / "data" / "characters.json").read_text())["characters"]
     diff = json.loads((repo_root() / "data" / "tunables" / "difficulty.json").read_text())
@@ -55,6 +59,8 @@ def build_content() -> dict:
         "anagrams": {w: anagrams_of(w) for words in acts.values() for w in words},
         "levels": {a: load_levels(a) for a in acts if a in level_acts},
         "characters": chars,
+        "codex": load_story("codex")["entries"],
+        "tomas": load_story("tomas")["messages"],
         "difficulty": {"default": diff["default"], "levels": diff["levels"]},
     }
 

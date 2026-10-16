@@ -156,6 +156,16 @@ func set_profile(character: String, pronouns: String, difficulty: String) -> voi
 	_write()
 
 
+## How many of Tomas's act messages the player has opened (WP-F.5); drives the map's unread badge.
+func inbox_read() -> int:
+	return _int(_d.get("inbox_read"))
+
+
+func set_inbox_read(n: int) -> void:
+	_d["inbox_read"] = maxi(n, 0)
+	_write()
+
+
 static func _int(v: Variant) -> int:
 	return maxi(int(v), 0) if typeof(v) in [TYPE_INT, TYPE_FLOAT] else 0
 

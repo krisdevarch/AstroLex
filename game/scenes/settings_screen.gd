@@ -8,6 +8,7 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 signal closed
 ## The player asked for the frame-rate bench.
 signal bench_pressed
+signal codex_pressed
 ## Change-entry buttons (shown when a save is set).
 signal character_pressed
 signal difficulty_pressed
@@ -118,6 +119,10 @@ func _ready() -> void:
 		no.pressed.connect(_cancel_reset)
 		_confirm.add_child(no)
 		box.add_child(_confirm)
+	var codex := Ui.secondary("Rhee's Codex", 40, Vector2(820, 100))
+	codex.name = "CodexButton"
+	codex.pressed.connect(func() -> void: codex_pressed.emit())
+	box.add_child(codex)
 	var bench := Ui.link("Frame-rate test", 32, Vector2(400, 70))
 	bench.name = "BenchButton"
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
