@@ -138,7 +138,7 @@
     },
     {
       "id": "4-12", "order": 12, "title": "The Last Word", "beat": "Encounter: the last words are the Catcher name, then LISTEN; Babel chooses; every colour floods back.",
-      "pacing": "encounter", "words": ["name", "listen"], "seed": 4112, "babel": true, "babelIntro": "Ready, Catcher? I think I finally am.",
+      "pacing": "encounter", "words": ["listen", "name"], "seed": 4112, "babel": true, "babelIntro": "Ready, Catcher? I think I finally am.",
       "tuning": {"burst.seconds": 30, "spawner.decoys": 5, "drift.speed": 0.21, "plane.backTiles": 9, "thief.interval": 4, "hazard.counterfeitRatio": 0.5, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 8, "hazard.stroopSec": 4},
       "commsBefore": [
         {"who": "kit", "text": "Two left. We are all here."},

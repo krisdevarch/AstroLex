@@ -27,20 +27,21 @@ func test_new_player_reaches_the_map_with_a_profile_saved() -> void:
 		assert_true(Flow.has(main, "Swatch_%s" % id) and Flow.has(main, "Character_%s" % id), "card %s" % id)
 	Flow.press(main, "Character_ash")
 	Flow.press(main, "Pronoun_she")
+	(main.find_child("NameInput", true, false) as LineEdit).text_changed.emit("Ada")
 	Flow.press(main, "ConfirmButton")
 	assert_true(Flow.has(main, "DifficultySelect"), "difficulty next")
 	Flow.press(main, "Difficulty_hard")
 	Flow.press(main, "ConfirmButton")
 	assert_true(Flow.has(main, "LevelMap"), "map after the two choices")
 	assert_true(s.has_profile(), "profile saved")
-	assert_eq(s.profile(), {"character": "ash", "pronouns": "she", "difficulty": "hard"})
+	assert_eq(s.profile(), {"character": "ash", "pronouns": "she", "difficulty": "hard", "name": "ADA"})
 	assert_eq(main._mods().size(), 2, "difficulty and character mods")
 	main.free()
 
 
 func test_map_shows_four_acts_locks_and_stars() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal")
+	s.set_profile("wren", "they", "normal", "ADA")
 	s.record_level("act1_low_orbit", "1-01", 0, true, 50, 3)
 	var main: Node = Flow.returning(tree, s)
 	Flow.press(main, "StartButton")
@@ -89,7 +90,7 @@ func test_last_level_of_an_act_unlocks_the_next_act() -> void:
 	main.free()
 
 
-func test_winning_4_12_shows_beta_complete() -> void:
+func test_winning_4_12_shows_the_ending() -> void:
 	var s: RefCounted = Save.fake()
 	for a in ["act1_low_orbit", "act2_nebula", "act3_tower"]:
 		_won_through(s, a, 12)
@@ -100,12 +101,12 @@ func test_winning_4_12_shows_beta_complete() -> void:
 	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
 	assert_true(Flow.has(main, "LevelCard"), "level card first")
-	assert_false(Flow.has(main, "BetaComplete"), "not yet")
+	assert_false(Flow.has(main, "Ending"), "not yet")
 	Flow.press(main, "NextButton")
 	if Flow.has(main, "StoryStrip"):
 		Flow.press(main, "SkipButton")
-	assert_true(Flow.has(main, "BetaComplete"), "beta complete screen")
-	assert_eq((main.find_child("BetaMessage", true, false) as Label).text, "You restored every word in the beta. Story, art and music are on the way.")
+	assert_true(Flow.has(main, "Ending"), "ending screen")
+	Flow.press(main, "SkipButton")
 	assert_eq((main.find_child("TotalStars", true, false) as Label).text, "Total stars  %d" % s.total_stars())
 	Flow.press(main, "MapButton")
 	assert_true(Flow.has(main, "LevelMap"), "back to map")
@@ -135,7 +136,7 @@ func test_pause_menu_resume_restart_and_quit() -> void:
 
 func test_field_gets_character_colour_and_content_when_supported() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("juno", "he", "easy")
+	s.set_profile("juno", "he", "easy", "ADA")
 	var main: Node = Flow.returning(tree, s)
 	var f := Flow.to_field(main)
 	if "tether_colour" in f:
