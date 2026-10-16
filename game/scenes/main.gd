@@ -24,6 +24,7 @@ const PlayerName := preload("res://rules/player_name.gd")
 const CodexScreen := preload("res://scenes/codex.gd")
 const InboxScreen := preload("res://scenes/inbox.gd")
 const StoryData := preload("res://rules/story_data.gd")
+const Prologue := preload("res://scenes/prologue.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
 const DictService := preload("res://services/dictionary.gd")
@@ -212,7 +213,7 @@ func _show_start() -> void:
 		if save.has_profile():
 			_show_map()
 		else:
-			_show_character(false, func() -> void: _show_difficulty(false, _show_map)))
+			_show_character(false, func() -> void: _show_difficulty(false, _prologue_then_map)))
 	s.settings_pressed.connect(_show_settings.bind(_show_start))
 	_swap(s)
 	if not _ready_printed:
@@ -286,6 +287,7 @@ func _show_settings(back: Callable) -> void:
 	s.difficulty_pressed.connect(func() -> void: _show_difficulty(true, _show_settings.bind(back)))
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
 	s.codex_pressed.connect(_show_codex.bind(_show_settings.bind(back)))
+	s.prologue_pressed.connect(func() -> void: _play_animatic(false, Callable()))
 	_swap(s)
 
 
@@ -362,6 +364,9 @@ func _start_level(story: Array = []) -> void:
 	var level: Dictionary = levels[level_index]
 	if _is_final_level():
 		level = finale_level(level, save.player_name())
+	if act == "act3_tower" and str(level["id"]) == "3-06" and not autoplay and not save.flag("flashback_seen"):
+		_play_animatic(true, _start_level.bind(story))  # the Loud Wars flashback, once
+		return
 	var ch := _profile_character()
 	var cosmetic := not autoplay or demo
 	_close_pause()
@@ -554,3 +559,38 @@ func _close_pause() -> void:
 		else:
 			pause_menu.queue_free()
 		pause_menu = null
+
+
+# --- animatics (WP-F.7) --------------------------------------------------------------------
+
+func _prologue_then_map() -> void:
+	if save.flag("prologue_seen") or autoplay:
+		_show_map()
+	else:
+		_play_animatic(false, _show_map)
+
+
+## The wordless Prologue (or the flashback) over whatever is showing; `then` runs when it ends.
+func _play_animatic(flashback: bool, then: Callable) -> void:
+	var p: Control = Prologue.new()
+	p.stills = Prologue.load_stills("flashback" if flashback else "prologue")
+	p.with_water = not flashback
+	p.base_sat = 0.6 if flashback else 0.0
+	p.reduced_motion = settings.reduced_motion
+	p.treatment = settings.treatment
+	var layer := CanvasLayer.new()
+	layer.name = "AnimaticLayer"
+	layer.layer = 60
+	layer.add_child(p)
+	add_child(layer)
+	var music: Variant = get("music")
+	if music != null and (music as Object).has_method("duck"):
+		music.duck(true)
+	p.finished.connect(func(_skipped: bool) -> void:
+		save.set_flag("flashback_seen" if flashback else "prologue_seen")
+		if music != null and is_instance_valid(music as Object) and (music as Object).has_method("duck"):
+			music.duck(false)
+		remove_child(layer)
+		layer.queue_free()
+		if then.is_valid():
+			then.call())

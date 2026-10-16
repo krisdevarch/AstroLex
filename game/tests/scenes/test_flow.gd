@@ -17,6 +17,7 @@ func _won_through(s: RefCounted, act: String, n: int) -> void:
 
 func test_new_player_reaches_the_map_with_a_profile_saved() -> void:
 	var s: RefCounted = Save.fake()
+	s.set_flag("prologue_seen")  # the Prologue has its own tests
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	tree.root.add_child(main)

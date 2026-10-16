@@ -16,7 +16,7 @@ func _win(s: RefCounted, act: String, n: int) -> void:
 
 func _save() -> RefCounted:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal")
+	s.set_profile("wren", "they", "normal", "Kit")
 	return s
 
 
