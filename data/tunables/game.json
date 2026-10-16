@@ -114,5 +114,13 @@
   "coach.pulseAmount": 0.14,
   "coach.captionPx": 40,
   "coach.captionGapPx": 26,
-  "coach.afterCatchSec": 2.5
+  "coach.afterCatchSec": 2.5,
+  "hazard.counterfeitRatio": 0,
+  "hazard.traps": 0,
+  "hazard.trapWindowSec": 4,
+  "hazard.trapCost": 3,
+  "hazard.stroop": 0,
+  "hazard.stroopEverySec": 12,
+  "hazard.stroopSec": 3,
+  "hazard.shimmerSec": 2
 }

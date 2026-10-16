@@ -159,6 +159,8 @@ var _pending: Dictionary = {}  # Vector2i(absolute word, slot) -> true while a c
 var _view_word: int = 0
 var _end_t: float = -1.0
 var _toast_t: float = 0.0
+## Hazards that have bitten already this run: each gets its one-line toast the first time only (WP-F.1).
+var _hazard_seen: Dictionary = {}
 var _babel_t: float = 99.0
 var _pulse_t: float = 99.0
 var _tether_fade: float = 0.0
@@ -568,6 +570,9 @@ func summary() -> Dictionary:
 		"act": game_round.act,
 		"stolen": int(game_round.stats["stolen"]),
 		"thieves_down": int(game_round.stats["thieves_down"]),
+		"counterfeits": int(game_round.stats["counterfeits"]),
+		"traps": int(game_round.stats["traps"]),
+		"jams": int(game_round.stats["jams"]),
 	}
 
 
@@ -780,6 +785,8 @@ func _ensure_view(t: Object) -> TileViewScript:
 		v.set_back(_n("plane.backAlpha"), _next_item())
 	elif t.plane == 1:
 		v.set_depth(_n("plane.midDim"))
+	if t.kind != "":
+		v.set_kind(t.kind)
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
@@ -807,6 +814,7 @@ func _sync_views() -> void:
 	for t in game_round.tiles:
 		live[t.id] = true
 		var v := _ensure_view(t)
+		v.set_jam(game_round.jammed and t.plane < 2, t.decoy)
 		v.place(to_screen(t.pos), _time, t.pos.x)
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
@@ -928,6 +936,22 @@ func _apply_events() -> void:
 				_buzz(60)
 			"escape":
 				_show_toast("It drifted off", Ui.DIM)
+			"counterfeit":
+				var fv: TileViewScript = _views.get(int(e["tile_id"]))
+				if fv != null:
+					fv.flash(0.45)
+					fv.dissolve(_n("fx.dissolveSec"))
+				_burst(to_screen(e["pos"]), PERIWINKLE, 18)
+				_hazard_toast("counterfeit", "Forged letter   −%d s" % int(_n("burst.wrongCost")))
+				sfx.wrong()
+				_shake(_n("fx.shakePx") * 0.5)
+				_buzz(60)
+			"trap":
+				_hazard_toast("trap", "Babel's trap   −%d s" % int(round(float(e["cost"]))))
+				_shake(_n("fx.shakePx") * 0.7)
+				_buzz(90)
+			"jam_on":
+				_hazard_toast("jam", "Visor jammed")
 			"hint":
 				var hv: TileViewScript = _views.get(int(e["tile_id"]))
 				if hv != null and hv.anim == "":
@@ -1120,6 +1144,14 @@ func _burst(at: Vector2, colour: Color = Color(0.7, 0.95, 1.0), amount: int = 14
 	p.color = colour
 	_fx_layer.add_child(p)
 	_fx.append([p, 0.8])
+
+
+## The one-line toast for a hazard, the first time it bites.
+func _hazard_toast(key: String, text: String) -> void:
+	if _hazard_seen.has(key):
+		return
+	_hazard_seen[key] = true
+	_show_toast(text, PERIWINKLE)
 
 
 func _show_toast(text: String, color: Color) -> void:
@@ -1592,7 +1624,7 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 		var filled := _slot_text_filled(where, i, bool(slots[i]["filled"]))
 		var g := p.get_node("Glyph") as Label
 		var ch := str(slots[i]["ch"]).to_upper()
-		g.text = ch if filled or hint_shown(i, slots.size()) else ""
+		g.text = ch if filled or (hint_shown(i, slots.size()) and not game_round.jammed) else ""
 		g.modulate.a = 1.0 if filled else _n("hud.hintAlpha")
 		g.add_theme_color_override("font_color", TILE_INK if filled else Color.WHITE)
 		_style_slot(p, filled, where)

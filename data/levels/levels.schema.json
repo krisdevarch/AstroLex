@@ -24,7 +24,13 @@
         "thief.firstAt": {"type": "number"},
         "thief.speed": {"type": "number"},
         "thief.max": {"type": "integer", "minimum": 0},
-        "plane.backTiles": {"type": "integer", "minimum": 0}
+        "plane.backTiles": {"type": "integer", "minimum": 0},
+        "hazard.counterfeitRatio": {"type": "number", "minimum": 0, "maximum": 1},
+        "hazard.traps": {"type": "integer", "minimum": 0, "maximum": 1},
+        "hazard.trapCost": {"type": "number", "minimum": 0},
+        "hazard.stroop": {"type": "integer", "minimum": 0, "maximum": 1},
+        "hazard.stroopEverySec": {"type": "number", "minimum": 1},
+        "hazard.stroopSec": {"type": "number", "minimum": 0}
       }
     },
     "comm": {
