@@ -20,10 +20,14 @@ const BABEL_LINE := "Back for more?"
 const BABEL_FIRST_LINE := "Oh. A new one."
 signal start_pressed
 signal settings_pressed
+signal daily_pressed
 
 var settings: AppSettings = AppSettings.new()
 ## Start button text; main sets "Continue" when a save has a profile, else "New game".
 var start_label: String = "New game"
+## Daily Signal button text and the streak line under it (main fills them from the save).
+var daily_label: String = "Daily Signal"
+var daily_note: String = ""
 var tile_count: int = 0
 var _babel: Control
 var _t: float = 0.0
@@ -48,13 +52,23 @@ func _ready() -> void:
 	box.name = "Buttons"
 	box.add_theme_constant_override("separation", 30)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.size = Vector2(600, 320)
-	box.position = Vector2((view.x - 600.0) * 0.5, view.y * 0.64)
+	box.size = Vector2(600, 420)
+	box.position = Vector2((view.x - 600.0) * 0.5, view.y * 0.62)
 	add_child(box)
 	var start := Ui.primary(start_label, 62 if start_label.length() < 12 else 50, Vector2(600, 156))
 	start.name = "StartButton"
 	start.pressed.connect(func() -> void: start_pressed.emit())
 	box.add_child(start)
+	var daily := Ui.secondary(daily_label, 44, Vector2(600, 116))
+	daily.name = "DailyButton"
+	daily.pressed.connect(func() -> void: daily_pressed.emit())
+	box.add_child(daily)
+	if daily_note != "":
+		var note := Ui.text(daily_note, 30, Ui.MUTED)
+		note.name = "DailyStreak"
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.custom_minimum_size = Vector2(600, 0)
+		box.add_child(note)
 	var sett := Ui.secondary("Settings", 44, Vector2(600, 116))
 	sett.name = "SettingsButton"
 	sett.pressed.connect(func() -> void: settings_pressed.emit())

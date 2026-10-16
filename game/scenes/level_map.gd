@@ -34,6 +34,7 @@ signal settings_pressed
 signal codex_pressed
 signal inbox_pressed
 signal back_pressed
+signal daily_pressed
 
 var dictionary: RefCounted
 var save: RefCounted
@@ -101,7 +102,7 @@ func _build_bar(view: Vector2) -> void:
 	stars.reset_size()
 	stars.position = Vector2(170, (BAR_H - 96.0) * 0.5)
 	var x := view.x - 30.0 - 110.0
-	for spec: Array in [["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed], ["CodexButton", "book", codex_pressed], ["InboxButton", "envelope", inbox_pressed]]:
+	for spec: Array in [["DailyButton", "signal", daily_pressed], ["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed], ["CodexButton", "book", codex_pressed], ["InboxButton", "envelope", inbox_pressed]]:
 		var b := _round_button(spec[0], spec[1], Vector2(x, y))
 		var sig: Signal = spec[2]
 		b.pressed.connect(func() -> void: sig.emit())
@@ -115,7 +116,7 @@ func _build_bar(view: Vector2) -> void:
 			dot.position = Vector2(76, -2)
 			dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			b.add_child(dot)
-		x -= 126.0
+		x -= 118.0
 
 
 func _round_button(node_name: String, kind: String, pos: Vector2) -> Button:
@@ -362,6 +363,10 @@ class MapIcon extends Control:
 			"envelope":
 				draw_rect(Rect2(c.x - 28, c.y - 20, 56, 40), col, false, 6.0)
 				draw_polyline(PackedVector2Array([c + Vector2(-28, -20), c + Vector2(0, 4), c + Vector2(28, -20)]), col, 6.0, true)
+			"signal":
+				draw_circle(c + Vector2(0, 14), 6.0, col)
+				for k in 3:
+					draw_arc(c + Vector2(0, 14), 14.0 + 11.0 * k, PI * 1.2, PI * 1.8, 12, col, 6.0, true)
 			"settings":
 				draw_arc(c, 18.0, 0.0, TAU, 32, col, 6.0, true)
 				draw_arc(c, 6.0, 0.0, TAU, 20, col, 5.0, true)

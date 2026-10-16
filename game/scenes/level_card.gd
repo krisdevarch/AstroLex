@@ -8,6 +8,9 @@ extends Control
 
 const Ui := preload("res://scenes/ui.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
+const Daily := preload("res://rules/daily.gd")
+const DailyImage := preload("res://scenes/daily_image.gd")
+const Share := preload("res://services/share.gd")
 
 signal next
 signal retry
@@ -15,6 +18,7 @@ signal map
 
 const CARD_W := 820.0
 const CARD_H := 720.0
+const DAILY_EXTRA := 90.0
 const STAR_D := 150.0
 const STAR_MID_D := 180.0
 const STAR_GAP := 34.0
@@ -38,6 +42,12 @@ var summary: Dictionary = {}
 ## Optional; the Send and Copy results buttons show only when set.
 var telemetry: RefCounted
 var reduced_motion: bool = false
+## Daily Signal result (WP-F.6): Babel's daily line, then Share and Back instead of Next/Retry/Map.
+var daily: bool = false
+var daily_date: String = ""
+var daily_words: Array = []
+## The share image (PNG, base64), rendered ahead of the tap on the web; "" when there is none.
+var share_b64: String = ""
 ## Screen point the stars fly out of (the clock bar), and the card's centre.
 var star_from: Vector2 = Vector2(540, 1800)
 var centre: Vector2 = Vector2(540, 900)
@@ -66,12 +76,12 @@ func _ready() -> void:
 	_card = Panel.new()
 	_card.name = "LevelCardPanel"
 	_card.add_theme_stylebox_override("panel", Ui.box(CARD_FILL, 44, CARD_EDGE, 5))
-	_card.size = Vector2(CARD_W, CARD_H if telemetry != null else CARD_H - 110.0)
+	_card.size = Vector2(CARD_W, (CARD_H if telemetry != null else CARD_H - 110.0) + (DAILY_EXTRA if daily else 0.0))
 	_card.position = centre - _card.size * 0.5
 	_card.pivot_offset = _card.size * 0.5
 	_card.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_card)
-	var title := Ui.label("Sector cleared" if won else "Out of time", 66, TEXT_CREAM if won else LOSS)
+	var title := Ui.label(("Signal caught" if won else "Signal lost") if daily else ("Sector cleared" if won else "Out of time"), 66, TEXT_CREAM if won else LOSS)
 	title.name = "EndTitle"
 	title.add_theme_constant_override("outline_size", 0)
 	title.position = Vector2(0, 34)
@@ -101,6 +111,34 @@ func _ready() -> void:
 	_card.add_child(stats)
 	# Buttons: the primary one in the Hint button's orange, the others in the HUD's navy.
 	# Won: Next (orange) and Retry, with a quiet Map link under them. Lost: Retry (orange) and Map.
+	if daily:
+		_build_daily(won)
+	else:
+		_build_buttons(won)
+	if telemetry != null:
+		var ry := _card.size.y - 92.0
+		var send := _pill("SendResultsButton", "Send results", Vector2(CARD_W * 0.5 - 330.0, ry), Vector2(310, 66), false, 30)
+		send.pressed.connect(func() -> void: telemetry.send_results())
+		var copy := _pill("CopyResultsButton", "Copy results", Vector2(CARD_W * 0.5 + 20.0, ry), Vector2(310, 66), false, 30)
+		copy.pressed.connect(_on_copy)
+	if telemetry != null or daily:
+		_toast = Ui.label("", 34, Color(0.45, 0.8, 1.0))
+		_toast.name = "CopyToast"
+		_toast.add_theme_constant_override("outline_size", 0)
+		_toast.position = Vector2(0, _card.size.y - 92.0 - 46.0)
+		_toast.size = Vector2(CARD_W, 40)
+		_toast.modulate.a = 0.0
+		_card.add_child(_toast)
+	if reduced_motion:
+		finish_now()
+	else:
+		_card.modulate.a = 0.0
+		_card.scale = Vector2.ONE * 0.9
+	if daily and OS.has_feature("web"):
+		prepare_image()
+
+
+func _build_buttons(won: bool) -> void:
 	var y := 392.0
 	var first := _pill("NextButton" if won else "RetryButton", "Next" if won else "Retry", Vector2(CARD_W * 0.5 - 300.0, y), Vector2(340, 112), true)
 	var second := _pill("RetryButton" if won else "MapButton", "Retry" if won else "Map", Vector2(CARD_W * 0.5 + 60.0, y), Vector2(240, 112), false)
@@ -116,24 +154,48 @@ func _ready() -> void:
 	else:
 		first.pressed.connect(choose.bind("retry"))
 		second.pressed.connect(choose.bind("map"))
-	if telemetry != null:
-		var ry := _card.size.y - 92.0
-		var send := _pill("SendResultsButton", "Send results", Vector2(CARD_W * 0.5 - 330.0, ry), Vector2(310, 66), false, 30)
-		send.pressed.connect(func() -> void: telemetry.send_results())
-		var copy := _pill("CopyResultsButton", "Copy results", Vector2(CARD_W * 0.5 + 20.0, ry), Vector2(310, 66), false, 30)
-		copy.pressed.connect(_on_copy)
-		_toast = Ui.label("", 34, Color(0.45, 0.8, 1.0))
-		_toast.name = "CopyToast"
-		_toast.add_theme_constant_override("outline_size", 0)
-		_toast.position = Vector2(0, ry - 46.0)
-		_toast.size = Vector2(CARD_W, 40)
-		_toast.modulate.a = 0.0
-		_card.add_child(_toast)
-	if reduced_motion:
-		finish_now()
-	else:
-		_card.modulate.a = 0.0
-		_card.scale = Vector2.ONE * 0.9
+
+
+## Daily result: Babel's line under the stats, then Share (orange) and Back.
+func _build_daily(won: bool) -> void:
+	var line := Ui.text(Daily.result_line(won, daily_date), 34, Color("aab8ff"))
+	line.name = "DailyLine"
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line.position = Vector2(50, 376)
+	line.size = Vector2(CARD_W - 100.0, 90)
+	_card.add_child(line)
+	var y := 392.0 + DAILY_EXTRA
+	var share := _pill("ShareButton", "Share", Vector2(CARD_W * 0.5 - 300.0, y), Vector2(340, 112), true)
+	share.pressed.connect(on_share)
+	var back := _pill("BackButton", "Back", Vector2(CARD_W * 0.5 + 60.0, y), Vector2(240, 112), false)
+	back.pressed.connect(choose.bind("map"))
+
+
+## The share text for this result.
+func share_text() -> String:
+	return Daily.share_text(daily_date, int(summary.get("words_done", 0)), int(summary.get("words_total", 0)), _earned, float(summary.get("time_left", 0.0)))
+
+
+## Share: the share sheet when the browser has one, else the clipboard and a "Copied" toast.
+func on_share() -> String:
+	var how := Share.share(share_text(), share_b64)
+	if how == "copied" and _toast != null:
+		_toast.text = "Copied"
+		_toast_t = 1.4
+	return how
+
+
+## Renders the 1080x1080 share image ahead of the tap (the web only: the share sheet needs the tap
+## to still be fresh). Quietly gives up when the renderer gives no image.
+func prepare_image() -> void:
+	var vp := DailyImage.build(daily_date, daily_words, int(summary.get("words_done", 0)), _earned, float(summary.get("time_left", 0.0)))
+	add_child(vp)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var bytes := DailyImage.png(vp)
+	vp.queue_free()
+	if not bytes.is_empty():
+		share_b64 = Marshalls.raw_to_base64(bytes)
 
 
 func _stats_text(won: bool) -> String:

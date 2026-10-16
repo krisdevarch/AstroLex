@@ -64,6 +64,11 @@ func data() -> Dictionary:
 	return _d
 
 
+## Writes the save now (for callers that edit data() directly, like the daily record).
+func flush() -> void:
+	_write()
+
+
 func player_id() -> String:
 	return str(_d["player_id"])
 

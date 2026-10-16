@@ -28,6 +28,8 @@ const StoryData := preload("res://rules/story_data.gd")
 const Prologue := preload("res://scenes/prologue.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
+const Daily := preload("res://rules/daily.gd")
+const DailyHooks := preload("res://scenes/daily_hooks.gd")
 const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
@@ -52,6 +54,9 @@ var save: RefCounted
 ## Words and levels. Tests may set DictService.fake(...) before _ready.
 var dictionary: RefCounted
 var pause_menu: Control
+## The UTC date of the Daily Signal being played ("" when none). Tests may set daily_today.
+var daily_date: String = ""
+var daily_today: String = ""
 ## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
 var music: MusicScript
 var _ready_printed: bool = false
@@ -199,6 +204,7 @@ func _swap(node: Node) -> void:
 		screen.queue_free()
 	screen = node
 	if node.name != "Field":
+		daily_date = ""
 		music.play(MusicScript.MENU)
 	add_child(node)
 
@@ -216,10 +222,19 @@ func _show_start() -> void:
 		else:
 			_show_character(false, func() -> void: _show_difficulty(false, _prologue_then_map)))
 	s.settings_pressed.connect(_show_settings.bind(_show_start))
+	DailyHooks.decorate_start(self, s)
 	_swap(s)
 	if not _ready_printed:
 		_ready_printed = true
 		print("AstroLex ready: %d tiles" % s.tile_count)
+
+
+func _start_daily() -> void:
+	DailyHooks.start(self)
+
+
+func _on_daily_finished(summary: Dictionary) -> void:
+	DailyHooks.finished(self, summary)
 
 
 func _show_character(can_cancel: bool, then: Callable) -> void:
@@ -274,6 +289,7 @@ func _show_map() -> void:
 	m.settings_pressed.connect(_show_settings.bind(_show_map))
 	m.codex_pressed.connect(_show_codex.bind(_show_map))
 	m.inbox_pressed.connect(_show_inbox.bind(_show_map))
+	m.daily_pressed.connect(_start_daily)
 	m.back_pressed.connect(_show_start)
 	_swap(m)
 
@@ -364,7 +380,9 @@ func _start_level(story: Array = []) -> void:
 		_show_map()
 		return
 	var level: Dictionary = levels[level_index]
-	if _is_final_level():
+	if daily_date != "":
+		level = Daily.make_level(daily_date, dictionary.content())
+	elif _is_final_level():
 		level = finale_level(level, save.player_name())
 	if act == "act3_tower" and str(level["id"]) == "3-06" and not autoplay and not save.flag("flashback_seen"):
 		_play_animatic(true, _start_level.bind(story))  # the Loud Wars flashback, once
@@ -395,14 +413,14 @@ func _start_level(story: Array = []) -> void:
 	else:
 		f.set_paused(false)
 	music.play(act)
-	f.level_counter = "Level %d / %d" % [level_index + 1, levels.size()]
+	f.level_counter = Daily.TITLE if daily_date != "" else "Level %d / %d" % [level_index + 1, levels.size()]
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
 	var char_id := "" if autoplay else str(ch.get("id", ""))
-	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), act, char_id, diff_id)
+	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), Daily.TELEMETRY_ACT if daily_date != "" else act, char_id, diff_id)
 	f.coach_enabled = not autoplay and save.total_stars() == 0  # first-play coach (WP-3.Q)
 	f.coach_drones = not autoplay and save.next_level(act) <= 3  # nobody past 1-03 has met the drones
-	f.begin_level(level, act, _mods(), _story(story))
+	f.begin_level(level, Daily.ROUND_ACT if daily_date != "" else act, _mods(), _story(story))
 
 
 ## 4-12: the level's words become LISTEN, then the Catcher's name (the file keeps a placeholder).
@@ -422,6 +440,9 @@ func _is_final_level() -> bool:
 
 
 func _on_level_finished(summary: Dictionary, level: Dictionary = {}) -> void:
+	if daily_date != "":
+		_on_daily_finished(summary)
+		return
 	if level.is_empty():
 		level = levels[level_index]
 	summary["level"] = str(level["id"])
