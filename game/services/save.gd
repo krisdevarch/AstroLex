@@ -143,6 +143,19 @@ func total_stars() -> int:
 	return n
 
 
+## One-time flags ("prologue_seen", "flashback_seen"); progress reset keeps them.
+func flag(key: String) -> bool:
+	var f: Variant = _d.get("flags")
+	return f is Dictionary and (f as Dictionary).get(key, false) == true
+
+
+func set_flag(key: String) -> void:
+	if not _d.get("flags") is Dictionary:
+		_d["flags"] = {}
+	_d["flags"][key] = true
+	_write()
+
+
 func has_profile() -> bool:
 	return str(profile().get("character", "")) != ""
 
@@ -219,6 +232,8 @@ static func _migrate(d: Variant) -> Dictionary:
 				levels[str(id)] = _level(raw[id])
 		clean[str(act)] = {"next": _int((a as Dictionary).get("next")), "levels": levels}
 	dict["progress"] = clean
+	if not dict.get("flags") is Dictionary:
+		dict["flags"] = {}
 	return dict
 
 
