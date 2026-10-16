@@ -113,3 +113,8 @@ func test_streak_counts_consecutive_days_and_replays_do_not_count() -> void:
 	r = DailyRecord.record(s, "2026-10-20", true, 1, 5.0)
 	assert_eq(r["streak"], 1, "starts again")
 	assert_eq(r["best"], 3)
+
+
+func test_short_date_reads_as_day_and_month() -> void:
+	assert_eq(Daily.short_date("2026-10-16"), "16 Oct")
+	assert_eq(Daily.short_date("2026-01-05"), "5 Jan")

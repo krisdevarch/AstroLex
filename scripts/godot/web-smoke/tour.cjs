@@ -36,6 +36,8 @@ const W = 432, H = 768, S = W / 1080;
     } else if (s[0] === 'tap') { await page.mouse.click(s[1] * S, s[2] * S); await page.waitForTimeout(700); }
     else if (s[0] === 'drag') { await page.mouse.move(s[1] * S, s[2] * S); await page.mouse.down(); await page.mouse.move(s[3] * S, s[4] * S, { steps: 12 }); await page.mouse.up(); await page.waitForTimeout(500); }
     else if (s[0] === 'wait') await page.waitForTimeout(s[1]);
+    else if (s[0] === 'wheel') { await page.mouse.move(s[1] * S, s[2] * S); await page.mouse.wheel(0, s[3]); await page.waitForTimeout(500); }
+    else if (s[0] === 'type') { await page.keyboard.type(s[1], { delay: 60 }); await page.waitForTimeout(400); }
     else if (s[0] === 'shot') { await page.screenshot({ path: path.join(out, s[1] + '.png') }); console.log('shot', s[1]); }
   }
   await browser.close();

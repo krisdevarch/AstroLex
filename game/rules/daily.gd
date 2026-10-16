@@ -110,5 +110,14 @@ static func unix_of(date: String) -> int:
 	return int(Time.get_unix_time_from_datetime_string(date + "T00:00:00"))
 
 
+## "16 Oct" for "2026-10-16": the right-hand chip in a daily round (the middle one says Daily Signal).
+static func short_date(date: String) -> String:
+	const MONTHS := ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+	var parts := date.split("-")
+	if parts.size() != 3:
+		return date
+	return "%d %s" % [int(parts[2]), MONTHS[clampi(int(parts[1]) - 1, 0, 11)]]
+
+
 static func shift(date: String, days: int) -> String:
 	return Time.get_date_string_from_unix_time(unix_of(date) + days * 86400)

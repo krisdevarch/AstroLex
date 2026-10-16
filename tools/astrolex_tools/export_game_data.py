@@ -56,7 +56,8 @@ def build_credits() -> str:
         if raw.startswith("|") and len(cells) >= 6 and cells[0] not in ("Source",) and not cells[0].startswith("---"):
             a = cells[4]
             if a and not a.startswith(("None", "Keep", "Attribution")):
-                attrib.append(a.strip('"').replace("plus the licence text in the app's Licences screen", "").strip())
+                a = a.replace("plus the licence text in the app's Licences screen", "").strip()
+                attrib.append(a.strip('"').strip())
     attrib += ["Word list: ENABLE (public domain).", "Word difficulty: wordfreq (Apache-2.0; data CC BY-SA 4.0)."]
     return "\n".join(lines + ["", "Word data and licences"] + attrib)
 

@@ -21,6 +21,13 @@ def G(v):
     return (v, v, v)
 
 
+def lift(img):
+    """Tone lift so the near-black drawings read on a phone in daylight: a gamma curve that keeps the
+    blacks black and brings the mid greys up (the stills are drawn dark, like a storyboard)."""
+    lut = [int(255 * (v / 255) ** 0.55) for v in range(256)] * 3
+    return img.point(lut)
+
+
 def canvas(top, bottom):
     img = Image.new("RGB", (W, H))
     d = ImageDraw.Draw(img)
@@ -206,7 +213,7 @@ def main():
         timing[key] = [{"id": b["id"], "seconds": b["seconds"]} for b in beats]
     (root / "game" / "data" / "stills.json").write_text(json.dumps(timing, indent=1) + "\n")
     for name in ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "f1", "f2", "f3", "f4", "f5"]:
-        img = globals()[name]().filter(ImageFilter.GaussianBlur(1.2))
+        img = lift(globals()[name]()).filter(ImageFilter.GaussianBlur(1.2))
         img.save(OUT / f"{name}.jpg", quality=72, optimize=True)
         print(name, (OUT / f"{name}.jpg").stat().st_size)
 

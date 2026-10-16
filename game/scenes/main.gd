@@ -413,7 +413,7 @@ func _start_level(story: Array = []) -> void:
 	else:
 		f.set_paused(false)
 	music.play(act)
-	f.level_counter = Daily.TITLE if daily_date != "" else "Level %d / %d" % [level_index + 1, levels.size()]
+	f.level_counter = Daily.short_date(daily_date) if daily_date != "" else "Level %d / %d" % [level_index + 1, levels.size()]
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
 	var char_id := "" if autoplay else str(ch.get("id", ""))
