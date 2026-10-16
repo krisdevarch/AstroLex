@@ -57,6 +57,10 @@ var round_no: int = 1
 var seed_value: int = 0
 var level_id: String = ""
 var babel_on: bool = true
+## Presentation only: the share of each step's drift the letters move (1.0 = full). The field eases
+## it from 0 to 1 after Babel's throw so the letters start drifting gently. The clock, thieves and
+## shots are unaffected, and the default keeps the rules identical to the Python reference.
+var drift_scale: float = 1.0
 
 var _t: Dictionary = {}
 var _content: Dictionary = {}
@@ -677,7 +681,7 @@ func _remove_thief(th: Thief) -> void:
 func _drift(t: Tile, h: float) -> void:
 	_steer(t, h)
 	var r := t.radius
-	t.pos += t.vel * h
+	t.pos += t.vel * h * drift_scale
 	if t.pos.x < r:
 		t.pos.x = r
 		t.vel.x = absf(t.vel.x)

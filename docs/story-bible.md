@@ -38,6 +38,7 @@ Babel did not scatter words at random. It sorted by meaning, because it thinks i
 **Rule 4. What Babel can and cannot do.**
 - Babel has no voice of its own. It holds no words. It can speak only by rearranging letters the Catcher has already restored in the current level. The pool is the letters on the board, with multiplicity.
 - It cannot use a letter you have not caught. This is the game's signature moment, and it is why Babel cannot say your name until you do.
+- One exception (owner, 16 Oct 2026): when Babel flies in at the start of a level, he says one short line of his own in a bubble (`babelIntro` in the level files, owner-approved like all text). Everything he says during play still follows this rule.
 - It can forge fragments (counterfeits), rearrange fragments into its own counter-words (anagram traps), and jam the visor's colour channel (Stroop). It cannot change shape or pattern. Those stay honest.
 - It cannot lie in a way the player cannot catch. A forgery shimmers.
 - It opens every round by throwing that round's letters out of a periwinkle rift into the field. It is showing off, and it is also proof that it holds the words. It throws in silence: no letter is restored yet, so it has nothing to say.

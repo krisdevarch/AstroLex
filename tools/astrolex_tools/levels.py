@@ -33,7 +33,7 @@ def _tokens(text: str) -> set[str]:
 def spoiler_problems(levels: list[dict]) -> list[str]:
     """Text shown before or between rounds must not give away a word still to be caught.
 
-    The title and commsBefore of a level may not name its own words or a later level's;
+    The title, babelIntro and commsBefore of a level may not name its own words or a later level's;
     commsAfter may name the words just restored but not a later level's.
     """
     problems = []
@@ -41,6 +41,8 @@ def spoiler_problems(levels: list[dict]) -> list[str]:
         ahead = {w for later in levels[i + 1:] for w in later["words"]}
         here = set(lv["words"]) | ahead
         shown = [("title", lv["title"], here)]
+        if "babelIntro" in lv:
+            shown.append(("babelIntro", lv["babelIntro"], here))
         shown += [("commsBefore", c["text"], here) for c in lv["commsBefore"]]
         shown += [("commsAfter", c["text"], ahead) for c in lv["commsAfter"]]
         for key, text, banned in shown:

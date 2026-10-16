@@ -48,6 +48,12 @@ var _vel_px: Vector2 = Vector2.ZERO
 var _squash_t: float = 0.0
 var _squash_axis: Vector2 = Vector2.ZERO
 const SQUASH_DUR := 0.28  # seconds a bounce squash takes to spring back
+const GROW_FROM := 0.35  # a letter made mid-play starts at this share of its size
+const GROW_OVERSHOOT := 1.0
+## Grow-in for letters made mid-play (WP-3.P): node scale and alpha only.
+var _grow_t: float = 0.0
+var _grow_dur: float = 0.0
+var _grow_alpha: float = 1.0  # the alpha it grows to
 
 
 func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_treatment: String, p_reduced: bool, tun: Dictionary, p_phase: float) -> void:
@@ -230,6 +236,38 @@ func _lean() -> float:
 	return deg_to_rad(float(_tun.get("tile.leanDeg", 0.0))) * k
 
 
+## A letter made mid-play grows from about a third of its size with a small back-ease and fades in
+## (reduced motion: fade only). place(), fly, dissolve, hint glow and taps are untouched.
+func grow_in(dur: float) -> void:
+	if dur <= 0.0:
+		return
+	_grow_dur = dur
+	_grow_t = dur
+	_grow_alpha = modulate.a
+	_apply_grow(0.0)
+
+
+## A fly, dissolve or scatter takes over from a grow-in: start it from the full size and alpha.
+func _cancel_grow() -> void:
+	if _grow_t > 0.0:
+		_grow_t = 0.0
+		scale = Vector2.ONE
+		modulate.a = _grow_alpha
+
+
+func is_growing() -> bool:
+	return _grow_t > 0.0
+
+
+func _apply_grow(u: float) -> void:
+	modulate.a = _grow_alpha * clampf(u * 1.5, 0.0, 1.0)
+	if reduced_motion:
+		return
+	var w := u - 1.0
+	var e := 1.0 + (GROW_OVERSHOOT + 1.0) * w * w * w + GROW_OVERSHOOT * w * w
+	scale = Vector2.ONE * lerpf(GROW_FROM, 1.0, e)
+
+
 func flash(dur: float) -> void:
 	_flash_dur = maxf(0.01, dur)
 	_flash_t = _flash_dur
@@ -273,6 +311,7 @@ class HintGlow extends Node2D:
 
 
 func fly_to(target: Vector2, target_size_px: float, dur: float) -> void:
+	_cancel_grow()
 	anim = "fly"
 	_from = position
 	_to = target
@@ -284,6 +323,7 @@ func fly_to(target: Vector2, target_size_px: float, dur: float) -> void:
 
 
 func dissolve(dur: float) -> void:
+	_cancel_grow()
 	anim = "dissolve"
 	_anim_dur = maxf(0.01, dur)
 	_anim_t = 0.0
@@ -292,6 +332,7 @@ func dissolve(dur: float) -> void:
 
 ## The level is over: the tile drifts out of the field along `push` (pixels) and fades.
 func scatter(push: Vector2, dur: float) -> void:
+	_cancel_grow()
 	anim = "scatter"
 	_from = position
 	_to = position + push
@@ -318,6 +359,15 @@ func tick(delta: float) -> bool:
 		if is_item:
 			var fc := Color.WHITE.lerp(ITEM_FLASH, _flash_t / _flash_dur)
 			modulate = Color(fc.r, fc.g, fc.b, modulate.a)
+	if _grow_t > 0.0:
+		if anim != "":
+			_grow_t = 0.0  # a fly, dissolve or scatter takes over
+		else:
+			_grow_t = maxf(0.0, _grow_t - delta)
+			_apply_grow(1.0 - _grow_t / _grow_dur)
+			if _grow_t <= 0.0:
+				scale = Vector2.ONE
+				modulate.a = _grow_alpha
 	if anim == "":
 		return false
 	_anim_t += delta
