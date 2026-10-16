@@ -41,7 +41,6 @@ func _ready() -> void:
 	add_child(title)
 	var tag := Ui.text(TAGLINE, 46, Ui.CREAM)
 	tag.name = "Tagline"
-	tag.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	tag.position = Vector2((view.x - 1000.0) * 0.5, view.y * TILE_Y_SHARE + 110.0)
 	tag.size = Vector2(1000, 70)
 	add_child(tag)
@@ -50,7 +49,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 30)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.size = Vector2(600, 320)
-	box.position = Vector2((view.x - 600.0) * 0.5, view.y * 0.6)
+	box.position = Vector2((view.x - 600.0) * 0.5, view.y * 0.64)
 	add_child(box)
 	var start := Ui.primary(start_label, 62 if start_label.length() < 12 else 50, Vector2(600, 156))
 	start.name = "StartButton"
@@ -100,7 +99,7 @@ func _build_babel(view: Vector2) -> void:
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var k := BABEL_H / tex.get_size().y
 	holder.size = tex.get_size() * k
-	holder.position = Vector2(view.x - holder.size.x - 40.0, view.y * TILE_Y_SHARE - 330.0 - holder.size.y * 0.5)
+	holder.position = Vector2(view.x - holder.size.x - 70.0, view.y * TILE_Y_SHARE + 230.0)
 	add_child(holder)
 	var spr := TextureRect.new()
 	spr.texture = tex
@@ -125,7 +124,7 @@ func _build_babel(view: Vector2) -> void:
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bubble)
 	bubble.reset_size()
-	bubble.position = Vector2(holder.position.x - bubble.size.x + 30.0, holder.position.y + 20.0)
+	bubble.position = Vector2(holder.position.x - bubble.size.x + 20.0, holder.position.y + 60.0)
 	_babel = holder
 
 

@@ -82,7 +82,7 @@ func _card(o: Dictionary, index: int, group: ButtonGroup) -> Button:
 		tag.name = "RecommendedTag"
 		b.add_child(tag)
 		tag.reset_size()
-		tag.position = Vector2(CARD.x - tag.size.x - 34.0, 34)
+		tag.position = Vector2(460, 38)
 	for ch in b.get_children():
 		if ch is Control:
 			(ch as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE

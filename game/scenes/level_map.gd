@@ -22,7 +22,7 @@ const ACT_TONES := {
 	"act4_core": Color("8f93ff"),
 }
 const COLUMNS := 4
-const BADGE := Vector2(236, 300)
+const BADGE := Vector2(236, 286)
 const DISC_D := 156.0
 const BAR_H := 150.0
 
