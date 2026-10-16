@@ -4,6 +4,7 @@ extends RefCounted
 ## outline, the Hint button's orange for the main action, warm cream text and gold stars. Built from
 ## StyleBoxFlat and _draw, no art assets.
 
+const GameFont := preload("res://scenes/game_font.gd")
 const INK := Color(0.93, 0.95, 1.0)
 const DIM := Color(0.6, 0.66, 0.8)
 const ACCENT := Color(0.45, 0.8, 1.0)
@@ -49,7 +50,7 @@ static func label(text: String, size: int, color: Color = INK, align: Horizontal
 	l.text = text
 	l.horizontal_alignment = align
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", GameFont.scaled(size))
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	l.add_theme_constant_override("outline_size", maxi(2, size / 10))
@@ -89,7 +90,7 @@ static func primary(t: String, size: int = 52, min_size: Vector2 = Vector2(560, 
 	var b := Button.new()
 	b.text = t
 	b.custom_minimum_size = min_size
-	b.add_theme_font_size_override("font_size", size)
+	b.add_theme_font_size_override("font_size", GameFont.scaled(size))
 	var r := int(min_size.y * 0.5)
 	for st: String in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
 		var fill := ORANGE
@@ -122,7 +123,7 @@ static func secondary(t: String, size: int = 44, min_size: Vector2 = Vector2(420
 	var b := Button.new()
 	b.text = t
 	b.custom_minimum_size = min_size
-	b.add_theme_font_size_override("font_size", size)
+	b.add_theme_font_size_override("font_size", GameFont.scaled(size))
 	var r := int(minf(min_size.y * 0.5, 40.0))
 	b.add_theme_stylebox_override("normal", box(NAVY, r, SLATE, 4))
 	b.add_theme_stylebox_override("hover", box(Color(0.12, 0.16, 0.27, 0.97), r, TEAL, 4))
@@ -141,7 +142,7 @@ static func link(t: String, size: int = 38, min_size: Vector2 = Vector2(300, 80)
 	var b := Button.new()
 	b.text = t
 	b.custom_minimum_size = min_size
-	b.add_theme_font_size_override("font_size", size)
+	b.add_theme_font_size_override("font_size", GameFont.scaled(size))
 	for st: String in ["normal", "hover", "pressed", "hover_pressed", "focus"]:
 		b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
 	b.add_theme_color_override("font_color", MUTED)
@@ -176,7 +177,7 @@ static func switch(t: String, on: bool, size: int = 42, width: float = 820.0) ->
 	c.text = t
 	c.button_pressed = on
 	c.custom_minimum_size = Vector2(width, 104)
-	c.add_theme_font_size_override("font_size", size)
+	c.add_theme_font_size_override("font_size", GameFont.scaled(size))
 	for col: String in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		c.add_theme_color_override(col, CREAM)
 	c.add_theme_stylebox_override("normal", box(NAVY, 32, SLATE, 4))

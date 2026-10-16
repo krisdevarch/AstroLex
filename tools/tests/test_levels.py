@@ -127,12 +127,11 @@ def test_comms_after_may_name_caught_words_but_not_later_ones(doc, words):
 
 
 def test_act_tuning_merges_under_level_tuning():
-    """Burst length is per act (owner, 9 Oct 2026): Act I starts at 60 s and only the late
-    Act IV levels reach 30 s. Level keys win over the act's."""
-    secs = {a: [lv["tuning"]["burst.seconds"] for lv in L.load_levels(a)] for a in
-            ("act1_low_orbit", "act2_nebula", "act3_tower", "act4_core")}
-    assert set(secs["act1_low_orbit"]) == {60}
-    assert all(30 < s for a in ("act1_low_orbit", "act2_nebula", "act3_tower") for s in secs[a])
-    assert secs["act4_core"][-1] == 30 and secs["act4_core"][0] > 30
-    flat = [s for a in secs.values() for s in a]
-    assert flat == sorted(flat, reverse=True), "the clock never grows as the campaign goes on"
+    """Act keys apply to every level of the act; level keys win over them. WP-F.9 sets burst.seconds per
+    level from the curve model (tools/astrolex_tools/curve.py), so the clock follows the words, not the act."""
+    import json
+    doc = json.loads((L.levels_dir() / "act1_low_orbit.json").read_text())
+    assert doc["tuning"]["burst.seconds"] == 60
+    merged = L.load_levels("act1_low_orbit")
+    assert all(m["tuning"]["burst.seconds"] == raw["tuning"]["burst.seconds"] for m, raw in zip(merged, doc["levels"]))
+    assert all(m["tuning"]["burst.seconds"] >= 30 for a in ("act2_nebula", "act3_tower", "act4_core") for m in L.load_levels(a))

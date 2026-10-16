@@ -118,6 +118,8 @@
   "thief.speed": 0.16,
   "thief.stealCost": 2,
   "tile.bounceSquash": 0.16,
+  "tile.glyphOutline": 0.1,
+  "tile.glyphOutlineNormal": 0.035,
   "tile.glyphScale": 0.68,
   "tile.leanDeg": 9,
   "tile.maxTiltDeg": 20,

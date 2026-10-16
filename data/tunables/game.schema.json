@@ -48,6 +48,8 @@
     "tile.size",
     "tile.minGap",
     "tile.glyphScale",
+    "tile.glyphOutlineNormal",
+    "tile.glyphOutline",
     "plane.frontScale",
     "plane.midScale",
     "plane.backScale",
@@ -352,6 +354,18 @@
       "minimum": 0.4,
       "maximum": 1.0,
       "description": "letter glyph font size as a share of the tile size (owner, 13 Oct 2026: letters a little bigger)"
+    },
+    "tile.glyphOutlineNormal": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.3,
+      "description": "ink halo width of a tile letter as a share of the tile size"
+    },
+    "tile.glyphOutline": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.3,
+      "description": "the same halo with the High contrast letters setting on (WP-F.9); fully opaque ink"
     },
     "tile.size": {
       "type": "number",
