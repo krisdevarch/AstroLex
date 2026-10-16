@@ -3,10 +3,12 @@ extends Node
 ## fires, a note per catch that climbs the scale as a word fills (so spelling a word plays a little
 ## tune), a buzz for a wrong letter, a chord when a word is restored, and a heartbeat in the last
 ## seconds. O-14: shipped audio is human-made, so the audio designer replaces these (plan WP-4.8).
-## The sound button mutes the Master bus, which silences these too.
+## Plays on the "Sfx" bus (Sound slider); the sound button mutes Master, which silences these too.
 
 const RATE := 22050
 const VOICES := 8
+const SFX_BUS := "Sfx"
+const MUSIC_BUS := "Music"
 ## C major pentatonic from C5: any run of catches sounds musical.
 const SCALE := [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0]
 
@@ -19,12 +21,23 @@ var played: Array[String] = []
 
 
 func _ready() -> void:
+	ensure_buses()
 	for i in VOICES:
 		var p := AudioStreamPlayer.new()
 		p.name = "Voice%d" % i
-		p.bus = "Master"
+		p.bus = SFX_BUS
 		add_child(p)
 		_players.append(p)
+
+
+## Makes the Music and Sfx buses (routed to Master) when the project has none; idempotent.
+static func ensure_buses() -> void:
+	for n in [MUSIC_BUS, SFX_BUS]:
+		if AudioServer.get_bus_index(n) < 0:
+			AudioServer.add_bus()
+			var i := AudioServer.bus_count - 1
+			AudioServer.set_bus_name(i, n)
+			AudioServer.set_bus_send(i, "Master")
 
 
 func fire() -> void:

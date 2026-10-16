@@ -205,6 +205,8 @@ var _band_label: Label
 var _fps_meter: CanvasLayer
 ## Game feel (WP-3.N): placeholder sounds, the combo pop, the restored-word banner, the shake.
 var sfx: Sfx
+## Optional Music node (main sets it): ducked during the chatter and pause, stings per speaker.
+var music: Node
 var _pops: Array = []  # [Label, age, start_pos] rising combo pops
 var _banner: Label
 var _banner_t: float = 99.0
@@ -371,6 +373,9 @@ func play_story(messages: Array, then: Callable) -> void:
 	s.read_sec = _n("flow.storyReadSec")
 	s.cps = _n("flow.storyCps")
 	s.sfx = sfx
+	s.music = music
+	if music != null:
+		music.call("duck", true)
 	s.position = Vector2(0.0, FIELD_TOP)
 	s.size = Vector2(view_size.x, view_size.y - FIELD_BOTTOM_UP - FIELD_TOP)
 	s.babel_line.connect(func(text: String) -> void:
@@ -379,6 +384,8 @@ func play_story(messages: Array, then: Callable) -> void:
 	s.finished.connect(func() -> void:
 		_story_on = false
 		_story = null
+		if music != null:
+			music.call("duck", paused)
 		_tiles_root.visible = not _cleared  # the act's closing chatter: the old letters stay gone
 		then.call())
 	_story = s
@@ -503,6 +510,8 @@ func _notification(what: int) -> void:
 ## Freezes or resumes everything: rules, intro, effects; taps are ignored while paused.
 func set_paused(on: bool) -> void:
 	paused = on
+	if music != null:
+		music.call("duck", on or _story_on)
 	if _coach != null:
 		_coach.modulate.a = 0.0 if on else 1.0
 	if _pause_icon != null:

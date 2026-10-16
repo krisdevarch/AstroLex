@@ -71,6 +71,15 @@ func _ready() -> void:
 		hb.button_pressed = settings.hint == h
 		hb.pressed.connect(_set_hint.bind(h))
 		hgrid.add_child(hb)
+	box.add_child(_section("Audio"))
+	var ms := Ui.slider("Music", settings.music_volume)
+	ms.name = "MusicRow"
+	ms.get_node("Slider").value_changed.connect(_set_music)
+	box.add_child(ms)
+	var ss := Ui.slider("Sound", settings.sound_volume)
+	ss.name = "SoundRow"
+	ss.get_node("Slider").value_changed.connect(_set_sound)
+	box.add_child(ss)
 	box.add_child(_section("Comfort"))
 	var rm := Ui.switch("Reduced motion", settings.reduced_motion)
 	rm.name = "ReducedMotion"
@@ -144,6 +153,18 @@ func _set_treatment(t: String) -> void:
 
 func _set_hint(h: String) -> void:
 	settings.hint = h
+	settings.save_to(save_path)
+
+
+func _set_music(v: float) -> void:
+	settings.music_volume = int(v)
+	settings.apply_audio()
+	settings.save_to(save_path)
+
+
+func _set_sound(v: float) -> void:
+	settings.sound_volume = int(v)
+	settings.apply_audio()
 	settings.save_to(save_path)
 
 

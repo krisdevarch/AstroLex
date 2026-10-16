@@ -38,6 +38,8 @@ var read_sec: float = 1.6
 var cps: float = 22.0
 ## Optional Sfx node: a soft blip per line.
 var sfx: Node
+## Optional Music node: the speaker's leitmotif rings as their bubble appears.
+var music: Node
 
 var _i: int = -1
 var _line_t: float = 0.0
@@ -130,6 +132,8 @@ func _show(i: int) -> void:
 	var text := str(m.get("text", ""))
 	if sfx != null:
 		sfx.call("story_line")
+	if music != null:
+		music.call("sting", who)
 	if who == "babel":
 		babel_line.emit(text)
 		return

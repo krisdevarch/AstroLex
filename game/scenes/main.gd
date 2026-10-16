@@ -24,6 +24,7 @@ const Save := preload("res://services/save.gd")
 const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
+const MusicScript := preload("res://scenes/music.gd")
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const SAVETEST_PATH := "user://save_test.json"
 const DEMO_NEXT_SEC := 3.5
@@ -44,6 +45,8 @@ var save: RefCounted
 ## Words and levels. Tests may set DictService.fake(...) before _ready.
 var dictionary: RefCounted
 var pause_menu: Control
+## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
+var music: MusicScript
 var _ready_printed: bool = false
 
 
@@ -78,6 +81,9 @@ func _ready() -> void:
 	levels = dictionary.levels(act)
 	settings.load_from()
 	settings.apply_audio()
+	music = MusicScript.new()
+	music.name = "Music"
+	add_child(music)
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	if save == null:
 		if offline:
@@ -185,6 +191,8 @@ func _swap(node: Node) -> void:
 		remove_child(screen)
 		screen.queue_free()
 	screen = node
+	if node.name != "Field":
+		music.play(MusicScript.MENU)
 	add_child(node)
 
 
@@ -327,6 +335,7 @@ func _start_level(story: Array = []) -> void:
 		f = FieldScene.instantiate()
 		f.name = "Field"
 		f.settings = settings
+		f.music = music
 		f.autoplay = autoplay
 		f.view_size = get_viewport().get_visible_rect().size
 		f.print_ready = not _ready_printed
@@ -343,6 +352,7 @@ func _start_level(story: Array = []) -> void:
 		_swap(f)
 	else:
 		f.set_paused(false)
+	music.play(act)
 	f.level_counter = "Level %d / %d" % [level_index + 1, levels.size()]
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
