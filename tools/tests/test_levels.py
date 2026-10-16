@@ -112,6 +112,13 @@ def test_comms_before_and_title_may_not_give_away_words(doc, words):
     assert f"1-01: title gives away '{later}' before it is caught" in problems
 
 
+def test_babel_intro_may_not_give_away_words(doc, words):
+    doc["levels"][0]["babelIntro"] = "Nothing to see here."
+    assert check(doc, words) == []
+    doc["levels"][0]["babelIntro"] = f"You will never find the {words[0]}."
+    assert check(doc, words) == [f"1-01: babelIntro gives away '{words[0]}' before it is caught"]
+
+
 def test_comms_after_may_name_caught_words_but_not_later_ones(doc, words):
     doc["levels"][0]["commsAfter"] = [{"who": "ade", "text": f"{words[0]} and {words[1]}, done."}]
     assert check(doc, words) == []

@@ -63,6 +63,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-3.M | Livelier letter movement: faster, curved swooping paths, speed surges, bounce squash and lean | godot-dev | merged (#47) | `reports/WP-3.M/evidence.md` |
 | WP-3.N | Game feel pack 1: level speeds ×1.6 (the WP-3.M speed-up never reached levels), placeholder sounds, combo pop, restored-word banner, shake, heartbeat | godot-dev | merged (#48) | `reports/WP-3.N/evidence.md` |
 | WP-3.O | One game screen from level to level: leftover letters drift off, an in-field level card with stars flying from the clock bar, the crew's chatter on the game screen, chips, slots and clock change over in place, then Babel's throw (owner, 13 Oct 2026) | orchestrator | done, awaiting owner merge | `reports/WP-3.O/evidence.md` |
+| WP-3.P | Babel flies in from the top right each level, says a level quote in a bubble and shoots the letters from his gun; idle animation; new letters grow in instead of popping (owner, 16 Oct 2026). Owner chose free quotes over letters-only for the entrance | orchestrator, story-writer, godot-dev | done, awaiting owner merge; 48 `babelIntro` lines `status: draft` | `reports/WP-3.P/evidence.md` |
 | WP-3.7 | Story bible v1: world rules, characters, act beats, twist, ending; wordless Prologue; Babel and comms samples | story-writer | drafted (9 Oct 2026), awaiting owner approval | `reports/WP-3.7/evidence.md` |
 | WP-3.T | Babel throws the round's letters from a rift at round start (owner ask, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.T/evidence.md` |
 | WP-4.5a | Level format and Act I's 12 levels: schema and checks, export, levels played in order with comms, Next and Retry (owner pulled forward, 9 Oct 2026) | story-writer, builder, rules-engineer, godot-dev | done, awaiting owner playtest; level file `status: draft` | `reports/WP-4.5a/evidence.md` |
@@ -89,4 +90,5 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 - Keep `main.gd` the only wall-clock seed source when the Daily Signal date seed lands (review of the first draft).
 - SCOWL import for UK spelling variants (CONT-001 US/UK rule).
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.
+- WP-3.P review: Babel's look numbers (enter overshoot, lean, recoil and flash timing, jet puffs, bubble size and font, sway speed) are constants in `game/scenes/babel_view.gd`; move them to `babel.*` tunables with the WP-4.2 art bible. Babel keeps the reduced-motion setting from his first level until the field is rebuilt.
 - Babel template set v2 once the owner has read v1 candidates; more glue words widen feasibility.

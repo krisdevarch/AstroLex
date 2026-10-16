@@ -30,12 +30,18 @@
     "ramp.decoyMax",
     "babel.showSeconds",
     "babel.minLineLetters",
-    "babel.throwOriginX",
-    "babel.throwOriginY",
     "babel.throwSec",
     "babel.throwStagger",
     "babel.throwOvershoot",
-    "babel.riftRadius",
+    "babel.enterSec",
+    "babel.quoteSec",
+    "babel.exitSec",
+    "babel.perchX",
+    "babel.perchY",
+    "babel.heightShare",
+    "babel.bobPx",
+    "babel.swayAmp",
+    "babel.recoilPx",
     "sim.stepSec",
     "field.height",
     "field.topMargin",
@@ -57,6 +63,7 @@
     "tile.pulse",
     "tile.pulseHz",
     "tile.shadowOffset",
+    "tile.spawnInSec",
     "glass.blur",
     "glass.refractPx",
     "glass.frost",
@@ -233,16 +240,6 @@
       "minimum": 0,
       "description": "seconds a Babel line stays on screen"
     },
-    "babel.throwOriginX": {
-      "type": "number",
-      "minimum": 0,
-      "description": "rift x in field units (1 = field width)"
-    },
-    "babel.throwOriginY": {
-      "type": "number",
-      "minimum": 0,
-      "description": "rift y in field units"
-    },
     "babel.throwSec": {
       "type": "number",
       "minimum": 0,
@@ -258,10 +255,50 @@
       "minimum": 0,
       "description": "back-ease overshoot of a thrown tile"
     },
-    "babel.riftRadius": {
+    "babel.enterSec": {
       "type": "number",
       "minimum": 0,
-      "description": "Babel rift core radius in field units"
+      "description": "seconds Babel takes to fly in from the top right to his perch (also the reduced-motion fade)"
+    },
+    "babel.quoteSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds his line stays up after it has finished typing, before the letters are thrown"
+    },
+    "babel.exitSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds Babel takes to fly back out top right (also the reduced-motion fade)"
+    },
+    "babel.perchX": {
+      "type": "number",
+      "minimum": 0,
+      "description": "perch x as a share of screen width (the sprite centre)"
+    },
+    "babel.perchY": {
+      "type": "number",
+      "minimum": 0,
+      "description": "perch y of the sprite centre, from the top of the screen, as a share of screen width (the top HUD is laid out in pixels at 1080 wide, so this keeps him just under the chips on any phone)"
+    },
+    "babel.heightShare": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Babel sprite height as a share of screen width"
+    },
+    "babel.bobPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "hover bob amplitude in screen px"
+    },
+    "babel.swayAmp": {
+      "type": "number",
+      "minimum": 0,
+      "description": "cape and lower-body sway, as a UV share of the sprite width"
+    },
+    "babel.recoilPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "screen px Babel kicks back from each shot"
     },
     "babel.minLineLetters": {
       "type": "integer",
@@ -387,6 +424,11 @@
       "type": "number",
       "minimum": 0,
       "description": "screen px drop-shadow offset on the front plane"
+    },
+    "tile.spawnInSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds a letter made mid-play takes to grow and fade in (reduced motion: fade only)"
     },
     "glass.blur": {
       "type": "number",

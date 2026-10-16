@@ -38,7 +38,7 @@ def build_tunables() -> dict:
 
 ## Content version for the dictionary loader: bump (YYYYMMDDn) whenever exported words or levels change,
 ## so a cached remote copy older than the bundled data is ignored.
-CONTENT_VERSION = 202610092
+CONTENT_VERSION = 202610161
 
 
 def build_content() -> dict:

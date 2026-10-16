@@ -15,6 +15,7 @@ const FpsMeter := preload("res://scenes/fps_meter.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
 const GameFont := preload("res://scenes/game_font.gd")
 
+const BabelViewScript := preload("res://scenes/babel_view.gd")
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const Sfx := preload("res://scenes/sfx.gd")
 const StoryStrip := preload("res://scenes/story_strip.gd")
@@ -84,12 +85,12 @@ const BTN_GAP := 14.0
 const TIMER_H := 70.0
 const CLOCK_LABEL_W := 110.0
 const COST_FLOAT_UP := 600.0
-# Babel's throw: look of a single flight (timing and origin are tunables under babel.*).
+# Babel's throw: look of a single flight (timing and perch are tunables under babel.*).
 const THROW_START_SCALE := 0.15
 const THROW_WOBBLE := 0.12
 const THROW_WOBBLE_HZ := 40.0
-const THROW_FLARE_SEC := 0.12
-const THROW_TAIL := 0.25  # rift fade after the last landing, as a share of babel.throwSec
+const INTRO_MAX_STEP := 0.1  # a load hitch (up to 0.25 s) must not skip the first launches; slow phones still run at speed
+const EXIT_LEAD := 0.12  # Babel leaves this long after the last launch
 
 signal round_finished(summary: Dictionary)
 ## Every rules event, as the field applies it (for telemetry and other listeners).
@@ -120,14 +121,19 @@ var settings: AppSettings = AppSettings.new()
 var game_round: RoundScript
 var last_babel: String = ""
 var finished: bool = false
-## Babel throws the round's letters out of a rift before play starts (visual only).
+## Babel flies in, speaks and shoots the round's letters before play starts (visual only).
 var intro_enabled: bool = true
 
 var _intro_on: bool = false
 var _intro_t: float = 0.0
 var _intro_dur: float = 0.0
 var _intro_order: Dictionary = {}  # tile_id -> launch index
-var _rift: Node2D
+var _intro_origin: Dictionary = {}  # tile_id -> muzzle position at launch (launched tiles only)
+var _intro_quote: String = ""  # this level's Babel line; empty for the endless rounds
+var _intro_throw_at: float = 0.0  # intro time the first letter leaves
+var _intro_exiting: bool = false
+var _spawn_grow: bool = false  # letters made mid-play grow in
+var _babel: Node2D
 
 var _level_title: String = ""
 var _level_label: Label
@@ -230,6 +236,7 @@ func begin(round_no: int, seed_value: int) -> void:
 	_tun = GameData.load_tunables()
 	_content = content_override if not content_override.is_empty() else GameData.load_content()
 	game_round = RoundScript.create(_tun, _content, DEFAULT_ACT, seed_value, round_no)
+	_intro_quote = ""
 	_start(seed_value)
 
 
@@ -240,6 +247,7 @@ func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = [],
 	_tun = GameData.load_tunables()
 	_content = content_override if not content_override.is_empty() else GameData.load_content()
 	game_round = RoundScript.create_level(_tun, _content, act, level, mods)
+	_intro_quote = str(level.get("babelIntro", "")) if bool(level.get("babel", false)) else ""
 	_level_title = str(level.get("title", level.get("id", "")))  # the mock shows the name; "Level n / N" gives the number
 	_start(int(level["seed"]), story)
 
@@ -247,6 +255,7 @@ func begin_level(level: Dictionary, act: String = DEFAULT_ACT, mods: Array = [],
 func _start(seed_value: int, story: Array = []) -> void:
 	GameFont.apply()
 	_seed = seed_value
+	_spawn_grow = false
 	if _hud != null:
 		_reset_for_level()
 	else:
@@ -290,9 +299,8 @@ func _reset_for_level() -> void:
 	_babel_t = 99.0
 	_cleared = false
 	_intro_on = false
-	if _rift != null:
-		_rift.queue_free()
-		_rift = null
+	if _babel != null:
+		_babel.hide_now()
 	for id in _views.keys():
 		(_views[id] as Node).queue_free()
 	_views.clear()
@@ -493,11 +501,13 @@ func advance(delta: float) -> void:
 	if game_round == null or paused:
 		return
 	_time += delta
+	if _babel != null:
+		_babel.tick(minf(delta, INTRO_MAX_STEP))
 	if _story_on or _intro_on:
 		if _story != null:
 			_story.call("tick", delta)
 		if _intro_on:
-			_tick_intro(delta)
+			_tick_intro(minf(delta, INTRO_MAX_STEP))
 		_update_hud()
 		_tick_hud(delta)
 		return
@@ -549,11 +559,12 @@ func intro_active() -> bool:
 
 func _start_intro(seed_value: int) -> void:
 	if not intro_enabled:
+		_spawn_grow = true
 		return
-	if _rift != null:
-		_rift.queue_free()
-		_rift = null
+	_ensure_babel()
+	_babel.hide_now()
 	_intro_order.clear()
+	_intro_origin.clear()
 	var ids: Array = []
 	for t in game_round.tiles:
 		ids.append(t.id)
@@ -567,26 +578,43 @@ func _start_intro(seed_value: int) -> void:
 	for i in ids.size():
 		_intro_order[ids[i]] = i
 	var throw_sec := _n("babel.throwSec")
-	_intro_dur = throw_sec if settings.reduced_motion else throw_sec + _n("babel.throwStagger") * float(maxi(ids.size() - 1, 0))
+	var talk := 0.0
+	if _intro_quote != "":
+		talk = _babel.typing_sec(_intro_quote) + _n("babel.quoteSec")
+	_intro_throw_at = maxf(_n("babel.enterSec"), talk)  # the bubble types while he flies in
+	var spread := 0.0 if settings.reduced_motion else _n("babel.throwStagger") * float(maxi(ids.size() - 1, 0))
+	_intro_dur = _intro_throw_at + throw_sec + spread
 	_intro_t = 0.0
 	_intro_on = true
-	_rift = Rift.new()
-	_rift.name = "BabelRift"
-	_rift.position = to_screen(Vector2(_n("babel.throwOriginX"), _n("babel.throwOriginY")))
-	_rift.radius = _n("babel.riftRadius") * _scale
-	_rift.animated = not settings.reduced_motion
-	_fx_layer.add_child(_rift)
+	_intro_exiting = false
+	_babel.fly_in()
+	if _intro_quote != "":
+		_babel.say(_intro_quote)
 	_pose_intro()
 
 
-## Ends the intro at once: every tile snaps to its place and play starts.
+func _ensure_babel() -> void:
+	if _babel != null:
+		return
+	_babel = BabelViewScript.new()
+	_babel.name = "Babel"
+	_babel.cps = TYPE_CPS
+	_babel.setup(view_size, _tun, settings.reduced_motion)
+	_fx_layer.add_child(_babel)
+
+
+## Ends the intro at once: Babel is gone, every tile snaps to its place and play starts.
 func skip_intro() -> void:
+	_end_intro(true)
+
+
+func _end_intro(babel_leaves_now: bool) -> void:
 	if not _intro_on:
 		return
 	_intro_on = false
-	if _rift != null:
-		_rift.queue_free()
-		_rift = null
+	_spawn_grow = true
+	if _babel != null and babel_leaves_now:
+		_babel.hide_now()
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
 		v.scale = Vector2.ONE
@@ -597,8 +625,8 @@ func skip_intro() -> void:
 
 func _tick_intro(delta: float) -> void:
 	_intro_t += delta
-	if _intro_t >= _intro_dur + _n("babel.throwSec") * THROW_TAIL:
-		skip_intro()
+	if _intro_t >= _intro_dur:
+		_end_intro(false)  # Babel may still be flying out; he finishes on his own
 		return
 	_sync_views()
 	_pose_intro()
@@ -608,58 +636,38 @@ func _pose_intro() -> void:
 	var throw_sec := maxf(_n("babel.throwSec"), 0.01)
 	var stagger := _n("babel.throwStagger")
 	var s := _n("babel.throwOvershoot")
-	var origin := _rift.position
-	var flare := 0.0
+	var last_launch := _intro_throw_at + stagger * float(maxi(_intro_order.size() - 1, 0))
+	if _babel.is_talking() and _intro_t >= _intro_throw_at:
+		_babel.close_bubble()
+	if not _intro_exiting and _intro_t >= (_intro_throw_at + throw_sec if settings.reduced_motion else last_launch + EXIT_LEAD):
+		_intro_exiting = true
+		_babel.fly_out()
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
 		var real := to_screen(game_round.find_tile(id).pos)
 		var base_a := _n("plane.backAlpha") if v.is_back else 1.0
 		if settings.reduced_motion:
-			var f := clampf(_intro_t / throw_sec, 0.0, 1.0)
+			var f := clampf((_intro_t - _intro_throw_at) / throw_sec, 0.0, 1.0)
 			v.position = real
 			v.scale = Vector2.ONE
 			v.modulate.a = base_a * f
 			continue
-		var start: float = float(_intro_order.get(id, 0)) * stagger
-		var u := clampf((_intro_t - start) / throw_sec, 0.0, 1.0)
+		var start: float = _intro_throw_at + float(_intro_order.get(id, 0)) * stagger
 		if _intro_t < start:
 			v.visible = false
 			continue
+		if not _intro_origin.has(id):
+			_intro_origin[id] = _babel.muzzle_position()
+			_babel.shoot(real)
+		var u := clampf((_intro_t - start) / throw_sec, 0.0, 1.0)
 		v.visible = true
 		var w := u - 1.0
 		var e := 1.0 + (s + 1.0) * w * w * w + s * w * w  # back ease-out
-		v.position = origin.lerp(real, e)
+		v.position = (_intro_origin[id] as Vector2).lerp(real, e)
 		var grow := clampf(u * 2.0, 0.0, 1.0)
 		var wobble := THROW_WOBBLE * sin(PI * clampf((u - 0.7) / 0.3, 0.0, 1.0)) * sin(u * THROW_WOBBLE_HZ)
 		v.scale = Vector2.ONE * lerpf(THROW_START_SCALE, 1.0, grow) * (1.0 + wobble)
 		v.modulate.a = base_a * clampf(u * 4.0, 0.0, 1.0)
-		if _intro_t - start < THROW_FLARE_SEC:
-			flare = 1.0
-	if _rift != null:
-		var rest := clampf((_intro_dur + throw_sec * THROW_TAIL - _intro_t) / (throw_sec * THROW_TAIL), 0.0, 1.0)
-		_rift.flare = flare
-		_rift.fade = minf(1.0, rest) if not settings.reduced_motion else 1.0
-		_rift.t = _time
-		_rift.queue_redraw()
-
-
-class Rift extends Node2D:
-	var radius: float = 60.0
-	var flare: float = 0.0
-	var fade: float = 1.0
-	var t: float = 0.0
-	var animated: bool = true
-
-	func _draw() -> void:
-		var c := Color(0.439, 0.439, 1.0)  # periwinkle #7070FF
-		var pulse := 1.0 + (0.12 * sin(t * 6.0) if animated else 0.0)
-		var r := radius * pulse * (1.0 + 0.35 * flare)
-		for i in 5:
-			var k := float(i) / 4.0
-			draw_circle(Vector2.ZERO, r * (2.2 - 1.6 * k), Color(c.r, c.g, c.b, 0.10 * fade * (0.6 + flare)))
-		draw_circle(Vector2.ZERO, r * 0.6, Color(0.85, 0.85, 1.0, 0.85 * fade))
-		draw_arc(Vector2.ZERO, r, 0.0, TAU, 48, Color(c.r, c.g, c.b, fade), 5.0)
-		draw_arc(Vector2.ZERO, r * 1.5, t * 0.8, t * 0.8 + TAU * 0.7, 40, Color(c.r, c.g, c.b, 0.5 * fade), 3.0)
 
 
 # --- autoplay --------------------------------------------------------------------------
@@ -872,7 +880,10 @@ func _apply_events() -> void:
 			"spawn":
 				var t := game_round.find_tile(int(e["tile_id"]))
 				if t != null:
-					_ensure_view(t)
+					var fresh := not _views.has(t.id)
+					var nv := _ensure_view(t)
+					if fresh and _spawn_grow and not _intro_on:
+						nv.grow_in(_n("tile.spawnInSec"))
 			"fire":
 				sfx.fire()
 			"catch":
