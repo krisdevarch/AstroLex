@@ -14,3 +14,7 @@ var radius: float = 0.0
 var carried_by: int = -1
 ## Spawn speed (field units per second); drift steers and surges around it. 0: plain straight drift.
 var base_speed: float = 0.0
+
+## Hazard kind (WP-F.1): "" for a plain tile, "counterfeit" (a forged copy of a needed letter, a decoy)
+## or "trap" (one letter of Babel's counter-word, a decoy).
+var kind: String = ""

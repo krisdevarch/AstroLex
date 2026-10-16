@@ -116,7 +116,15 @@
     "coach.pulseAmount",
     "coach.captionPx",
     "coach.captionGapPx",
-    "coach.afterCatchSec"
+    "coach.afterCatchSec",
+    "hazard.counterfeitRatio",
+    "hazard.traps",
+    "hazard.trapWindowSec",
+    "hazard.trapCost",
+    "hazard.stroop",
+    "hazard.stroopEverySec",
+    "hazard.stroopSec",
+    "hazard.shimmerSec"
   ],
   "properties": {
     "$schema": {
@@ -723,6 +731,49 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds the fill-every-slot caption stays after the first catch"
+    },
+    "hazard.counterfeitRatio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "share of the decoys that are counterfeits: forged copies of a needed letter (Babel forges fragments)"
+    },
+    "hazard.traps": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: the decoys include the letters of one short Babel counter-word; 0: no anagram trap"
+    },
+    "hazard.trapWindowSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "two trap letters caught within this many seconds set the trap off"
+    },
+    "hazard.trapCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds the clock loses when the trap goes off"
+    },
+    "hazard.stroop": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: Babel jams the colour channel on a schedule (slot hints dark, colours lie)"
+    },
+    "hazard.stroopEverySec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds between the starts of two jams"
+    },
+    "hazard.stroopSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds a jam lasts (keep it under stroopEverySec)"
+    },
+    "hazard.shimmerSec": {
+      "type": "number",
+      "minimum": 0.1,
+      "description": "seconds one periwinkle shimmer sweep takes round a counterfeit bubble"
     }
   }
 }
