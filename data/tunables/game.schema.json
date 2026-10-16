@@ -109,7 +109,14 @@
     "thief.fleeSpeed",
     "thief.radius",
     "thief.stealCost",
-    "thief.respawnDelay"
+    "thief.respawnDelay",
+    "coach.ringPx",
+    "coach.ringWidthPx",
+    "coach.pulseSec",
+    "coach.pulseAmount",
+    "coach.captionPx",
+    "coach.captionGapPx",
+    "coach.afterCatchSec"
   ],
   "properties": {
     "$schema": {
@@ -681,6 +688,41 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds before a stolen letter respawns"
+    },
+    "coach.ringPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "radius of the coach ring in pixels"
+    },
+    "coach.ringWidthPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "stroke width of the coach ring"
+    },
+    "coach.pulseSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds per ring pulse"
+    },
+    "coach.pulseAmount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "ring size swing as a share of its radius"
+    },
+    "coach.captionPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "caption text size"
+    },
+    "coach.captionGapPx": {
+      "type": "number",
+      "minimum": 0,
+      "description": "gap between the ring and the caption"
+    },
+    "coach.afterCatchSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds the fill-every-slot caption stays after the first catch"
     }
   }
 }

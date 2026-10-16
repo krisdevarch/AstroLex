@@ -348,6 +348,8 @@ func _start_level(story: Array = []) -> void:
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
 	var char_id := "" if autoplay else str(ch.get("id", ""))
 	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), act, char_id, diff_id)
+	f.coach_enabled = not autoplay and save.total_stars() == 0  # first-play coach (WP-3.Q)
+	f.coach_drones = not autoplay and save.next_level(act) <= 3  # nobody past 1-03 has met the drones
 	f.begin_level(level, act, _mods(), _story(story))
 
 
