@@ -1,6 +1,6 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act2_nebula",
   "tuning": {"burst.seconds": 50},
   "levels": [

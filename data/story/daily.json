@@ -1,0 +1,12 @@
+{
+  "status": "approved",
+  "title": "Daily Signal",
+  "intro": "One new signal a day. Catch it, share it, and come back tomorrow.",
+  "share_card": "AstroLex Daily Signal {date}\n{words} words, {stars} stars, {time}",
+  "streak_lines": {
+    "first": "Your first signal. The line is open.",
+    "continue": "{n} days in a row. The line stays open.",
+    "broken": "The streak slipped. Today starts a new one.",
+    "best": "A new best: {n} days in a row."
+  }
+}

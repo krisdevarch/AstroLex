@@ -1,6 +1,6 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act3_tower",
   "tuning": {"burst.seconds": 45},
   "levels": [

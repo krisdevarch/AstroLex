@@ -1,0 +1,35 @@
+{
+  "status": "approved",
+  "messages": [
+    {
+      "act": "prologue",
+      "typing": true,
+      "text_blank": "...",
+      "text_full": "..."
+    },
+    {
+      "act": 1,
+      "fills": ["Water", "water"],
+      "text_blank": "___. I can say ___.",
+      "text_full": "Water. I can say water."
+    },
+    {
+      "act": 2,
+      "fills": ["miss", "scared"],
+      "text_blank": "I ___ you. I am not ___.",
+      "text_full": "I miss you. I am not scared."
+    },
+    {
+      "act": 3,
+      "fills": ["promise", "promise"],
+      "text_blank": "I said ___ out loud today. I did not know I could. You kept your ___.",
+      "text_full": "I said promise out loud today. I did not know I could. You kept your promise."
+    },
+    {
+      "act": 4,
+      "fills": ["say", "love", "Thank", "{name}", "water"],
+      "text_blank": "I can ___ all of it now. I ___ you, Gran. ___ you, ___. Come and see the ___ with us.",
+      "text_full": "I can say all of it now. I love you, Gran. Thank you, {name}. Come and see the water with us."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "status": "approved",
+  "note": "Wordless. Captions are for the artist and are never shown. No text, signs or subtitles inside any still. Palette stays grey until the first letter is caught (see docs/story/prologue.md).",
+  "stills": [
+    {"id": "p1", "caption_for_artist": "Earth at night, a small grey room. Tomas, about 20, at an open window, one hand cupped at his mouth, shoulders lifted as if shouting. A thin line of breath leaves him and the air stays still.", "seconds": 6},
+    {"id": "p2", "caption_for_artist": "Close on the sill: a battered handheld radio, its light off. His hand rests on it, then lets go.", "seconds": 4},
+    {"id": "p3", "caption_for_artist": "A grey street. A mother crouches before a small child, points at the child, then at her own mouth. Her face is searching, not angry. The child tilts their head.", "seconds": 6},
+    {"id": "p4", "caption_for_artist": "Wide street: figures stand in small pairs, mouths slightly open, nothing coming out. Only the mother pointing hand is white.", "seconds": 4},
+    {"id": "p5", "caption_for_artist": "The Scriptorium: a round window onto a dim grey Earth. Rhee, elderly, in silhouette, pencil behind her ear, one palm flat on the glass. Stacked handwritten cards, one lamp, off.", "seconds": 7},
+    {"id": "p6", "caption_for_artist": "Black space. A single glass tile drifts in from the left edge, turning slowly, the only thing with its own light.", "seconds": 5},
+    {"id": "p7", "caption_for_artist": "The tile stops near the viewer and hovers, bobbing. The letter on it is W, the first of water. Hold, then hand over to the taught play that ends on the word water.", "seconds": 5}
+  ]
+}

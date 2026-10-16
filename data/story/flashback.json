@@ -1,0 +1,11 @@
+{
+  "status": "approved",
+  "note": "Act III, level 3-06. Babel memory of the Loud Wars, wordless, skippable, under 30 s. Captions are for the artist and are never shown. No legible text in any still.",
+  "stills": [
+    {"id": "f1", "caption_for_artist": "A feed scrolling faster than a person can read, a blur of grey panels and flickering periwinkle light. No legible words.", "seconds": 5},
+    {"id": "f2", "caption_for_artist": "A child shouting at a glowing screen, face lit from below, fists tight.", "seconds": 6},
+    {"id": "f3", "caption_for_artist": "A soldier at the edge of a ruined street, holding a phone in both hands, looking at it instead of ahead.", "seconds": 6},
+    {"id": "f4", "caption_for_artist": "A quiet room after: a cold cup, an empty chair, dust in a thin shaft of light. Nothing moves.", "seconds": 6},
+    {"id": "f5", "caption_for_artist": "A first dictionary opens on a desk. One word is written on the page in amber ink, too small to read, in handwriting the player has seen on Rhee cards.", "seconds": 6}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "status": "approved",
+  "silent_to_listen": "SILENT. NO. LISTEN.",
+  "after_name": "Listen, {name}.",
+  "daily_lines": [
+    {"kind": "win", "text": "Cleared. I was not worried. I was rehearsing."},
+    {"kind": "win", "text": "Fast hands. I will pretend I did not notice."},
+    {"kind": "win", "text": "Again tomorrow? I will be here. I am always here."},
+    {"kind": "win", "text": "Neat work. Do not let it go to your visor."},
+    {"kind": "lose", "text": "Out of air. It happens to the best of lungs."},
+    {"kind": "lose","text": "Close. My drones will take the credit."},
+    {"kind": "lose", "text": "The signal slipped. It is a slippery thing."},
+    {"kind": "lose", "text": "Not today. Tomorrow has fresh letters."}
+  ]
+}

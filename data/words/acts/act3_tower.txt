@@ -1,5 +1,5 @@
 # Act III, The Tower: abstract ideas. The station where Babel was built.
-# status: draft
+# status: approved (owner, 16 Oct 2026)
 justice
 truce
 promise
