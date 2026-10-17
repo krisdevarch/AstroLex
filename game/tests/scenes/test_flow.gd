@@ -56,6 +56,7 @@ func test_map_shows_four_acts_locks_and_stars() -> void:
 	assert_true((main.find_child("Level_2-01", true, false) as Button).disabled, "act 2 locked")
 	assert_eq((main.find_child("StarsTotal", true, false) as Label).text, "3")
 	assert_true(main.find_child("MapScroll", true, false) is ScrollContainer, "scrollable")
+	assert_true((main.find_child("MapScroll", true, false) as Node).has_node("DragScroll"), "finger drags scroll the map")
 	Flow.press(main, "CharacterButton")
 	assert_true(Flow.has(main, "CharacterSelect"), "change character from the map")
 	Flow.press(main, "BackButton")

@@ -3,6 +3,7 @@ extends Control
 ## painted sky. Saves on every change.
 
 const Ui := preload("res://scenes/ui.gd")
+const DragScroll := preload("res://scenes/drag_scroll.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 
 signal closed
@@ -38,6 +39,7 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	add_child(scroll)
+	DragScroll.attach(scroll)  # finger drags scroll even when they start on a button
 	var centre := CenterContainer.new()
 	centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL

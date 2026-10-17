@@ -6,6 +6,7 @@ extends Control
 ## and the title screen.
 
 const Ui := preload("res://scenes/ui.gd")
+const DragScroll := preload("res://scenes/drag_scroll.gd")
 const StoryData := preload("res://rules/story_data.gd")
 
 const ACT_TITLES := {
@@ -57,6 +58,7 @@ func _ready() -> void:
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	add_child(_scroll)
+	DragScroll.attach(_scroll)  # finger drags scroll even when they start on a button
 	var pad := MarginContainer.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.add_theme_constant_override("margin_left", 36)
