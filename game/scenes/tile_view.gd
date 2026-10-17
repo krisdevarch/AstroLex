@@ -5,12 +5,20 @@ extends Node2D
 ## dropped on 9 Oct 2026: the owner found them too much like every other word game.
 
 const TileTextures := preload("res://scenes/tile_textures.gd")
+const GameFont := preload("res://scenes/game_font.gd")
 const GLASS_SHADER: Shader = preload("res://shaders/glass.gdshader")
 ## The ambient CanvasModulate dims anything it tints; glass is off the lamp, so undo it.
 const GLASS_GAIN := Vector3(1.55, 1.52, 1.28)
 const GLASS_ACCENT := Color(0.35, 0.85, 1.0)
 const LOOKS: Array[String] = ["glass", "bubble"]
 const DEFAULT_LOOK := "bubble"
+## Babel's hazards (WP-F.1): forgeries shimmer periwinkle, trap letters wear a faint periwinkle ring,
+## and while the colour channel is jammed decoys pulse the Catcher's cyan and needed letters periwinkle.
+const HAZARD_PERIWINKLE := Color("7579f0")
+const SHIMMER_ARC := 1.1  # radians of the sweeping glint
+const SHIMMER_RIM_ALPHA := 0.16  # the faint rim a forgery always has
+const TRAP_RING_ALPHA := 0.32
+const JAM_PULSE_HZ := 1.6
 
 @onready var shadow: Sprite2D = $Shadow
 @onready var body: Sprite2D = $Body
@@ -26,6 +34,10 @@ var reduced_motion: bool = false
 var size_px: float = 100.0
 var anim: String = ""  # "", "fly", "dissolve" or "scatter"
 var current_tilt: Vector2 = Vector2.ZERO
+## "", "counterfeit" or "trap" (the rules' Tile.kind) and the jam colour: 0 off, 1 cyan (a decoy), 2 periwinkle (needed).
+var kind: String = ""
+var jam_colour: int = 0
+var _ring: HazardRing
 
 var _tun: Dictionary = {}
 var _phase: float = 0.0
@@ -110,9 +122,88 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.add_theme_font_size_override("font_size", int(size_px * float(tun.get("tile.glyphScale", 0.68))))
 	# White glyph with a thin dark ink halo; modulate undoes the ambient tint (glyph is unlit).
 	glyph.add_theme_color_override("font_color", Color.WHITE)
-	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 0.6))
-	glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * 0.035)))
+	var hc: bool = GameFont.high_contrast
+	glyph.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.12, 1.0 if hc else 0.6))
+	var halo := float(tun.get("tile.glyphOutline" if hc else "tile.glyphOutlineNormal", 0.1 if hc else 0.035))
+	glyph.add_theme_constant_override("outline_size", maxi(2, int(size_px * halo)))
 	glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
+
+
+## Marks the tile as a hazard: a counterfeit shimmers, a trap letter wears a ring.
+func set_kind(k: String) -> void:
+	kind = k
+	_refresh_ring()
+
+
+## Colour jam: decoy true pulses cyan, false pulses periwinkle; `on` false clears it.
+func set_jam(on: bool, decoy: bool) -> void:
+	var c := 0 if not on else (1 if decoy else 2)
+	if c == jam_colour:
+		return
+	jam_colour = c
+	_refresh_ring()
+
+
+func _refresh_ring() -> void:
+	if is_item or (kind == "" and jam_colour == 0):
+		if _ring != null:
+			_ring.queue_free()
+			_ring = null
+		return
+	if _ring == null:
+		_ring = HazardRing.new()
+		_ring.name = "HazardRing"
+		add_child(_ring)
+		move_child(_ring, glyph.get_index())  # over the bubble, under the letter
+	_ring.radius = size_px * 0.5 * (float(_tun.get("glass.bubbleScale", 1.0)) if treatment == "bubble" else 1.0) * 0.97
+	_ring.width = maxf(3.0, size_px * 0.045)
+	_ring.kind = kind
+	_ring.jam = jam_colour
+	_ring.queue_redraw()
+
+
+## The shimmer's sweep position (0..1) at a time; one pass every hazard.shimmerSec.
+func shimmer_at(time: float) -> float:
+	return fposmod(time / maxf(0.1, float(_tun.get("hazard.shimmerSec", 2.0))) + _phase / TAU, 1.0)
+
+
+func _tick_ring(time: float) -> void:
+	if _ring == null:
+		return
+	_ring.sweep = 0.25 if reduced_motion else shimmer_at(time)
+	_ring.pulse = 0.5 if reduced_motion else 0.5 + 0.5 * sin(time * TAU * JAM_PULSE_HZ + _phase)
+	_ring.queue_redraw()
+
+
+class HazardRing extends Node2D:
+	var radius: float = 60.0
+	var width: float = 5.0
+	var kind: String = ""
+	var jam: int = 0
+	var sweep: float = 0.0
+	var pulse: float = 0.5
+
+	func _draw() -> void:
+		if jam != 0:
+			var c := Color("59d9ff") if jam == 1 else Color("7579f0")
+			c.a = 0.45 + 0.5 * pulse
+			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, c, width * 1.6, true)
+			return
+		if kind == "trap":
+			var tc := Color("7579f0")
+			tc.a = TRAP_RING_ALPHA
+			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, tc, width * 0.8, true)
+		elif kind == "counterfeit":
+			var rim := Color("7579f0")
+			rim.a = SHIMMER_RIM_ALPHA
+			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, rim, width * 0.6, true)
+			var centre := sweep * TAU
+			for i in 6:  # a glint that fades off at both ends
+				var u := float(i) / 5.0
+				var a := lerpf(0.9, 0.15, absf(u * 2.0 - 1.0))
+				var gc := Color("b9bcff")
+				gc.a = a
+				draw_arc(Vector2.ZERO, radius, centre - SHIMMER_ARC * 0.5 + u * SHIMMER_ARC - 0.1, centre - SHIMMER_ARC * 0.5 + u * SHIMMER_ARC + 0.1, 8, gc, width * 1.3, true)
 
 
 func _shadow_corner() -> float:
@@ -171,6 +262,7 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		return
 	_track_motion(screen_pos, time)
 	position = screen_pos
+	_tick_ring(time)
 	var tilt := Vector2.ZERO
 	if is_item:
 		if not reduced_motion:

@@ -6,6 +6,7 @@ extends Control
 ## and the title screen.
 
 const Ui := preload("res://scenes/ui.gd")
+const StoryData := preload("res://rules/story_data.gd")
 
 const ACT_TITLES := {
 	"act1_low_orbit": "Act I · Low Orbit",
@@ -30,7 +31,10 @@ signal level_chosen(act: String, index: int)
 signal character_pressed
 signal difficulty_pressed
 signal settings_pressed
+signal codex_pressed
+signal inbox_pressed
 signal back_pressed
+signal daily_pressed
 
 var dictionary: RefCounted
 var save: RefCounted
@@ -98,12 +102,21 @@ func _build_bar(view: Vector2) -> void:
 	stars.reset_size()
 	stars.position = Vector2(170, (BAR_H - 96.0) * 0.5)
 	var x := view.x - 30.0 - 110.0
-	for spec: Array in [["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed]]:
+	for spec: Array in [["DailyButton", "signal", daily_pressed], ["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed], ["CodexButton", "book", codex_pressed], ["InboxButton", "envelope", inbox_pressed]]:
 		var b := _round_button(spec[0], spec[1], Vector2(x, y))
 		var sig: Signal = spec[2]
 		b.pressed.connect(func() -> void: sig.emit())
 		bar.add_child(b)
-		x -= 126.0
+		if spec[0] == "InboxButton" and StoryData.unread(save, dictionary) > 0:
+			var badge := Ui.box(Color("ff7f6e"), 18, Ui.NAVY_DEEP, 4)
+			var dot := Panel.new()
+			dot.name = "InboxBadge"
+			dot.add_theme_stylebox_override("panel", badge)
+			dot.size = Vector2(36, 36)
+			dot.position = Vector2(76, -2)
+			dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(dot)
+		x -= 118.0
 
 
 func _round_button(node_name: String, kind: String, pos: Vector2) -> Button:
@@ -340,6 +353,20 @@ class MapIcon extends Control:
 				visor.set_corner_radius_all(12)
 				draw_style_box(visor, Rect2(c.x - 21, c.y - 13, 42, 26))
 				draw_arc(c + Vector2(-6, -2), 8.0, PI * 1.1, PI * 1.6, 8, Color(1, 1, 1, 0.6), 4.0, true)
+			"book":
+				draw_rect(Rect2(c.x - 26, c.y - 22, 52, 44), col, false, 6.0)
+				draw_line(c + Vector2(0, -22), c + Vector2(0, 22), col, 6.0)
+				draw_line(c + Vector2(-17, -8), c + Vector2(-8, -8), col, 4.0)
+				draw_line(c + Vector2(8, -8), c + Vector2(17, -8), col, 4.0)
+				draw_line(c + Vector2(-17, 4), c + Vector2(-8, 4), col, 4.0)
+				draw_line(c + Vector2(8, 4), c + Vector2(17, 4), col, 4.0)
+			"envelope":
+				draw_rect(Rect2(c.x - 28, c.y - 20, 56, 40), col, false, 6.0)
+				draw_polyline(PackedVector2Array([c + Vector2(-28, -20), c + Vector2(0, 4), c + Vector2(28, -20)]), col, 6.0, true)
+			"signal":
+				draw_circle(c + Vector2(0, 14), 6.0, col)
+				for k in 3:
+					draw_arc(c + Vector2(0, 14), 14.0 + 11.0 * k, PI * 1.2, PI * 1.8, 12, col, 6.0, true)
 			"settings":
 				draw_arc(c, 18.0, 0.0, TAU, 32, col, 6.0, true)
 				draw_arc(c, 6.0, 0.0, TAU, 20, col, 5.0, true)

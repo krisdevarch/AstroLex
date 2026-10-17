@@ -34,6 +34,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | O-26 | Backgrounds | **A painted-sky scene per act**: gradient sky, a glowing band of stars, one landmark (grey Earth, Earth's night side, nebula, the Tower, Babel's core) and layered horizons, within the four `Parallax2D` layers. One palette per act; the Daily Signal follows the owner's reference image. The core rule is that silence is grey and each restored word brings a colour back (design doc §9, §11) | answered by owner (9 Oct 2026) |
 | O-27 | Character colours | **One signature colour per character** (from Hades): Catcher cyan, Rhee amber, Tomas coral, Babel periwinkle, Ade seafoam, Kit pink, VANTA crimson; used on bubbles, names, portrait rims and leitmotifs (design doc §9) | answered by owner (9 Oct 2026) |
 | O-28 | Prologue | **Wordless Prologue** (from Ori): painted stills with no text, and *water* is the first word on screen in the game. Built first as a cheap animatic in WP-3.4; story-writer drafts the beats, and the owner approves them (design doc §3) | answered by owner (9 Oct 2026) |
+| O-29 | Finish milestone approvals | **Owner approved every decision** in `wps/MILESTONE-finish.md` (16 Oct 2026, project thread): all drafted text ships as `approved`, placeholder art and audio ship until human-made assets replace them | answered by owner (16 Oct 2026) |
 
 ## Work packages
 
@@ -65,6 +66,7 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 | WP-3.O | One game screen from level to level: leftover letters drift off, an in-field level card with stars flying from the clock bar, the crew's chatter on the game screen, chips, slots and clock change over in place, then Babel's throw (owner, 13 Oct 2026) | orchestrator | done, awaiting owner merge | `reports/WP-3.O/evidence.md` |
 | WP-3.P | Babel flies in from the top right each level, says a level quote in a bubble and shoots the letters from his gun; idle animation; new letters grow in instead of popping (owner, 16 Oct 2026). Owner chose free quotes over letters-only for the entrance | orchestrator, story-writer, godot-dev | done, awaiting owner merge; 48 `babelIntro` lines `status: draft` | `reports/WP-3.P/evidence.md` |
 | WP-3.R | Polish pass (owner, 16 Oct 2026): menus restyled to the game screen (title, Catcher cards with portraits, difficulty, level map, pause, settings, act complete), first-play coach, Act I comms polished and Acts II–IV comms written, story bible brought up to date with bursts | orchestrator, godot-dev, story-writer | done, awaiting owner merge; all new text `status: draft` | `reports/WP-3.R/evidence.md` |
+| M-finish (WP-F.1 to F.10) | Finish the game end to end (owner, 16 Oct 2026, O-29): hazards (counterfeits, anagram traps, Stroop jam), the name and the finale with the ending, placeholder skies for Acts II–IV and crew portraits, all text approved, Codex and Tomas's inbox, Daily Signal with streak and share card, wordless Prologue and Act III flashback, placeholder music with volume sliders, level curve model, large text and high contrast, credits and privacy | orchestrator + workers | done, awaiting owner merge; placeholder art and audio until O-14/O-11 assets land | `wps/MILESTONE-finish.md`, `reports/WP-F/evidence.md`, `reports/WP-F.1/` to `WP-F.9/` |
 | WP-3.7 | Story bible v1: world rules, characters, act beats, twist, ending; wordless Prologue; Babel and comms samples | story-writer | drafted (9 Oct 2026), awaiting owner approval | `reports/WP-3.7/evidence.md` |
 | WP-3.T | Babel throws the round's letters from a rift at round start (owner ask, 9 Oct 2026) | godot-dev | done, awaiting owner playtest | `reports/WP-3.T/evidence.md` |
 | WP-4.5a | Level format and Act I's 12 levels: schema and checks, export, levels played in order with comms, Next and Retry (owner pulled forward, 9 Oct 2026) | story-writer, builder, rules-engineer, godot-dev | done, awaiting owner playtest; level file `status: draft` | `reports/WP-4.5a/evidence.md` |
@@ -75,11 +77,11 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 
 ## Review queue (cap 4)
 
-1. WP-1.3 act word lists: skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
+1. ~~WP-1.3 act word lists~~ (approved under O-29): skim four files of 40 words, flip `status: draft` to `approved` or strike words (defaults apply meanwhile).
 2. WP-1.5 feasibility report: O-13 `level` scope applies by default; say so if you disagree.
 3. Phase 2 loop 1: share the toy link with the first 5–7 outside testers per `playtests/P2/protocol.md`; paste each tester's Copy results output into `playtests/P2/results/loop-1/`.
 4. Playtest the word hints: one round on the default (first and last letter), one on "No letters", **Send results** after each; then send the layout sketches (where the slots, comms and HUD sit), so the colours and glass tiles can be mapped onto them.
-5. WP-3.7 story bible (owner asked for it on 9 Oct 2026, over the cap of 4): read `docs/story-bible.md`, `docs/story/prologue.md`, `docs/story/samples.md`; answer the open questions in `reports/WP-3.7/evidence.md`; flip `status: draft` to `approved`.
+5. ~~WP-3.7 story bible~~ (approved under O-29) (owner asked for it on 9 Oct 2026, over the cap of 4): read `docs/story-bible.md`, `docs/story/prologue.md`, `docs/story/samples.md`; answer the open questions in `reports/WP-3.7/evidence.md`; flip `status: draft` to `approved`.
 
 ## Backlog (found while building, not in scope of any current WP)
 
@@ -93,3 +95,8 @@ Plan of record: `docs/AstroLex-Master-Plan-v4.md`. One file per work package in 
 - Frequency source with a cleaner licence than wordfreq's CC BY-SA data (Google Books Ngram, CC BY) before launch. See `data/words/LICENCES.md`.
 - WP-3.P review: Babel's look numbers (enter overshoot, lean, recoil and flash timing, jet puffs, bubble size and font, sway speed) are constants in `game/scenes/babel_view.gd`; move them to `babel.*` tunables with the WP-4.2 art bible. Babel keeps the reduced-motion setting from his first level until the field is rebuilt.
 - Babel template set v2 once the owner has read v1 candidates; more glue words widen feasibility.
+- After M-finish: a server for the remote dictionary and cloud save (Supabase or Firebase, anonymous ids) before the Daily Signal goes public; the web download (39 MB wasm) and a loading screen; the Phase 2 tester gate on the Godot build (20 outside players); the money decision (O-7); Android, then iOS (WP-3.0).
+- Placeholders to replace with human-made assets: Act II–IV skies and crew portraits (`scripts/art/`), Prologue and flashback stills (`scripts/art/make_stills.py`), music beds and leitmotifs (`game/scenes/music.gd`). O-14 and O-11 still stand.
+- Level 4-11 (four long words, every hazard on) runs on a 70 s clock by the curve model; playtest it, and the 3-10/3-11 and 4-07 to 4-10 clocks, before trimming.
+- Daily Signal: the result card and the share PNG are untested on a real phone; the share link in `game/rules/daily.gd` points at the Pages site.
+

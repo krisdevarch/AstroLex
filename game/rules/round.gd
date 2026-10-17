@@ -15,6 +15,12 @@ extends RefCounted
 ##   stolen{thief_id,tile_id,ch} (thief left the top with the tile; both are gone, the letter respawns later)
 ##   thief_down{thief_id,tile_id,pos} (shot; tile_id is the released tile or -1)
 ##   thief_miss{thief_id} (a shot at a thief missed or the thief was gone; counts as an escape)
+## Hazards (WP-F.1, all off unless the hazard.* tunables enable them):
+##   counterfeit{tile_id,ch,pos} (a forged copy of a needed letter was caught: it is gone, burst.wrongCost
+##   comes off with a time_cost reason "counterfeit", the real letter is still out there)
+##   trap{word,cost} (two letters of Babel's counter-word caught within hazard.trapWindowSec; once per round;
+##   a babel{text} event with the word follows and a time_cost reason "trap")
+##   jam_on{} jam_off{} (every hazard.stroopEverySec the slot hints go dark for hazard.stroopSec: `jammed`)
 ## Thieves live in `thieves` (thief.gd: id, pos, vel, target_id, carrying_id, state "seek"/"flee") and
 ## share the tile id space; fire(id) accepts a thief id. A shot dict has "kind": "tile" or "thief".
 ## Tiles leave `tiles` when caught or dissolved; the view keeps its own node per tile_id.
@@ -29,10 +35,14 @@ const Self := preload("res://rules/round.gd")
 const GOLDEN_ANGLE := 2.39996  # radians; spreads per-tile phases evenly
 const BABEL_SEED_XOR := 0x5BAB31
 const THIEF_SEED_XOR := 0x7E1EF5
+const HAZARD_SEED_XOR := 0x4A2A2D
+const TRAP_MIN_LEN := 3
+const TRAP_MAX_LEN := 4
 const THIEF_IDLE_MUL := 0.25
 ## Letter weights for decoys and back tiles: English frequency is language data, not a feel number.
 const FREQ := {"e": 127, "t": 91, "a": 82, "o": 75, "i": 70, "n": 67, "s": 63, "h": 61, "r": 60, "d": 43, "l": 40, "c": 28, "u": 28, "m": 24, "w": 24, "f": 22, "g": 20, "y": 20, "p": 19, "b": 15, "v": 10, "k": 8, "j": 2, "x": 2, "q": 1, "z": 1}
 const EPS := 1e-6
+const FINALE_SINCERE := "I hear you."
 
 var words: PackedStringArray = []
 var word_index: int = 0
@@ -57,16 +67,25 @@ var round_no: int = 1
 var seed_value: int = 0
 var level_id: String = ""
 var babel_on: bool = true
+## The finale (4-12, WP-F.2): words are LISTEN then the Catcher's name; Babel's two lines are scripted.
+var finale: bool = false
 ## Presentation only: the share of each step's drift the letters move (1.0 = full). The field eases
 ## it from 0 to 1 after Babel's throw so the letters start drifting gently. The clock, thieves and
 ## shots are unaffected, and the default keeps the rules identical to the Python reference.
 var drift_scale: float = 1.0
+## True while the Stroop jam is on: the slot hints are dark and the view lies about colour.
+var jammed: bool = false
+## Babel's counter-word for this round ("" when hazard.traps is 0 or no lexicon word fits) and whether it fired.
+var trap_word: String = ""
+var trap_fired: bool = false
 
 var _t: Dictionary = {}
 var _content: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _babel_rng := RandomNumberGenerator.new()
 var _thief_rng := RandomNumberGenerator.new()
+var _hazard_rng := RandomNumberGenerator.new()
+var _trap_hits: Array[Dictionary] = []
 var _events: Array[Dictionary] = []
 var _by_id: Dictionary = {}
 var _next_id: int = 0
@@ -96,6 +115,7 @@ static func create_level(tunables: Dictionary, content: Dictionary, act_key: Str
 	r._t = _apply_mods(t, mods)
 	r.level_id = str(level.get("id", ""))
 	r.babel_on = bool(level.get("babel", true))
+	r.finale = bool(level.get("finale", false)) and (level["words"] as Array).size() == 2
 	var w := PackedStringArray()
 	for x in (level["words"] as Array):
 		w.append(str(x))
@@ -128,14 +148,16 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	_rng.seed = seed_value_in
 	_babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
 	_thief_rng.seed = seed_value_in ^ THIEF_SEED_XOR
+	_hazard_rng.seed = seed_value_in ^ HAZARD_SEED_XOR
 	burst_seconds = _num("burst.seconds")
 	time_left = burst_seconds
 	_next_thief_at = _num("thief.firstAt") if _num("thief.interval") > 0.0 else INF
-	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0}
+	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0, "counterfeits": 0, "traps": 0, "jams": 0}
 	if fixed_words.is_empty():
 		_pick_words()
 	else:
 		words = fixed_words
+	_pick_trap_word()
 	active = _slots_of(words[0])
 	preview = _slots_of(words[1]) if words.size() > 1 else ([] as Array[Dictionary])
 	for _i in int(_num("plane.backTiles")):
@@ -232,7 +254,7 @@ func _active_key() -> String:
 
 ## Catchable now and its letter fills an open slot of the active word.
 func _hint_ok(t: Tile) -> bool:
-	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0:
+	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0 or t.kind == "counterfeit":
 		return false
 	if (not shot.is_empty() and shot["tile_id"] == t.id) or queued_id == t.id:
 		return false
@@ -279,6 +301,36 @@ func _star_line(key: String) -> float:
 
 func _num(key: String) -> float:
 	return float(_t[key])
+
+
+## A hazard tunable; 0 when the key is absent so older tunables dictionaries still work.
+func _hnum(key: String) -> float:
+	return float(_t.get(key, 0.0))
+
+
+## Babel's counter-word: a short lexicon word whose letters appear in none of the round's words
+## (so catching them is always wrong). Picked once, from the hazard RNG, so it is stable per seed.
+func _pick_trap_word() -> void:
+	if _hnum("hazard.traps") < 1.0:
+		return
+	var used := {}
+	for w in words:
+		for c in w:
+			used[c] = true
+	var cands: Array[String] = []
+	for entry: Array in _content.get("lexicon", []):
+		var w: String = entry[0]
+		if w.length() < TRAP_MIN_LEN or w.length() > TRAP_MAX_LEN or cands.has(w):
+			continue
+		var ok := true
+		for c in w:
+			if used.has(c) or not FREQ.has(c):
+				ok = false
+				break
+		if ok:
+			cands.append(w)
+	if not cands.is_empty():
+		trap_word = cands[_hazard_rng.randi_range(0, cands.size() - 1)]
 
 
 func _emit(e: Dictionary) -> void:
@@ -481,11 +533,16 @@ func _trim_surplus() -> void:
 		if t.plane < 2 and not t.decoy:
 			order.append(t)
 	for t: Tile in tiles:
-		if t.plane < 2 and t.decoy and in_words.has(t.ch):
+		if t.plane < 2 and t.decoy and t.kind == "" and in_words.has(t.ch):
 			order.append(t)
 	for t: Tile in order:
 		seen[t.ch] = int(seen.get(t.ch, 0)) + 1
 		if int(seen[t.ch]) > int(need.get(t.ch, 0)):
+			_remove(t)
+			_emit({"type": "dissolve", "tile_id": t.id, "ch": t.ch, "decoy": t.decoy, "pos": t.pos})
+	# A forgery of a letter nobody needs any more has nothing to fool: it dissolves and a new one is made.
+	for t: Tile in tiles.duplicate():
+		if t.kind == "counterfeit" and not need.has(t.ch):
 			_remove(t)
 			_emit({"type": "dissolve", "tile_id": t.id, "ch": t.ch, "decoy": t.decoy, "pos": t.pos})
 
@@ -493,13 +550,44 @@ func _trim_surplus() -> void:
 func _ensure_decoys() -> void:
 	var n := 0
 	var real := 0
+	var forged := 0
+	var trap_have := {}
 	for t: Tile in tiles:
 		if t.plane < 2:
 			if t.decoy:
 				n += 1
+				if t.kind == "counterfeit":
+					forged += 1
+				elif t.kind == "trap":
+					trap_have[t.ch] = int(trap_have.get(t.ch, 0)) + 1
 			elif t.alive:
 				real += 1
 	var want := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	# Babel's counter-word: its letters are decoys too, made again until the trap has gone off.
+	var trap_missing: Array[String] = []
+	var trap_len := 0
+	if trap_word != "" and not trap_fired:
+		trap_len = trap_word.length()
+		var left := trap_have.duplicate()
+		for c in trap_word:
+			if int(left.get(c, 0)) > 0:
+				left[c] = int(left[c]) - 1
+			else:
+				trap_missing.append(c)
+		want = maxi(want, trap_len)
+	var want_forged := 0
+	if _hnum("hazard.counterfeitRatio") > 0.0 and want > 0 and not _needed_counts().is_empty():
+		want_forged = maxi(1, roundi(want * _hnum("hazard.counterfeitRatio")))
+		want = maxi(want, want_forged + trap_len)
+	for c: String in trap_missing:
+		_spawn(c, true, _pick_plane()).kind = "trap"
+		n += 1
+	while forged < want_forged:
+		var letters: Array = _needed_counts().keys()
+		letters.sort()
+		_spawn(letters[_hazard_rng.randi_range(0, letters.size() - 1)], true, _pick_plane()).kind = "counterfeit"
+		forged += 1
+		n += 1
 	var excluded := _word_letters()
 	while n < want:
 		_spawn(_weighted_letter(excluded), true, _pick_plane())
@@ -523,6 +611,7 @@ func _remove(t: Tile) -> void:
 
 func _tick(h: float) -> void:
 	stats["secs"] = float(stats["secs"]) + h
+	_tick_jam()
 	for t: Tile in tiles:
 		if t.carried_by < 0:
 			_drift(t, h)
@@ -541,6 +630,19 @@ func _tick(h: float) -> void:
 		if time_left <= 0.0:
 			time_left = 0.0
 			_end(false)
+
+
+## The Stroop jam: dark for hazard.stroopSec at every multiple of hazard.stroopEverySec (first at that mark).
+func _tick_jam() -> void:
+	var every := _hnum("hazard.stroopEverySec")
+	var secs := float(stats["secs"]) + EPS
+	var on := _hnum("hazard.stroop") >= 1.0 and every > 0.0 and secs >= every and fmod(secs, every) < _hnum("hazard.stroopSec")
+	if on == jammed:
+		return
+	jammed = on
+	if on:
+		stats["jams"] = int(stats["jams"]) + 1
+	_emit({"type": "jam_on" if on else "jam_off"})
 
 
 func _note_time() -> void:
@@ -775,6 +877,9 @@ func _resolve_hit(tile: Tile, target: Vector2) -> void:
 		stats["escapes"] = int(stats["escapes"]) + 1
 		_emit({"type": "escape", "tile_id": tile.id})
 		return
+	if tile.kind == "counterfeit":
+		_counterfeit_catch(tile)
+		return
 	var where := "active"
 	var idx := _open_slot(active, tile.ch)
 	if idx < 0:
@@ -816,6 +921,40 @@ func _wrong_catch(tile: Tile) -> void:
 	var in_words := _word_letters().has(tile.ch)
 	_emit({"type": "wrong", "tile_id": tile.id, "kind": "surplus" if in_words else "unneeded", "ch": tile.ch})
 	_cost(_num("burst.wrongCost"), "wrong")
+	if tile.kind == "trap" and state == "play":
+		_note_trap(tile)
+
+
+## A forged letter: it costs a wrong catch, resets the combo and is gone; the real one is still out there.
+func _counterfeit_catch(tile: Tile) -> void:
+	stats["counterfeits"] = int(stats["counterfeits"]) + 1
+	combo = 1.0
+	_remove(tile)
+	_emit({"type": "counterfeit", "tile_id": tile.id, "ch": tile.ch, "pos": tile.pos})
+	_cost(_num("burst.wrongCost"), "counterfeit")
+	if state == "play":
+		_refill()
+
+
+## Babel's counter-word goes off when two different trap letters are caught within hazard.trapWindowSec.
+func _note_trap(tile: Tile) -> void:
+	if trap_fired:
+		return
+	var now := float(stats["secs"])
+	var keep: Array[Dictionary] = []
+	for h in _trap_hits:
+		if now - float(h["t"]) <= _hnum("hazard.trapWindowSec") + EPS and int(h["id"]) != tile.id:
+			keep.append(h)
+	keep.append({"id": tile.id, "t": now})
+	_trap_hits = keep
+	if keep.size() < 2:
+		return
+	trap_fired = true
+	stats["traps"] = int(stats["traps"]) + 1
+	_emit({"type": "trap", "word": trap_word, "cost": _hnum("hazard.trapCost")})
+	if babel_on:
+		_emit({"type": "babel", "text": trap_word.capitalize() + "."})
+	_cost(_hnum("hazard.trapCost"), "trap")
 
 
 ## Restores the active word, and keeps going while the carried-over next word is already full.
@@ -831,7 +970,11 @@ func _restore_words() -> void:
 		for c: String in counts:
 			_pool[c] = int(_pool.get(c, 0)) + int(counts[c])
 		_emit({"type": "restore", "word": w, "score": gained})
-		if babel_on:
+		if babel_on and finale:
+			var fl := _finale_line(w)
+			if fl != "":
+				_emit({"type": "babel", "text": fl})
+		elif babel_on:
 			var lines := Babel.compose(_pool, restored_words, _content, int(_num("babel.minLineLetters")), _babel_rng)
 			var text := Babel.pick(lines, _shown, _babel_rng)
 			if text != "":
@@ -850,8 +993,18 @@ func _restore_words() -> void:
 			return
 
 
+## Babel's scripted finale. LISTEN is its own letters turned back (the pool holds them, so the
+## letters-only rule holds). Then it says the name, and one sincere line (the one allowed exception
+## to the letters-only rule, bible 3: Babel voice sheet).
+func _finale_line(w: String) -> String:
+	if restored_words.size() == 1:
+		return "SILENT. No. LISTEN."
+	return "%s. %s" % [w.to_upper(), FINALE_SINCERE]
+
+
 func _end(won: bool) -> void:
 	state = "won" if won else "lost"
+	jammed = false
 	shot = {}
 	queued_id = -1
 	_emit({"type": "round_end", "won": won})

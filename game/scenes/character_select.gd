@@ -5,12 +5,13 @@ extends Control
 
 const Ui := preload("res://scenes/ui.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
+const PlayerName := preload("res://rules/player_name.gd")
 
 const PRONOUNS := ["they", "she", "he"]
 const CARD := Vector2(480, 560)
 const PORTRAIT_D := 236.0
 
-signal confirmed(character_id: String, pronouns: String)
+signal confirmed(character_id: String, pronouns: String, player_name: String)
 signal cancelled
 
 ## content.json "characters": [{id, name, role, colour, perk, mod}].
@@ -19,6 +20,12 @@ var selected: String = ""
 var pronouns: String = "they"
 ## Shows a Back button (when changing from the map or settings).
 var can_cancel: bool = false
+## The Catcher's name (A-Z, upper-case) and the blocklist it is checked against.
+var player_name: String = ""
+var blocklist: Array = []
+var _ok: Button
+var _warn: Label
+var _input: LineEdit
 
 
 func _ready() -> void:
@@ -31,7 +38,7 @@ func _ready() -> void:
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(centre)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 22)
+	box.add_theme_constant_override("separation", 12)
 	centre.add_child(box)
 	box.add_child(Ui.heading("The Lexicon Corps"))
 	var title := Ui.text("Choose your Catcher", 84)
@@ -61,7 +68,26 @@ func _ready() -> void:
 		pb.button_pressed = pronouns == p
 		pb.pressed.connect(func() -> void: pronouns = p)
 		prow.add_child(pb)
-	box.add_child(_spacer(10))
+	box.add_child(_spacer(4))
+	_input = LineEdit.new()
+	_input.name = "NameInput"
+	_input.placeholder_text = "Your name"
+	_input.max_length = PlayerName.MAX_LEN
+	_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_input.custom_minimum_size = Vector2(620, 110)
+	_input.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_input.add_theme_font_size_override("font_size", 56)
+	_input.add_theme_color_override("font_color", Ui.CREAM)
+	_input.add_theme_color_override("font_placeholder_color", Ui.MUTED)
+	_input.add_theme_stylebox_override("normal", Ui.box(Ui.NAVY, 30, Ui.SLATE, 4))
+	_input.add_theme_stylebox_override("focus", Ui.box(Ui.NAVY, 30, Ui.TEAL, 5))
+	_input.text = player_name
+	_input.text_changed.connect(_on_name_changed)
+	box.add_child(_input)
+	_warn = Ui.text("", 34, Color(1.0, 0.55, 0.5))
+	_warn.name = "NameWarning"
+	_warn.custom_minimum_size = Vector2(0, 44)
+	box.add_child(_warn)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 24)
@@ -73,8 +99,29 @@ func _ready() -> void:
 		row.add_child(back)
 	var ok := Ui.primary("Suit up", 56, Vector2(560 if not can_cancel else 460, 136))
 	ok.name = "ConfirmButton"
-	ok.pressed.connect(func() -> void: confirmed.emit(selected, pronouns))
+	ok.pressed.connect(func() -> void:
+		if name_valid():
+			confirmed.emit(selected, pronouns, player_name))
 	row.add_child(ok)
+	_ok = ok
+	_sync_name()
+
+
+func name_valid() -> bool:
+	return PlayerName.long_enough(player_name) and not PlayerName.blocked(player_name, blocklist)
+
+
+func _on_name_changed(text: String) -> void:
+	player_name = PlayerName.clean(text)
+	if _input.text != player_name:
+		_input.text = player_name
+		_input.caret_column = player_name.length()
+	_sync_name()
+
+
+func _sync_name() -> void:
+	_warn.text = "Pick another name" if PlayerName.blocked(player_name, blocklist) else ("3 to 8 letters" if player_name != "" and not PlayerName.long_enough(player_name) else "")
+	_ok.disabled = not name_valid()
 
 
 func _spacer(h: float) -> Control:

@@ -13,12 +13,24 @@ const HINT_LABELS: Dictionary = {"full": "All letters", "edges": "First and last
 const DEFAULT_HINT := "one"
 const HINT_KEY := "hint_v3"
 
+const GameFont := preload("res://scenes/game_font.gd")
+const SfxScript := preload("res://scenes/sfx.gd")
+## Slider defaults mirror the music.defaultVolume and sound.defaultVolume tunables.
+const DEFAULT_MUSIC := 70
+const DEFAULT_SOUND := 100
+
 var treatment: String = DEFAULT_TREATMENT
 var reduced_motion: bool = false
 var hint: String = DEFAULT_HINT
 var show_fps: bool = false
 ## Master mute switch (the game has no audio yet); false mutes bus 0.
 var sound_on: bool = true
+## Music and Sound sliders, 0 to 100 (the Music and Sfx buses).
+var music_volume: int = DEFAULT_MUSIC
+var sound_volume: int = DEFAULT_SOUND
+## Comfort (WP-F.9): "large" text is 1.2x; high contrast thickens the tile letter halo.
+var large_text: bool = false
+var high_contrast: bool = false
 
 
 func save_to(path: String = PATH) -> int:
@@ -28,6 +40,10 @@ func save_to(path: String = PATH) -> int:
 	cf.set_value("look", HINT_KEY, hint)
 	cf.set_value("debug", "show_fps", show_fps)
 	cf.set_value("audio", "sound_on", sound_on)
+	cf.set_value("audio", "music_volume", music_volume)
+	cf.set_value("audio", "sound_volume", sound_volume)
+	cf.set_value("comfort", "large_text", large_text)
+	cf.set_value("comfort", "high_contrast", high_contrast)
 	return cf.save(path)
 
 
@@ -44,8 +60,30 @@ func load_from(path: String = PATH) -> void:
 		hint = h
 	show_fps = bool(cf.get_value("debug", "show_fps", false))
 	sound_on = bool(cf.get_value("audio", "sound_on", true))
+	music_volume = clampi(int(cf.get_value("audio", "music_volume", DEFAULT_MUSIC)), 0, 100)
+	sound_volume = clampi(int(cf.get_value("audio", "sound_volume", DEFAULT_SOUND)), 0, 100)
+	large_text = bool(cf.get_value("comfort", "large_text", false))
+	high_contrast = bool(cf.get_value("comfort", "high_contrast", false))
+	apply_comfort()
 
 
-## Mutes or unmutes the master bus to match sound_on.
+## Mutes or unmutes the master bus to match sound_on and sets the Music and Sfx bus volumes.
 func apply_audio() -> void:
+	SfxScript.ensure_buses()
 	AudioServer.set_bus_mute(0, not sound_on)
+	_set_bus(SfxScript.MUSIC_BUS, music_volume)
+	_set_bus(SfxScript.SFX_BUS, sound_volume)
+
+
+static func _set_bus(bus: String, v: int) -> void:
+	var i := AudioServer.get_bus_index(bus)
+	if i < 0:
+		return
+	AudioServer.set_bus_mute(i, v <= 0)
+	AudioServer.set_bus_volume_db(i, linear_to_db(maxf(float(v) / 100.0, 0.0001)))
+
+
+## Pushes the Comfort switches to GameFont (read by Ui helpers and the tile view); text size shows from the next screen.
+func apply_comfort() -> void:
+	GameFont.ui_scale = GameFont.LARGE_SCALE if large_text else 1.0
+	GameFont.high_contrast = high_contrast

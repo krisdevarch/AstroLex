@@ -48,6 +48,8 @@
     "tile.size",
     "tile.minGap",
     "tile.glyphScale",
+    "tile.glyphOutlineNormal",
+    "tile.glyphOutline",
     "plane.frontScale",
     "plane.midScale",
     "plane.backScale",
@@ -93,6 +95,12 @@
     "flow.storyCps",
     "flow.refillSec",
     "sfx.volumeDb",
+    "music.crossfadeSec",
+    "music.duckDb",
+    "music.bedDb",
+    "music.stingDb",
+    "music.defaultVolume",
+    "sound.defaultVolume",
     "hud.hintAlpha",
     "autoplay.tapInterval",
     "burst.seconds",
@@ -116,7 +124,15 @@
     "coach.pulseAmount",
     "coach.captionPx",
     "coach.captionGapPx",
-    "coach.afterCatchSec"
+    "coach.afterCatchSec",
+    "hazard.counterfeitRatio",
+    "hazard.traps",
+    "hazard.trapWindowSec",
+    "hazard.trapCost",
+    "hazard.stroop",
+    "hazard.stroopEverySec",
+    "hazard.stroopSec",
+    "hazard.shimmerSec"
   ],
   "properties": {
     "$schema": {
@@ -338,6 +354,18 @@
       "minimum": 0.4,
       "maximum": 1.0,
       "description": "letter glyph font size as a share of the tile size (owner, 13 Oct 2026: letters a little bigger)"
+    },
+    "tile.glyphOutlineNormal": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.3,
+      "description": "ink halo width of a tile letter as a share of the tile size"
+    },
+    "tile.glyphOutline": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.3,
+      "description": "the same halo with the High contrast letters setting on (WP-F.9); fully opaque ink"
     },
     "tile.size": {
       "type": "number",
@@ -597,6 +625,12 @@
       "minimum": 0,
       "description": "seconds the clock bar takes to refill for the next level"
     },
+    "music.crossfadeSec": {"type": "number", "minimum": 0, "description": "seconds a music bed takes to cross-fade into the next"},
+    "music.duckDb": {"type": "number", "maximum": 0, "description": "how far the music dips during comms and pause, in decibels"},
+    "music.bedDb": {"type": "number", "maximum": 6, "description": "level of the looping music bed before the Music slider, in decibels"},
+    "music.stingDb": {"type": "number", "maximum": 6, "description": "level of a character's leitmotif sting, in decibels"},
+    "music.defaultVolume": {"type": "number", "minimum": 0, "maximum": 100, "description": "Music slider default (0-100)"},
+    "sound.defaultVolume": {"type": "number", "minimum": 0, "maximum": 100, "description": "Sound slider default (0-100)"},
     "sfx.volumeDb": {
       "type": "number",
       "maximum": 6,
@@ -723,6 +757,49 @@
       "type": "number",
       "minimum": 0,
       "description": "seconds the fill-every-slot caption stays after the first catch"
+    },
+    "hazard.counterfeitRatio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "share of the decoys that are counterfeits: forged copies of a needed letter (Babel forges fragments)"
+    },
+    "hazard.traps": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: the decoys include the letters of one short Babel counter-word; 0: no anagram trap"
+    },
+    "hazard.trapWindowSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "two trap letters caught within this many seconds set the trap off"
+    },
+    "hazard.trapCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds the clock loses when the trap goes off"
+    },
+    "hazard.stroop": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: Babel jams the colour channel on a schedule (slot hints dark, colours lie)"
+    },
+    "hazard.stroopEverySec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds between the starts of two jams"
+    },
+    "hazard.stroopSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds a jam lasts (keep it under stroopEverySec)"
+    },
+    "hazard.shimmerSec": {
+      "type": "number",
+      "minimum": 0.1,
+      "description": "seconds one periwinkle shimmer sweep takes round a counterfeit bubble"
     }
   }
 }

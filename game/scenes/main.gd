@@ -19,11 +19,21 @@ const DifficultySelect := preload("res://scenes/difficulty_select.gd")
 const LevelMap := preload("res://scenes/level_map.gd")
 const PauseMenu := preload("res://scenes/pause_menu.gd")
 const ActComplete := preload("res://scenes/act_complete.gd")
+const Ending := preload("res://scenes/ending.gd")
+const Credits := preload("res://scenes/credits.gd")
+const PlayerName := preload("res://rules/player_name.gd")
+const CodexScreen := preload("res://scenes/codex.gd")
+const InboxScreen := preload("res://scenes/inbox.gd")
+const StoryData := preload("res://rules/story_data.gd")
+const Prologue := preload("res://scenes/prologue.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
+const Daily := preload("res://rules/daily.gd")
+const DailyHooks := preload("res://scenes/daily_hooks.gd")
 const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
+const MusicScript := preload("res://scenes/music.gd")
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const SAVETEST_PATH := "user://save_test.json"
 const DEMO_NEXT_SEC := 3.5
@@ -44,6 +54,11 @@ var save: RefCounted
 ## Words and levels. Tests may set DictService.fake(...) before _ready.
 var dictionary: RefCounted
 var pause_menu: Control
+## The UTC date of the Daily Signal being played ("" when none). Tests may set daily_today.
+var daily_date: String = ""
+var daily_today: String = ""
+## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
+var music: MusicScript
 var _ready_printed: bool = false
 
 
@@ -78,12 +93,15 @@ func _ready() -> void:
 	levels = dictionary.levels(act)
 	settings.load_from()
 	settings.apply_audio()
+	music = MusicScript.new()
+	music.name = "Music"
+	add_child(music)
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	if save == null:
 		if offline:
 			save = Save.fake()
 			if demo:
-				save.set_profile("wren", "they", _default_difficulty())
+				save.set_profile("wren", "they", _default_difficulty(), "ADA")
 		elif _savetest_query() != "":
 			save = Save.real(SAVETEST_PATH)  # never the real player's save
 		else:
@@ -119,7 +137,8 @@ func _sync_level_index() -> void:
 	level_index = clampi(save.next_level(act), 0, maxi(levels.size() - 1, 0))
 
 
-## Web-only test hook: ?savetest=1 (own save file) prints the saved next level, &win=1 first records 1-01 as won.
+## Web-only test hook: ?savetest=1 (own save file) prints the saved next level, &win=1 first records 1-01 as won,
+## &ending=1 opens the ending screen straight away (a preview for the owner; no save is changed).
 func _save_debug_hook() -> void:
 	var q := _savetest_query()
 	if q == "" or autoplay or levels.is_empty():
@@ -127,6 +146,10 @@ func _save_debug_hook() -> void:
 	if q.contains("win=1"):
 		save.record_level(act, str((levels[0] as Dictionary)["id"]), 0, true, 100, 1)
 		_sync_level_index()
+	if q.contains("ending=1"):
+		if save.player_name() == "":
+			save.set_profile("wren", "they", _default_difficulty(), "KIT")
+		_show_ending.call_deferred()
 	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
 
 
@@ -185,6 +208,9 @@ func _swap(node: Node) -> void:
 		remove_child(screen)
 		screen.queue_free()
 	screen = node
+	if node.name != "Field":
+		daily_date = ""
+		music.play(MusicScript.MENU)
 	add_child(node)
 
 
@@ -199,12 +225,21 @@ func _show_start() -> void:
 		if save.has_profile():
 			_show_map()
 		else:
-			_show_character(false, func() -> void: _show_difficulty(false, _show_map)))
+			_show_character(false, func() -> void: _show_difficulty(false, _prologue_then_map)))
 	s.settings_pressed.connect(_show_settings.bind(_show_start))
+	DailyHooks.decorate_start(self, s)
 	_swap(s)
 	if not _ready_printed:
 		_ready_printed = true
 		print("AstroLex ready: %d tiles" % s.tile_count)
+
+
+func _start_daily() -> void:
+	DailyHooks.start(self)
+
+
+func _on_daily_finished(summary: Dictionary) -> void:
+	DailyHooks.finished(self, summary)
 
 
 func _show_character(can_cancel: bool, then: Callable) -> void:
@@ -214,9 +249,11 @@ func _show_character(can_cancel: bool, then: Callable) -> void:
 	s.selected = str(save.profile().get("character", ""))
 	s.pronouns = str(save.profile().get("pronouns", "they"))
 	s.can_cancel = can_cancel
-	s.confirmed.connect(func(id: String, pron: String) -> void:
+	s.player_name = save.player_name()
+	s.blocklist = dictionary.content().get("blocklist", [])
+	s.confirmed.connect(func(id: String, pron: String, nm: String) -> void:
 		var diff: String = str(save.profile().get("difficulty", ""))
-		save.set_profile(id, pron, diff if diff != "" else _default_difficulty())
+		save.set_profile(id, pron, diff if diff != "" else _default_difficulty(), nm)
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
@@ -231,13 +268,17 @@ func _show_difficulty(can_cancel: bool, then: Callable) -> void:
 	s.can_cancel = can_cancel
 	s.confirmed.connect(func(id: String) -> void:
 		var p: Dictionary = save.profile()
-		save.set_profile(str(p.get("character", "")), str(p.get("pronouns", "they")), id)
+		save.set_profile(str(p.get("character", "")), str(p.get("pronouns", "they")), id, str(p.get("name", "")))
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
 
 
 func _show_map() -> void:
+	if save.has_profile() and save.player_name() == "" and not autoplay:
+		# An older save, or a profile without a name: ask for it before the map (WP-F.2).
+		_show_character(false, _show_map)
+		return
 	_sync_layout()
 	var m: Control = LevelMap.new()
 	m.name = "LevelMap"
@@ -251,6 +292,9 @@ func _show_map() -> void:
 	m.character_pressed.connect(_show_character.bind(true, _show_map))
 	m.difficulty_pressed.connect(_show_difficulty.bind(true, _show_map))
 	m.settings_pressed.connect(_show_settings.bind(_show_map))
+	m.codex_pressed.connect(_show_codex.bind(_show_map))
+	m.inbox_pressed.connect(_show_inbox.bind(_show_map))
+	m.daily_pressed.connect(_start_daily)
 	m.back_pressed.connect(_show_start)
 	_swap(m)
 
@@ -264,7 +308,29 @@ func _show_settings(back: Callable) -> void:
 	s.character_pressed.connect(func() -> void: _show_character(true, _show_settings.bind(back)))
 	s.difficulty_pressed.connect(func() -> void: _show_difficulty(true, _show_settings.bind(back)))
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
+	s.codex_pressed.connect(_show_codex.bind(_show_settings.bind(back)))
+	s.prologue_pressed.connect(func() -> void: _play_animatic(false, Callable()))
+	s.credits_pressed.connect(func() -> void: _show_credits(_show_settings.bind(back)))
 	_swap(s)
+
+
+func _show_codex(back: Callable) -> void:
+	var c: Control = CodexScreen.new()
+	c.name = "CodexScreen"
+	c.save = save
+	c.dictionary = dictionary
+	c.closed.connect(back)
+	_swap(c)
+
+
+func _show_inbox(back: Callable) -> void:
+	var c: Control = InboxScreen.new()
+	c.name = "InboxScreen"
+	c.save = save
+	c.dictionary = dictionary
+	c.reduced_motion = settings.reduced_motion
+	c.closed.connect(back)
+	_swap(c)
 
 
 func _show_bench(auto: bool) -> void:
@@ -319,6 +385,13 @@ func _start_level(story: Array = []) -> void:
 		_show_map()
 		return
 	var level: Dictionary = levels[level_index]
+	if daily_date != "":
+		level = Daily.make_level(daily_date, dictionary.content())
+	elif _is_final_level():
+		level = finale_level(level, save.player_name())
+	if act == "act3_tower" and str(level["id"]) == "3-06" and not autoplay and not save.flag("flashback_seen"):
+		_play_animatic(true, _start_level.bind(story))  # the Loud Wars flashback, once
+		return
 	var ch := _profile_character()
 	var cosmetic := not autoplay or demo
 	_close_pause()
@@ -327,6 +400,7 @@ func _start_level(story: Array = []) -> void:
 		f = FieldScene.instantiate()
 		f.name = "Field"
 		f.settings = settings
+		f.music = music
 		f.autoplay = autoplay
 		f.view_size = get_viewport().get_visible_rect().size
 		f.print_ready = not _ready_printed
@@ -343,14 +417,26 @@ func _start_level(story: Array = []) -> void:
 		_swap(f)
 	else:
 		f.set_paused(false)
-	f.level_counter = "Level %d / %d" % [level_index + 1, levels.size()]
+	music.play(act)
+	f.level_counter = Daily.short_date(daily_date) if daily_date != "" else "Level %d / %d" % [level_index + 1, levels.size()]
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
 	var diff_id := "" if autoplay else str(_profile_difficulty().get("id", ""))
 	var char_id := "" if autoplay else str(ch.get("id", ""))
-	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), act, char_id, diff_id)
+	telemetry.begin_round(f, level_index + 1, int(level["seed"]), str(level["id"]), Daily.TELEMETRY_ACT if daily_date != "" else act, char_id, diff_id)
 	f.coach_enabled = not autoplay and save.total_stars() == 0  # first-play coach (WP-3.Q)
 	f.coach_drones = not autoplay and save.next_level(act) <= 3  # nobody past 1-03 has met the drones
-	f.begin_level(level, act, _mods(), _story(story))
+	f.begin_level(level, Daily.ROUND_ACT if daily_date != "" else act, _mods(), _story(story))
+
+
+## 4-12: the level's words become LISTEN, then the Catcher's name (the file keeps a placeholder).
+## Without a name (autoplay) the placeholder stays.
+static func finale_level(level: Dictionary, player_name: String) -> Dictionary:
+	var l: Dictionary = level.duplicate(true)
+	var w: Array = l["words"]
+	if player_name != "":
+		w[w.size() - 1] = PlayerName.clean(player_name).to_lower()
+	l["finale"] = true
+	return l
 
 
 func _is_final_level() -> bool:
@@ -359,6 +445,9 @@ func _is_final_level() -> bool:
 
 
 func _on_level_finished(summary: Dictionary, level: Dictionary = {}) -> void:
+	if daily_date != "":
+		_on_daily_finished(summary)
+		return
 	if level.is_empty():
 		level = levels[level_index]
 	summary["level"] = str(level["id"])
@@ -391,16 +480,34 @@ func _show_card(summary: Dictionary) -> void:
 
 ## Next after a win: the level's closing chatter and the next level's opening chatter on the game
 ## screen, then its letters; after the last level of an act, the closing chatter, then the
-## act-complete screen (the beta-complete screen after the very last level).
+## act-complete screen (the ending after the very last level).
 func _go_next() -> void:
 	var after: Array = _comms_of(level_index, "commsAfter")
 	if _is_final_level():
-		_story_then(after, _show_complete.bind(true))
+		_show_ending()  # the ending carries Rhee's and Tomas's closing lines itself
 	elif level_index < levels.size() - 1:
 		level_index += 1
 		_start_level(after + _comms_of(level_index, "commsBefore"))
 	else:
 		_story_then(after, _show_complete.bind(false))
+
+
+func _show_ending() -> void:
+	var e: Control = Ending.new()
+	e.name = "Ending"
+	e.player_name = save.player_name()
+	e.total_stars = save.total_stars()
+	e.reduced_motion = settings.reduced_motion
+	e.back_to_map.connect(_show_map)
+	e.credits_pressed.connect(func() -> void: _show_credits(_show_map))
+	_swap(e)
+
+
+func _show_credits(back: Callable) -> void:
+	var c: Control = Credits.new()
+	c.name = "Credits"
+	c.closed.connect(back)
+	_swap(c)
 
 
 func _show_complete(final: bool) -> void:
@@ -420,6 +527,8 @@ func _show_complete(final: bool) -> void:
 		else:
 			_show_map())
 	c.back_to_map.connect(_show_map)
+	c.new_message = StoryData.unread(save, dictionary) > 0
+	c.open_inbox.connect(_show_inbox.bind(_show_map))
 	_swap(c)
 
 
@@ -486,3 +595,38 @@ func _close_pause() -> void:
 		else:
 			pause_menu.queue_free()
 		pause_menu = null
+
+
+# --- animatics (WP-F.7) --------------------------------------------------------------------
+
+func _prologue_then_map() -> void:
+	if save.flag("prologue_seen") or autoplay:
+		_show_map()
+	else:
+		_play_animatic(false, _show_map)
+
+
+## The wordless Prologue (or the flashback) over whatever is showing; `then` runs when it ends.
+func _play_animatic(flashback: bool, then: Callable) -> void:
+	var p: Control = Prologue.new()
+	p.stills = Prologue.load_stills("flashback" if flashback else "prologue")
+	p.with_water = not flashback
+	p.base_sat = 0.6 if flashback else 0.0
+	p.reduced_motion = settings.reduced_motion
+	p.treatment = settings.treatment
+	var layer := CanvasLayer.new()
+	layer.name = "AnimaticLayer"
+	layer.layer = 60
+	layer.add_child(p)
+	add_child(layer)
+	var music: Variant = get("music")
+	if music != null and (music as Object).has_method("duck"):
+		music.duck(true)
+	p.finished.connect(func(_skipped: bool) -> void:
+		save.set_flag("flashback_seen" if flashback else "prologue_seen")
+		if music != null and is_instance_valid(music as Object) and (music as Object).has_method("duck"):
+			music.duck(false)
+		remove_child(layer)
+		layer.queue_free()
+		if then.is_valid():
+			then.call())

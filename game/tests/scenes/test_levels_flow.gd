@@ -127,15 +127,16 @@ func test_begin_level_uses_the_level_words_in_order() -> void:
 
 func test_act_one_burst_is_sixty_seconds_and_the_bar_fits_it() -> void:
 	var lv := _level(0)
-	assert_eq(float((lv["tuning"] as Dictionary)["burst.seconds"]), 60.0, "Act I burst from the act tuning")
+	var secs := float((lv["tuning"] as Dictionary)["burst.seconds"])
+	assert_true(secs >= 30.0, "burst comes from the level tuning (WP-F.9 curve)")
 	var f: Node2D = FieldScene.instantiate()
 	f.print_ready = false
 	tree.root.add_child(f)
 	f.begin_level(lv)
 	f.skip_intro()
 	f.advance(1.0 / 60.0)
-	assert_eq(f.game_round.burst_seconds, 60.0)
+	assert_eq(f.game_round.burst_seconds, secs)
 	var bar := f.find_child("TimeBar", true, false) as ProgressBar
-	assert_eq(bar.max_value, 60.0, "time bar spans the whole burst")
-	assert_true(bar.value > 59.0, "bar starts full")
+	assert_eq(bar.max_value, secs, "time bar spans the whole burst")
+	assert_true(bar.value > secs - 1.0, "bar starts full")
 	f.free()

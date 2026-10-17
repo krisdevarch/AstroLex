@@ -8,9 +8,14 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 signal closed
 ## The player asked for the frame-rate bench.
 signal bench_pressed
+signal codex_pressed
 ## Change-entry buttons (shown when a save is set).
 signal character_pressed
 signal difficulty_pressed
+## The player asked to see the Prologue again.
+signal prologue_pressed
+## The player asked for the credits and privacy screen (WP-F.9).
+signal credits_pressed
 
 var settings: AppSettings = AppSettings.new()
 var save_path: String = AppSettings.PATH
@@ -71,6 +76,15 @@ func _ready() -> void:
 		hb.button_pressed = settings.hint == h
 		hb.pressed.connect(_set_hint.bind(h))
 		hgrid.add_child(hb)
+	box.add_child(_section("Audio"))
+	var ms := Ui.slider("Music", settings.music_volume)
+	ms.name = "MusicRow"
+	ms.get_node("Slider").value_changed.connect(_set_music)
+	box.add_child(ms)
+	var ss := Ui.slider("Sound", settings.sound_volume)
+	ss.name = "SoundRow"
+	ss.get_node("Slider").value_changed.connect(_set_sound)
+	box.add_child(ss)
 	box.add_child(_section("Comfort"))
 	var rm := Ui.switch("Reduced motion", settings.reduced_motion)
 	rm.name = "ReducedMotion"
@@ -82,6 +96,19 @@ func _ready() -> void:
 	fps.name = "ShowFps"
 	fps.toggled.connect(_set_fps)
 	box.add_child(fps)
+	var lt := Ui.switch("Large text", settings.large_text)
+	lt.name = "LargeText"
+	lt.toggled.connect(func(on: bool) -> void: _comfort("large_text", on))
+	box.add_child(lt)
+	var hcb := Ui.switch("High contrast letters", settings.high_contrast)
+	hcb.name = "HighContrast"
+	hcb.toggled.connect(func(on: bool) -> void: _comfort("high_contrast", on))
+	box.add_child(hcb)
+	var cr := Ui.link("Credits and privacy", 32, Vector2(400, 70))
+	cr.name = "CreditsButton"
+	cr.pressed.connect(func() -> void: credits_pressed.emit())
+	cr.visible = show_sky  # not over the game screen: the pause menu has no way back from it
+	box.add_child(cr)
 	if save != null:
 		box.add_child(_section("Profile"))
 		var prow := HBoxContainer.new()
@@ -118,10 +145,18 @@ func _ready() -> void:
 		no.pressed.connect(_cancel_reset)
 		_confirm.add_child(no)
 		box.add_child(_confirm)
+	var codex := Ui.secondary("Rhee's Codex", 40, Vector2(820, 100))
+	codex.name = "CodexButton"
+	codex.pressed.connect(func() -> void: codex_pressed.emit())
+	box.add_child(codex)
 	var bench := Ui.link("Frame-rate test", 32, Vector2(400, 70))
 	bench.name = "BenchButton"
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
 	box.add_child(bench)
+	var pro := Ui.link("Replay the Prologue", 32, Vector2(400, 70))
+	pro.name = "PrologueButton"
+	pro.pressed.connect(func() -> void: prologue_pressed.emit())
+	box.add_child(pro)
 	var back := Ui.primary("Done", 52, Vector2(560, 136))
 	back.name = "BackButton"
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -144,6 +179,24 @@ func _set_treatment(t: String) -> void:
 
 func _set_hint(h: String) -> void:
 	settings.hint = h
+	settings.save_to(save_path)
+
+
+func _set_music(v: float) -> void:
+	settings.music_volume = int(v)
+	settings.apply_audio()
+	settings.save_to(save_path)
+
+
+func _set_sound(v: float) -> void:
+	settings.sound_volume = int(v)
+	settings.apply_audio()
+	settings.save_to(save_path)
+
+
+func _comfort(key: String, on: bool) -> void:
+	settings.set(key, on)
+	settings.apply_comfort()
 	settings.save_to(save_path)
 
 

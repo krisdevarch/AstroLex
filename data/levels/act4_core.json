@@ -1,13 +1,13 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act4_core",
   "tuning": {"burst.seconds": 40},
   "levels": [
     {
       "id": "4-01", "order": 1, "title": "Channel Open", "beat": "Opening: the crew gather, even VANTA; no jokes for one beat, then Ade makes one.",
       "pacing": "teach", "words": ["war", "verb", "noun"], "seed": 4101, "babel": true, "babelIntro": "Full channel today. I am not used to company.",
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "rhee", "text": "Kit. Ade. VANTA. Tomas. Everyone is on the channel. Thank you for coming."},
         {"who": "vanta", "text": "Here. Do not make a thing of it."}
@@ -20,7 +20,7 @@
     {
       "id": "4-02", "order": 2, "title": "Small Returns", "beat": "Teach: short words return.",
       "pacing": "teach", "words": ["mind", "song", "star"], "seed": 4102, "babel": true, "babelIntro": "Small pieces back. I kept every one safe.",
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "rhee", "text": "Short ones first. They are the oldest, so they come back easiest."}
       ],
@@ -32,7 +32,7 @@
     {
       "id": "4-03", "order": 3, "title": "First Colour", "beat": "Core: a colour from Act I comes back.",
       "pacing": "core", "words": ["word", "echo", "mouth"], "seed": 4103, "babel": true, "babelIntro": "That colour. I forgot it could be so bright.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "A colour just came back. From the first ring, I think. Wait, why now?"},
         {"who": "rhee", "text": "Each piece carries its colour home. That is how it works."}
@@ -44,7 +44,7 @@
     {
       "id": "4-04", "order": 4, "title": "Dark Side", "beat": "Core: combined hazards begin.",
       "pacing": "core", "words": ["night", "dream", "earth"], "seed": 4104, "babel": true, "babelIntro": "Dark out here. I have sat in it for ages.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.18, "plane.backTiles": 8, "thief.interval": 5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.18, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "vanta", "text": "Dark side. I count better in the dark. Keep up."},
         {"who": "rhee", "text": "Drones and decoys in the dark. Stay close to the line."}
@@ -56,7 +56,7 @@
     {
       "id": "4-05", "order": 5, "title": "Hearth", "beat": "Core: heart and quiet.",
       "pacing": "core", "words": ["child", "heart", "quiet"], "seed": 4105, "babel": true, "babelIntro": "I never had a fireside. Odd to miss one.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 10, "hazard.stroopSec": 3.5},
       "commsBefore": [
         {"who": "ade", "text": "ok ok ok, a hearth. I love a hearth. It feels like a hot drink."},
         {"who": "rhee", "text": "Gentle ones. Slow hands."}
@@ -68,7 +68,7 @@
     {
       "id": "4-06", "order": 6, "title": "Quiet Pause", "beat": "Rest: a pause before Babel confronts.",
       "pacing": "rest", "words": ["sound", "noise", "breath"], "seed": 4106, "babel": true, "babelIntro": "Stop a moment. I am tired of arguing too.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 10, "hazard.stroopSec": 3.5},
       "commsBefore": [
         {"who": "kit", "text": "A rest. Nobody talk for a second."},
         {"who": "rhee", "text": "Breathe, all of you."}
@@ -80,7 +80,7 @@
     {
       "id": "4-07", "order": 7, "title": "Say It", "beat": "Core: first four-word level; Babel confronts.",
       "pacing": "core", "words": ["voice", "speak", "story", "reply"], "seed": 4107, "babel": true, "babelIntro": "Tell me what I got wrong. I am asking.",
-      "tuning": {"burst.seconds": 35, "spawner.decoys": 4, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5},
+      "tuning": {"burst.seconds": 40, "spawner.decoys": 4, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 10, "hazard.stroopSec": 3.5},
       "commsBefore": [
         {"who": "kit", "text": "Babel is on the line. It wants to talk. Wait, why now?"},
         {"who": "rhee", "text": "Let it. Do not rush it. Hear all of it."}
@@ -92,7 +92,7 @@
     {
       "id": "4-08", "order": 8, "title": "Far Out", "beat": "Core: colours of Act II return. Kit forgives Rhee out loud.",
       "pacing": "core", "words": ["shout", "orbit", "ocean", "sorry"], "seed": 4108, "babel": true, "babelIntro": "Far out, Catcher. Farther than I ever went alone.",
-      "tuning": {"burst.seconds": 35, "spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 8, "thief.interval": 5},
+      "tuning": {"burst.seconds": 40, "spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 10, "hazard.stroopSec": 3.5},
       "commsBefore": [
         {"who": "kit", "text": "Pink is back out there. The nebula pink. Wait, it is coming home?"},
         {"who": "vanta", "text": "Far out. Farther than my best run. I am following you."}
@@ -105,7 +105,7 @@
     {
       "id": "4-09", "order": 9, "title": "Kin", "beat": "Core: people words.",
       "pacing": "core", "words": ["tongue", "friend", "mother", "murmur"], "seed": 4109, "babel": true, "babelIntro": "Everyone here has someone. I had a tower.",
-      "tuning": {"burst.seconds": 35, "spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 8, "thief.interval": 5},
+      "tuning": {"burst.seconds": 55, "spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.5, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 8, "hazard.stroopSec": 4},
       "commsBefore": [
         {"who": "ade", "text": "No joke. I froze in the Tower and you waited. Thank you."},
         {"who": "rhee", "text": "People words now. Hold them gently."}
@@ -115,7 +115,7 @@
     {
       "id": "4-10", "order": 10, "title": "Call and Reply", "beat": "Core: signals cross. VANTA says good job, once.",
       "pacing": "core", "words": ["answer", "signal", "thought", "whisper"], "seed": 4110, "babel": true, "babelIntro": "Crossed wires again. Maybe that was always the trouble.",
-      "tuning": {"burst.seconds": 30, "spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 9, "thief.interval": 4},
+      "tuning": {"burst.seconds": 60, "spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 9, "thief.interval": 5, "hazard.counterfeitRatio": 0.5, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 8, "hazard.stroopSec": 4},
       "commsBefore": [
         {"who": "kit", "text": "The lines are crossing. Wait, are those our voices?"},
         {"who": "rhee", "text": "Four hard ones. Keep your eyes on the slots."}
@@ -127,7 +127,7 @@
     {
       "id": "4-11", "order": 11, "title": "The Hush", "beat": "Late: silent, and a sentence for Babel.",
       "pacing": "core", "words": ["silent", "morning", "sentence", "question"], "seed": 4111, "babel": true, "babelIntro": "The hush I made hurts too, does it not?",
-      "tuning": {"burst.seconds": 30, "spawner.decoys": 5, "drift.speed": 0.2, "plane.backTiles": 9, "thief.interval": 4},
+      "tuning": {"burst.seconds": 70, "spawner.decoys": 5, "drift.speed": 0.2, "plane.backTiles": 9, "thief.interval": 5, "hazard.counterfeitRatio": 0.5, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 8, "hazard.stroopSec": 4},
       "commsBefore": [
         {"who": "kit", "text": "Last four before the last two. Everyone breathe."},
         {"who": "rhee", "text": "Babel has waited a long time for someone to ask it."}
@@ -138,8 +138,8 @@
     },
     {
       "id": "4-12", "order": 12, "title": "The Last Word", "beat": "Encounter: the last words are the Catcher name, then LISTEN; Babel chooses; every colour floods back.",
-      "pacing": "encounter", "words": ["name", "listen"], "seed": 4112, "babel": true, "babelIntro": "Ready, Catcher? I think I finally am.",
-      "tuning": {"burst.seconds": 30, "spawner.decoys": 5, "drift.speed": 0.21, "plane.backTiles": 9, "thief.interval": 4},
+      "pacing": "encounter", "words": ["listen", "name"], "seed": 4112, "babel": true, "babelIntro": "Ready, Catcher? I think I finally am.",
+      "tuning": {"burst.seconds": 30, "spawner.decoys": 5, "drift.speed": 0.21, "plane.backTiles": 9, "thief.interval": 5, "hazard.counterfeitRatio": 0.5, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 8, "hazard.stroopSec": 4},
       "commsBefore": [
         {"who": "kit", "text": "Two left. We are all here."},
         {"who": "ade", "text": "No joke. I am proud of you. Go."},
