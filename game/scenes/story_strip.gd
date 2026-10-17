@@ -42,6 +42,10 @@ var sfx: Node
 ## Optional Music node: the speaker's leitmotif rings as their bubble appears.
 var music: Node
 
+## The Skip button's top edge in this strip's coordinates; the field lifts it up to just under the
+## top chips (owner, 17 Oct 2026: it sat too low).
+var skip_top: float = 20.0
+
 var _i: int = -1
 var _line_t: float = 0.0
 var _bubbles: Array = []  # [Panel, Label, target_y, age]
@@ -61,7 +65,7 @@ func _ready() -> void:
 	_skip.text = "Skip  ›"
 	_skip.focus_mode = Control.FOCUS_NONE
 	_skip.size = Vector2(200, 72)
-	_skip.position = Vector2(size.x - INSET - 200.0, 20.0)
+	_skip.position = Vector2(size.x - INSET - 200.0, skip_top)
 	_skip.add_theme_font_size_override("font_size", 34)
 	for st in ["normal", "hover", "pressed", "hover_pressed"]:
 		_skip.add_theme_stylebox_override(st, Ui.box(Color(0.13, 0.15, 0.25, 0.86), 36))

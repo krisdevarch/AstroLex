@@ -382,6 +382,7 @@ func play_story(messages: Array, then: Callable) -> void:
 		music.call("duck", true)
 	s.position = Vector2(0.0, FIELD_TOP)
 	s.size = Vector2(view_size.x, view_size.y - FIELD_BOTTOM_UP - FIELD_TOP)
+	s.skip_top = CHIP_Y + CHIP_H + 16.0 - FIELD_TOP  # just under the top-right chip
 	s.babel_line.connect(func(text: String) -> void:
 		last_babel = text
 		_babel_t = 0.0)
