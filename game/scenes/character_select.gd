@@ -6,6 +6,7 @@ extends Control
 const Ui := preload("res://scenes/ui.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
 const PlayerName := preload("res://rules/player_name.gd")
+const WebTextField := preload("res://scenes/web_text_field.gd")
 
 const PRONOUNS := ["they", "she", "he"]
 const CARD := Vector2(480, 560)
@@ -84,6 +85,7 @@ func _ready() -> void:
 	_input.text = player_name
 	_input.text_changed.connect(_on_name_changed)
 	box.add_child(_input)
+	WebTextField.attach(_input)  # on the web, a page input over the field so phones open their keyboard
 	_warn = Ui.text("", 34, Color(1.0, 0.55, 0.5))
 	_warn.name = "NameWarning"
 	_warn.custom_minimum_size = Vector2(0, 44)
