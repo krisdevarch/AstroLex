@@ -4,6 +4,7 @@ extends Control
 ## "???" and its title. The header counts the words filed.
 
 const Ui := preload("res://scenes/ui.gd")
+const DragScroll := preload("res://scenes/drag_scroll.gd")
 const CrewArt := preload("res://scenes/crew_art.gd")
 const StoryData := preload("res://rules/story_data.gd")
 const LevelMap := preload("res://scenes/level_map.gd")
@@ -43,6 +44,7 @@ func _ready() -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(scroll)
+	DragScroll.attach(scroll)  # finger drags scroll even when they start on a card
 	var list := VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 16)

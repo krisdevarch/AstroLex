@@ -3,6 +3,7 @@ extends Control
 ## (content.json "credits"), then a Privacy section, in a scrolling column on the painted sky.
 
 const Ui := preload("res://scenes/ui.gd")
+const DragScroll := preload("res://scenes/drag_scroll.gd")
 const GameData := preload("res://rules/game_data.gd")
 
 signal closed
@@ -24,6 +25,7 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	add_child(scroll)
+	DragScroll.attach(scroll)  # finger drags scroll even when they start on a button
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 22)
 	box.custom_minimum_size = Vector2(880, 0)
