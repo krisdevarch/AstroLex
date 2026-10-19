@@ -1,4 +1,5 @@
-"""Paints the placeholder Act II-IV backdrops (WP-F.3) into game/art/backdrop/. PIL only.
+"""Painted the placeholder Act II-IV backdrops (WP-F.3). PIL only. Retired 19 Oct 2026: all four
+acts now use the owner's paintings in game/art/backdrop/, so running this writes nothing.
 
     python3 scripts/art/make_skies.py
 
@@ -146,7 +147,7 @@ def core():
 
 
 if __name__ == "__main__":
-    for name, fn in [("act2_nebula", nebula), ("act3_tower", tower), ("act4_core", core)]:
+    for name, fn in []:  # was act2_nebula, act3_tower, act4_core
         path = OUT / f"{name}.jpg"
         for q in (88, 80, 72, 64):
             fn().save(path, quality=q, optimize=True)
