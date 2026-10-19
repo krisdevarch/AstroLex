@@ -44,7 +44,7 @@ func test_bottom_hud_anchors_to_the_real_bottom_on_a_taller_screen() -> void:
 	var btn := f.find_child("SettingsButton", true, false) as Control
 	assert_true(btn.position.y + btn.size.y < 2342.0 and btn.position.y > 2342.0 - 300.0, "the bottom button hugs the bottom too")
 	var hint := f.find_child("HintButton", true, false) as Control
-	assert_true(hint.position.y > 2342.0 - 700.0, "the hint bulb stays with the console")
+	assert_true(hint.position.y > 2342.0 - 720.0, "the hint bulb stays with the console")
 	assert_eq(f.panel_top(), 2342.0 - 530.0, "panel top follows the bottom")
 	f.free()
 
@@ -158,10 +158,12 @@ func test_hud_follows_the_target_mock() -> void:
 		assert_true(f.find_child("TitleChip", true, false) == null, "no AstroLex chip")
 		# The right column: hint bulb, pause, sound, settings, top to bottom, one x.
 		for c: Control in [hint, sound, gear]:
-			assert_true(absf(c.position.x + c.size.x * 0.5 - (pause.position.x + pause.size.x * 0.5)) < 0.5, "%s in the button column" % c.name)
+			# The mock's bulb sits a hair left of the buttons' centre line.
+			var tol := 6.0 if c == hint else 0.5
+			assert_true(absf(c.position.x + c.size.x * 0.5 - (pause.position.x + pause.size.x * 0.5)) < tol, "%s in the button column" % c.name)
 		assert_true(hint.position.y + hint.size.y <= pause.position.y + 1.0, "hint above pause")
 		assert_true(pause.position.y < sound.position.y and sound.position.y < gear.position.y, "pause, sound, settings stacked")
-		assert_true(gear.position.x + gear.size.x <= size.x - 30.0, "buttons inside the screen")
+		assert_true(gear.position.x + gear.size.x <= size.x - 10.0, "buttons inside the screen")
 		assert_true(tray.position.x + tray.size.x < pause.position.x, "slot screen left of the buttons")
 		var p_right: float = portrait.position.x + portrait.size.x * portrait.scale.x
 		assert_true(portrait.position.x < tray.position.x and p_right < tray.position.x + 20.0, "porthole left of the slot screen")

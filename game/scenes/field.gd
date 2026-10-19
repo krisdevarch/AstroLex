@@ -27,12 +27,12 @@ const POP_SEC := 0.8
 const AMBER := Color("F8BC04")
 # The owner's tray mock (16:51): a navy tray with a slate rim, near-black slots with a teal outline,
 # cream letter tiles with a darker bottom lip, and an orange Hint button with a glowing bulb.
-const TRAY_FILL := Color(0.09, 0.12, 0.2, 0.95)
-const TRAY_EDGE := Color("2f3b58")
-const SLOT_FILL := Color("0b1634")
-const TILE_CREAM := Color("f6ebcd")
-const TILE_LIP := Color("d4bf92")
-const TILE_INK := Color("1c2740")
+const TILE_CREAM := Color("f8eccc")  # the mock's letter tile: cream, a tan lip, a dark brown line
+const TILE_LIP := Color("cdae8f")
+const TILE_INK_LINE := Color("3a2a2c")
+const TILE_INK := Color("0d0626")  # its letters
+const SLOT_EMPTY := Color(0.165, 0.306, 0.44, 0.92)  # the mock's empty slot: a teal well
+const SLOT_RIM := Color("9ff8ff")  # with a bright cyan rim
 const CLOCK_TEXT := Color(1.0, 0.85, 0.78)
 const PERIWINKLE := Color("7579f0")
 const TEXT_CREAM := Color("efe8d6")  # the mock's warm off-white for HUD text
@@ -66,34 +66,34 @@ const BAND_TAIL := 34.0
 const FIELD_TOP := 320.0  # top of the play field (below Babel's bubble)
 const FIELD_BOTTOM_UP := 560.0  # bottom of the play field, just above Earth's rim
 const PANEL_TOP_UP := 530.0  # highest point of Earth's rim
-const CONSOLE_X := 40.0  # the console tray body: from here to CONSOLE_R
-const CONSOLE_R := 912.0
-const CONSOLE_TOP_UP := 512.0
-const CONSOLE_BOTTOM_UP := 146.0
-const PORTRAIT_X := 158.0  # the porthole, at the console's left end
-const PORTRAIT_UP := 330.0
-const PORTRAIT_D := 270.0
-const TRAY_X := 318.0  # the slot screen inside the console
-const TRAY_R := 894.0
-const TRAY_TOP_UP := 486.0
-const TRAY_BOTTOM_UP := 176.0
-const TRAY_PAD := 20.0
-const ROW1_UP := 400.0  # centre of the active word's row
-const ROW2_UP := 262.0  # centre of the next word's row
-const SLOT_MAX := 96.0
-const SLOT_GAP := 10.0
+## The console is the owner's target mock itself (19 Oct 2026: "make it pixel perfect"), cut out
+## by scripts/art/cut_hud.py. Everything on it is placed in the mock's own pixels (572x1024, its
+## bottom on the screen's bottom, scaled to 1080 wide and centred): see _m().
+const MOCK_W := 572.0
+const MOCK_H := 1024.0
+const HUD_ART := "res://art/hud/"
+const MOCK_CONSOLE := Vector2(0, 742)  # corner of console.png
+const MOCK_PORT := Vector2(83.5, 832.5)  # the porthole's screen, where the Catcher sits
+const MOCK_WINDOW_R := 52.5
+const MOCK_SCREEN := Rect2(174, 777, 285, 127)  # the slot screen
+const MOCK_ROW1_Y := 809.0  # centre of the active word's row
+const MOCK_ROW2_Y := 871.5  # centre of the next word's row
+const MOCK_SLOT := 42.4
+const MOCK_SLOT_GAP := 12.0
+const MOCK_BTN_X := 526.3  # the round buttons, stacked at the right
+const MOCK_PAUSE_Y := 793.0
+const MOCK_SOUND_Y := 874.0
+const MOCK_SETTINGS_Y := 955.0
+const MOCK_BTN_R := 37.0
+const MOCK_ICON_R := 23.0  # the icon disc inside a button's neon ring
+const MOCK_RING_R := 25.5
+const MOCK_BULB := Rect2(497, 650, 54, 91)  # the hint bulb
+const MOCK_BULB_GLASS := Vector2(523.2, 678.5)
+const MOCK_CHANNEL := Rect2(72, 964, 389, 33)  # the clock bar's channel, where the liquid runs
+const TRAY_PAD := 22.0
+const SLOT_MAX := MOCK_SLOT * 1080.0 / MOCK_W
+const SLOT_GAP := MOCK_SLOT_GAP * 1080.0 / MOCK_W
 const SLOTS_PER_ROW := 5
-const BTN_SIZE := 112.0  # the round buttons, stacked at the right of the console
-const BTN_X_IN := 44.0  # their right edge sits this far in from the screen edge
-const PAUSE_UP := 436.0
-const SOUND_UP := 290.0
-const SETTINGS_UP := 144.0
-const HINT_D := 132.0  # the hint bulb, above the buttons
-const HINT_UP := 598.0
-const BOTTOM_UP := 70.0  # centre of the clock bar
-const BTN_GAP := 14.0
-const TIMER_H := 66.0
-const TIMER_X := 70.0
 const CLOCK_LABEL_W := 110.0
 const COST_FLOAT_UP := 600.0
 # Babel's throw: look of a single flight (timing and perch are tunables under babel.*).
@@ -199,6 +199,7 @@ var _band_tail: Control
 var _band_home: Vector2 = Vector2.ZERO
 var _band_shown: String = ""
 var _slot_empty_sb: StyleBoxFlat
+var _wires: Control
 var _anim_t: float = 0.0  # idle animation clock for the HUD (stops while paused)
 var _was_calm: bool = false
 var _fly_layer: CanvasLayer
@@ -373,6 +374,7 @@ func _reset_for_level() -> void:
 		_set_clock_colours(false)
 		_clock_label.add_theme_color_override("font_color", CLOCK_TEXT)
 		_clock_label.scale = Vector2.ONE
+		_clock_label.visible = false
 	_launcher.position = to_screen(game_round.origin())
 	_level_label.text = _level_title
 	_fit_title()
@@ -445,7 +447,7 @@ func show_card(card: Control) -> void:
 		_card.queue_free()
 	var bar := _time_bar.get_rect()
 	var share := clampf(_time_bar.value / maxf(0.01, _time_bar.max_value), 0.0, 1.0)
-	card.set("star_from", Vector2(bar.position.x + maxf(TIMER_H * 0.5, bar.size.x * share - TIMER_H * 0.5), bar.get_center().y))
+	card.set("star_from", Vector2(bar.position.x + maxf(bar.size.y * 0.5, bar.size.x * share - bar.size.y * 0.5), bar.get_center().y))
 	card.set("centre", Vector2(view_size.x * 0.5, (FIELD_TOP + view_size.y - FIELD_BOTTOM_UP) * 0.5))
 	card.set("reduced_motion", settings.reduced_motion)
 	card.set("star_sec", _n("flow.starSec"))
@@ -1191,10 +1193,27 @@ func panel_top() -> float:
 	return view_size.y - PANEL_TOP_UP
 
 
+## Mock px per game px (the HUD is laid out at 1080 wide).
+func _mk() -> float:
+	return 1080.0 / MOCK_W
+
+
+## A point of the target mock on screen: its bottom on the screen's bottom, centred across.
+func _m(p: Vector2) -> Vector2:
+	return Vector2((view_size.x - 1080.0) * 0.5 + p.x * _mk(), view_size.y - (MOCK_H - p.y) * _mk())
+
+
+func _m_rect(r: Rect2) -> Rect2:
+	return Rect2(_m(r.position), r.size * _mk())
+
+
+func _hud_tex(file: String) -> Texture2D:
+	return load(HUD_ART + file) as Texture2D
+
+
 ## The slot screen inside the console.
 func _tray_rect() -> Rect2:
-	var top := view_size.y - TRAY_TOP_UP
-	return Rect2(TRAY_X, top, TRAY_R - TRAY_X, TRAY_TOP_UP - TRAY_BOTTOM_UP)
+	return _m_rect(MOCK_SCREEN)
 
 
 ## Both rows use the slot screen's full inner width (the hint bulb sits outside, above the buttons).
@@ -1217,7 +1236,7 @@ func _slot_center(where: String, idx: int, n: int) -> Vector2:
 	var x0 := _tray_rect().position.x + TRAY_PAD
 	x0 += (_row_width(where) - (float(n) * size + float(maxi(n - 1, 0)) * SLOT_GAP)) * 0.5
 	var x := x0 + size * 0.5 + float(idx) * (size + SLOT_GAP)
-	return Vector2(x, view_size.y - (ROW1_UP if where == "active" else ROW2_UP))
+	return Vector2(x, _m(Vector2(0, MOCK_ROW1_Y if where == "active" else MOCK_ROW2_Y)).y)
 
 
 func _ignore(c: Control) -> Control:
@@ -1256,33 +1275,64 @@ func _chip_max_w() -> float:
 	return (view_size.x - 2.0 * SIDE_PAD - 24.0) * 0.5
 
 
-## A round console button centred at `centre`: an invisible Button over a ring and an icon.
-func _icon_button(node_name: String, kind: String, centre: Vector2, d: float, ring: Color, icon_colour: Color) -> Button:
+## A round console button centred on a mock point: an invisible Button over the mock's ring
+## ("Ring", its icon painted out) and the icon ("Icon", the mock's own where it has one).
+func _icon_button(node_name: String, kind: String, mock_y: float, ring: Color) -> Button:
+	var b := _hud_button(node_name)
+	var d := MOCK_BTN_R * 2.0 * _mk()
+	b.size = Vector2(d, d)
+	b.position = _m(Vector2(MOCK_BTN_X, mock_y)) - b.size * 0.5
+	b.pivot_offset = b.size * 0.5
+	# The textures were cut from whole mock pixels round the button (cut_hud.py).
+	var corner := Vector2(floorf(MOCK_BTN_X - MOCK_BTN_R - 2.0), floorf(mock_y - MOCK_BTN_R - 2.0))
+	var tex_pos := (corner - Vector2(MOCK_BTN_X - MOCK_BTN_R, mock_y - MOCK_BTN_R)) * _mk()
+	var art: Control = HudArt.RingArt.new()
+	art.name = "Ring"
+	art.set("tex", _hud_tex("btn_%s.png" % kind))
+	art.set("tex_pos", tex_pos)
+	art.set("ring", ring)
+	art.set("ring_r", MOCK_RING_R * _mk())
+	art.set("calm", settings.reduced_motion)
+	art.size = b.size
+	b.add_child(_ignore(art))
+	var ic: Control = HudArt.Icon.new()
+	ic.name = "Icon"
+	ic.set("art", {kind: _hud_tex("btn_%s_icon.png" % kind)})
+	ic.set("art_pos", tex_pos)
+	ic.set("clip_r", MOCK_ICON_R * _mk())
+	ic.set("colour", Color("ffd2b0") if kind == "pause" else Color("d8faff"))
+	ic.set("kind", kind)
+	ic.size = b.size
+	ic.pivot_offset = ic.size * 0.5
+	b.add_child(_ignore(ic))
+	return b
+
+
+## The hint bulb above the buttons: the mock's bulb, glowing.
+func _hint_bulb() -> Button:
+	var b := _hud_button("HintButton")
+	var r := _m_rect(MOCK_BULB)
+	b.position = r.position
+	b.size = r.size
+	b.pivot_offset = b.size * Vector2(0.5, 0.9)
+	var ic: Control = HudArt.Icon.new()
+	ic.name = "Icon"
+	ic.set("art", {"hint": _hud_tex("bulb.png")})
+	ic.set("halo", (MOCK_BULB_GLASS - MOCK_BULB.position) * _mk())
+	ic.set("halo_r", 24.8 * _mk())
+	ic.set("kind", "hint")
+	ic.size = b.size
+	ic.pivot_offset = b.size * Vector2(0.5, 0.95)  # it wobbles on its screw base
+	b.add_child(_ignore(ic))
+	return b
+
+
+func _hud_button(node_name: String) -> Button:
 	var b := Button.new()
 	b.name = node_name
 	b.focus_mode = Control.FOCUS_NONE
 	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
 		b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
-	b.size = Vector2(d, d)
-	b.position = centre - b.size * 0.5
-	b.pivot_offset = b.size * 0.5
-	if kind != "hint":
-		var art: Control = HudArt.RingArt.new()
-		art.name = "Ring"
-		art.set("ring", ring)
-		art.set("calm", settings.reduced_motion)
-		art.size = b.size
-		b.add_child(_ignore(art))
-	var ic: Control = HudArt.Icon.new()
-	ic.name = "Icon"
-	ic.set("kind", kind)
-	ic.set("colour", icon_colour)
-	ic.size = Vector2(BTN_SIZE, BTN_SIZE)
-	ic.pivot_offset = ic.size * 0.5
-	ic.scale = Vector2.ONE * (d / BTN_SIZE) * (1.25 if kind == "hint" else 0.74)
-	ic.position = (b.size - ic.size * ic.scale) * 0.5
-	_ignore(ic)
-	b.add_child(ic)
 	b.button_down.connect(_squish.bind(b, 0.86))
 	b.button_up.connect(_squish.bind(b, 1.0))
 	_hud.add_child(b)
@@ -1301,22 +1351,14 @@ func _squish(b: Control, to: float) -> void:
 	tw.tween_property(b, "scale", Vector2.ONE * to, 0.08 if to < 1.0 else 0.32).set_trans(Tween.TRANS_BACK if to >= 1.0 else Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
+## The Catcher in the porthole's round screen (where the mock has its astronaut), under the glass.
 func _build_portrait() -> void:
-	var centre := Vector2(PORTRAIT_X, view_size.y - PORTRAIT_UP)
+	var r := MOCK_WINDOW_R * _mk()
 	var holder := Control.new()
 	holder.name = "Portrait"
-	# The art is drawn at HudArt.ART_D and scaled to PORTRAIT_D.
-	holder.size = Vector2(HudArt.ART_D, HudArt.ART_D)
-	holder.scale = Vector2.ONE * (PORTRAIT_D / HudArt.ART_D)
-	holder.position = centre - holder.size * 0.5 * holder.scale
+	holder.size = Vector2(r, r) * 2.0
+	holder.position = _m(MOCK_PORT) - holder.size * 0.5
 	_ignore(holder)
-	var art: Control = HudArt.PortraitArt.new()
-	art.name = "PortraitArt"
-	art.set("colour", tether_colour)
-	art.set("calm", settings.reduced_motion)
-	art.size = holder.size
-	_ignore(art)
-	holder.add_child(art)
 	var path := "res://brand/characters/%s.png" % character_id
 	if ResourceLoader.exists(path):
 		var bust := TextureRect.new()
@@ -1324,16 +1366,20 @@ func _build_portrait() -> void:
 		bust.texture = load(path)
 		bust.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bust.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		bust.size = Vector2(HudArt.DISC_R * 2.0, HudArt.DISC_R * 2.0)
-		bust.position = (holder.size - bust.size) * 0.5
+		bust.size = holder.size
 		bust.pivot_offset = bust.size * Vector2(0.5, 0.9)
 		bust.material = HudArt.clip_material()
 		_ignore(bust)
 		holder.add_child(bust)
 		_bust = bust
+	var glass: Control = HudArt.PortholeGlass.new()
+	glass.name = "PortraitArt"
+	glass.set("calm", settings.reduced_motion)
+	glass.size = holder.size
+	holder.add_child(_ignore(glass))
 	_hud.add_child(holder)
 	_portrait = holder
-	_portrait_art = art
+	_portrait_art = glass
 
 
 func _build_hud() -> void:
@@ -1349,15 +1395,16 @@ func _build_hud() -> void:
 	night.position = Vector2(0.0, h - HudArt.PANEL_H)
 	_hud.add_child(_ignore(night))
 	_night = night
-	# The console tray (target mock): porthole at its left end, the slot screen in the middle.
+	# The console tray, the mock's own art: porthole at its left end, the slot screen in the middle.
 	var con: Control = HudArt.Console.new()
 	con.name = "Console"
-	con.size = Vector2(w, h)
-	con.set("body", Rect2(CONSOLE_X, h - CONSOLE_TOP_UP, CONSOLE_R - CONSOLE_X, CONSOLE_TOP_UP - CONSOLE_BOTTOM_UP))
-	con.set("screen", _tray_rect())
-	con.set("porthole", Vector2(PORTRAIT_X, h - PORTRAIT_UP))
-	con.set("porthole_r", HudArt.RIM_R * PORTRAIT_D / HudArt.ART_D)
-	con.set("accent", NEON)
+	var ctex := _hud_tex("console.png")
+	con.set("tex", ctex)
+	con.set("k", _mk())
+	con.set("origin", MOCK_CONSOLE)
+	con.position = _m(MOCK_CONSOLE)
+	con.size = ctex.get_size()
+	con.set("screen", Rect2(_tray_rect().position - con.position, _tray_rect().size))
 	con.set("calm", settings.reduced_motion)
 	_hud.add_child(_ignore(con))
 	_console = con
@@ -1448,15 +1495,24 @@ func _build_hud() -> void:
 	_preview_row = Control.new()
 	_preview_row.name = "PreviewSlots"
 	_hud.add_child(_ignore(_preview_row))
-	_slot_empty_sb = Ui.box(SLOT_FILL, 16, NEON, 3)
-	_slot_empty_sb.shadow_color = Color(NEON.r, NEON.g, NEON.b, 0.3)
-	_slot_empty_sb.shadow_size = 8
+	# The wires sit under the slots: amber links along the active word, cyan wires down to the next.
+	_wires = HudArt.SlotWires.new()
+	_wires.name = "SlotWires"
+	_wires.set("top_row", _active_row)
+	_wires.set("bottom_row", _preview_row)
+	_wires.set("calm", settings.reduced_motion)
+	_wires.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_hud.add_child(_ignore(_wires))
+	_hud.move_child(_wires, _active_row.get_index())
+	# The mock's empty slot: a teal well with a bright cyan rim and a soft glow.
+	_slot_empty_sb = Ui.box(SLOT_EMPTY, 12, SLOT_RIM, 4)
+	_slot_empty_sb.shadow_color = Color(SLOT_RIM.r, SLOT_RIM.g, SLOT_RIM.b, 0.35)
+	_slot_empty_sb.shadow_size = 9
 	# Right column (target mock): the hint bulb, then Pause, Sound and Settings stacked.
-	var bx := w - BTN_X_IN - BTN_SIZE * 0.5
-	_hint_button = _icon_button("HintButton", "hint", Vector2(bx, h - HINT_UP), HINT_D, NEON, Color.WHITE)
-	_pause_button = _icon_button("PauseButton", "pause", Vector2(bx, h - PAUSE_UP), BTN_SIZE, Color("ff9a4a"), Color("ffe2c8"))
-	_sound_button = _icon_button("SoundButton", "sound", Vector2(bx, h - SOUND_UP), BTN_SIZE, NEON, Color("d8faff"))
-	_settings_button = _icon_button("SettingsButton", "settings", Vector2(bx, h - SETTINGS_UP), BTN_SIZE, NEON, Color("d8faff"))
+	_hint_button = _hint_bulb()
+	_pause_button = _icon_button("PauseButton", "pause", MOCK_PAUSE_Y, Color("ff9a4a"))
+	_sound_button = _icon_button("SoundButton", "sound", MOCK_SOUND_Y, NEON)
+	_settings_button = _icon_button("SettingsButton", "settings", MOCK_SETTINGS_Y, NEON)
 	_pause_icon = _pause_button.get_node("Icon")
 	_sound_icon = _sound_button.get_node("Icon")
 	_hint_icon = _hint_button.get_node("Icon")
@@ -1465,20 +1521,17 @@ func _build_hud() -> void:
 	_sound_button.pressed.connect(toggle_sound)
 	_settings_button.pressed.connect(func() -> void: settings_requested.emit())
 	_sync_sound_icon()
-	# The clock bar under the console: coral liquid in a dark frame with a neon rim.
+	# The clock: liquid in the console art's bar channel (the frame is in the art).
+	var ch := _m_rect(MOCK_CHANNEL)
 	_time_bar = ProgressBar.new()
 	_time_bar.name = "TimeBar"
-	var timer_right := CONSOLE_R - 18.0
-	_time_bar.position = Vector2(TIMER_X, h - BOTTOM_UP - TIMER_H * 0.5)
-	_time_bar.custom_minimum_size = Vector2(0, TIMER_H)
-	_time_bar.size = Vector2(timer_right - TIMER_X, TIMER_H)
+	_time_bar.position = ch.position
+	_time_bar.custom_minimum_size = Vector2(0, ch.size.y)
+	_time_bar.size = ch.size
 	_time_bar.show_percentage = false
 	_time_bar.min_value = 0.0
 	_time_bar.max_value = _n("burst.seconds")
-	var frame := Ui.box(Color("0b1430"), int(TIMER_H * 0.5), Color(NEON.r, NEON.g, NEON.b, 0.7), 3)
-	frame.shadow_color = Color(NEON.r, NEON.g, NEON.b, 0.18)
-	frame.shadow_size = 8
-	_time_bar.add_theme_stylebox_override("background", frame)
+	_time_bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
 	_time_bar.add_theme_stylebox_override("fill", StyleBoxEmpty.new())
 	_hud.add_child(_ignore(_time_bar))
 	_liquid = HudArt.Liquid.new()
@@ -1487,12 +1540,14 @@ func _build_hud() -> void:
 	_liquid.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_time_bar.add_child(_ignore(_liquid))
 	_set_clock_colours(false)
-	_clock_label = Ui.label("", 32, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT)
+	# The mock shows no number on the clock; the seconds appear, pulsing, only when time runs low.
+	_clock_label = Ui.label("", 34, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT)
 	_clock_label.name = "ClockLabel"
-	_clock_label.position = Vector2(timer_right - 24.0 - CLOCK_LABEL_W, h - BOTTOM_UP - 24.0)
+	_clock_label.position = Vector2(ch.end.x - 16.0 - CLOCK_LABEL_W, ch.get_center().y - 24.0)
 	_clock_label.size = Vector2(CLOCK_LABEL_W, 48)
 	_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_clock_label.pivot_offset = Vector2(CLOCK_LABEL_W, 24)
+	_clock_label.visible = false
 	_hud.add_child(_ignore(_clock_label))
 	_coach = Coach.new()
 	_coach.setup(_tun, settings.reduced_motion, view_size)
@@ -1641,7 +1696,20 @@ func _rebuild_row(row: Control, where: String, slots: Array[Dictionary]) -> void
 		p.size = Vector2(size, size)
 		p.pivot_offset = p.size * 0.5
 		p.position = _slot_center(where, i, n) - p.size * 0.5
-		var l := Ui.label("", int(size * 0.6), TILE_INK)
+		# A filled slot is the mock's tile: a dark line round a cream face with a tan lip.
+		var r := int(size * 0.13)
+		p.set_meta("tile_sb", Ui.box(TILE_INK_LINE, r + 2, TILE_INK_LINE, 0))
+		var face := Panel.new()
+		face.name = "Face"
+		var line := maxf(2.0, size * 0.045)
+		face.position = Vector2(line, line)
+		face.size = p.size - Vector2(line, line) * 2.0
+		var fsb := Ui.box(TILE_CREAM, r, TILE_LIP, 0)
+		fsb.border_width_bottom = maxi(3, int(size * 0.075))
+		face.add_theme_stylebox_override("panel", fsb)
+		face.visible = false
+		p.add_child(_ignore(face))
+		var l := Ui.label("", int(size * 0.62), TILE_INK)
 		l.name = "Glyph"
 		l.size = p.size
 		l.add_theme_constant_override("outline_size", 0)
@@ -1649,15 +1717,9 @@ func _rebuild_row(row: Control, where: String, slots: Array[Dictionary]) -> void
 		row.add_child(p)
 
 
-func _style_slot(p: Panel, filled: bool, where: String) -> void:
-	var r := int(p.size.x * 0.24)
-	if filled:
-		# A cream tile with a darker lip along the bottom, so it reads as a raised key.
-		var sb := Ui.box(TILE_CREAM, r, TILE_LIP, 0)
-		sb.border_width_bottom = maxi(4, int(p.size.y * 0.08))
-		p.add_theme_stylebox_override("panel", sb)
-	else:
-		p.add_theme_stylebox_override("panel", _slot_empty_sb)
+func _style_slot(p: Panel, filled: bool, _where: String) -> void:
+	p.add_theme_stylebox_override("panel", p.get_meta("tile_sb") if filled else _slot_empty_sb)
+	(p.get_node("Face") as Control).visible = filled
 
 
 ## Share of the level's words restored so far: colour and city lights come back with it.
@@ -1690,7 +1752,8 @@ func _update_hud() -> void:
 	if low != _low:
 		_low = low
 		_set_clock_colours(low)
-		_clock_label.add_theme_color_override("font_color", HudArt.CRIMSON if low else CLOCK_TEXT)
+		_clock_label.add_theme_color_override("font_color", HudArt.CRIMSON_LIGHT if low else CLOCK_TEXT)
+		_clock_label.visible = low
 		if not low:
 			_clock_label.scale = Vector2.ONE
 	var akey := "%d:%s" % [game_round.word_index, "".join(game_round.active.map(func(s: Dictionary) -> String: return s["ch"]))]
@@ -1772,11 +1835,11 @@ func _tick_hud(delta: float) -> void:
 	# Console idle life: the porthole arcs drift, the Catcher breathes, lights blink, the liquid sloshes.
 	# Reduced motion can change mid-level (Settings), so the arts read it every frame.
 	var redraw := not calm or calm != _was_calm
-	for n in [_console, _portrait_art, _liquid]:
+	for n in [_console, _portrait_art, _liquid, _wires]:
 		if n != null:
 			n.set("t", t)
 			n.set("calm", calm)
-			if redraw or n == _liquid:
+			if redraw or n == _liquid or n == _wires:
 				n.queue_redraw()
 	if _bust != null:
 		var br := 1.0 if calm else 1.0 + 0.025 * sin(t * 2.1)
@@ -1828,8 +1891,8 @@ func _tick_hud(delta: float) -> void:
 	# Empty slots breathe a soft cyan glow.
 	if _slot_empty_sb != null:
 		var g := 0.7 if calm else 0.55 + 0.45 * (0.5 + 0.5 * sin(t * 2.0))
-		_slot_empty_sb.border_color = Color(NEON.r, NEON.g, NEON.b, 0.55 + 0.4 * g)
-		_slot_empty_sb.shadow_color = Color(NEON.r, NEON.g, NEON.b, 0.32 * g)
+		_slot_empty_sb.border_color = Color(SLOT_RIM.r, SLOT_RIM.g, SLOT_RIM.b, 0.8 + 0.2 * g)
+		_slot_empty_sb.shadow_color = Color(SLOT_RIM.r, SLOT_RIM.g, SLOT_RIM.b, 0.38 * g)
 	_pulse_t += delta
 	var k := 1.0
 	if _pulse_t < PULSE_SEC and not calm:
