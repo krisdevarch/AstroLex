@@ -27,6 +27,10 @@ var blocklist: Array = []
 var _ok: Button
 var _warn: Label
 var _input: LineEdit
+## Reduced motion: the portraits hold still.
+var reduced_motion: bool = false
+var _t: float = 0.0
+var _portraits: Dictionary = {}  # character id -> [holder, art, rest y]
 
 
 func _ready() -> void:
@@ -153,9 +157,11 @@ func _card(c: Dictionary, group: ButtonGroup) -> Button:
 	b.add_child(portrait)
 	var art: Control = HudArt.PortraitArt.new()
 	art.set("colour", col)
+	art.set("calm", reduced_motion)
 	art.size = portrait.size
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait.add_child(art)
+	_portraits[str(c["id"])] = [portrait, art, portrait.position.y]
 	var path := "res://brand/characters/%s.png" % c["id"]
 	if ResourceLoader.exists(path):
 		var bust := TextureRect.new()
@@ -209,3 +215,16 @@ func _card(c: Dictionary, group: ButtonGroup) -> Button:
 		if ch is Control:
 			(ch as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return b
+
+
+## The porthole arcs drift on every card; the picked Catcher bobs gently in their window.
+func _process(delta: float) -> void:
+	if reduced_motion:
+		return
+	_t += delta
+	for id: String in _portraits:
+		var p: Array = _portraits[id]
+		(p[1] as Control).set("t", _t + float(id.hash() % 7))
+		(p[1] as Control).queue_redraw()
+		var holder := p[0] as Control
+		holder.position.y = float(p[2]) + (sin(_t * 2.2) * 6.0 if id == selected else 0.0)

@@ -27,8 +27,7 @@ const JAM_PULSE_HZ := 1.6
 var ch: String = ""
 var plane: int = 0
 var is_back: bool = false
-var is_item: bool = false
-var item: String = ""
+var is_star: bool = false
 var treatment: String = DEFAULT_LOOK
 var reduced_motion: bool = false
 var size_px: float = 100.0
@@ -105,6 +104,8 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_mat.set_shader_parameter("rim_bend", float(_tun.get("glass.rimBend", 0.0)))
 	_mat.set_shader_parameter("dark", float(_tun.get("glass.dark", 0.0)))
 	_mat.set_shader_parameter("film", float(_tun.get("glass.film", 0.1)))
+	_mat.set_shader_parameter("film_sat", float(_tun.get("glass.filmSat", 0.6)))
+	_mat.set_shader_parameter("film_width", float(_tun.get("glass.filmWidth", 13.0)))
 	_mat.set_shader_parameter("gloss", float(_tun.get("glass.gloss", 0.0)))
 	shadow.modulate.a = 0.45  # clear glass casts a faint shadow
 	_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
@@ -145,7 +146,7 @@ func set_jam(on: bool, decoy: bool) -> void:
 
 
 func _refresh_ring() -> void:
-	if is_item or (kind == "" and jam_colour == 0):
+	if is_star or (kind == "" and jam_colour == 0):
 		if _ring != null:
 			_ring.queue_free()
 			_ring = null
@@ -212,32 +213,37 @@ func _shadow_corner() -> float:
 	return TileTextures.GLASS_CORNER
 
 
-## Background items: every sticker cut from the owner's sheet (docs/design/space-items-sheet.jpg).
-## They ride the back plane, drifting behind the letters.
-const ITEMS := ["teacup", "bread", "spoon", "key", "desk_lamp", "door", "envelope", "chair", "tv", "satellite", "solar_panel", "gears", "cable_tangle", "helmet", "power_cable", "battery", "wrench", "gear_tag", "backpack", "glove", "camera", "thermos", "asteroid_purple", "asteroid_teal", "asteroid_brown", "asteroid_small", "comet_small", "comet_mid", "comet_big", "rocket", "sputnik"]
-const ITEM_ART := "res://art/space/%s.png"
-const ITEM_FILL := 0.95  # the item's longest side as a share of the bubble's diameter
-const ITEM_TUMBLE := 0.25  # radians per second, alternating direction
-const ITEM_FLASH := Color(1.0, 0.35, 0.3)
+## Back plane (owner, 19 Oct 2026: "remove the objects in the background, just use some star
+## animation that won't clutter the screen"): a small soft star that twinkles as it drifts slowly
+## behind the letters. It cannot be tapped.
+const STAR_FILL := 0.5  # the glow's diameter as a share of the tile's size
+const STAR_TINTS := [Color("ffffff"), Color("dff1ff"), Color("fff3d6"), Color("e8dcff")]
+const STAR_FLASH := Color(1.0, 0.35, 0.3)
 
 
-## Shows this tile as a sticker item: no bubble, no letter, no shadow, lightly tinted toward the night.
-## It tumbles slowly unless reduced motion is on.
-func set_item(art: String) -> void:
-	is_item = true
-	item = art
+func set_back(alpha: float) -> void:
+	is_star = true
+	is_back = true
 	glyph.visible = false
 	shadow.visible = false
 	body.material = null
-	body.texture = load(ITEM_ART % art)
-	var k := size_px * float(_tun.get("glass.bubbleScale", 1.0)) * ITEM_FILL / maxf(body.texture.get_width(), body.texture.get_height())
+	body.texture = TileTextures.glint()
+	var k := size_px * STAR_FILL / float(TileTextures.SIZE)
 	body.scale = Vector2(k, k)
 	_body_scale = body.scale
-	body.rotation = (fposmod(_phase, TAU) - PI) * 0.2
+	body.rotation = fposmod(_phase, TAU)
 	current_tilt = Vector2.ZERO
 	_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
-	# Unlit like the glass, so the ambient tint does not dim it.
-	body.self_modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0) * Color(0.82, 0.86, 0.95)
+	body.self_modulate = STAR_TINTS[int(_phase * 10.0) % STAR_TINTS.size()]
+	modulate = Color(1.0, 1.0, 1.0, alpha)
+
+
+## How bright a back star is at a time (0..1): a slow, soft twinkle, each on its own beat.
+func twinkle_at(time: float) -> float:
+	if reduced_motion:
+		return 0.8
+	var a := 0.5 + 0.5 * sin(time * (1.3 + fposmod(_phase, 1.0)) + _phase * 3.0)
+	return 0.45 + 0.55 * a * a
 
 
 ## Mid plane (2.5D): a letter one layer back, smaller (plane.midScale, applied by the caller) and a
@@ -248,14 +254,6 @@ func set_depth(dim: float) -> void:
 	glyph.self_modulate = Color(k, k * 1.02, minf(1.0, k * 1.12), 1.0)
 
 
-## Back plane: one of the owner's sticker items drifting slowly behind the letters (owner, 13 Oct
-## 2026: "keep the decoys in the background moving"). It cannot be tapped.
-func set_back(alpha: float, art: String) -> void:
-	set_item(art)
-	is_back = true
-	modulate = Color(1.0, 1.0, 1.0, alpha)
-
-
 ## Places the tile and tilts it toward the lamp, plus a slow sway. nx is the tile's x in 0..1.
 func place(screen_pos: Vector2, time: float, nx: float) -> void:
 	if anim != "":
@@ -264,9 +262,12 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 	position = screen_pos
 	_tick_ring(time)
 	var tilt := Vector2.ZERO
-	if is_item:
+	if is_star:
+		var tw := twinkle_at(time)
+		body.scale = _body_scale * (0.7 + 0.4 * tw)
+		body.self_modulate.a = tw
 		if not reduced_motion:
-			body.rotation = (fposmod(_phase, TAU) - PI) * 0.2 + time * ITEM_TUMBLE * (1.0 if int(_phase * 10.0) % 2 == 0 else -1.0)
+			body.rotation = fposmod(_phase, TAU) + time * 0.15
 		return
 	if treatment == "bubble":
 		# A sphere looks the same from any angle, so no tilt: the bubble wobbles instead, and
@@ -448,8 +449,8 @@ func tick(delta: float) -> bool:
 	if _flash_t > 0.0:
 		_flash_t = maxf(0.0, _flash_t - delta)
 		_mat.set_shader_parameter("flash", _flash_t / _flash_dur)
-		if is_item:
-			var fc := Color.WHITE.lerp(ITEM_FLASH, _flash_t / _flash_dur)
+		if is_star:
+			var fc := Color.WHITE.lerp(STAR_FLASH, _flash_t / _flash_dur)
 			modulate = Color(fc.r, fc.g, fc.b, modulate.a)
 	if _grow_t > 0.0:
 		if anim != "":

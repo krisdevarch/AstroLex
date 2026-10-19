@@ -81,6 +81,8 @@
     "glass.rimBend",
     "glass.dark",
     "glass.film",
+    "glass.filmSat",
+    "glass.filmWidth",
     "glass.gloss",
     "fx.flyToSlotSec",
     "fx.dissolveSec",
@@ -544,6 +546,18 @@
       "minimum": 0,
       "maximum": 1,
       "description": "bubble look: strength of the iridescent soap-film rim"
+    },
+    "glass.filmSat": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "bubble look: how saturated the soap-film rim's rainbow is (0 pastel white, 1 full rainbow)"
+    },
+    "glass.filmWidth": {
+      "type": "number",
+      "minimum": 4,
+      "maximum": 40,
+      "description": "bubble look: width of the soap-film rim in tile texture px (128 across)"
     },
     "glass.gloss": {
       "type": "number",

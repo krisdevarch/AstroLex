@@ -1,11 +1,12 @@
 extends Node2D
 ## The sky behind the play field: the owner's painted Low Orbit backdrop (19 Oct 2026): a purple
-## night with the Milky Way, a crescent moon, layered clouds, a tiny floating chair and Earth's tilted
-## night side with its city lights and an orange dawn glow at the bottom, lined up so the sky fills the
-## screen and Earth's rim runs just above the HUD's curve on the left (`horizon_y`). Over it, a few twinkling
-## sticker sparkles and now and then a shooting star (owner: "make the stars a bit more interesting"). The owner's sticker
-## items are the decoys, drawn by tile_view.gd. Colour story: the scene starts drained and its
-## colour comes back as words are restored (`restore` 0..1).
+## night with the Milky Way, a crescent moon, layered clouds and Earth's tilted night side with its
+## city lights and an orange dawn glow at the bottom (the floating chair was painted out on 19 Oct),
+## lined up so the sky fills the screen and Earth's rim runs just above the HUD's curve on the left
+## (`horizon_y`). Over it, a quiet star layer (owner, 19 Oct 2026: "just use some star animation that
+## won't clutter the screen"): tiny stars that fade in and out, a few soft glints, and now and then
+## a faint shooting star. Colour story: the scene starts drained and its colour comes back as words
+## are restored (`restore` 0..1).
 
 
 const GREY_SAT := 0.8  # saturation before any word is restored
@@ -27,12 +28,13 @@ const SKIES := {
 	"act4_core": {"tex": "res://art/backdrop/act4_core.jpg", "horizon": 1330.0,
 		"tints": [Color("b8f4ff"), Color("ffffff"), Color("ffb0e0"), Color("d0d4ff")]},
 }
-const SPARKLES := 12
+const TileTextures := preload("res://scenes/tile_textures.gd")
+const SPARKLES := 7  # soft glints with rays
+const DOTS := 44  # tiny twinkling stars
 const SPARKLE_TINTS := [Color("ffffff"), Color("fff6d8"), Color("dceeff"), Color("ffffff"), Color("cfe6ff"), Color("fff6d8")]
-const INK := Color(0.04, 0.06, 0.18)
-const SHOOT_EVERY := 5.0  # seconds between shooting stars, give or take
-const SHOOT_SPEED := 1500.0  # px/s at 1080 wide
-const SHOOT_TAIL := 260.0
+const SHOOT_EVERY := 9.0  # seconds between shooting stars, give or take
+const SHOOT_SPEED := 1300.0  # px/s at 1080 wide
+const SHOOT_TAIL := 220.0
 const SAT_SHADER := "shader_type canvas_item;\nuniform float sat = 1.0;\nvoid fragment() {\n\tvec4 c = COLOR;  // already the texture times the modulate\n\tfloat g = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n\tCOLOR = vec4(mix(vec3(g), c.rgb, sat), c.a);\n}\n"
 
 ## The act whose sky to show (set before _ready, or call set_act); unknown acts show Low Orbit.
@@ -51,10 +53,11 @@ var _mat: ShaderMaterial
 var _live: Node2D
 var _sky: Sprite2D
 var _sparkles: Array = []  # [pos, size, phase, tint, spin]
+var _dots: Array = []  # [pos, radius, phase, speed]
 var _rng := RandomNumberGenerator.new()
 ## The shooting star now crossing ({pos, vel}), or empty.
 var _shoot: Dictionary = {}
-var _shoot_wait: float = 2.5
+var _shoot_wait: float = 4.0
 
 
 func _ready() -> void:
@@ -77,9 +80,11 @@ func _ready() -> void:
 	var k := view_size.x / 1080.0
 	for i in SPARKLES:
 		var p := Vector2(_rng.randf_range(0.03, 0.97) * view_size.x, _rng.randf_range(0.02, 0.62) * view_size.y)
-		var big := i % 4 == 0
-		var sz := (_rng.randf_range(12.0, 16.0) if big else _rng.randf_range(6.0, 9.0)) * k
-		_sparkles.append([p, sz, _rng.randf() * TAU, Color.WHITE, _rng.randf_range(-0.4, 0.4)])
+		var sz := _rng.randf_range(26.0, 40.0) * k
+		_sparkles.append([p, sz, _rng.randf() * TAU, Color.WHITE, _rng.randf_range(-0.25, 0.25)])
+	for i in DOTS:
+		var p := Vector2(_rng.randf() * view_size.x, _rng.randf_range(0.0, 0.7) * view_size.y)
+		_dots.append([p, _rng.randf_range(1.6, 3.4) * k, _rng.randf() * TAU, _rng.randf_range(0.6, 1.8)])
 	set_act(act)
 	_apply_sat()
 
@@ -165,37 +170,33 @@ class Live extends Node2D:
 		var bg := owner_bg
 		var calm: bool = bg.reduced_motion
 		var t: float = bg._t
+		# Tiny stars: each fades in and out on its own slow beat.
+		for d in bg._dots:
+			var a := 0.7 if calm else 0.5 + 0.5 * sin(t * float(d[3]) + float(d[2]))
+			var r := float(d[1])
+			draw_circle(d[0], r * 2.4, Color(0.85, 0.92, 1.0, 0.08 * a))
+			draw_circle(d[0], r * (0.7 + 0.3 * a), Color(1.0, 1.0, 1.0, 0.25 + 0.6 * a * a))
+		# A few soft glints that swell and turn slowly.
+		var tex: Texture2D = TileTextures.glint()
 		for sp in bg._sparkles:
 			var ph := float(sp[2])
-			var k := 1.0 if calm else 0.7 + 0.3 * sin(t * 1.7 + ph)
-			var turn := 0.0 if calm else t * float(sp[4])
-			_sparkle(sp[0], float(sp[1]) * k, ph * 0.2 + turn, sp[3])
+			var k := 0.85 if calm else 0.55 + 0.45 * pow(0.5 + 0.5 * sin(t * 0.9 + ph), 2.0)
+			var s := float(sp[1]) * k
+			draw_set_transform(sp[0], ph * 0.2 + (0.0 if calm else t * float(sp[4])), Vector2.ONE)
+			var c: Color = sp[3]
+			draw_texture_rect(tex, Rect2(-s, -s, s * 2.0, s * 2.0), false, Color(c.r, c.g, c.b, 0.35 + 0.55 * k))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		if not bg._shoot.is_empty():
 			_shooting_star(bg._shoot["pos"], (bg._shoot["vel"] as Vector2).normalized(), float(bg._shoot["life"]))
 
-	## A sticker sparkle as on the owner's sheet: a four-point star with concave sides, a dark ink
-	## outline and a white glint.
-	func _sparkle(p: Vector2, s: float, rot: float, c: Color) -> void:
-		draw_colored_polygon(_star(p, s + 2.0, rot), INK)
-		draw_colored_polygon(_star(p, s, rot), c)
-		draw_circle(p + Vector2(-s * 0.12, -s * 0.16), maxf(1.2, s * 0.1), Color(1, 1, 1, 0.9))
-
-	func _star(p: Vector2, s: float, rot: float) -> PackedVector2Array:
-		var pts := PackedVector2Array()
-		var n := 32
-		for i in n:
-			var a := TAU * float(i) / float(n)
-			var r := s * (0.38 + 0.62 * pow(absf(cos(2.0 * a)), 2.2))
-			pts.append(p + Vector2.from_angle(a + rot) * r)
-		return pts
-
-	## A shooting star: a fading gold-to-clear tail behind a small bright sparkle.
+	## A faint shooting star: a thin pale tail fading behind a small bright head.
 	func _shooting_star(head: Vector2, dir: Vector2, life: float) -> void:
 		var fade := clampf(life * 4.0, 0.0, 1.0)
 		var segs := 12
 		for i in segs:
 			var u0 := float(i) / float(segs)
 			var u1 := float(i + 1) / float(segs)
-			var a := Color(1.0, 0.92, 0.6, (1.0 - u0) * 0.8 * fade)
-			draw_line(head - dir * SHOOT_TAIL * u0, head - dir * SHOOT_TAIL * u1, a, lerpf(7.0, 1.5, u0), true)
-		_sparkle(head, 14.0, life * 3.0, Color("fff6d8"))
+			var a := Color(0.92, 0.96, 1.0, (1.0 - u0) * 0.55 * fade)
+			draw_line(head - dir * SHOOT_TAIL * u0, head - dir * SHOOT_TAIL * u1, a, lerpf(4.0, 1.0, u0), true)
+		draw_circle(head, 7.0, Color(1, 1, 1, 0.25 * fade))
+		draw_circle(head, 3.2, Color(1, 1, 1, 0.95 * fade))
