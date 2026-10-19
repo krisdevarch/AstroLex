@@ -1,11 +1,10 @@
-"""Paints the 12 placeholder stills of the Prologue (p1-p7) and the Act III flashback (f1-f5)
-(WP-F.7) into game/art/stills/. PIL only. Grey-toned silhouettes drawn from the captions in
-data/story/prologue_beats.json and flashback.json; human art replaces them.
+"""Paints the 5 placeholder stills of the Act III flashback (f1-f5) (WP-F.7) into game/art/stills/.
+PIL only. Grey-toned silhouettes drawn from the captions in data/story/flashback.json; human art
+replaces them.
 
     python3 scripts/art/make_stills.py
 
-p7 carries a faint tint (cold blue, one amber glint) so the saturation shader has something to
-bring back when the word water appears. Deterministic.
+Deterministic.
 """
 import json
 from pathlib import Path
@@ -52,101 +51,6 @@ def glow(img, box, col, r, ellipse=True):
     (dm.ellipse if ellipse else dm.rectangle)(box, fill=255)
     m = m.filter(ImageFilter.GaussianBlur(r))
     img.paste(Image.new("RGB", (W, H), col), (0, 0), m)
-
-
-def earth(d, cx, cy, r, col):
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=col)
-
-
-def p1():
-    img = canvas(G(26), G(44))
-    d = ImageDraw.Draw(img)
-    d.rectangle([140, 380, 940, 1300], fill=G(12))  # open window onto the night
-    earth(d, 540, 1100, 420, G(58))
-    for i in range(30):
-        d.point([(200 + i * 25) % 900 + 150, 420 + (i * 83) % 300], fill=G(170))
-    d.rectangle([0, 1300, W, H], fill=G(22))
-    person(d, 540, 1500, 700, G(8))
-    d.line([(600, 900), (760, 840)], fill=G(70), width=5)  # the thin line of breath
-    return img
-
-
-def p2():
-    img = canvas(G(30), G(20))
-    d = ImageDraw.Draw(img)
-    d.rectangle([0, 1100, W, H], fill=G(14))  # sill
-    d.rounded_rectangle([300, 780, 780, 1100], 40, fill=G(52))  # radio
-    d.ellipse([360, 840, 560, 1040], fill=G(30))
-    d.rectangle([620, 840, 730, 880], fill=G(26))
-    d.line([(700, 780), (860, 420)], fill=G(60), width=10)  # antenna
-    d.ellipse([520, 1000, 800, 1160], fill=G(10))  # resting hand
-    return img
-
-
-def p3():
-    img = canvas(G(70), G(40))
-    d = ImageDraw.Draw(img)
-    for x in range(0, W, 220):
-        d.rectangle([x, 500 + (x % 3) * 60, x + 180, 1400], fill=G(46))
-    d.rectangle([0, 1400, W, H], fill=G(28))
-    person(d, 360, 1700, 800, G(10), crouch=True)
-    person(d, 720, 1700, 520, G(10))
-    d.line([(430, 1180), (620, 1150)], fill=G(220), width=14)  # the pointing hand
-    return img
-
-
-def p4():
-    img = canvas(G(80), G(44))
-    d = ImageDraw.Draw(img)
-    d.polygon([(0, 700), (W, 700), (W, H), (0, H)], fill=G(36))
-    d.polygon([(380, 700), (700, 700), (1000, H), (80, H)], fill=G(30))
-    for i, x in enumerate((140, 250, 380, 480, 620, 720, 840, 940)):
-        person(d, x, 1150 + i % 3 * 120, 330 + i % 3 * 90, G(14))
-    d.ellipse([480, 1130, 540, 1190], fill=G(245))  # only the pointing hand is white
-    return img
-
-
-def p5():
-    img = canvas(G(22), G(30))
-    d = ImageDraw.Draw(img)
-    d.ellipse([160, 340, 920, 1100], fill=G(60), outline=G(90), width=18)  # round window
-    earth(d, 540, 900, 300, G(46))
-    person(d, 330, 1500, 820, G(8))
-    d.line([(400, 800), (480, 700)], fill=G(8), width=24)  # palm on the glass
-    for i in range(7):  # stacked cards
-        d.rectangle([620, 1450 - i * 22, 940, 1470 - i * 22], fill=G(100 + i * 6))
-    d.ellipse([760, 1080, 840, 1120], fill=G(18))  # lamp, off
-    return img
-
-
-def tile(img, cx, cy, s, rot=0.0):
-    t = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    dt = ImageDraw.Draw(t)
-    dt.rounded_rectangle([0, 0, s - 1, s - 1], s // 6, fill=G(190))
-    dt.rounded_rectangle([s // 12, s // 12, s - s // 12, s - s // 12], s // 8, fill=G(230))
-    t = t.rotate(rot, expand=True, resample=Image.BICUBIC)
-    glow(img, [cx - s, cy - s, cx + s, cy + s], G(70), s * 0.6)
-    img.paste(t, (int(cx - t.width / 2), int(cy - t.height / 2)), t)
-
-
-def stars(d, col):
-    for i in range(60):
-        d.point([((i * 197) % W, (i * 331) % H)], fill=col)
-
-
-def p6():
-    img = canvas(G(4), G(10))
-    stars(ImageDraw.Draw(img), G(120))
-    tile(img, 190, 900, 190, 18)
-    return img
-
-
-def p7():
-    img = canvas((8, 12, 22), (18, 22, 34))
-    stars(ImageDraw.Draw(img), (150, 160, 200))
-    glow(img, [200, 560, 880, 1340], (60, 80, 140), 160)
-    glow(img, [500, 140, 580, 200], (230, 160, 60), 30)
-    return img
 
 
 def f1():
@@ -208,11 +112,11 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     root = OUT.parents[2]
     timing = {}  # game/data/stills.json: ids and seconds only (captions are for the artist)
-    for key, src in (("prologue", "prologue_beats.json"), ("flashback", "flashback.json")):
+    for key, src in (("flashback", "flashback.json"),):
         beats = json.loads((root / "data" / "story" / src).read_text())["stills"]
         timing[key] = [{"id": b["id"], "seconds": b["seconds"]} for b in beats]
     (root / "game" / "data" / "stills.json").write_text(json.dumps(timing, indent=1) + "\n")
-    for name in ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "f1", "f2", "f3", "f4", "f5"]:
+    for name in ["f1", "f2", "f3", "f4", "f5"]:
         img = lift(globals()[name]()).filter(ImageFilter.GaussianBlur(1.2))
         img.save(OUT / f"{name}.jpg", quality=72, optimize=True)
         print(name, (OUT / f"{name}.jpg").stat().st_size)

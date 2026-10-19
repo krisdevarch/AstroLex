@@ -2,6 +2,8 @@
 
 status: approved
 
+**Dropped (O-30, 19 Oct 2026).** The owner removed the Prologue from the game: "not needed for this kind of game". Kept for reference only; nothing in the game reads this file.
+
 Source: plan v3 §1.5 (Prologue row), Design Direction §3 (wordless Prologue), §8 (Hades: signature colours), §9 (colour story).
 Rule: NO text in any still. No captions, no subtitles, no signs, no lips-synced speech bubbles. The only words in the whole sequence are the HUD slot letters and the word WATER, in play.
 Palette (grey, until the first letter is caught): #000000 #0D0D0D #36454F #4B0082 #FFFFFF. Colour arrives only with the first caught letter.

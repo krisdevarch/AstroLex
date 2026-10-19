@@ -13,8 +13,6 @@ signal codex_pressed
 ## Change-entry buttons (shown when a save is set).
 signal character_pressed
 signal difficulty_pressed
-## The player asked to see the Prologue again.
-signal prologue_pressed
 ## The player asked for the credits and privacy screen (WP-F.9).
 signal credits_pressed
 
@@ -155,10 +153,6 @@ func _ready() -> void:
 	bench.name = "BenchButton"
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
 	box.add_child(bench)
-	var pro := Ui.link("Replay the Prologue", 32, Vector2(400, 70))
-	pro.name = "PrologueButton"
-	pro.pressed.connect(func() -> void: prologue_pressed.emit())
-	box.add_child(pro)
 	var back := Ui.primary("Done", 52, Vector2(560, 136))
 	back.name = "BackButton"
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

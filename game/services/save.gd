@@ -152,7 +152,7 @@ func player_name() -> String:
 	return str(profile().get("name", ""))
 
 
-## One-time flags ("prologue_seen", "flashback_seen"); progress reset keeps them.
+## One-time flags (such as "flashback_seen"); progress reset keeps them.
 func flag(key: String) -> bool:
 	var f: Variant = _d.get("flags")
 	return f is Dictionary and (f as Dictionary).get(key, false) == true
