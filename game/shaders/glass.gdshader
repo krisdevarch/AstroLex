@@ -41,6 +41,8 @@ uniform float magnify = 0.12;      // bubble look: lens magnification at the cen
 uniform float rim_bend = 0.9;      // bubble look: extra magnification toward the rim, where the glass bends most
 uniform float dark : hint_range(0.0, 1.0) = 0.0;   // bubble look: how much the inside darkens toward night navy (mock v3)
 uniform float film : hint_range(0.0, 1.0) = 0.1;   // bubble look: strength of the iridescent rim
+uniform float film_sat : hint_range(0.0, 1.0) = 0.6;  // bubble look: rainbow saturation of the rim
+uniform float film_width = 13.0;  // bubble look: rim width in texture px
 uniform float gloss : hint_range(0.0, 1.0) = 0.0;  // bubble look: the white highlight crescent and dot, top-left
 uniform bool bubble = false;      // soap bubble: whole-ball lens, thin-film rainbow rim, highlight spot
 uniform float bubble_time = 0.0;
@@ -138,9 +140,11 @@ void fragment() {
 		// Soap-bubble rim (owner mock v3): a thin iridescent band that drifts slowly, a bright line
 		// top-left and bottom-right, and a white highlight crescent with a dot, top-left.
 		float ang = atan(g.y, g.x) + bubble_time * 0.4;
-		vec3 irid = mix(0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0), vec3(1.0), 0.4);  // pastel
-		float edge = smoothstep(13.0, 0.0, -d) * (0.55 + 0.45 * smoothstep(13.0, 3.0, -d));
-		col += irid * edge * film * 0.6;
+		// Target mock (19 Oct 2026): a bold rainbow rim (pink, gold, green, cyan, violet) round the ball.
+		vec3 irid = mix(0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0), vec3(1.0), 1.0 - film_sat);
+		float edge = smoothstep(film_width, 0.0, -d) * (0.55 + 0.45 * smoothstep(film_width, 3.0, -d));
+		col = mix(col, irid * 1.05, clamp(edge * film * film_sat * 0.75, 0.0, 1.0));
+		col += irid * edge * film * 0.35;
 		float arc = smoothstep(3.0, 0.5, abs(-d - 2.0)) * pow(abs(dot(g, normalize(vec2(-1.0, -1.0)))), 2.0);
 		col += vec3(1.0) * arc * 0.55 * specular;
 		vec2 pn = p / HALF;

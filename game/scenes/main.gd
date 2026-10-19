@@ -245,6 +245,7 @@ func _on_daily_finished(summary: Dictionary) -> void:
 func _show_character(can_cancel: bool, then: Callable) -> void:
 	var s: Control = CharacterSelect.new()
 	s.name = "CharacterSelect"
+	s.reduced_motion = settings.reduced_motion
 	s.characters = _characters()
 	s.selected = str(save.profile().get("character", ""))
 	s.pronouns = str(save.profile().get("pronouns", "they"))

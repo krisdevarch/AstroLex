@@ -31,6 +31,7 @@ var daily_note: String = ""
 var tile_count: int = 0
 var _babel: Control
 var _t: float = 0.0
+var _tiles: Array = []  # [view, rest position, index]: the logo letters bob in a slow wave
 
 
 func _ready() -> void:
@@ -73,7 +74,7 @@ func _ready() -> void:
 	sett.name = "SettingsButton"
 	sett.pressed.connect(func() -> void: settings_pressed.emit())
 	box.add_child(sett)
-	var foot := Ui.text("Beta  ·  v%s" % str(ProjectSettings.get_setting("application/config/version", "0")), 30, Color(Ui.MUTED, 0.8))
+	var foot := Ui.text("Beta  ·  v%s" % str(ProjectSettings.get_setting("application/config/version", "0")), 30, Color(Ui.CREAM, 0.85))
 	foot.name = "VersionLabel"
 	foot.position = Vector2(0, view.y - 110.0)
 	foot.size = Vector2(view.x, 60)
@@ -99,7 +100,9 @@ func _build_tiles(view: Vector2) -> void:
 		v.name = "TitleTile_%d" % i
 		layer.add_child(v)
 		v.setup(TITLE[i].to_lower(), px, px / (float(tun["tile.size"]) * view.x), 0, settings.treatment, settings.reduced_motion, tun, float(i) * 1.1)
-		v.place(Vector2(x0 + i * (TILE_PX + TILE_GAP), y + (8.0 if i % 2 == 0 else -8.0)), 0.0, float(i) / 7.0)
+		var rest := Vector2(x0 + i * (TILE_PX + TILE_GAP), y + (8.0 if i % 2 == 0 else -8.0))
+		v.place(rest, 0.0, float(i) / 7.0)
+		_tiles.append([v, rest, i])
 		tile_count += 1
 
 
@@ -143,8 +146,13 @@ func _build_babel(view: Vector2) -> void:
 
 
 func _process(delta: float) -> void:
-	if _babel == null or settings.reduced_motion:
+	if settings.reduced_motion:
 		return
 	_t += delta
+	for e in _tiles:
+		var i := int(e[2])
+		(e[0] as Node2D).call("place", (e[1] as Vector2) + Vector2(0.0, sin(_t * 1.8 - float(i) * 0.6) * 10.0), _t, float(i) / 7.0)
+	if _babel == null:
+		return
 	_babel.position.y += sin(_t * 1.6) * 0.35
 	_babel.rotation = sin(_t * 0.9) * 0.025

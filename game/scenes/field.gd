@@ -25,21 +25,20 @@ const LOW_TIME := 5.0
 const FLOAT_SEC := 0.9
 const POP_SEC := 0.8
 const AMBER := Color("F8BC04")
-const SLOT_EDGE := Color("3cbfd2")  # the mock's teal slot outline
 # The owner's tray mock (16:51): a navy tray with a slate rim, near-black slots with a teal outline,
 # cream letter tiles with a darker bottom lip, and an orange Hint button with a glowing bulb.
 const TRAY_FILL := Color(0.09, 0.12, 0.2, 0.95)
 const TRAY_EDGE := Color("2f3b58")
-const SLOT_FILL := Color("121826")
+const SLOT_FILL := Color("0b1634")
 const TILE_CREAM := Color("f6ebcd")
 const TILE_LIP := Color("d4bf92")
 const TILE_INK := Color("1c2740")
-const HINT_FILL := Color("f7a21d")
-const HINT_RIM := Color("9c540c")
 const CLOCK_TEXT := Color(1.0, 0.85, 0.78)
 const PERIWINKLE := Color("7579f0")
 const TEXT_CREAM := Color("efe8d6")  # the mock's warm off-white for HUD text
-const BAND_FILL := Color(0.15, 0.15, 0.3, 0.92)
+const BAND_FILL := Color(0.1, 0.11, 0.26, 0.9)
+const BAND_FONT := 40
+const NEON := Color("4fe3ff")  # the console's cyan glow (target mock)
 const RED := Color(1.0, 0.3, 0.3)
 # Pure layout and pacing constants (screen pixels at 1080 wide, seconds). Bottom items are offsets
 # up from the real bottom of the visible viewport, so taller phones just add field height.
@@ -50,40 +49,50 @@ const TETHER_FADE := 0.12
 const PULSE_SEC := 0.45
 const HINT_GLOW_SEC := 1.5
 const HINT_FLASH_SEC := 0.45
-# Layout from the owner's mock (13 Oct 2026), in pixels at 1080 wide. Bottom items are offsets up
-# from the real bottom of the visible viewport, so taller phones just add field height.
+# Layout from the owner's target mock (19 Oct 2026), in pixels at 1080 wide. Bottom items are
+# offsets up from the real bottom of the visible viewport, so taller phones just add field height.
 const SIDE_PAD := 44.0
 const EDGE := 44.0
-const CHIP_Y := 55.0
+const CHIP_Y := 50.0
 const CHIP_H := 80.0
-const CHIP_MID_W := 356.0  # the centre chip: the level name
-const BAND_Y := 180.0  # Babel's speech bubble
-const BAND_H := 102.0
-const BAND_INSET := 105.0
-const BAND_TAIL := 26.0
+const CHIP_MID_W := 356.0  # widest the level name chip grows before its font shrinks
+const BAND_Y := 168.0  # Babel's speech bubble: sized to the line, centred
+const BAND_MAX_W := 700.0
+const BAND_LINE_H := 50.0
+const BAND_PAD_X := 34.0
+const BAND_PAD_Y := 20.0
+const BAND_TAIL := 34.0
 const FIELD_TOP := 320.0  # top of the play field (below Babel's bubble)
 const FIELD_BOTTOM_UP := 560.0  # bottom of the play field, just above Earth's rim
 const PANEL_TOP_UP := 530.0  # highest point of Earth's rim
-const PORTRAIT_X := 223.0
-const PORTRAIT_UP := 290.0
-const PORTRAIT_D := 300.0
-const NAME_UP := 76.0  # centre of the name pill
-const NAME_W := 256.0
-const NAME_H := 64.0
-const TRAY_X := 412.0  # left edge of the slot tray; it runs to the right margin
-const TRAY_TOP_UP := 378.0
-const TRAY_BOTTOM_UP := 156.0
+const CONSOLE_X := 40.0  # the console tray body: from here to CONSOLE_R
+const CONSOLE_R := 912.0
+const CONSOLE_TOP_UP := 512.0
+const CONSOLE_BOTTOM_UP := 146.0
+const PORTRAIT_X := 158.0  # the porthole, at the console's left end
+const PORTRAIT_UP := 330.0
+const PORTRAIT_D := 270.0
+const TRAY_X := 318.0  # the slot screen inside the console
+const TRAY_R := 894.0
+const TRAY_TOP_UP := 486.0
+const TRAY_BOTTOM_UP := 176.0
 const TRAY_PAD := 20.0
-const ROW1_UP := 320.0  # centre of the active word's row
-const ROW2_UP := 216.0  # centre of the next word's row
-const SLOT_MAX := 78.0
+const ROW1_UP := 400.0  # centre of the active word's row
+const ROW2_UP := 262.0  # centre of the next word's row
+const SLOT_MAX := 96.0
 const SLOT_GAP := 10.0
-const SLOTS_PER_ROW := 7
-const HINT_D := 88.0  # round Hint button at the right end of the next word's row
-const BOTTOM_UP := 76.0  # centre of the timer pill and the round buttons
-const BTN_SIZE := 88.0
+const SLOTS_PER_ROW := 5
+const BTN_SIZE := 112.0  # the round buttons, stacked at the right of the console
+const BTN_X_IN := 44.0  # their right edge sits this far in from the screen edge
+const PAUSE_UP := 436.0
+const SOUND_UP := 290.0
+const SETTINGS_UP := 144.0
+const HINT_D := 132.0  # the hint bulb, above the buttons
+const HINT_UP := 598.0
+const BOTTOM_UP := 70.0  # centre of the clock bar
 const BTN_GAP := 14.0
-const TIMER_H := 70.0
+const TIMER_H := 66.0
+const TIMER_X := 70.0
 const CLOCK_LABEL_W := 110.0
 const COST_FLOAT_UP := 600.0
 # Babel's throw: look of a single flight (timing and perch are tunables under babel.*).
@@ -177,9 +186,19 @@ var _sound_button: Button
 var _sound_icon: Control
 var _settings_button: Button
 var _hint_flash_t: float = 0.0
-var _fill_coral: StyleBoxTexture
-var _fill_crimson: StyleBoxTexture
 var _portrait: Control
+var _portrait_art: Control
+var _bust: Control
+var _console: Control
+var _liquid: Control
+var _hint_icon: Control
+var _level_chip: Control
+var _counter_chip: Control
+var _band_tail: Control
+var _band_home: Vector2 = Vector2.ZERO
+var _band_shown: String = ""
+var _slot_empty_sb: StyleBoxFlat
+var _anim_t: float = 0.0  # idle animation clock for the HUD (stops while paused)
 var _fly_layer: CanvasLayer
 var _score_row: HBoxContainer
 var _low: bool = false
@@ -190,7 +209,6 @@ var _preview_n: int = 0
 
 var _world: CanvasLayer
 var _backdrop: Node2D
-var _item_deck: Array = []  # back-plane item art, dealt in a seeded order so items rarely repeat
 var _seed: int = 0
 var _night: Control
 var _tiles_root: Node2D
@@ -203,7 +221,7 @@ var _score_label: Label
 var _combo_label: Label
 var _toast: Label
 var _band: Panel
-var _band_label: Label
+var _band_label: RichTextLabel
 var _fps_meter: CanvasLayer
 ## Game feel (WP-3.N): placeholder sounds, the combo pop, the restored-word banner, the shake.
 var sfx: Sfx
@@ -233,6 +251,7 @@ var _slots_in_t: float = 99.0
 const CHIP_SWAP_SEC := 0.5
 const SLOT_IN_SEC := 0.28
 const SLOT_IN_STAGGER := 0.05
+const LAND_SEC := 0.45
 
 
 func _process(delta: float) -> void:
@@ -331,7 +350,6 @@ func _reset_for_level() -> void:
 	_pops.clear()
 	_pending.clear()
 	_fly_keys.clear()
-	_item_deck.clear()
 	_view_word = 0
 	_active_key = ""
 	_preview_key = ""
@@ -349,7 +367,7 @@ func _reset_for_level() -> void:
 	_tiles_root.visible = true
 	if _low:
 		_low = false
-		_time_bar.add_theme_stylebox_override("fill", _fill_coral)
+		_set_clock_colours(false)
 		_clock_label.add_theme_color_override("font_color", CLOCK_TEXT)
 		_clock_label.scale = Vector2.ONE
 	_launcher.position = to_screen(game_round.origin())
@@ -439,11 +457,16 @@ func card() -> Control:
 	return _card if _card != null and is_instance_valid(_card) else null
 
 
+## The level name chip grows with its name; long names shrink their font to fit half the top row.
 func _fit_title() -> void:
+	var max_w := _chip_max_w()
 	var fs := 42
-	while fs > 24 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > CHIP_MID_W - 40.0:
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 64.0 > max_w:
 		fs -= 2
 	_level_label.add_theme_font_size_override("font_size", fs)
+	if _level_chip != null:
+		_level_chip.size.x = clampf(ThemeDB.fallback_font.get_string_size(_level_title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 64.0, 200.0, max_w)
+		_level_chip.pivot_offset = _level_chip.size * 0.5
 
 
 func to_screen(p: Vector2) -> Vector2:
@@ -795,7 +818,7 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.z_index = 2 - t.plane
 	v.name = "Tile_%d" % t.id
 	if t.plane == 2:
-		v.set_back(_n("plane.backAlpha"), _next_item())
+		v.set_back(_n("plane.backAlpha"))
 	elif t.plane == 1:
 		v.set_depth(_n("plane.midDim"))
 	if t.kind != "":
@@ -803,21 +826,6 @@ func _ensure_view(t: Object) -> TileViewScript:
 	v.place(to_screen(t.pos), _time, t.pos.x)
 	_views[t.id] = v
 	return v
-
-
-## The back plane shows the owner's sticker items (owner, 13 Oct 2026: "keep the decoys in the
-## background moving"), dealt from a deck shuffled by the level seed so none shows twice at once.
-func _next_item() -> String:
-	if _item_deck.is_empty():
-		var rng := RandomNumberGenerator.new()
-		rng.seed = _seed + _view_word * 7919 + _views.size()
-		_item_deck = TileViewScript.ITEMS.duplicate()
-		for i in _item_deck.size():
-			var j := rng.randi_range(i, _item_deck.size() - 1)
-			var tmp = _item_deck[i]
-			_item_deck[i] = _item_deck[j]
-			_item_deck[j] = tmp
-	return _item_deck.pop_back()
 
 
 func _sync_views() -> void:
@@ -1180,16 +1188,15 @@ func panel_top() -> float:
 	return view_size.y - PANEL_TOP_UP
 
 
-## The slot tray: from TRAY_X to the right margin.
+## The slot screen inside the console.
 func _tray_rect() -> Rect2:
 	var top := view_size.y - TRAY_TOP_UP
-	return Rect2(TRAY_X, top, view_size.x - EDGE - TRAY_X, TRAY_TOP_UP - TRAY_BOTTOM_UP)
+	return Rect2(TRAY_X, top, TRAY_R - TRAY_X, TRAY_TOP_UP - TRAY_BOTTOM_UP)
 
 
-## Active word: first row of the tray, full width. Next word: second row, leaving room for Hint.
-func _row_width(where: String) -> float:
-	var inner := _tray_rect().size.x - 2.0 * TRAY_PAD
-	return inner if where == "active" else inner - HINT_D - SLOT_GAP
+## Both rows use the slot screen's full inner width (the hint bulb sits outside, above the buttons).
+func _row_width(_where: String) -> float:
+	return _tray_rect().size.x - 2.0 * TRAY_PAD
 
 
 ## One slot size for both rows, as in the owner's tray mock (16:51): seven slots fill the first row.
@@ -1201,12 +1208,11 @@ func _slot_size(where: String, n: int) -> float:
 	return minf(s, (_row_width(where) - SLOT_GAP * (k - 1.0)) / k)
 
 
-## The active word is centred in the first row; the next word starts at the left of the second.
+## Both words are centred in their rows: the active word on top, the next word's slots under it.
 func _slot_center(where: String, idx: int, n: int) -> Vector2:
 	var size := _slot_size(where, n)
 	var x0 := _tray_rect().position.x + TRAY_PAD
-	if where == "active":
-		x0 += (_row_width("active") - (float(n) * size + float(maxi(n - 1, 0)) * SLOT_GAP)) * 0.5
+	x0 += (_row_width(where) - (float(n) * size + float(maxi(n - 1, 0)) * SLOT_GAP)) * 0.5
 	var x := x0 + size * 0.5 + float(idx) * (size + SLOT_GAP)
 	return Vector2(x, view_size.y - (ROW1_UP if where == "active" else ROW2_UP))
 
@@ -1217,49 +1223,75 @@ func _ignore(c: Control) -> Control:
 
 
 ## A rounded chip with one label inside; returns the panel (the label is its child `label_name`).
+## Target mock: a dark glassy pill with a pale rim.
 func _chip(panel_name: String, label_name: String, text: String, min_w: float = 0.0) -> Panel:
 	var p := Panel.new()
 	p.name = panel_name
-	p.add_theme_stylebox_override("panel", Ui.box(Color(0.13, 0.15, 0.25, 0.86), int(CHIP_H * 0.5)))
+	var sb := Ui.box(Color(0.08, 0.1, 0.2, 0.78), int(CHIP_H * 0.5), Color(0.72, 0.78, 0.95, 0.55), 3)
+	sb.shadow_color = Color(0.0, 0.02, 0.08, 0.35)
+	sb.shadow_size = 10
+	p.add_theme_stylebox_override("panel", sb)
 	var l := Ui.label(text, 42, TEXT_CREAM)
 	l.name = label_name
 	l.add_theme_constant_override("outline_size", 0)
 	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	p.add_child(l)
-	# Side chips share the room left by the centre chip; long names shrink their font to fit.
-	var max_w := (view_size.x - CHIP_MID_W) * 0.5 - SIDE_PAD - 16.0
+	# The two chips share the top row; long names shrink their font to fit.
+	var max_w := _chip_max_w()
 	var fs := 42
-	while fs > 24 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0 > max_w:
+	while fs > 24 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 64.0 > max_w:
 		fs -= 2
 	l.add_theme_font_size_override("font_size", fs)
-	p.size = Vector2(maxf(min_w, minf(max_w, ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 56.0)), CHIP_H)
+	p.size = Vector2(maxf(min_w, minf(max_w, ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 64.0)), CHIP_H)
+	p.pivot_offset = p.size * 0.5
 	_ignore(p)
 	_ignore(l)
 	return p
 
 
-## A round icon button centred at `centre`.
-func _icon_button(node_name: String, kind: String, centre: Vector2, d: float, border: Color, icon_colour: Color, bg: Color, border_w: int = 3) -> Button:
+func _chip_max_w() -> float:
+	return (view_size.x - 2.0 * SIDE_PAD - 24.0) * 0.5
+
+
+## A round console button centred at `centre`: an invisible Button over a ring and an icon.
+func _icon_button(node_name: String, kind: String, centre: Vector2, d: float, ring: Color, icon_colour: Color) -> Button:
 	var b := Button.new()
 	b.name = node_name
 	b.focus_mode = Control.FOCUS_NONE
-	var r := int(d * 0.5)
-	b.add_theme_stylebox_override("normal", Ui.box(bg, r, border, border_w))
-	b.add_theme_stylebox_override("hover", Ui.box(bg.lightened(0.08), r, border, border_w))
-	b.add_theme_stylebox_override("pressed", Ui.box(bg.lightened(0.2), r, border, border_w))
+	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+		b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
 	b.size = Vector2(d, d)
 	b.position = centre - b.size * 0.5
+	b.pivot_offset = b.size * 0.5
+	if kind != "hint":
+		var art: Control = HudArt.RingArt.new()
+		art.name = "Ring"
+		art.set("ring", ring)
+		art.set("calm", settings.reduced_motion)
+		art.size = b.size
+		b.add_child(_ignore(art))
 	var ic: Control = HudArt.Icon.new()
 	ic.name = "Icon"
 	ic.set("kind", kind)
 	ic.set("colour", icon_colour)
 	ic.size = Vector2(BTN_SIZE, BTN_SIZE)
-	ic.scale = Vector2.ONE * (d / BTN_SIZE) * 0.8
+	ic.pivot_offset = ic.size * 0.5
+	ic.scale = Vector2.ONE * (d / BTN_SIZE) * (1.25 if kind == "hint" else 0.74)
 	ic.position = (b.size - ic.size * ic.scale) * 0.5
 	_ignore(ic)
 	b.add_child(ic)
+	b.button_down.connect(_squish.bind(b, 0.86))
+	b.button_up.connect(_squish.bind(b, 1.0))
 	_hud.add_child(b)
 	return b
+
+
+## A press squishes a button and lets it spring back.
+func _squish(b: Control, to: float) -> void:
+	if settings.reduced_motion or not b.is_inside_tree():
+		return
+	var tw := b.create_tween()
+	tw.tween_property(b, "scale", Vector2.ONE * to, 0.08 if to < 1.0 else 0.32).set_trans(Tween.TRANS_BACK if to >= 1.0 else Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _build_portrait() -> void:
@@ -1274,6 +1306,7 @@ func _build_portrait() -> void:
 	var art: Control = HudArt.PortraitArt.new()
 	art.name = "PortraitArt"
 	art.set("colour", tether_colour)
+	art.set("calm", settings.reduced_motion)
 	art.size = holder.size
 	_ignore(art)
 	holder.add_child(art)
@@ -1286,23 +1319,14 @@ func _build_portrait() -> void:
 		bust.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		bust.size = Vector2(HudArt.DISC_R * 2.0, HudArt.DISC_R * 2.0)
 		bust.position = (holder.size - bust.size) * 0.5
+		bust.pivot_offset = bust.size * Vector2(0.5, 0.9)
 		bust.material = HudArt.clip_material()
 		_ignore(bust)
 		holder.add_child(bust)
+		_bust = bust
 	_hud.add_child(holder)
 	_portrait = holder
-	var nm := character_name if character_name != "" else character_id.capitalize()
-	var pill := Panel.new()
-	pill.name = "PortraitName"
-	pill.add_theme_stylebox_override("panel", Ui.box(Color("0f1a3e"), int(NAME_H * 0.5), tether_colour, 4))
-	pill.size = Vector2(maxf(NAME_W, ThemeDB.fallback_font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 34).x + 64.0), NAME_H)
-	pill.position = Vector2(centre.x - pill.size.x * 0.5, view_size.y - NAME_UP - NAME_H * 0.5)
-	var pl := Ui.label(nm, 38, TEXT_CREAM)
-	pl.name = "PortraitNameLabel"
-	pl.add_theme_constant_override("outline_size", 0)
-	pl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	pill.add_child(_ignore(pl))
-	_hud.add_child(_ignore(pill))
+	_portrait_art = art
 
 
 func _build_hud() -> void:
@@ -1318,18 +1342,31 @@ func _build_hud() -> void:
 	night.position = Vector2(0.0, h - HudArt.PANEL_H)
 	_hud.add_child(_ignore(night))
 	_night = night
+	# The console tray (target mock): porthole at its left end, the slot screen in the middle.
+	var con: Control = HudArt.Console.new()
+	con.name = "Console"
+	con.size = Vector2(w, h)
+	con.set("body", Rect2(CONSOLE_X, h - CONSOLE_TOP_UP, CONSOLE_R - CONSOLE_X, CONSOLE_TOP_UP - CONSOLE_BOTTOM_UP))
+	con.set("screen", _tray_rect())
+	con.set("porthole", Vector2(PORTRAIT_X, h - PORTRAIT_UP))
+	con.set("porthole_r", HudArt.RIM_R * PORTRAIT_D / HudArt.ART_D)
+	con.set("accent", NEON)
+	con.set("calm", settings.reduced_motion)
+	_hud.add_child(_ignore(con))
+	_console = con
 	if character_id != "":
 		_build_portrait()
-	# Top (owner mock v3): the level's name in the middle, Level n / N at right.
+	# Top (target mock): the level's name at left, Level n / N at right, both pills.
 	var cc := _chip("LevelCounterChip", "LevelCounter", level_counter)
 	cc.position = Vector2(w - SIDE_PAD - cc.size.x, CHIP_Y)
 	cc.visible = level_counter != ""
 	_hud.add_child(cc)
 	_counter_label = cc.get_node("LevelCounter")
-	var mid := _chip("LevelChip", "LevelLabel", _level_title, CHIP_MID_W)
-	mid.size.x = CHIP_MID_W
-	mid.position = Vector2((w - CHIP_MID_W) * 0.5, CHIP_Y)
+	_counter_chip = cc
+	var mid := _chip("LevelChip", "LevelLabel", _level_title)
+	mid.position = Vector2(SIDE_PAD, CHIP_Y)
 	_hud.add_child(mid)
+	_level_chip = mid
 	_level_label = mid.get_node("LevelLabel") as Label
 	_fit_title()
 	_score_row = HBoxContainer.new()
@@ -1348,36 +1385,33 @@ func _build_hud() -> void:
 	_combo_label.name = "ComboLabel"
 	_combo_label.add_theme_constant_override("outline_size", 0)
 	_score_row.add_child(_ignore(_combo_label))
-	# Babel's speech bubble under the chips, its tail pointing up toward the level counter.
+	# Babel's speech bubble under the chips (target mock): sized to the line, its tail curling down left.
 	_band = Panel.new()
 	_band.name = "BabelBand"
-	_band.position = Vector2(BAND_INSET, BAND_Y)
-	_band.size = Vector2(w - 2.0 * BAND_INSET, BAND_H)
-	_band.add_theme_stylebox_override("panel", Ui.box(BAND_FILL, int(BAND_H * 0.5), PERIWINKLE, 6))
+	_band.position = Vector2(BAND_PAD_X, BAND_Y)
+	_band.size = Vector2(BAND_MAX_W, BAND_LINE_H + 2.0 * BAND_PAD_Y)
+	var bsb := Ui.box(BAND_FILL, 30, PERIWINKLE, 5)
+	bsb.shadow_color = Color(PERIWINKLE.r, PERIWINKLE.g, PERIWINKLE.b, 0.25)
+	bsb.shadow_size = 14
+	_band.add_theme_stylebox_override("panel", bsb)
 	_band.visible = false
 	_hud.add_child(_ignore(_band))
 	var tail: Control = HudArt.BubbleTail.new()
 	tail.name = "BabelTail"
 	tail.set("colour", PERIWINKLE)
 	tail.set("fill", BAND_FILL)
-	tail.size = Vector2(BAND_TAIL * 1.6, BAND_TAIL + 6.0)
-	tail.position = Vector2(cc.position.x + cc.size.x * 0.5 - BAND_INSET - tail.size.x * 0.5, -BAND_TAIL + 2.0)
+	tail.size = Vector2(BAND_TAIL * 1.3, BAND_TAIL)
 	_band.add_child(_ignore(tail))
-	var tag := Ui.label("Babel:", 40, PERIWINKLE, HORIZONTAL_ALIGNMENT_LEFT)
-	tag.name = "BabelTag"
-	tag.add_theme_constant_override("outline_size", 0)
-	tag.position = Vector2(40, 0)
-	tag.size = Vector2(130, BAND_H)
-	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_band.add_child(_ignore(tag))
-	_band_label = Ui.label("", 40, TEXT_CREAM, HORIZONTAL_ALIGNMENT_LEFT)
+	_band_tail = tail
+	_band_label = RichTextLabel.new()
 	_band_label.name = "BabelText"
-	_band_label.add_theme_constant_override("outline_size", 0)
-	_band_label.position = Vector2(40 + ThemeDB.fallback_font.get_string_size("Babel: ", HORIZONTAL_ALIGNMENT_LEFT, -1, 40).x, 4)
-	_band_label.size = Vector2(_band.size.x - _band_label.position.x - 36, BAND_H - 8)
-	_band_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_band_label.bbcode_enabled = true
+	_band_label.scroll_active = false
 	_band_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_band.add_child(_band_label)
+	_band_label.add_theme_font_size_override("normal_font_size", GameFont.scaled(BAND_FONT))
+	_band_label.add_theme_color_override("default_color", TEXT_CREAM)
+	_band_label.position = Vector2(BAND_PAD_X, BAND_PAD_Y - 4.0)
+	_band.add_child(_ignore(_band_label))
 	_toast = Ui.label("", 44, Ui.INK)
 	_toast.name = "Toast"
 	_toast.position = Vector2(0, _ft + 24.0)
@@ -1393,13 +1427,13 @@ func _build_hud() -> void:
 	_banner.pivot_offset = _banner.size * 0.5
 	_banner.visible = false
 	_fly_layer.add_child(_ignore(_banner))  # above the letters
-	# Slot tray: the active word on the first row, the next word on the second, Hint at its end.
+	# Slot screen: the active word on the first row, the next word on the second. The console draws it.
 	var tr := _tray_rect()
 	var tray := Panel.new()
 	tray.name = "SlotTray"
 	tray.position = tr.position
 	tray.size = tr.size
-	tray.add_theme_stylebox_override("panel", Ui.box(TRAY_FILL, 40, TRAY_EDGE, 5))
+	tray.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_hud.add_child(_ignore(tray))
 	_active_row = Control.new()
 	_active_row.name = "ActiveSlots"
@@ -1407,39 +1441,48 @@ func _build_hud() -> void:
 	_preview_row = Control.new()
 	_preview_row.name = "PreviewSlots"
 	_hud.add_child(_ignore(_preview_row))
-	_hint_button = _icon_button("HintButton", "hint", Vector2(tr.end.x - TRAY_PAD - HINT_D * 0.5, h - ROW2_UP), HINT_D, HINT_RIM, Color.WHITE, HINT_FILL, 4)
-	# Bottom row under the tray: the timer pill, then Pause, Sound and Settings as round buttons.
-	var by := h - BOTTOM_UP
-	var bx := w - EDGE - BTN_SIZE * 0.5
-	var plain := Color("15214d")
-	var edge := Color(0.6, 0.7, 0.95, 0.6)
-	_settings_button = _icon_button("SettingsButton", "settings", Vector2(bx, by), BTN_SIZE, edge, Ui.INK, plain)
-	_sound_button = _icon_button("SoundButton", "sound", Vector2(bx - (BTN_SIZE + BTN_GAP), by), BTN_SIZE, edge, Ui.INK, plain)
-	_pause_button = _icon_button("PauseButton", "pause", Vector2(bx - 2.0 * (BTN_SIZE + BTN_GAP), by), BTN_SIZE, edge, Ui.INK, plain)
+	_slot_empty_sb = Ui.box(SLOT_FILL, 16, NEON, 3)
+	_slot_empty_sb.shadow_color = Color(NEON.r, NEON.g, NEON.b, 0.3)
+	_slot_empty_sb.shadow_size = 8
+	# Right column (target mock): the hint bulb, then Pause, Sound and Settings stacked.
+	var bx := w - BTN_X_IN - BTN_SIZE * 0.5
+	_hint_button = _icon_button("HintButton", "hint", Vector2(bx, h - HINT_UP), HINT_D, NEON, Color.WHITE)
+	_pause_button = _icon_button("PauseButton", "pause", Vector2(bx, h - PAUSE_UP), BTN_SIZE, Color("ff9a4a"), Color("ffe2c8"))
+	_sound_button = _icon_button("SoundButton", "sound", Vector2(bx, h - SOUND_UP), BTN_SIZE, NEON, Color("d8faff"))
+	_settings_button = _icon_button("SettingsButton", "settings", Vector2(bx, h - SETTINGS_UP), BTN_SIZE, NEON, Color("d8faff"))
 	_pause_icon = _pause_button.get_node("Icon")
 	_sound_icon = _sound_button.get_node("Icon")
+	_hint_icon = _hint_button.get_node("Icon")
 	_hint_button.pressed.connect(request_hint)
 	_pause_button.pressed.connect(func() -> void: pause_requested.emit())
 	_sound_button.pressed.connect(toggle_sound)
 	_settings_button.pressed.connect(func() -> void: settings_requested.emit())
 	_sync_sound_icon()
-	_fill_coral = HudArt.bar_fill_box(HudArt.CORAL, HudArt.CORAL_LIGHT, int(TIMER_H))
-	_fill_crimson = HudArt.bar_fill_box(HudArt.CRIMSON, HudArt.CRIMSON_LIGHT, int(TIMER_H))
+	# The clock bar under the console: coral liquid in a dark frame with a neon rim.
 	_time_bar = ProgressBar.new()
 	_time_bar.name = "TimeBar"
-	var timer_right := _pause_button.position.x - BTN_GAP
-	_time_bar.position = Vector2(tr.position.x, by - TIMER_H * 0.5)
+	var timer_right := CONSOLE_R - 18.0
+	_time_bar.position = Vector2(TIMER_X, h - BOTTOM_UP - TIMER_H * 0.5)
 	_time_bar.custom_minimum_size = Vector2(0, TIMER_H)
-	_time_bar.size = Vector2(timer_right - tr.position.x, TIMER_H)
+	_time_bar.size = Vector2(timer_right - TIMER_X, TIMER_H)
 	_time_bar.show_percentage = false
 	_time_bar.min_value = 0.0
 	_time_bar.max_value = _n("burst.seconds")
-	_time_bar.add_theme_stylebox_override("background", Ui.box(Color("15214d"), int(TIMER_H * 0.5), Color(0.6, 0.7, 0.95, 0.6), 3))
-	_time_bar.add_theme_stylebox_override("fill", _fill_coral)
+	var frame := Ui.box(Color("0b1430"), int(TIMER_H * 0.5), Color(NEON.r, NEON.g, NEON.b, 0.7), 3)
+	frame.shadow_color = Color(NEON.r, NEON.g, NEON.b, 0.18)
+	frame.shadow_size = 8
+	_time_bar.add_theme_stylebox_override("background", frame)
+	_time_bar.add_theme_stylebox_override("fill", StyleBoxEmpty.new())
 	_hud.add_child(_ignore(_time_bar))
+	_liquid = HudArt.Liquid.new()
+	_liquid.name = "Liquid"
+	_liquid.set("calm", settings.reduced_motion)
+	_liquid.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_time_bar.add_child(_ignore(_liquid))
+	_set_clock_colours(false)
 	_clock_label = Ui.label("", 32, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT)
 	_clock_label.name = "ClockLabel"
-	_clock_label.position = Vector2(timer_right - 24.0 - CLOCK_LABEL_W, by - 24.0)
+	_clock_label.position = Vector2(timer_right - 24.0 - CLOCK_LABEL_W, h - BOTTOM_UP - 24.0)
 	_clock_label.size = Vector2(CLOCK_LABEL_W, 48)
 	_clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_clock_label.pivot_offset = Vector2(CLOCK_LABEL_W, 24)
@@ -1447,6 +1490,42 @@ func _build_hud() -> void:
 	_coach = Coach.new()
 	_coach.setup(_tun, settings.reduced_motion, view_size)
 	_hud.add_child(_coach)
+
+
+## Coral liquid normally, crimson in the last seconds.
+func _set_clock_colours(low: bool) -> void:
+	if _liquid == null:
+		return
+	_liquid.set("c1", HudArt.CRIMSON if low else HudArt.CORAL)
+	_liquid.set("c2", HudArt.CRIMSON_LIGHT if low else HudArt.CORAL_LIGHT)
+
+
+## Sizes Babel's bubble to his line: one line if it fits, else wrapped (at most BAND_MAX_W wide).
+func _layout_band(text: String) -> void:
+	var font: Font = ThemeDB.fallback_font
+	var fs := GameFont.scaled(BAND_FONT)
+	var inner := BAND_MAX_W - 2.0 * BAND_PAD_X
+	var lines := 1
+	var line_w := 0.0
+	var widest := 0.0
+	var space := font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	for word in text.split(" ", false):
+		var ww := font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		if line_w > 0.0 and line_w + space + ww > inner:
+			lines += 1
+			widest = maxf(widest, line_w)
+			line_w = ww
+		else:
+			line_w += (space if line_w > 0.0 else 0.0) + ww
+	widest = minf(inner, maxf(widest, line_w))
+	var bw := widest + 2.0 * BAND_PAD_X + 8.0
+	var bh := float(lines) * BAND_LINE_H + 2.0 * BAND_PAD_Y
+	_band.size = Vector2(bw, bh)
+	_band.position = Vector2((view_size.x - bw) * 0.5 - 40.0, BAND_Y)
+	_band_label.size = Vector2(widest + 8.0, bh - 2.0 * BAND_PAD_Y + 8.0)
+	_band_tail.position = Vector2(bw * 0.12, bh - 4.0)
+	_band.pivot_offset = Vector2(bw * 0.12, bh + BAND_TAIL)
+	_band_home = _band.position
 
 
 # --- first-play coach ------------------------------------------------------------------
@@ -1571,7 +1650,7 @@ func _style_slot(p: Panel, filled: bool, where: String) -> void:
 		sb.border_width_bottom = maxi(4, int(p.size.y * 0.08))
 		p.add_theme_stylebox_override("panel", sb)
 	else:
-		p.add_theme_stylebox_override("panel", Ui.box(SLOT_FILL, r, SLOT_EDGE, 5))
+		p.add_theme_stylebox_override("panel", _slot_empty_sb)
 
 
 ## Share of the level's words restored so far: colour and city lights come back with it.
@@ -1603,7 +1682,7 @@ func _update_hud() -> void:
 	var low: bool = game_round.time_left < LOW_TIME
 	if low != _low:
 		_low = low
-		_time_bar.add_theme_stylebox_override("fill", _fill_crimson if low else _fill_coral)
+		_set_clock_colours(low)
 		_clock_label.add_theme_color_override("font_color", HudArt.CRIMSON if low else CLOCK_TEXT)
 		if not low:
 			_clock_label.scale = Vector2.ONE
@@ -1649,6 +1728,9 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 		g.text = ch if filled or _name_row(where) or (hint_shown(i, slots.size()) and not game_round.jammed) else ""
 		g.modulate.a = 1.0 if filled else _n("hud.hintAlpha")
 		g.add_theme_color_override("font_color", TILE_INK if filled else Color.WHITE)
+		if filled and not bool(p.get_meta("was_filled", false)):
+			p.set_meta("land_t", 0.0)
+		p.set_meta("was_filled", filled)
 		_style_slot(p, filled, where)
 
 
@@ -1659,42 +1741,102 @@ func _tick_hud(delta: float) -> void:
 			_refill_t = -1.0
 	if _night != null and float(_night.get("lit")) > restored_share():
 		_night.set("lit", move_toward(float(_night.get("lit")), restored_share(), delta * 0.8))
+	var calm := settings.reduced_motion
+	_anim_t += delta
+	var t := _anim_t
 	if _chip_t < CHIP_SWAP_SEC:
 		_chip_t += delta
 		var c := clampf(_chip_t / CHIP_SWAP_SEC, 0.0, 1.0)
-		var a := 1.0 if settings.reduced_motion else clampf(c * 1.4, 0.0, 1.0)
+		var a := 1.0 if calm else clampf(c * 1.4, 0.0, 1.0)
 		_level_label.modulate.a = a
 		_counter_label.modulate.a = a
+	# The pills pop in with a little overshoot on a new level, then bob gently out of step.
+	if not calm:
+		var pop := _back_ease(clampf(_chip_t / CHIP_SWAP_SEC, 0.0, 1.0))
+		_level_chip.scale = Vector2.ONE * lerpf(0.7, 1.0, pop)
+		_counter_chip.scale = Vector2.ONE * lerpf(0.7, 1.0, _back_ease(clampf((_chip_t - 0.08) / CHIP_SWAP_SEC, 0.0, 1.0)))
+		_level_chip.position.y = CHIP_Y + 3.0 * sin(t * 1.2)
+		_counter_chip.position.y = CHIP_Y + 3.0 * sin(t * 1.2 + 1.7)
+	# Console idle life: the porthole arcs drift, the Catcher breathes, lights blink, the liquid sloshes.
+	for n in [_console, _portrait_art, _liquid]:
+		if n != null:
+			n.set("t", t)
+			n.queue_redraw()
+	if _bust != null and not calm:
+		var br := 1.0 + 0.025 * sin(t * 2.1)
+		_bust.scale = Vector2(2.0 - br, br)  # a soft breath: a touch taller, a touch narrower
+	for b in [_pause_button, _sound_button, _settings_button]:
+		var ring := (b as Node).get_node_or_null("Ring")
+		if ring != null:
+			ring.set("t", t + float(b.get_index()) * 0.9)
+			ring.queue_redraw()
+	# Hint bulb: a warm pulse and a little wobble; a hop every few seconds says "tap me".
+	if _hint_icon != null:
+		_hint_icon.set("glow", 0.6 if calm else 0.5 + 0.5 * sin(t * 2.4))
+		if not calm:
+			var hop := fposmod(t, 6.0)
+			var up := 0.0 if hop > 0.6 else sin(hop / 0.6 * PI) * 14.0
+			_hint_icon.rotation = deg_to_rad(5.0 * sin(t * 1.8)) + (deg_to_rad(8.0) * sin(hop * 25.0) * (1.0 - hop / 0.6) if hop < 0.6 else 0.0)
+			_hint_icon.position.y = (_hint_button.size.y - _hint_icon.size.y * _hint_icon.scale.y) * 0.5 - up
 	if _hint_flash_t > 0.0:
 		_hint_flash_t = maxf(0.0, _hint_flash_t - delta)
 		_hint_button.modulate = Color.WHITE.lerp(Color(1.0, 0.35, 0.35), _hint_flash_t / HINT_FLASH_SEC)
 	if _toast_t > 0.0:
 		_toast_t -= delta
 		_toast.modulate.a = clampf(_toast_t / 0.35, 0.0, 1.0)
-	# Babel's bubble stays up once he has spoken; each new line types itself in.
+	# Babel's bubble stays up once he has spoken; each new line pops in from its tail and types itself in.
 	_babel_t += delta
 	_band.visible = last_babel != ""
 	if _band.visible:
-		_band_label.text = "“%s”" % last_babel  # quoted, as in the mock
-		_band_label.visible_characters = int(_babel_t * TYPE_CPS) + 1
-	if _low and not settings.reduced_motion:
+		var line := "“%s”" % last_babel  # quoted, as in the mock
+		if line != _band_shown:
+			_band_shown = line
+			_layout_band("Babel: " + line)
+			_band_label.text = "[color=#%s]Babel:[/color] %s" % [Color("a9adff").to_html(false), line]
+		_band_label.visible_characters = 7 + int(_babel_t * TYPE_CPS) + 1
+		if calm:
+			_band.scale = Vector2.ONE
+			_band.position = _band_home
+		else:
+			_band.scale = Vector2.ONE * lerpf(0.5, 1.0, _back_ease(clampf(_babel_t / 0.35, 0.0, 1.0)))
+			_band.position = _band_home + Vector2(0.0, 4.0 * sin(t * 1.5))
+	if _low and not calm:
 		var cp := 1.0 + 0.12 * absf(sin(_time * TAU))
 		_clock_label.scale = Vector2(cp, cp)
+	# Empty slots breathe a soft cyan glow.
+	if _slot_empty_sb != null:
+		var g := 0.7 if calm else 0.55 + 0.45 * (0.5 + 0.5 * sin(t * 2.0))
+		_slot_empty_sb.border_color = Color(NEON.r, NEON.g, NEON.b, 0.55 + 0.4 * g)
+		_slot_empty_sb.shadow_color = Color(NEON.r, NEON.g, NEON.b, 0.32 * g)
 	_pulse_t += delta
 	var k := 1.0
-	if _pulse_t < PULSE_SEC and not settings.reduced_motion:
+	if _pulse_t < PULSE_SEC and not calm:
 		k = 1.0 + 0.18 * sin(PI * _pulse_t / PULSE_SEC)
-	if _slots_in_t < 2.0 and not settings.reduced_motion:
+	if _slots_in_t < 2.0 and not calm:
 		# A new level: the empty slots pop in one after another.
 		_slots_in_t += delta
 		var i := 0
 		for row in [_active_row, _preview_row]:
 			for c in row.get_children():
 				var u := clampf((_slots_in_t - float(i) * SLOT_IN_STAGGER) / SLOT_IN_SEC, 0.0, 1.0)
-				var w := u - 1.0
-				var s := 1.0 + 2.7 * w * w * w + 1.7 * w * w  # back ease-out
-				(c as Control).scale = Vector2.ONE * maxf(0.0, s)
+				(c as Control).scale = Vector2.ONE * maxf(0.0, _back_ease(u))
 				i += 1
 		return
-	for c in _active_row.get_children():
-		(c as Control).scale = Vector2(k, k)
+	for row in [_active_row, _preview_row]:
+		for c in row.get_children():
+			var sq := Vector2.ONE
+			var lt := float((c as Node).get_meta("land_t", 99.0))
+			if lt < LAND_SEC and not calm:
+				lt += delta
+				c.set_meta("land_t", lt)
+				# A letter lands: squash wide, then spring tall and settle.
+				var u := lt / LAND_SEC
+				var wob := sin(u * PI * 2.5) * (1.0 - u) * 0.22
+				sq = Vector2(1.0 + wob, 1.0 - wob)
+			(c as Control).scale = sq * (k if row == _active_row else 1.0)
+
+
+## Back ease-out (overshoots a little, then settles): 0 -> 0, 1 -> 1.
+static func _back_ease(u: float) -> float:
+	var w := u - 1.0
+	return 1.0 + 2.7 * w * w * w + 1.7 * w * w
