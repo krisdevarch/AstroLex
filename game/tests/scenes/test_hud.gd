@@ -84,7 +84,7 @@ func test_hint_icon_is_first_button_icon() -> void:
 func test_preview_row_fits_its_width_for_an_eleven_letter_word() -> void:
 	var f := _field("wren")
 	var n := 11
-	var total: float = f._slot_size("preview", n) * n + f.SLOT_GAP * (n - 1)
+	var total: float = f._slot_size("preview", n) * n + f._slot_gap(n) * (n - 1)
 	assert_true(total <= f._row_width("preview") + 0.01, "next word's row fits beside Hint (%.0f)" % total)
 	f.free()
 
@@ -170,22 +170,43 @@ func test_hud_follows_the_target_mock() -> void:
 		assert_true(bar.position.y > tray.position.y + tray.size.y, "clock bar under the console")
 		assert_true(bar.position.x < tray.position.x and bar.position.x + bar.size.x > tray.position.x + tray.size.x - 40.0, "clock bar runs under the console")
 		assert_true(bar.position.x + bar.size.x < gear.position.x, "clock bar ends before the buttons")
-		# Both words are centred in the slot screen, the next word under the active one.
+		# As in the mock, both words start at the slot screen's left edge on one grid, the next word
+		# under the active one.
 		for rn in ["ActiveSlots", "PreviewSlots"]:
 			var row := f.find_child(rn, true, false) as Control
 			if row.get_child_count() == 0:
 				continue
 			var first := row.get_child(0) as Control
 			var last := row.get_child(row.get_child_count() - 1) as Control
-			var left_gap: float = first.position.x - tray.position.x
-			var right_gap: float = tray.position.x + tray.size.x - (last.position.x + last.size.x)
-			assert_true(absf(left_gap - right_gap) < 1.0, "%s centred in the slot screen" % rn)
+			var arow0 := f.find_child("ActiveSlots", true, false).get_child(0) as Control
+			assert_true(absf(first.position.x - arow0.position.x) < 0.5, "%s starts in the grid's first column" % rn)
+			assert_true(first.position.x >= tray.position.x, "%s inside the slot screen" % rn)
+			assert_true(last.position.x + last.size.x <= tray.position.x + tray.size.x, "%s inside the slot screen" % rn)
 		var prow := f.find_child("PreviewSlots", true, false) as Control
 		var arow := f.find_child("ActiveSlots", true, false) as Control
 		if prow.get_child_count() > 0:
 			assert_true((prow.get_child(0) as Control).position.y > (arow.get_child(0) as Control).position.y, "next word under the active word")
 			assert_true((prow.get_child(0) as Control).position.y + (prow.get_child(0) as Control).size.y < tray.position.y + tray.size.y, "inside the slot screen")
 		f.free()
+
+
+func test_slot_grid_suits_every_word_length() -> void:
+	# Words in the game run 3 to 8 letters. Up to five columns the tiles keep the mock's size; a
+	# level with longer words shrinks its grid just enough, and both rows share its columns.
+	var f := _field("wren")
+	var tray: Rect2 = f._tray_rect()
+	var mock_size: float = f.SLOT_MAX
+	for longest in [3, 4, 5, 6, 7, 8]:
+		f.game_round.words = PackedStringArray(["cat", "q".repeat(longest)])
+		var size: float = f._slot_size("active", 3)
+		var last: Vector2 = f._slot_center("preview", longest - 1, longest)
+		assert_true(last.x + size * 0.5 <= tray.end.x - f.TRAY_PAD + 0.5, "%d letters fit the slot screen" % longest)
+		assert_true(f._slot_center("active", 0, 3).x == f._slot_center("preview", 0, longest).x, "%d: rows share columns" % longest)
+		if longest <= 5:
+			assert_eq(size, mock_size, "%d letters: the mock's tile size" % longest)
+		else:
+			assert_true(size >= 48.0, "%d letters: tiles stay readable (%.0f px)" % [longest, size])
+	f.free()
 
 
 func test_babel_bubble_fits_his_line() -> void:

@@ -92,8 +92,8 @@ const MOCK_BULB_GLASS := Vector2(523.2, 678.5)
 const MOCK_CHANNEL := Rect2(72, 964, 389, 33)  # the clock bar's channel, where the liquid runs
 const TRAY_PAD := 22.0
 const SLOT_MAX := MOCK_SLOT * 1080.0 / MOCK_W
-const SLOT_GAP := MOCK_SLOT_GAP * 1080.0 / MOCK_W
-const SLOTS_PER_ROW := 5
+const GAP_RATIO := MOCK_SLOT_GAP / MOCK_SLOT
+const MIN_COLS := 4
 const CLOCK_LABEL_W := 110.0
 const COST_FLOAT_UP := 600.0
 # Babel's throw: look of a single flight (timing and perch are tunables under babel.*).
@@ -1221,21 +1221,35 @@ func _row_width(_where: String) -> float:
 	return _tray_rect().size.x - 2.0 * TRAY_PAD
 
 
-## One slot size for both rows, as in the owner's tray mock (16:51): seven slots fill the first row.
-## Longer words shrink to fit their row.
-func _slot_size(where: String, n: int) -> float:
-	var per_row := float(SLOTS_PER_ROW)
-	var s := minf(SLOT_MAX, (_row_width("active") - SLOT_GAP * (per_row - 1.0)) / per_row)
-	var k := float(maxi(n, 1))
-	return minf(s, (_row_width(where) - SLOT_GAP * (k - 1.0)) / k)
+## The slot grid (owner, 19 Oct 2026): both rows share one grid of columns, so every letter has
+## its slot straight under it and the wires run straight. The grid has as many columns as the
+## level's longest word (words run 3 to 8 letters), at least MIN_COLS, and keeps the mock's look:
+## its tile size (SLOT_MAX) and gap ratio, shrinking only as far as the longest word needs to fit
+## the screen. Words start in the grid's first column, as the mock's do.
+func _grid_cols(n: int) -> int:
+	var cols := maxi(MIN_COLS, n)
+	if game_round != null:
+		for w in game_round.words:
+			cols = maxi(cols, w.length())
+	return cols
 
 
-## Both words are centred in their rows: the active word on top, the next word's slots under it.
+func _slot_size(_where: String, n: int) -> float:
+	var k := float(_grid_cols(n))
+	return minf(SLOT_MAX, _row_width("active") / (k + GAP_RATIO * (k - 1.0)))
+
+
+func _slot_gap(n: int) -> float:
+	return _slot_size("active", n) * GAP_RATIO
+
+
+## The grid is centred in the slot screen (it fills it from five columns up); words sit left on it.
 func _slot_center(where: String, idx: int, n: int) -> Vector2:
 	var size := _slot_size(where, n)
-	var x0 := _tray_rect().position.x + TRAY_PAD
-	x0 += (_row_width(where) - (float(n) * size + float(maxi(n - 1, 0)) * SLOT_GAP)) * 0.5
-	var x := x0 + size * 0.5 + float(idx) * (size + SLOT_GAP)
+	var gap := _slot_gap(n)
+	var k := float(_grid_cols(n))
+	var x0 := _tray_rect().position.x + TRAY_PAD + (_row_width(where) - (k * size + (k - 1.0) * gap)) * 0.5
+	var x := x0 + size * 0.5 + float(idx) * (size + gap)
 	return Vector2(x, _m(Vector2(0, MOCK_ROW1_Y if where == "active" else MOCK_ROW2_Y)).y)
 
 
