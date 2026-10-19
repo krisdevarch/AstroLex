@@ -1,24 +1,30 @@
 extends Node2D
-## The sky behind the play field: the owner's painted Low Orbit backdrop (13 Oct 2026, mock v3): a
-## blue night with the Milky Way, a crescent moon and Earth's night side with its city lights at the
-## bottom, lined up so Earth's rim sits under the HUD's curve (`horizon_y`). Over it, a few twinkling
+## The sky behind the play field: the owner's painted Low Orbit backdrop (19 Oct 2026): a purple
+## night with the Milky Way, a crescent moon, layered clouds, a tiny floating chair and Earth's tilted
+## night side with its city lights and an orange dawn glow at the bottom, lined up so the sky fills the
+## screen and Earth's rim runs just above the HUD's curve on the left (`horizon_y`). Over it, a few twinkling
 ## sticker sparkles and now and then a shooting star (owner: "make the stars a bit more interesting"). The owner's sticker
 ## items are the decoys, drawn by tile_view.gd. Colour story: the scene starts drained and its
-## colour comes back as words are restored (`restore` 0..1). Placeholder art (O-14).
+## colour comes back as words are restored (`restore` 0..1).
 
 
 const GREY_SAT := 0.8  # saturation before any word is restored
 const RESTORE_RATE := 0.8  # per second, how fast colour eases back
 const DEFAULT_ACT := "act1_low_orbit"
 ## Per act: the painted sky, where its horizon crests (image px from the top) and the sparkle tints.
-## Acts II-IV are placeholder paintings from scripts/art/make_skies.py (crest at y=1540 of 1920).
+## Act I's "horizon" is the row pinned to the HUD crest: its tilted rim crests 1351 px on the left and
+## 1455 px mid-image (of 1935), and 1330 keeps the whole sky, moon included, on a 1080x1920 screen.
+## Act II is the owner's moon painting (19 Oct 2026: Earth small in the sky, purple and peach clouds,
+## the Moon's cratered rim rising from the bottom left), framed the same way as Act I. Act IV is the
+## owner's heart nebula under a spiral galaxy, and Act III their ringed purple planet under a spiral
+## galaxy (both 19 Oct 2026), framed the same way too.
 const SKIES := {
-	"act1_low_orbit": {"tex": "res://art/backdrop/low_orbit.jpg", "horizon": 750.0},
-	"act2_nebula": {"tex": "res://art/backdrop/act2_nebula.jpg", "horizon": 1540.0,
+	"act1_low_orbit": {"tex": "res://art/backdrop/low_orbit.jpg", "horizon": 1330.0},
+	"act2_nebula": {"tex": "res://art/backdrop/act2_nebula.jpg", "horizon": 1330.0,
 		"tints": [Color("ffd0ec"), Color("ffffff"), Color("e6c8ff"), Color("ffb8dc")]},
-	"act3_tower": {"tex": "res://art/backdrop/act3_tower.jpg", "horizon": 1540.0,
+	"act3_tower": {"tex": "res://art/backdrop/act3_tower.jpg", "horizon": 1330.0,
 		"tints": [Color("ffd9a0"), Color("ffffff"), Color("d8e8f4"), Color("ffc070")]},
-	"act4_core": {"tex": "res://art/backdrop/act4_core.jpg", "horizon": 1540.0,
+	"act4_core": {"tex": "res://art/backdrop/act4_core.jpg", "horizon": 1330.0,
 		"tints": [Color("b8f4ff"), Color("ffffff"), Color("ffb0e0"), Color("d0d4ff")]},
 }
 const SPARKLES := 12
