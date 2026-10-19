@@ -38,6 +38,7 @@ const PERIWINKLE := Color("7579f0")
 const TEXT_CREAM := Color("efe8d6")  # the mock's warm off-white for HUD text
 const BAND_FILL := Color(0.1, 0.11, 0.26, 0.9)
 const BAND_FONT := 40
+const BAND_TAG := "Babel:"
 const NEON := Color("4fe3ff")  # the console's cyan glow (target mock)
 const RED := Color(1.0, 0.3, 0.3)
 # Pure layout and pacing constants (screen pixels at 1080 wide, seconds). Bottom items are offsets
@@ -199,6 +200,7 @@ var _band_home: Vector2 = Vector2.ZERO
 var _band_shown: String = ""
 var _slot_empty_sb: StyleBoxFlat
 var _anim_t: float = 0.0  # idle animation clock for the HUD (stops while paused)
+var _was_calm: bool = false
 var _fly_layer: CanvasLayer
 var _score_row: HBoxContainer
 var _low: bool = false
@@ -330,6 +332,7 @@ func _reset_for_level() -> void:
 	if _backdrop != null:
 		_backdrop.set_act(game_round.act)
 	last_babel = ""  # a new level: Babel has not spoken yet
+	_band_shown = ""
 	_babel_t = 99.0
 	_cleared = false
 	_intro_on = false
@@ -1290,7 +1293,11 @@ func _icon_button(node_name: String, kind: String, centre: Vector2, d: float, ri
 func _squish(b: Control, to: float) -> void:
 	if settings.reduced_motion or not b.is_inside_tree():
 		return
+	var old: Variant = b.get_meta("squish", null)
+	if old is Tween and (old as Tween).is_valid():
+		(old as Tween).kill()
 	var tw := b.create_tween()
+	b.set_meta("squish", tw)
 	tw.tween_property(b, "scale", Vector2.ONE * to, 0.08 if to < 1.0 else 0.32).set_trans(Tween.TRANS_BACK if to >= 1.0 else Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
@@ -1502,7 +1509,7 @@ func _set_clock_colours(low: bool) -> void:
 
 ## Sizes Babel's bubble to his line: one line if it fits, else wrapped (at most BAND_MAX_W wide).
 func _layout_band(text: String) -> void:
-	var font: Font = ThemeDB.fallback_font
+	var font: Font = _band_label.get_theme_font("normal_font")
 	var fs := GameFont.scaled(BAND_FONT)
 	var inner := BAND_MAX_W - 2.0 * BAND_PAD_X
 	var lines := 1
@@ -1757,19 +1764,30 @@ func _tick_hud(delta: float) -> void:
 		_counter_chip.scale = Vector2.ONE * lerpf(0.7, 1.0, _back_ease(clampf((_chip_t - 0.08) / CHIP_SWAP_SEC, 0.0, 1.0)))
 		_level_chip.position.y = CHIP_Y + 3.0 * sin(t * 1.2)
 		_counter_chip.position.y = CHIP_Y + 3.0 * sin(t * 1.2 + 1.7)
+	elif calm != _was_calm:
+		_level_chip.scale = Vector2.ONE
+		_counter_chip.scale = Vector2.ONE
+		_level_chip.position.y = CHIP_Y
+		_counter_chip.position.y = CHIP_Y
 	# Console idle life: the porthole arcs drift, the Catcher breathes, lights blink, the liquid sloshes.
+	# Reduced motion can change mid-level (Settings), so the arts read it every frame.
+	var redraw := not calm or calm != _was_calm
 	for n in [_console, _portrait_art, _liquid]:
 		if n != null:
 			n.set("t", t)
-			n.queue_redraw()
-	if _bust != null and not calm:
-		var br := 1.0 + 0.025 * sin(t * 2.1)
+			n.set("calm", calm)
+			if redraw or n == _liquid:
+				n.queue_redraw()
+	if _bust != null:
+		var br := 1.0 if calm else 1.0 + 0.025 * sin(t * 2.1)
 		_bust.scale = Vector2(2.0 - br, br)  # a soft breath: a touch taller, a touch narrower
 	for b in [_pause_button, _sound_button, _settings_button]:
 		var ring := (b as Node).get_node_or_null("Ring")
 		if ring != null:
 			ring.set("t", t + float(b.get_index()) * 0.9)
-			ring.queue_redraw()
+			ring.set("calm", calm)
+			if redraw:
+				ring.queue_redraw()
 	# Hint bulb: a warm pulse and a little wobble; a hop every few seconds says "tap me".
 	if _hint_icon != null:
 		_hint_icon.set("glow", 0.6 if calm else 0.5 + 0.5 * sin(t * 2.4))
@@ -1778,6 +1796,10 @@ func _tick_hud(delta: float) -> void:
 			var up := 0.0 if hop > 0.6 else sin(hop / 0.6 * PI) * 14.0
 			_hint_icon.rotation = deg_to_rad(5.0 * sin(t * 1.8)) + (deg_to_rad(8.0) * sin(hop * 25.0) * (1.0 - hop / 0.6) if hop < 0.6 else 0.0)
 			_hint_icon.position.y = (_hint_button.size.y - _hint_icon.size.y * _hint_icon.scale.y) * 0.5 - up
+		elif calm != _was_calm:
+			_hint_icon.rotation = 0.0
+			_hint_icon.position.y = (_hint_button.size.y - _hint_icon.size.y * _hint_icon.scale.y) * 0.5
+	_was_calm = calm
 	if _hint_flash_t > 0.0:
 		_hint_flash_t = maxf(0.0, _hint_flash_t - delta)
 		_hint_button.modulate = Color.WHITE.lerp(Color(1.0, 0.35, 0.35), _hint_flash_t / HINT_FLASH_SEC)
@@ -1791,9 +1813,9 @@ func _tick_hud(delta: float) -> void:
 		var line := "“%s”" % last_babel  # quoted, as in the mock
 		if line != _band_shown:
 			_band_shown = line
-			_layout_band("Babel: " + line)
-			_band_label.text = "[color=#%s]Babel:[/color] %s" % [Color("a9adff").to_html(false), line]
-		_band_label.visible_characters = 7 + int(_babel_t * TYPE_CPS) + 1
+			_layout_band(BAND_TAG + " " + line)
+			_band_label.text = "[color=#%s]%s[/color] %s" % [Color("a9adff").to_html(false), BAND_TAG, line]
+		_band_label.visible_characters = BAND_TAG.length() + 1 + int(_babel_t * TYPE_CPS) + 1
 		if calm:
 			_band.scale = Vector2.ONE
 			_band.position = _band_home

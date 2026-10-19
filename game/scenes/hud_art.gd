@@ -182,15 +182,22 @@ class Console extends Control:
 			draw_circle(Vector2(lx, ly), 9.0, Color(col.r, col.g, col.b, 0.18 * on))
 			draw_circle(Vector2(lx, ly), 5.0, Color(col.r, col.g, col.b, 0.35 + 0.65 * on))
 
+	var _boxes: Dictionary = {}  # reused between redraws (the console redraws every frame)
+
+	func _box(key: String) -> StyleBoxFlat:
+		if not _boxes.has(key):
+			_boxes[key] = StyleBoxFlat.new()
+		return _boxes[key]
+
 	func _round(r: Rect2, rad: float, col: Color) -> void:
-		var sb := StyleBoxFlat.new()
+		var sb := _box("r_%s_%s" % [str(r), str(rad)])
 		sb.bg_color = col
 		sb.set_corner_radius_all(int(minf(rad, minf(r.size.x, r.size.y) * 0.5)))
 		sb.anti_aliasing = true
 		draw_style_box(sb, r)
 
 	func _outline(r: Rect2, rad: float, col: Color, w: float) -> void:
-		var sb := StyleBoxFlat.new()
+		var sb := _box("o_%s_%s_%s" % [str(r), str(rad), str(w)])
 		sb.draw_center = false
 		sb.border_color = col
 		sb.set_border_width_all(int(maxf(1.0, w)))
@@ -249,13 +256,12 @@ class Liquid extends Control:
 		for i in range(steps + 1):
 			var a := PI * 0.5 + PI * float(i) / float(steps)
 			pts.append(Vector2(pad + r, pad + r) + Vector2.from_angle(a) * r)
-		var front := pad + maxf(r, w)
+		# The front stays right of the cap (so the outline never crosses itself) and inside the frame.
+		var front := clampf(pad + w, pad + r + 14.0, pad + full - 6.0)
 		for i in range(steps + 1):
 			var u := float(i) / float(steps)
 			var y := pad + u * h
 			var wave := 0.0 if calm else 6.0 * sin(u * TAU * 1.5 + t * 5.0)
-			if i == 0:
-				pts.append(Vector2(front - 6.0 + wave, y))
 			pts.append(Vector2(front + wave - 6.0 * (1.0 - sin(u * PI)), y))
 		pts.reverse()
 		for p in pts:
