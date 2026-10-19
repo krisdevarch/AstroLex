@@ -25,7 +25,7 @@ const PlayerName := preload("res://rules/player_name.gd")
 const CodexScreen := preload("res://scenes/codex.gd")
 const InboxScreen := preload("res://scenes/inbox.gd")
 const StoryData := preload("res://rules/story_data.gd")
-const Prologue := preload("res://scenes/prologue.gd")
+const Flashback := preload("res://scenes/flashback.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
 const Daily := preload("res://rules/daily.gd")
@@ -225,7 +225,7 @@ func _show_start() -> void:
 		if save.has_profile():
 			_show_map()
 		else:
-			_show_character(false, func() -> void: _show_difficulty(false, _prologue_then_map)))
+			_show_character(false, func() -> void: _show_difficulty(false, _show_map)))
 	s.settings_pressed.connect(_show_settings.bind(_show_start))
 	DailyHooks.decorate_start(self, s)
 	_swap(s)
@@ -309,7 +309,6 @@ func _show_settings(back: Callable) -> void:
 	s.difficulty_pressed.connect(func() -> void: _show_difficulty(true, _show_settings.bind(back)))
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
 	s.codex_pressed.connect(_show_codex.bind(_show_settings.bind(back)))
-	s.prologue_pressed.connect(func() -> void: _play_animatic(false, Callable()))
 	s.credits_pressed.connect(func() -> void: _show_credits(_show_settings.bind(back)))
 	_swap(s)
 
@@ -390,7 +389,7 @@ func _start_level(story: Array = []) -> void:
 	elif _is_final_level():
 		level = finale_level(level, save.player_name())
 	if act == "act3_tower" and str(level["id"]) == "3-06" and not autoplay and not save.flag("flashback_seen"):
-		_play_animatic(true, _start_level.bind(story))  # the Loud Wars flashback, once
+		_play_flashback(_start_level.bind(story))  # the Loud Wars flashback, once
 		return
 	var ch := _profile_character()
 	var cosmetic := not autoplay or demo
@@ -597,23 +596,12 @@ func _close_pause() -> void:
 		pause_menu = null
 
 
-# --- animatics (WP-F.7) --------------------------------------------------------------------
+# --- flashback (WP-F.7) --------------------------------------------------------------------
 
-func _prologue_then_map() -> void:
-	if save.flag("prologue_seen") or autoplay:
-		_show_map()
-	else:
-		_play_animatic(false, _show_map)
-
-
-## The wordless Prologue (or the flashback) over whatever is showing; `then` runs when it ends.
-func _play_animatic(flashback: bool, then: Callable) -> void:
-	var p: Control = Prologue.new()
-	p.stills = Prologue.load_stills("flashback" if flashback else "prologue")
-	p.with_water = not flashback
-	p.base_sat = 0.6 if flashback else 0.0
+## The wordless Act III flashback over whatever is showing; `then` runs when it ends.
+func _play_flashback(then: Callable) -> void:
+	var p: Control = Flashback.new()
 	p.reduced_motion = settings.reduced_motion
-	p.treatment = settings.treatment
 	var layer := CanvasLayer.new()
 	layer.name = "AnimaticLayer"
 	layer.layer = 60
@@ -623,7 +611,7 @@ func _play_animatic(flashback: bool, then: Callable) -> void:
 	if music != null and (music as Object).has_method("duck"):
 		music.duck(true)
 	p.finished.connect(func(_skipped: bool) -> void:
-		save.set_flag("flashback_seen" if flashback else "prologue_seen")
+		save.set_flag("flashback_seen")
 		if music != null and is_instance_valid(music as Object) and (music as Object).has_method("duck"):
 			music.duck(false)
 		remove_child(layer)
