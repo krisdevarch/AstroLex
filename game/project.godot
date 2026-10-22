@@ -11,7 +11,9 @@ config/version="0.1.0"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7")
 boot_splash/bg_color=Color(0.02, 0.03, 0.08, 1)
-boot_splash/image="res://brand/icon.png"
+boot_splash/image="res://brand/splash.png"
+boot_splash/fullsize=true
+boot_splash/use_filter=true
 config/icon="res://brand/icon.png"
 
 [display]
