@@ -136,12 +136,12 @@ def rhee():
 
 
 def ade():
-    SK, SKS = "#E39A5E", "#BE7040"
+    SK, SKS = "#FF9A3C", "#F2A878"
     SF, SFS = "#88FFEE", "#4DD2C0"
     b = ""
     # ear stalks (wobbly)
-    b += stalk([(170, 130), (140, 114), (152, 92), (126, 80), (146, 56)], (146, 56), 20, "#E39A5E", "#F2B079")
-    b += stalk([(360, 126), (394, 110), (382, 90), (408, 78), (392, 56)], (392, 56), 20, "#E39A5E", "#F2B079")
+    b += stalk([(210, 130), (180, 112), (214, 96), (188, 80), (196, 64)], (196, 64), 19, "#FF9A3C", "#FFB866")
+    b += stalk([(322, 130), (352, 112), (318, 96), (344, 80), (336, 64)], (336, 64), 19, "#FF9A3C", "#FFB866")
     # jacket
     b += shape(P(SHOULDERS), SF, SFS, (110, 440, 24, 8, -20))
     b += f'<path d="M262 410 L262 512" stroke="{OUT}" stroke-width="7"/>'
@@ -175,7 +175,7 @@ def ade():
 
 
 def kit():
-    SK, SKS = "#EBB98F", "#C88E64"
+    SK, SKS = "#C2EBDA", "#A3A2DE"
     PK, PKS = "#FF88CC", "#D4559F"
     VI, VIS = "#8450E0", "#5A2FB0"
     b = ""
@@ -199,7 +199,7 @@ def kit():
     b += cheek(184, 308, "#FF7FA8", 22, 13) + cheek(346, 304, "#FF7FA8", 22, 13)
     # freckles
     for x, y in ((170, 290), (190, 298), (204, 286), (322, 286), (338, 296), (356, 284), (310, 300)):
-        b += f'<circle cx="{x}" cy="{y}" r="3.6" fill="#A8603A"/>'
+        b += f'<circle cx="{x}" cy="{y}" r="3.6" fill="#5F8FA8"/>'
     # eyes
     b += eye(212, 250, 32, 36, "#FF4FA8", (2, 2)) + eye(334, 246, 29, 34, "#FF4FA8", (2, 2))
     b += brow(176, 202, 238, 198, "#5A2FB0", 9)
@@ -255,7 +255,7 @@ def vanta():
 
 
 def tomas():
-    SK, SKS = "#F6CBA2", "#D3A07A"
+    SK, SKS = "#BDBAF4", "#938FD2"
     CO, COS = "#FF6B35", "#CC4412"
     HR, HRS = "#5A3C2E", "#3A2418"
     TL = "#2DD4BF"
@@ -271,14 +271,15 @@ def tomas():
     b += f'<path d="M300 442 L308 498" stroke="{OUT}" stroke-width="12" stroke-linecap="round"/>'
     b += f'<path d="M300 442 L308 498" stroke="#fff" stroke-width="5" stroke-linecap="round"/>'
     b += shape(C(224, 502, 8), "#fff", None, None, 5) + shape(C(308, 500, 8), "#fff", None, None, 5)
+    # rounded ear-fins
+    b += shape(P("M146 268 Q96 226 84 270 Q92 316 148 306 Z"), "#8F8CE8", "#6A67C2", (110, 266, 6, 14, 0))
+    b += shape(P("M392 262 Q440 222 452 264 Q444 308 394 300 Z"), "#8F8CE8", "#6A67C2", None)
     # small round head
     b += shape(E(268, 256, 128, 122), SK, SKS, (190, 190, 26, 10, -35))
     # hair: messy fringe
     b += shape(P("M140 250 Q128 128 262 124 Q396 126 394 250 Q372 196 338 178 Q326 214 292 176 Q262 212 236 176 Q206 214 190 184 Q154 202 140 250 Z"),
                HR, HRS, (200, 150, 28, 8, -25))
-    # teal cheek spots
-    for x, y in ((184, 340), (204, 350), (190, 358), (344, 338), (364, 346), (348, 356)):
-        b += f'<circle cx="{x}" cy="{y}" r="7" fill="{TL}" stroke="{OUT}" stroke-width="3"/>'
+    b += cheek(186, 330, "#FF8FB0", 26, 17) + cheek(350, 326, "#FF8FB0", 24, 16)
     # very big eyes
     b += eye(214, 262, 42, 48, "#2E7DD6", (3, 3)) + eye(328, 258, 38, 45, "#2E7DD6", (3, 3))
     b += brow(176, 202, 244, 196, HRS, 8) + brow(298, 194, 360, 200, HRS, 8)
