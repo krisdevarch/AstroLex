@@ -119,3 +119,13 @@ func test_act_complete_offers_the_new_message() -> void:
 	assert_true(Flow.has(main, "InboxScreen"), "opens the inbox")
 	assert_eq(s.inbox_read(), 1)
 	main.free()
+
+
+func test_every_crew_portrait_texture_loads() -> void:
+	const CrewArt := preload("res://scenes/crew_art.gd")
+	for who in CrewArt.CREW:
+		var tex := CrewArt.crew_texture(who)
+		assert_true(tex != null, "crew texture %s loads" % who)
+		if tex:
+			assert_eq(tex.get_size(), Vector2(512, 512))
+	assert_true(CrewArt.crew_texture("nobody") == null)
