@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14162a"/><stop offset=".5" stop-color="#2b2f4c"/><stop offset="1" stop-color="#5b6088"/></linearGradient>
+<linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4e72"/><stop offset=".15" stop-color="#2a2d48"/><stop offset="1" stop-color="#0c0d18"/></linearGradient>
+<linearGradient id="far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3e60"/><stop offset="1" stop-color="#555a82"/></linearGradient>
+<linearGradient id="mid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171929"/><stop offset="1" stop-color="#2b2e4a"/></linearGradient>
+<linearGradient id="face" x1="-60" y1="110" x2="40" y2="-60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d4d5ff"/><stop offset=".4" stop-color="#8e92d4"/><stop offset="1" stop-color="#2b2e50"/></linearGradient>
+<linearGradient id="jacket" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6a6eb8"/><stop offset=".3" stop-color="#2f3254"/><stop offset="1" stop-color="#121424"/></linearGradient>
+<linearGradient id="pants" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#454a82"/><stop offset=".4" stop-color="#22253f"/><stop offset="1" stop-color="#101120"/></linearGradient>
+<linearGradient id="helm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a4e86"/><stop offset=".5" stop-color="#232644"/><stop offset="1" stop-color="#0f1020"/></linearGradient>
+<radialGradient id="phoneGlow" cx="500" cy="1070" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8c8eff" stop-opacity=".8"/><stop offset=".4" stop-color="#7070FF" stop-opacity=".25"/><stop offset="1" stop-color="#7070FF" stop-opacity="0"/></radialGradient>
+<radialGradient id="vig" cx="540" cy="1000" r="1100" gradientUnits="userSpaceOnUse"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".7"/></radialGradient>
+<linearGradient id="haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8fc0" stop-opacity="0"/><stop offset="1" stop-color="#8a8fc0" stop-opacity=".45"/></linearGradient>
+<filter id="b3"><feGaussianBlur stdDeviation="3"/></filter>
+<filter id="b6"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="b14" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+<filter id="b30" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="30"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="13"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .6  0 0 0 .09 0"/></filter>
+</defs>
+<rect width="1080" height="1920" fill="url(#sky)"/>
+<!-- smoke columns, distant -->
+<g filter="url(#b30)" opacity=".5"><path d="M300 1000 C260 800 360 640 300 420 C380 600 330 800 360 1000 Z" fill="#6b7099"/><path d="M850 980 C830 820 900 700 860 540 C920 700 890 820 900 980 Z" fill="#6b7099"/></g>
+<!-- far skyline -->
+<path fill="url(#far)" d="M-20 1160 L-20 980 L80 960 L90 900 L160 905 L170 850 L230 880 L240 940 L330 930 L340 870 L410 890 L420 1000 L520 990 L530 920 L610 940 L620 1010 L700 1000 L710 940 L800 960 L810 1020 L900 1010 L910 930 L1000 950 L1100 980 L1100 1160 Z" opacity=".85"/>
+<g fill="#2e3250" opacity=".6"><rect x="110" y="950" width="22" height="30"/><rect x="190" y="900" width="22" height="30"/><rect x="360" y="930" width="22" height="30"/><rect x="560" y="965" width="22" height="30"/><rect x="740" y="990" width="22" height="30"/><rect x="930" y="975" width="22" height="30"/></g>
+<rect y="880" width="1080" height="300" fill="url(#haze)"/>
+<!-- right mid building, broken -->
+<path fill="url(#mid)" d="M780 1190 L780 900 L830 920 L850 850 L930 890 L960 840 L1100 880 L1100 1190 Z" opacity=".95"/>
+<g fill="#0a0b14"><rect x="808" y="960" width="44" height="60"/><rect x="880" y="960" width="44" height="60"/><rect x="956" y="950" width="44" height="60"/><rect x="808" y="1060" width="44" height="60"/><rect x="956" y="1050" width="44" height="60"/></g>
+<!-- left mid ruin -->
+<path fill="url(#mid)" d="M-20 1220 L-20 520 L70 570 L90 480 L170 540 L200 470 L270 610 L240 680 L330 740 L300 790 L350 840 L340 1220 Z"/>
+<g fill="#07080f"><rect x="20" y="640" width="70" height="100"/><rect x="130" y="640" width="70" height="100"/><rect x="20" y="800" width="70" height="100"/><rect x="130" y="800" width="70" height="100"/><rect x="20" y="960" width="70" height="100"/><rect x="130" y="960" width="70" height="100"/><rect x="236" y="800" width="60" height="90"/></g>
+<path d="M-20 520 L70 570 L90 480 L170 540 L200 470 L270 610" stroke="#8a8fff" stroke-width="3" fill="none" opacity=".25"/>
+<path d="M-20 1000 L340 960 M-20 1090 L340 1060" stroke="#0a0b14" stroke-width="14" opacity=".8"/>
+<!-- ground, street receding to the left -->
+<path fill="url(#ground)" d="M-20 1180 L1100 1180 L1100 1920 L-20 1920 Z"/>
+<g stroke="#6c71a8" stroke-width="2" fill="none" opacity=".25"><path d="M240 1180 L-300 1920 M240 1180 L40 1920 M240 1180 L360 1920 M240 1180 L700 1920 M240 1180 L1200 1760"/><path d="M0 1300 L1080 1290 M0 1450 L1080 1440"/></g>
+<!-- curb at the edge -->
+<path d="M0 1690 L1080 1650 L1080 1720 L0 1770 Z" fill="#32365a"/>
+<path d="M0 1690 L1080 1650" stroke="#9a9dff" stroke-width="3" opacity=".35"/>
+
+<!-- cast glow of the phone on the ground and body -->
+<ellipse cx="520" cy="1700" rx="260" ry="40" fill="#7070FF" opacity=".25" filter="url(#b14)"/>
+<ellipse cx="640" cy="1700" rx="170" ry="20" fill="#000" opacity=".6" filter="url(#b6)"/>
+
+<!-- ============ SOLDIER ============ -->
+<!-- rifle slung on the back (behind torso) -->
+<g>
+<path d="M740 1240 L780 800 L792 802 L752 1244 Z" fill="#0d0e1a"/>
+<path d="M730 1300 L742 1180 L772 1186 L762 1306 Z" fill="#0d0e1a"/>
+<path d="M780 800 L792 802" stroke="#6f73e0" stroke-width="3" opacity=".4"/>
+</g>
+<!-- back leg -->
+<path d="M650 1250 C690 1400 700 1560 690 1690" stroke="url(#pants)" stroke-width="96" stroke-linecap="round" fill="none"/>
+<path d="M656 1668 L742 1676 C754 1690 752 1706 736 1710 L650 1708 Z" fill="#0b0c16"/>
+<!-- front leg -->
+<path d="M610 1250 C600 1400 580 1560 566 1690" stroke="url(#pants)" stroke-width="102" stroke-linecap="round" fill="none"/>
+<path d="M520 1664 L610 1664 L614 1708 L500 1712 C492 1696 500 1670 520 1664 Z" fill="#12131f"/>
+<path d="M500 1706 L614 1704" stroke="#8588ff" stroke-width="3" opacity=".5"/>
+<!-- torso -->
+<path fill="url(#jacket)" d="M600 940 C660 930 720 960 730 1030 C742 1120 736 1200 724 1290 L520 1290 C516 1200 524 1100 540 1010 C550 970 570 948 600 940 Z"/>
+<!-- vest straps, belt -->
+<path d="M560 970 L720 1210" stroke="#0e0f1c" stroke-width="22" opacity=".85"/>
+<rect x="518" y="1250" width="208" height="30" fill="#0b0c18"/>
+<rect x="590" y="1246" width="38" height="40" rx="6" fill="#2a2d52"/>
+<path d="M540 1000 C528 1100 520 1200 520 1290" stroke="#aab0ff" stroke-width="5" fill="none" opacity=".55" filter="url(#b3)"/>
+<!-- far arm (behind phone) -->
+<path d="M690 1000 C720 1090 700 1130 640 1120 L520 1075" stroke="#171936" stroke-width="64" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<!-- neck -->
+<path d="M560 930 L640 925 L650 985 L560 985 Z" fill="#3a3e72"/>
+<!-- head, tilted down to the phone -->
+<g transform="translate(572 880) rotate(-30)">
+<path d="M10 70 L60 70 L70 150 L-10 150 Z" fill="#3a3e72"/>
+<path d="M20 -42 L-44 -30 C-52 -18 -50 -8 -50 -2 L-72 30 C-70 38 -60 40 -50 40 C-53 52 -53 56 -50 62 C-52 70 -48 78 -44 84 C-36 100 -20 106 0 108 L46 110 L56 -20 Z" fill="url(#face)"/>
+<path d="M-50 -2 L-72 30 C-70 38 -60 40 -50 40" stroke="#e8e9ff" stroke-width="4" fill="none" opacity=".85" filter="url(#b3)"/>
+<path d="M-44 84 C-36 100 -20 106 0 108" stroke="#e8e9ff" stroke-width="5" fill="none" opacity=".8" filter="url(#b3)"/>
+<path d="M-44 -26 C-30 -22 -14 -22 0 -26" stroke="#0a0b16" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M-28 -8 C-20 -4 -10 -4 -2 -8" stroke="#0a0b16" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M-52 62 C-40 64 -26 62 -18 60" stroke="#2b2e52" stroke-width="3" fill="none"/>
+<ellipse cx="30" cy="30" rx="14" ry="24" fill="#4a4e8e"/>
+<path d="M-58 -30 C-66 -90 -20 -136 40 -136 C100 -136 124 -80 112 -10 C108 20 94 44 72 58 L58 30 C40 -10 -10 -28 -58 -30 Z" fill="url(#helm)"/>
+<path d="M-58 -30 C-30 -26 20 -10 40 24" stroke="#07080f" stroke-width="10" fill="none" opacity=".8"/>
+<path d="M-50 -66 C-30 -118 20 -134 60 -128" stroke="#a0a4ff" stroke-width="5" fill="none" opacity=".6" filter="url(#b3)"/>
+<path d="M30 52 C20 80 0 100 -20 108" stroke="#0b0c16" stroke-width="5" fill="none" opacity=".9"/>
+</g>
+<!-- near arm: upper arm and forearm to the phone -->
+<path d="M650 1010 C690 1100 680 1150 600 1140 L520 1090" stroke="#2c2f5a" stroke-width="72" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M650 1010 C690 1100 680 1150 600 1140" stroke="#7a7ee6" stroke-width="5" fill="none" opacity=".4" filter="url(#b3)" transform="translate(-30 -6)"/>
+<!-- phone held in both hands -->
+<g transform="rotate(-14 498 1070)">
+<rect x="450" y="1005" width="92" height="150" rx="14" fill="#0b0c18"/>
+<rect x="457" y="1012" width="78" height="136" rx="9" fill="#d8d9ff"/>
+<rect x="463" y="1024" width="40" height="12" rx="4" fill="#7a7dff" opacity=".8"/>
+<rect x="463" y="1046" width="62" height="38" rx="5" fill="#9fa1ff" opacity=".9"/>
+<rect x="463" y="1096" width="60" height="7" rx="3" fill="#8a8dff" opacity=".8"/>
+<rect x="463" y="1112" width="44" height="7" rx="3" fill="#8a8dff" opacity=".8"/>
+</g>
+<!-- thumbs and fingers -->
+<path d="M470 1118 C456 1126 454 1148 474 1150 C490 1150 500 1140 500 1130 Z" fill="#a9acf4"/>
+<path d="M530 1126 C548 1130 556 1148 540 1156 C524 1160 512 1148 516 1134 Z" fill="#8a8ee0"/>
+<path d="M446 1040 C428 1048 430 1080 448 1090 C456 1088 456 1060 456 1046 Z" fill="#c4c6ff"/>
+<path d="M440 1070 C432 1084 440 1100 454 1096" stroke="#2b2e55" stroke-width="3" fill="none"/>
+
+<!-- phone light over everything -->
+<rect width="1080" height="1920" fill="url(#phoneGlow)"/>
+<ellipse cx="490" cy="1060" rx="150" ry="150" fill="#7070FF" opacity=".25" filter="url(#b30)"/>
+
+<!-- floating ash -->
+<g fill="#b7bbff" opacity=".35"><circle cx="150" cy="1300" r="3"/><circle cx="330" cy="1480" r="2.5"/><circle cx="870" cy="1350" r="3"/><circle cx="940" cy="1520" r="2"/><circle cx="780" cy="720" r="2.5"/><circle cx="420" cy="760" r="2"/><circle cx="220" cy="1100" r="2"/><circle cx="700" cy="1480" r="2.5"/></g>
+
+<!-- foreground rubble (out of focus) -->
+<g filter="url(#b3)">
+<path d="M-20 1920 L-20 1780 L90 1740 L170 1790 L260 1760 L330 1830 L420 1920 Z" fill="#06070d"/>
+<path d="M700 1920 L760 1830 L860 1810 L930 1760 L1010 1800 L1100 1770 L1100 1920 Z" fill="#06070d"/>
+<path d="M90 1740 L170 1790 L260 1760" stroke="#7a7eff" stroke-width="3" fill="none" opacity=".35"/>
+<path d="M860 1810 L930 1760 L1010 1800" stroke="#7a7eff" stroke-width="3" fill="none" opacity=".35"/>
+</g>
+<rect width="1080" height="1920" fill="url(#vig)"/>
+<rect width="1080" height="1920" filter="url(#grain)"/>
+</svg>

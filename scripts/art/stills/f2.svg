@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07080e"/><stop offset=".6" stop-color="#141728"/><stop offset="1" stop-color="#0b0c16"/></linearGradient>
+<radialGradient id="spill" cx="820" cy="1250" r="900" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7070FF" stop-opacity=".6"/><stop offset=".45" stop-color="#4b4fb8" stop-opacity=".2"/><stop offset="1" stop-color="#4b4fb8" stop-opacity="0"/></radialGradient>
+<linearGradient id="skin" x1="660" y1="1060" x2="330" y2="620" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c4c6ff"/><stop offset=".35" stop-color="#8c90cf"/><stop offset=".75" stop-color="#3a3d63"/><stop offset="1" stop-color="#1c1e35"/></linearGradient>
+<linearGradient id="hood" x1="800" y1="1250" x2="200" y2="1500" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#565aa8"/><stop offset=".4" stop-color="#2a2d52"/><stop offset="1" stop-color="#0f1020"/></linearGradient>
+<linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dcdcff"/><stop offset=".5" stop-color="#a0a2ff"/><stop offset="1" stop-color="#6366f0"/></linearGradient>
+<linearGradient id="table" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f58"/><stop offset=".2" stop-color="#14162a"/><stop offset="1" stop-color="#07080f"/></linearGradient>
+<radialGradient id="fist" cx="780" cy="1600" r="150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c4c6ff"/><stop offset=".5" stop-color="#6e72bd"/><stop offset="1" stop-color="#252848"/></radialGradient>
+<radialGradient id="vig" cx="540" cy="1000" r="1100" gradientUnits="userSpaceOnUse"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".8"/></radialGradient>
+<filter id="b6"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="b14" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+<filter id="b40" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="9"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .6  0 0 0 .09 0"/></filter>
+<path id="head" d="M338 1040 C246 968 212 790 290 668 C372 556 524 546 586 634 C606 662 616 690 621 722 C619 736 613 744 612 752 L668 832 C666 846 650 852 631 857 C640 870 646 882 641 892 C634 897 626 899 619 901 C632 908 643 922 638 936 C632 946 622 951 615 960 C620 972 610 992 584 1006 C556 1022 522 1034 492 1046 L478 1140 L338 1140 Z"/>
+<clipPath id="headclip"><use href="#head"/></clipPath>
+</defs>
+<rect width="1080" height="1920" fill="url(#bg)"/>
+<rect width="1080" height="1920" fill="url(#spill)"/>
+<!-- back wall: faint shelf and window shapes for depth -->
+<g opacity=".5"><rect x="60" y="260" width="190" height="420" fill="#0f1120"/><rect x="82" y="282" width="146" height="170" fill="#1b1e38"/><rect x="82" y="474" width="146" height="186" fill="#161830"/></g>
+<rect x="0" y="300" width="1080" height="2" fill="#2b2e55" opacity=".35"/>
+
+<!-- screen glow bloom -->
+<ellipse cx="880" cy="1300" rx="420" ry="420" fill="#7070FF" opacity=".5" filter="url(#b40)"/>
+
+<!-- torso (midground) -->
+<path fill="url(#hood)" d="M300 1090 C220 1120 160 1260 150 1500 L150 1920 L800 1920 L780 1540 C750 1350 640 1200 520 1120 L478 1090 Z"/>
+<path d="M300 1070 C240 1090 190 1140 150 1230" stroke="#3b3f78" stroke-width="5" fill="none" opacity=".6"/>
+<path d="M520 1120 C610 1170 700 1270 760 1420" stroke="#9496ff" stroke-width="5" fill="none" opacity=".55" filter="url(#b6)"/>
+<!-- hood rim behind the neck -->
+<path d="M250 1110 C250 1040 300 1010 345 1030 L480 1110 C430 1160 320 1170 250 1110 Z" fill="#161833"/>
+<!-- neck -->
+<path d="M370 1000 L494 1040 L500 1130 L350 1130 Z" fill="#4b4f92"/>
+
+<path d="M300 1100 C340 1075 420 1090 470 1085 C520 1082 560 1105 590 1140 C520 1160 380 1170 300 1130 Z" fill="#2b2e5a"/><path d="M470 1085 C520 1082 560 1105 590 1140" stroke="#9fa1ff" stroke-width="5" fill="none" opacity=".6" filter="url(#b6)"/>
+<!-- head -->
+<use href="#head" fill="url(#skin)"/>
+<g clip-path="url(#headclip)">
+<!-- light from the screen, below and in front -->
+<ellipse cx="700" cy="1090" rx="260" ry="220" fill="#9fa1ff" opacity=".55" filter="url(#b40)"/>
+<!-- shadows thrown upward: brow, nose, ear side -->
+<ellipse cx="560" cy="716" rx="70" ry="30" fill="#0c0d1a" opacity=".8" filter="url(#b14)"/>
+<ellipse cx="610" cy="640" rx="60" ry="80" fill="#0c0d1a" opacity=".65" filter="url(#b14)"/>
+<path d="M640 790 L668 832 L630 780 Z" fill="#1d1f3c" opacity=".8" filter="url(#b6)"/>
+<ellipse cx="560" cy="840" rx="50" ry="40" fill="#cfd0ff" opacity=".28" filter="url(#b14)"/>
+<!-- hair -->
+<path d="M180 480 L660 480 L632 650 C596 664 566 676 530 690 C490 706 456 740 440 790 C432 830 438 880 452 930 L420 1010 L180 1100 Z" fill="#0b0c18"/>
+<path d="M590 640 C600 668 574 690 540 700 C560 676 566 656 560 636 Z" fill="#0b0c18"/>
+<path d="M300 650 C370 566 500 562 580 610" stroke="#8d90ff" stroke-width="6" fill="none" opacity=".4" filter="url(#b6)"/>
+<path d="M280 760 C270 840 290 930 330 990" stroke="#6f73e8" stroke-width="5" fill="none" opacity=".3" filter="url(#b6)"/>
+</g>
+<!-- face details -->
+<path d="M520 706 C550 710 580 722 604 740" stroke="#07080f" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M548 750 C564 756 582 758 598 752" stroke="#0b0c18" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M570 790 C580 800 590 802 596 796" stroke="#1d1f3c" stroke-width="4" fill="none" opacity=".7"/>
+<!-- open mouth (shouting) -->
+<path d="M641 892 C626 893 596 902 584 918 C592 936 616 944 638 936 C643 922 634 908 619 901 Z" fill="#150f1c"/>
+<path d="M630 895 L616 896 L610 904 L630 903 Z" fill="#e8e8ff" opacity=".9"/>
+<path d="M600 930 C612 920 626 922 634 932 C624 944 608 944 600 930 Z" fill="#6a3b5a" opacity=".85"/>
+<!-- cheek crease, cheekbone light -->
+<path d="M590 870 C570 880 566 900 576 920" stroke="#262846" stroke-width="5" fill="none" opacity=".7"/>
+<!-- ear -->
+<path d="M415 800 C396 812 394 860 418 884 C438 892 446 868 440 840 C438 818 430 804 415 800 Z" fill="#3a3d68"/>
+<path d="M418 822 C412 840 418 860 428 868" stroke="#1c1e38" stroke-width="5" fill="none"/>
+<!-- jaw rim light -->
+<path d="M615 960 C620 972 610 992 584 1006 C556 1022 522 1034 492 1046" stroke="#d6d7ff" stroke-width="5" fill="none" opacity=".85" filter="url(#b6)"/>
+<path d="M631 857 C640 870 646 882 641 892 M619 901 C632 908 643 922 638 936" stroke="#e0e0ff" stroke-width="4" fill="none" opacity=".8" filter="url(#b6)"/>
+
+<!-- table -->
+<path d="M0 1610 L1080 1560 V1920 H0 Z" fill="url(#table)"/>
+<path d="M0 1610 L1080 1560" stroke="#8588ff" stroke-width="3" opacity=".6"/>
+<ellipse cx="860" cy="1660" rx="330" ry="50" fill="#7070FF" opacity=".5" filter="url(#b14)"/>
+
+<!-- screen (foreground-right) -->
+<g>
+<path d="M722 1050 L1080 996 V1596 L722 1590 Z" fill="#0a0b16"/>
+<path d="M738 1066 L1080 1016 V1580 L738 1574 Z" fill="url(#screen)"/>
+<clipPath id="sc"><path d="M738 1066 L1080 1016 V1580 L738 1574 Z"/></clipPath>
+<g fill="#4f52c9" opacity=".55" clip-path="url(#sc)">
+<rect x="762" y="1090" width="150" height="120" rx="8" transform="skewY(-4)"/>
+<rect x="930" y="1055" width="150" height="120" rx="8" transform="skewY(-4)"/>
+<rect x="762" y="1240" width="318" height="16" rx="8" transform="skewY(-4)"/>
+<rect x="762" y="1274" width="250" height="16" rx="8" transform="skewY(-4)"/>
+<circle cx="780" cy="1350" r="18" transform="skewY(-4)"/><rect x="814" y="1336" width="230" height="12" rx="6" transform="skewY(-4)"/><rect x="814" y="1360" width="170" height="12" rx="6" transform="skewY(-4)"/>
+<circle cx="780" cy="1420" r="18" transform="skewY(-4)"/><rect x="814" y="1406" width="250" height="12" rx="6" transform="skewY(-4)"/><rect x="814" y="1430" width="190" height="12" rx="6" transform="skewY(-4)"/>
+<circle cx="780" cy="1490" r="18" transform="skewY(-4)"/><rect x="814" y="1476" width="200" height="12" rx="6" transform="skewY(-4)"/>
+</g>
+<path d="M738 1066 L1080 1016" stroke="#fff" stroke-width="3" opacity=".6"/>
+<path d="M730 1590 L1080 1596 V1640 L700 1630 Z" fill="#1b1d3a"/>
+</g>
+
+<!-- far fist and arm (dark) -->
+<path d="M240 1260 C330 1420 400 1500 500 1560" stroke="#12132a" stroke-width="80" stroke-linecap="round" fill="none"/>
+<rect x="470" y="1505" width="120" height="100" rx="38" fill="#252848"/>
+<!-- near arm, forearm to fist, lit from the screen -->
+<path d="M330 1230 C380 1380 440 1470 560 1560" stroke="#2a2d58" stroke-width="104" stroke-linecap="round" fill="none"/>
+<path d="M330 1230 C380 1380 440 1470 560 1560" stroke="#7a7ee0" stroke-width="10" stroke-linecap="round" fill="none" opacity=".35" transform="translate(40 -14)" filter="url(#b6)"/>
+<path d="M560 1520 C610 1500 700 1500 740 1530 C770 1555 770 1610 740 1632 C690 1650 610 1650 560 1630 C535 1600 535 1550 560 1520 Z" fill="url(#fist)"/>
+<g stroke="#1a1c38" stroke-width="6" stroke-linecap="round" fill="none" opacity=".85">
+<path d="M738 1540 C720 1544 700 1544 684 1540 M744 1572 C724 1576 702 1576 684 1572 M740 1604 C722 1608 702 1608 686 1604"/>
+<path d="M600 1530 C640 1545 670 1560 690 1585 C670 1600 640 1606 614 1600"/>
+</g>
+<path d="M742 1534 C772 1556 772 1610 742 1632" stroke="#e4e4ff" stroke-width="6" fill="none" opacity=".8" filter="url(#b6)"/>
+
+<rect width="1080" height="1920" fill="url(#vig)"/>
+<rect width="1080" height="1920" filter="url(#grain)"/>
+</svg>
