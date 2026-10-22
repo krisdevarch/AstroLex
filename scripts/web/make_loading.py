@@ -82,12 +82,13 @@ def make_splash(art):
     y = h * 0.34 - (asc + desc - size) / 2  # CSS line-height:1 centres the content area in a 1em line box
     glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     ImageDraw.Draw(glow).text((cx, y), text, font=font, fill=CYAN + (255,), anchor="mt")
-    for blur, alpha in ((size * 0.7, 0.35), (size * 0.3, 0.65), (size * 0.1, 0.95)):
+    for blur, alpha in ((size * 0.35, 0.35), (size * 0.15, 0.65), (size * 0.05, 0.95)):
         g = glow.filter(ImageFilter.GaussianBlur(blur))
         g.putalpha(g.getchannel("A").point(lambda v, a=alpha: round(v * a)))
         img = Image.alpha_composite(img, g)
     ImageDraw.Draw(img).text((cx, y), text, font=font, fill=(255, 255, 255, 255), anchor="mt")
-    img.convert("RGB").save(SPLASH, optimize=True)
+    # Godot's web export only takes PNG: 720x1280, 256-colour dithered keeps it near 270 KB.
+    img.convert("RGB").resize((720, 1280), Image.LANCZOS).quantize(256, dither=Image.FLOYDSTEINBERG).save(SPLASH, optimize=True)
 
 
 def main():
