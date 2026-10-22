@@ -53,7 +53,7 @@ jobs:
     name: Web export and browser smoke test
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Godot version
@@ -68,6 +68,18 @@ jobs:
           key: godot-web-${{ steps.godot.outputs.version }}
       - name: Install Godot and web templates
         run: scripts/godot/install.sh --templates
+      # The slim engine (no 3D, physics, video or networking) is compiled once per Godot version
+      # and engine option set, then cached; a cache miss adds about 10 minutes.
+      - name: Cache slim web template
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/godot/web-template/out
+          key: godot-web-template-${{ steps.godot.outputs.version }}-${{ hashFiles('scripts/godot/web-template/*') }}
+      - name: Build slim web template
+        run: |
+          T="$(scripts/godot/web-template/build.sh | tail -n 1)"
+          test -f "$T"
+          echo "GODOT_WEB_TEMPLATE=$T" >> "$GITHUB_ENV"
       - name: Export web build
         run: scripts/godot/export.sh web
       - name: Size report
@@ -89,6 +101,10 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
           node smoke.cjs ../../../build/web ../../../build/web-smoke.png --autoplay
+      - name: Load time on a 10 Mbit/s phone connection (diagnostic)
+        continue-on-error: true
+        working-directory: scripts/godot/web-smoke
+        run: node loadtime.cjs ../../../build/web --runs=1 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Play it in WebKit as an iPhone (Safari's engine; diagnostic for now)
         id: webkit
         continue-on-error: true

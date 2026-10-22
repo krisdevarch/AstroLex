@@ -39,6 +39,7 @@ Godot game (`game/`, Godot 4.7.2 pinned in `scripts/godot/VERSION`). The scripts
 ```bash
 scripts/godot/test.sh                    # import the project, run every game/tests/**/test_*.gd headlessly
 scripts/godot/export.sh web              # web export to build/web/ (single-threaded, Compatibility renderer)
+GODOT_WEB_TEMPLATE=$(scripts/godot/web-template/build.sh | tail -n 1) scripts/godot/export.sh web   # same, with the slim engine CI ships (no 3D/physics/video/net; ~8 min first build)
 cd scripts/godot/web-smoke && npm install && npx playwright install chromium && node smoke.cjs ../../../build/web   # boot it in headless Chromium
 ```
 

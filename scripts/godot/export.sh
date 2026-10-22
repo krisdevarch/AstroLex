@@ -2,12 +2,17 @@
 # Exports the game with a preset from game/export_presets.cfg into build/<platform>/.
 #   scripts/godot/export.sh web             # build/web/index.html (release, single-threaded)
 # Web is the only preset for now; other platforms are added when their builds start.
+# GODOT_WEB_TEMPLATE=<zip> exports with that release template instead of the stock one; CI passes
+# the slim engine from scripts/godot/web-template/build.sh (about half the download).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 GODOT="${GODOT:-$("$REPO_ROOT/scripts/godot/install.sh" --templates | tail -n 1)}"
 LOG="$(mktemp)"
-trap 'rm -f "$LOG"' EXIT
+PRESETS="$REPO_ROOT/game/export_presets.cfg"
+PRESETS_BAK="$(mktemp)"
+cp "$PRESETS" "$PRESETS_BAK"
+trap 'cp "$PRESETS_BAK" "$PRESETS"; rm -f "$LOG" "$PRESETS_BAK"' EXIT
 
 case "${1:-}" in
   web) PRESET="Web"; OUT="$REPO_ROOT/build/web/index.html"; MODE="--export-release" ;;
@@ -15,6 +20,11 @@ case "${1:-}" in
 esac
 
 mkdir -p "$(dirname "$OUT")"
+if [ -n "${GODOT_WEB_TEMPLATE:-}" ]; then
+  [ -f "$GODOT_WEB_TEMPLATE" ] || { echo "GODOT_WEB_TEMPLATE not found: $GODOT_WEB_TEMPLATE" >&2; exit 1; }
+  echo "Using web release template $GODOT_WEB_TEMPLATE"
+  sed -i "s|^custom_template/release=.*|custom_template/release=\"$(cd "$(dirname "$GODOT_WEB_TEMPLATE")" && pwd)/$(basename "$GODOT_WEB_TEMPLATE")\"|" "$PRESETS"
+fi
 # Build info for playtest telemetry (gitignored; the game reads commit "dev" when it is absent).
 VERSION_STR="$(sed -n 's/^config\/version="\(.*\)"/\1/p' "$REPO_ROOT/game/project.godot")"
 printf '{"version": "%s", "commit": "%s", "built": "%s"}\n' "$VERSION_STR" \
