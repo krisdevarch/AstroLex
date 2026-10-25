@@ -155,5 +155,17 @@
   "babel.cornerSize": 0.2,
   "tile.breathe": 0.03,
   "tile.breatheHz": 0.35,
-  "tile.stretch": 0.12
+  "tile.stretch": 0.12,
+  "babel.moveEvery": 11,
+  "babel.moveFirstAt": 7,
+  "babel.tellSec": 1.2,
+  "babel.movesFromLevel": 5,
+  "babel.volleyDecoys": 3,
+  "babel.gustFromAct": 2,
+  "babel.gustSec": 1.2,
+  "babel.gustPush": 0.3,
+  "babel.shieldFromAct": 3,
+  "babel.shieldSec": 4,
+  "babel.scrambleFromAct": 4,
+  "babel.scrambleSec": 0.6
 }

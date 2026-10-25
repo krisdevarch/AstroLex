@@ -157,7 +157,19 @@
     "babel.cornerSize",
     "tile.breathe",
     "tile.breatheHz",
-    "tile.stretch"
+    "tile.stretch",
+    "babel.moveEvery",
+    "babel.moveFirstAt",
+    "babel.tellSec",
+    "babel.movesFromLevel",
+    "babel.volleyDecoys",
+    "babel.gustFromAct",
+    "babel.gustSec",
+    "babel.gustPush",
+    "babel.shieldFromAct",
+    "babel.shieldSec",
+    "babel.scrambleFromAct",
+    "babel.scrambleSec"
   ],
   "properties": {
     "$schema": {
@@ -872,6 +884,18 @@
     "babel.cornerSize": {"type": "number", "minimum": 0.05, "maximum": 0.5, "description": "diameter of Babel's corner porthole, share of view width"},
     "tile.breathe": {"type": "number", "minimum": 0, "maximum": 0.2, "description": "idle scale pulse of a letter, share of its size (0 = off)"},
     "tile.breatheHz": {"type": "number", "minimum": 0, "description": "idle scale pulse rate, cycles per second"},
-    "tile.stretch": {"type": "number", "minimum": 0, "maximum": 0.4, "description": "squash and stretch along the motion when a letter darts or is pushed, share of its size"}
+    "tile.stretch": {"type": "number", "minimum": 0, "maximum": 0.4, "description": "squash and stretch along the motion when a letter darts or is pushed, share of its size"},
+    "babel.moveEvery": {"type": "number", "minimum": 0, "description": "seconds between Babel's moves from his corner (0 = no moves) (WP-F.19)"},
+    "babel.moveFirstAt": {"type": "number", "minimum": 0, "description": "round seconds before Babel's first move"},
+    "babel.tellSec": {"type": "number", "minimum": 0.2, "description": "how long his porthole glows to warn of a move before it happens"},
+    "babel.movesFromLevel": {"type": "number", "minimum": 1, "description": "Act I level order from which Babel makes moves (earlier Act I levels have none)"},
+    "babel.volleyDecoys": {"type": "number", "minimum": 1, "maximum": 8, "description": "decoys a volley fires into the field"},
+    "babel.gustFromAct": {"type": "number", "minimum": 1, "maximum": 5, "description": "first act with the gust move (5 = never)"},
+    "babel.gustSec": {"type": "number", "minimum": 0.1, "description": "how long a gust pushes the letters"},
+    "babel.gustPush": {"type": "number", "minimum": 0, "description": "gust push speed, field units per second"},
+    "babel.shieldFromAct": {"type": "number", "minimum": 1, "maximum": 5, "description": "first act with the shield move (5 = never)"},
+    "babel.shieldSec": {"type": "number", "minimum": 0.5, "description": "how long a shield keeps one needed letter from being caught"},
+    "babel.scrambleFromAct": {"type": "number", "minimum": 1, "maximum": 5, "description": "first act with the scramble move (5 = never)"},
+    "babel.scrambleSec": {"type": "number", "minimum": 0.1, "description": "how long scrambled letters take to fly to their new places (not catchable meanwhile)"}
   }
 }
