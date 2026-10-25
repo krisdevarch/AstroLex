@@ -28,6 +28,7 @@ const StoryData := preload("res://rules/story_data.gd")
 const Flashback := preload("res://scenes/flashback.gd")
 const Telemetry := preload("res://services/telemetry.gd")
 const Save := preload("res://services/save.gd")
+const GameData := preload("res://rules/game_data.gd")
 const Daily := preload("res://rules/daily.gd")
 const DailyHooks := preload("res://scenes/daily_hooks.gd")
 const DictService := preload("res://services/dictionary.gd")
@@ -202,6 +203,11 @@ func _process(delta: float) -> void:
 		telemetry.sample_frame(delta)
 
 
+## Frame cap from the tunables: the play rate on the field, the lower menu rate everywhere else.
+func _cap_fps(play: bool) -> void:
+	Engine.max_fps = int(GameData.load_tunables()["perf.playFps" if play else "perf.menuFps"])
+
+
 func _swap(node: Node) -> void:
 	_close_pause()
 	if screen != null:
@@ -209,6 +215,7 @@ func _swap(node: Node) -> void:
 		screen.queue_free()
 	screen = node
 	if node.name != "Field":
+		_cap_fps(false)
 		daily_date = ""
 		music.play(MusicScript.MENU)
 	add_child(node)
@@ -417,6 +424,7 @@ func _start_level(story: Array = []) -> void:
 		_swap(f)
 	else:
 		f.set_paused(false)
+	_cap_fps(true)
 	music.play(act)
 	f.level_counter = Daily.short_date(daily_date) if daily_date != "" else "Level %d / %d" % [level_index + 1, levels.size()]
 	telemetry.set_settings(settings.treatment, settings.reduced_motion, settings.hint)
@@ -538,10 +546,12 @@ func _show_pause(f: Node) -> void:
 	if pause_menu != null:
 		return
 	f.set_paused(true)
+	_cap_fps(false)
 	var p: Control = PauseMenu.new()
 	p.name = "PauseMenu"
 	p.resumed.connect(func() -> void:
 		_close_pause()
+		_cap_fps(true)
 		f.set_paused(false))
 	p.restarted.connect(func() -> void:
 		_close_pause()

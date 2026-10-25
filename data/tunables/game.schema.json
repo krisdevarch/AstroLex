@@ -135,7 +135,9 @@
     "hazard.stroop",
     "hazard.stroopEverySec",
     "hazard.stroopSec",
-    "hazard.shimmerSec"
+    "hazard.shimmerSec",
+    "perf.playFps",
+    "perf.menuFps"
   ],
   "properties": {
     "$schema": {
@@ -820,6 +822,16 @@
       "type": "number",
       "minimum": 0.1,
       "description": "seconds one periwinkle shimmer sweep takes round a counterfeit bubble"
+    },
+    "perf.playFps": {
+      "type": "integer",
+      "minimum": 30,
+      "description": "frame cap during play. Sits a little above 60 on purpose: Godot's web loop skips a browser frame that arrives before the target time, so a cap of exactly 60 on a 60 Hz screen can drop frames; 64 gives 60 on a 120 Hz screen and full rate on 60 Hz"
+    },
+    "perf.menuFps": {
+      "type": "integer",
+      "minimum": 15,
+      "description": "frame cap on menus, the pause menu and other screens. Sits a little above 30 on purpose, for the same reason as perf.playFps"
     }
   }
 }
