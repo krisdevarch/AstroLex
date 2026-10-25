@@ -120,7 +120,7 @@ func test_no_repeat_when_alternatives_exist() -> void:
 
 
 func test_volley_adds_decoys_through_the_spawn_path_and_respects_the_cap() -> void:
-	var r := _make(2, "act2_nebula", "2-02", {"babel.moveEvery": 2.0, "babel.moveFirstAt": 2.0, "babel.gustFromAct": 9, "babel.shieldFromAct": 9, "babel.scrambleFromAct": 9, "ramp.decoyMax": 20})
+	var r := _make(2, "act2_nebula", "2-02", {"babel.moveEvery": 2.0, "babel.moveFirstAt": 2.0, "babel.gustFromAct": 9, "babel.shieldFromAct": 9, "babel.scrambleFromAct": 9, "ramp.decoyMax": 20, "babel.volleyLifeSec": 1000.0})
 	var max_decoys := 20
 	var volleys := 0
 	while r.state == "play" and float(r.stats["secs"]) < 60.0:
@@ -317,3 +317,18 @@ func test_bot_wins_with_all_moves_on() -> void:
 			var r := _make(sd + 30, _act_key(n), "%d-09" % n, {"burst.seconds": 70.0})
 			Bot.play(r, DT, 140.0)
 			assert_eq(r.state, "won", "act %d seed %d" % [n, sd + 30])
+
+
+func test_volley_decoys_dissolve_after_their_life() -> void:
+	var r := _make(2, "act2_nebula", "2-02", {"babel.moveEvery": 100.0, "babel.moveFirstAt": 2.0, "babel.gustFromAct": 9, "babel.shieldFromAct": 9, "babel.scrambleFromAct": 9, "ramp.decoyMax": 20})
+	var ev := _idle(r, 4.0)
+	var moves := _of(ev, "babel_move")
+	assert_true(not moves.is_empty() and moves[0]["move"] == "volley", "a volley happened")
+	var ids: Array = moves[0]["tile_ids"]
+	assert_true(not ids.is_empty(), "the volley fired decoys")
+	var gone := _of(_idle(r, 4.0 + float(_tun["babel.volleyLifeSec"]) + 0.5), "dissolve")
+	var dissolved := {}
+	for d in gone:
+		dissolved[int(d["tile_id"])] = true
+	for id in ids:
+		assert_true(r.find_tile(int(id)) == null and dissolved.has(int(id)), "volley decoy %d dissolved" % int(id))

@@ -23,7 +23,8 @@ extends RefCounted
 ##   jam_on{} jam_off{} (every hazard.stroopEverySec the slot hints go dark for hazard.stroopSec: `jammed`)
 ## Babel's moves (WP-F.19; babel.moveEvery 0 turns them off, none while state != "play"):
 ##   babel_tell{move,sec} (move "volley"|"gust"|"shield"|"scramble"; babel.tellSec before the move)
-##   babel_move{move,...} volley: tile_ids (new decoys, each also gets a normal spawn event and lands after babel.throwSec)
+##   babel_move{move,...} volley: tile_ids (new decoys, each also gets a normal spawn event and lands after babel.throwSec;
+##   each dissolves after babel.volleyLifeSec)
 ##   gust: dir (unit Vector2, y <= 0.2, never down), sec  shield: tile_id, sec
 ##   scramble: moves (Array of {tile_id,from,to}), sec (letters are uncatchable for that long)
 ##   shield_bounce{tile_id} (a shot reached a shielded letter: no catch, no time cost, no wrong, combo unchanged, the letter stays)
@@ -692,9 +693,15 @@ func _tick(h: float) -> void:
 	_tick_moves()
 	if _gust_t > 0.0:
 		_gust_t = maxf(0.0, _gust_t - h)
-	for t: Tile in tiles:
+	for t: Tile in tiles.duplicate():
 		t.landing = maxf(0.0, t.landing - h)
 		t.shield_t = maxf(0.0, t.shield_t - h)
+		if t.expire_t > 0.0:
+			t.expire_t -= h
+			if t.expire_t <= 0.0 and t.carried_by < 0 and t.id != int(shot.get("tile_id", -1)) and t.id != queued_id:
+				_remove(t)
+				_emit({"type": "dissolve", "tile_id": t.id, "ch": t.ch, "decoy": t.decoy, "pos": t.pos})
+				continue
 		if t.carried_by < 0:
 			_drift(t, h)
 	_react(h)
@@ -837,7 +844,9 @@ func _do_move(m: String) -> void:
 			var ids: Array = []
 			var excluded := _word_letters()
 			for _i in mini(int(_num("babel.volleyDecoys")), _decoy_room()):
-				ids.append(_spawn(_weighted_letter(excluded), true, _pick_plane()).id)
+				var d: Tile = _spawn(_weighted_letter(excluded), true, _pick_plane())
+				d.expire_t = _num("babel.volleyLifeSec")
+				ids.append(d.id)
 			for _pass in 16:
 				if not _separate_tiles():
 					break

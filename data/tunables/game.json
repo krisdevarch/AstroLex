@@ -167,5 +167,6 @@
   "babel.shieldFromAct": 3,
   "babel.shieldSec": 4,
   "babel.scrambleFromAct": 4,
-  "babel.scrambleSec": 0.6
+  "babel.scrambleSec": 0.6,
+  "babel.volleyLifeSec": 8
 }

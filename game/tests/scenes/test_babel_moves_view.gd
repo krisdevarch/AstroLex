@@ -140,6 +140,7 @@ func test_gust_has_no_streaks_under_reduced_motion() -> void:
 
 func test_several_moves_leave_no_extra_nodes() -> void:
 	var f := _field()
+	f.game_round._move_at = INF  # only the fake moves below: real volleys would add real letters
 	var t = _front(f)
 	_tell(f, "volley", 0.1)  # builds Babel's view so it is in the baseline
 	_run(f, 0.3)

@@ -37,5 +37,7 @@ var kick: Vector2 = Vector2.ZERO
 var kick_t: float = 0.0
 ## Seconds until a letter Babel fired mid-round lands (babel.throwSec); until then it cannot be caught or grabbed.
 var landing: float = 0.0
+## Seconds until a volley decoy dissolves (0 = stays).
+var expire_t: float = 0.0
 ## Babel's shield (WP-F.19): seconds left. While above 0 a shot that reaches the letter bounces off, and drones leave it alone.
 var shield_t: float = 0.0

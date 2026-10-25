@@ -31,6 +31,7 @@
   "babel.throwSec": 0.55,
   "babel.throwStagger": 0.06,
   "babel.volleyDecoys": 3,
+  "babel.volleyLifeSec": 8,
   "burst.hintCost": 3,
   "burst.perLetterSec": 0,
   "burst.restoreBonus": 0,
