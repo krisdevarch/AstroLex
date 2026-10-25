@@ -8,6 +8,8 @@ const SCHEMA := "astrolex.playtest.v1"
 const ISSUE_BASE := "https://github.com/krisdevarch/AstroLex/issues/new"
 const URL_LIMIT := 6000
 const EVENT_CAP := 600
+const FRAME_CAP := 3600  # frame times kept
+const FRAME_DROP := 600  # dropped in one go when over the cap
 const ERROR_CAP := 100
 const ERROR_MSG_CAP := 200
 const ID_CHARS := "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -227,6 +229,8 @@ func _finish_round(won: bool) -> void:
 func sample_frame(delta_sec: float) -> void:
 	if delta_sec > 0.0:
 		frames_ms.append(delta_sec * 1000.0)
+		if frames_ms.size() > FRAME_CAP:
+			frames_ms = frames_ms.slice(FRAME_DROP)
 
 
 ## The game reports its own error.

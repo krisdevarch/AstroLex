@@ -11,7 +11,7 @@ Owner ask (25 Oct 2026, project thread): words should tell the story instead of 
 | 3 | commsAfter ties words to a character; no spoilers before a round | pass | `python -m astrolex_tools.levels`: ok | `data/levels/*.json` |
 | 4 | One Codex note per level, for one of its words (new check) | pass | `codex_problems` in `levels.py`; `pytest tools/tests/test_levels.py` | `data/story/codex.json` (14 new notes) |
 | 5 | Babel comms lines fit the level's letters (new check) | pass | `babel_comms_problems` in `levels.py` | 2-06 SO CALM, 3-06 SO JUST, 3-11 NO HARM |
-| 6 | Changed files are draft; Python, data, export and Godot checks pass | pass | `pytest tools`, `validate_data`, `export_game_data`, `export_toy_data`, `scripts/godot/test.sh` (264 passed, 0 failed) | `game/data/content.json`, `web/toy/data.js` |
+| 6 | Changed files are draft; Python, data, export and Godot checks pass | pass | `pytest tools`, `validate_data`, `export_game_data`, `export_toy_data`, `scripts/godot/test.sh` (272 passed, 0 failed after merging main) | `game/data/content.json`, `web/toy/data.js` |
 
 Babel feasibility (`python -m astrolex_tools.babel.feasibility --levels 50`, not written to the tracked report): every act still PASSES; level-scope pass I 98%, II 96%, III 100%, IV 100% (before 99/100/100/100). Blocklist scan floor 99.4% (before 99.5%).
 

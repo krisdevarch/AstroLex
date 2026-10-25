@@ -133,5 +133,7 @@
   "hazard.stroop": 0,
   "hazard.stroopEverySec": 12,
   "hazard.stroopSec": 3,
-  "hazard.shimmerSec": 2
+  "hazard.shimmerSec": 2,
+  "perf.playFps": 64,
+  "perf.menuFps": 32
 }
