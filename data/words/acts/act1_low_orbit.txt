@@ -37,6 +37,6 @@ map
 phone
 bridge
 river
-stone
+rock
 water
 cup

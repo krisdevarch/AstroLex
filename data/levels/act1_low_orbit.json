@@ -2,7 +2,7 @@
   "$schema": "./levels.schema.json",
   "status": "draft",
   "act": "act1_low_orbit",
-  "tuning": {"burst.seconds": 60},
+  "tuning": {"burst.seconds": 50, "burst.perLetterSec": 1.0},
   "levels": [
     {
       "id": "1-01", "order": 1, "title": "First Shift", "beat": "Opening: Ade jokes about the debris, Kit asks what the Corps pays in. Even the Corps lost the names of its own kit.",
@@ -161,14 +161,14 @@
     },
     {
       "id": "1-12", "order": 12, "title": "The Crossing", "beat": "Encounter: the drones crowd in. Closing: the boy reaches the river and says water.",
-      "pacing": "encounter", "words": ["bridge", "river", "stone", "water"], "seed": 1112, "babel": true, "babelIntro": "Almost across. My drones are feeling brave tonight.",
+      "pacing": "encounter", "words": ["bridge", "river", "rock", "water"], "seed": 1112, "babel": true, "babelIntro": "Almost across. My drones are feeling brave tonight.",
       "tuning": {"spawner.decoys": 7, "drift.speed": 0.22, "oxygen.drainPerSec": 1.4, "plane.backTiles": 8, "thief.interval": 7, "hazard.counterfeitRatio": 0.25},
       "commsBefore": [
         {"who": "rhee", "text": "Last one for this ring. Tap fast, and the line will hold."},
         {"who": "ade", "text": "ok ok ok, the drones are doing laps. I am calm. I am a very calm person holding a very loud snack."}
       ],
       "commsAfter": [
-        {"who": "kit", "text": "He crossed the bridge, and the river stayed calm. He even skipped a stone."},
+        {"who": "kit", "text": "He crossed the bridge, and the river stayed calm. He even skipped a rock."},
         {"who": "rhee", "text": "That is the ring clear. A message just came through."},
         {"who": "tomas", "text": "Water. I can say water."}
       ]

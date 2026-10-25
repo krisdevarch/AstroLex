@@ -514,6 +514,18 @@ func test_stars_thresholds() -> void:
 		assert_eq(r.stars(), pair[1], str(pair[0]))
 
 
+func test_clock_adds_per_letter_seconds() -> void:
+	var r := Round.create_level(_tun, _content, "act1_low_orbit", {"id": "x", "seed": 1, "words": ["moon", "star"], "tuning": {"burst.seconds": 10, "burst.perLetterSec": 2}})
+	assert_eq(r.burst_seconds, 26.0, "10 s plus 2 s for each of 8 letters")
+	assert_eq(r.time_left, 26.0, "the round starts with the whole clock")
+	assert_eq(float(r.stats["min_time"]), 26.0)
+
+
+func test_clock_is_flat_without_per_letter_seconds() -> void:
+	var r := Round.create_level(_tun, _content, "act1_low_orbit", {"id": "x", "seed": 1, "words": ["moon", "star"], "tuning": {"burst.seconds": 10, "burst.perLetterSec": 0}})
+	assert_eq(r.burst_seconds, 10.0)
+
+
 func test_stars_scale_with_a_longer_burst() -> void:
 	var r := Round.create_level(_tun, _content, "act1_low_orbit", {"id": "x", "seed": 1, "words": ["moon", "star"], "tuning": {"burst.seconds": 60}})
 	assert_eq(r.burst_seconds, 60.0)

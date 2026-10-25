@@ -50,7 +50,8 @@ var active: Array[Dictionary] = []
 var preview: Array[Dictionary] = []
 var tiles: Array = []
 var time_left: float = 0.0
-## The clock this round started with (burst.seconds after level tuning and mods); stars scale with it.
+## The clock this round started with: burst.seconds plus burst.perLetterSec for every letter of its
+## words (after level tuning and mods); stars scale with it.
 var burst_seconds: float = 0.0
 var thieves: Array = []
 var score: float = 0.0
@@ -149,14 +150,17 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	_babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
 	_thief_rng.seed = seed_value_in ^ THIEF_SEED_XOR
 	_hazard_rng.seed = seed_value_in ^ HAZARD_SEED_XOR
-	burst_seconds = _num("burst.seconds")
-	time_left = burst_seconds
 	_next_thief_at = _num("thief.firstAt") if _num("thief.interval") > 0.0 else INF
-	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0, "counterfeits": 0, "traps": 0, "jams": 0}
 	if fixed_words.is_empty():
 		_pick_words()
 	else:
 		words = fixed_words
+	var letters := 0
+	for w in words:
+		letters += w.length()
+	burst_seconds = _num("burst.seconds") + _num("burst.perLetterSec") * letters
+	time_left = burst_seconds
+	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0, "counterfeits": 0, "traps": 0, "jams": 0}
 	_pick_trap_word()
 	active = _slots_of(words[0])
 	preview = _slots_of(words[1]) if words.size() > 1 else ([] as Array[Dictionary])

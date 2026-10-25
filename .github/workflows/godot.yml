@@ -53,7 +53,7 @@ jobs:
     name: Web export and browser smoke test
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Godot version
@@ -103,11 +103,14 @@ jobs:
           node smoke.cjs ../../../build/web ../../../build/web-smoke.png --autoplay
       - name: Load time on a 10 Mbit/s phone connection (diagnostic)
         continue-on-error: true
+        timeout-minutes: 5
         working-directory: scripts/godot/web-smoke
         run: node loadtime.cjs ../../../build/web --runs=1 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Play it in WebKit as an iPhone (Safari's engine; diagnostic for now)
         id: webkit
         continue-on-error: true
+        # A slow apt mirror must not sink the deploy: diagnostics get a hard cap.
+        timeout-minutes: 8
         working-directory: scripts/godot/web-smoke
         run: |
           npx playwright install --with-deps webkit
@@ -115,6 +118,7 @@ jobs:
       - name: Check the live Pages site in WebKit (diagnostic)
         if: always()
         continue-on-error: true
+        timeout-minutes: 3
         working-directory: scripts/godot/web-smoke
         run: node smoke.cjs ../../../build/web ../../../build/webkit-live.png --browser=webkit --url=https://krisdevarch.github.io/AstroLex/index.html
       - name: Upload web build
