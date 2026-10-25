@@ -284,7 +284,7 @@ func _active_key() -> String:
 
 ## Catchable now and its letter fills an open slot of the active word.
 func _hint_ok(t: Tile) -> bool:
-	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0 or t.kind == "counterfeit" or t.shield_t > 0.0:
+	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0 or t.kind == "counterfeit" or t.shield_t > 0.0 or t.landing > 0.0:
 		return false
 	if (not shot.is_empty() and shot["tile_id"] == t.id) or queued_id == t.id:
 		return false
@@ -878,7 +878,7 @@ func _shield_target() -> Tile:
 				break
 		var fallback: Tile = null
 		for t: Tile in tiles:
-			if t.plane >= 2 or t.decoy or t.carried_by >= 0 or not t.alive or t.landing > 0.0:
+			if t.plane >= 2 or t.decoy or t.carried_by >= 0 or not t.alive or t.landing > 0.0 or t.id == _hinted_id:
 				continue
 			if t.ch == want:
 				return t
@@ -891,9 +891,10 @@ func _shield_target() -> Tile:
 func _scramble() -> void:
 	var moves: Array = []
 	var gap := _num("tile.minGap")
+	var shot_id := int(shot.get("tile_id", -1))
 	for t: Tile in tiles:
-		if t.plane >= 2 or t.carried_by >= 0 or not t.alive:
-			continue
+		if t.plane >= 2 or t.carried_by >= 0 or not t.alive or t.id == shot_id or t.id == queued_id:
+			continue  # a letter the tether is already flying at (or queued for) stays put
 		var r := t.radius
 		var best_slack := -INF
 		var best_pos := t.pos
@@ -1188,7 +1189,7 @@ func _start_queued(id: int) -> void:
 		_start_shot_at(id, th.pos, "thief")
 		return
 	var nt: Tile = _by_id.get(id)
-	if nt != null and nt.alive and nt.carried_by < 0:
+	if nt != null and nt.alive and nt.carried_by < 0 and nt.landing <= 0.0:
 		_start_shot_at(id, nt.pos, "tile")
 
 

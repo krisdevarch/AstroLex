@@ -332,3 +332,17 @@ func test_volley_decoys_dissolve_after_their_life() -> void:
 		dissolved[int(d["tile_id"])] = true
 	for id in ids:
 		assert_true(r.find_tile(int(id)) == null and dissolved.has(int(id)), "volley decoy %d dissolved" % int(id))
+
+
+func test_scramble_leaves_the_letter_under_fire_in_place() -> void:
+	var r := _make(4, "act4_core", "4-05", {"babel.moveEvery": 1000.0})
+	_idle(r, 0.5)
+	var target = null
+	for t in r.tiles:
+		if t.plane < 2 and t.carried_by < 0 and t.landing <= 0.0:
+			target = t
+			break
+	assert_true(target != null and r.fire(target.id), "fired")
+	var before: Vector2 = target.pos
+	r._scramble()
+	assert_eq(target.pos, before, "the shot's letter is not scrambled")

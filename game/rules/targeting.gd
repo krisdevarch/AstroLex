@@ -40,7 +40,7 @@ static func letter_target(r: Round) -> int:
 		var best := -1
 		var best_d := INF
 		for t in r.tiles:
-			if t.plane < 2 and not t.decoy and t.carried_by < 0 and t.shield_t <= 0.0 and open.has(t.ch):
+			if t.plane < 2 and not t.decoy and t.carried_by < 0 and t.shield_t <= 0.0 and t.landing <= 0.0 and open.has(t.ch):
 				var d: float = origin.distance_to(t.pos)
 				if d < best_d:
 					best_d = d
