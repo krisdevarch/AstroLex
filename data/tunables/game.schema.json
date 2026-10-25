@@ -106,6 +106,7 @@
     "hud.hintAlpha",
     "autoplay.tapInterval",
     "burst.seconds",
+    "burst.perLetterSec",
     "burst.wrongCost",
     "burst.hintCost",
     "burst.restoreBonus",
@@ -665,7 +666,12 @@
     "burst.seconds": {
       "type": "number",
       "minimum": 1,
-      "description": "burst length in seconds"
+      "description": "burst length in seconds; the clock a round starts with is this plus burst.perLetterSec per letter of its words"
+    },
+    "burst.perLetterSec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds added to the burst for every letter in the round's words, so longer levels get a longer clock (0 = flat burst)"
     },
     "burst.wrongCost": {
       "type": "number",

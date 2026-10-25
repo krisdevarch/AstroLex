@@ -1,5 +1,5 @@
 extends "res://tests/test_case.gd"
-## WP-F.15: frame cap by screen, pause when the player leaves, bounded frame telemetry.
+## WP-F.16: frame cap by screen, pause when the player leaves, bounded frame telemetry.
 
 const Flow := preload("res://tests/scenes/flow.gd")
 const Telemetry := preload("res://services/telemetry.gd")

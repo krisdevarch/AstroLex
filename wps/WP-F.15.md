@@ -1,20 +1,16 @@
-# WP-F.15: Web stability and phone heat
+# WP-F.15: Ease time pressure at later levels
 
-Owner report (25 Oct 2026, project thread): "few times the game has crashed in chrome, after retrying to solve the letters" and "on my iphone 17 pro max it gets very hot so it should not happen."
+Owner playtest (25 Oct 2026): from about level 14 a player with intermediate English runs out of time collecting the letters; the words themselves are fine.
 
-What we found before the change:
-- Retry does not leak. 40 retries each on 1-01, 1-08 and 2-02 (headless Godot, a lost round, then Retry) left node, object and resource counts flat, no orphan nodes and no script errors.
-- The game draws every frame the browser offers, with no frame cap: 120 frames a second on a 120 Hz screen.
-- It renders at the full device pixel ratio: on a 3x phone the canvas is 1290 × 2796 (3.6 M pixels) and every pixel is redrawn every frame, with a full-screen copy for the bubble glass. In headless Chromium (software GL) the frame rate scales with pixel count: 3.1 fps at 3x, 7.3 fps at 2x.
-- Menus, the pause menu and the level card run at the same rate as play.
-- The telemetry frame-time list (`frames_ms`) grows without limit for the whole session.
+Cause: after Act I the clock shrinks (60, 50, 45, 40 s) while the letters per level grow (10 to 29) and the hazards (counterfeits, traps, drones, jams) eat more of it. Act I gives about 3 s per letter; late Act II about 1.9, late Act IV about 2.
+
+Fix: the clock scales with the level's letters. A round starts with `burst.seconds + burst.perLetterSec × letters` (sum of the level's word lengths). New tunable `burst.perLetterSec` (game.json default 0, so random rounds and the Daily Signal keep their flat clock). Act tunings: I 50 + 1.0/letter, II 25 + 2.75, III 15 + 4.0, IV 10 + 4.75; the per-level `burst.seconds` overrides in Acts III and IV go. No level gets less time than before.
+
+The curve report gains an "intermediate player" profile (slower per letter, hit by hazards more often). Its constants are modelling guesses, to be checked against playtest telemetry.
 
 ## Acceptance criteria
-1. Render resolution is capped at 2 device pixels per CSS pixel (`?dpr=` overrides it for testing). A 3x phone draws 44 % fewer pixels; 1x and 2x screens are unchanged.
-2. Frame cap from tunables: `perf.playFps` (60) during play, `perf.menuFps` (30) on menus, the pause menu and other screens. A 120 Hz screen draws at most 60 frames a second in play.
-3. Leaving the tab or app during a level opens the pause menu, so the clock and music stop until the player comes back.
-4. If the browser drops the game's graphics (WebGL context lost, the usual cause of a frozen or crashed tab), the page shows a short notice with a Reload button instead of a frozen picture. Progress is kept because the save is written after every level.
-5. Telemetry keeps the last 3,600 frame times only.
-6. `scripts/godot/test.sh` passes, with tests for 2, 3 and 5; the web export boots and wins a round on autoplay in Chromium.
-
-Out of scope: the glass look itself (the bubble's live refraction stays as the owner approved it), the level 14 timer and story words (separate threads).
+1. `Round` starts every round with `burst.seconds + burst.perLetterSec × letters`; `burst_seconds` reports that clock; stars, hints and the HUD use it. Headless test.
+2. `burst.perLetterSec` is in `game.json`, `game.schema.json` and the level tuning schema.
+3. Every level's new clock is at least its old clock (test).
+4. Curve report: every level keeps at least 20 % intermediate slack and at most 85 % skilled slack; slack still trends down within each act.
+5. All Python and Godot tests pass; game data re-exported.

@@ -186,7 +186,7 @@ body {
 	to { transform: translate(calc(var(--w) * 0.05), calc(var(--w) * -0.09)) rotate(8deg); }
 }
 
-/* Shown when the browser drops the game's graphics (WebGL context lost, WP-F.15). */
+/* Shown when the browser drops the game's graphics (WebGL context lost, WP-F.16). */
 #lost {
 	position: fixed;
 	inset: 0;
@@ -261,7 +261,7 @@ body {
 
 		<script src="$GODOT_URL"></script>
 		<script>
-// Phone heat (WP-F.15): Godot sizes the canvas by window.devicePixelRatio, so a 3x phone draws
+// Phone heat (WP-F.16): Godot sizes the canvas by window.devicePixelRatio, so a 3x phone draws
 // 2.25 times the pixels of a 2x one, every frame, for little visible gain. Cap the ratio at 2;
 // ?dpr=<n> sets another cap for testing.
 (function () {

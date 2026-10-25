@@ -104,6 +104,7 @@
   "hud.hintAlpha": 0.35,
   "autoplay.tapInterval": 0.45,
   "burst.seconds": 30,
+  "burst.perLetterSec": 0,
   "burst.wrongCost": 1,
   "burst.hintCost": 3,
   "burst.restoreBonus": 0,
