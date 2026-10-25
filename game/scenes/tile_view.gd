@@ -65,6 +65,10 @@ const GROW_OVERSHOOT := 1.0
 var _grow_t: float = 0.0
 var _grow_dur: float = 0.0
 var _grow_alpha: float = 1.0  # the alpha it grows to
+var _launch_t: float = 0.0  # a letter shot out of Babel's muzzle (see launch_from)
+var _launch_dur: float = 1.0
+var _launch_from: Vector2 = Vector2.ZERO
+var _launch_over: float = 0.6
 
 
 func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_treatment: String, p_reduced: bool, tun: Dictionary, p_phase: float) -> void:
@@ -259,7 +263,7 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 	if anim != "":
 		return
 	_track_motion(screen_pos, time)
-	position = screen_pos
+	position = _launch_pos(screen_pos)
 	_tick_ring(time)
 	var tilt := Vector2.ZERO
 	if is_star:
@@ -275,12 +279,14 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		if not reduced_motion:
 			var wob := 0.03 * sin(time * 2.3 + _phase * 2.0)
 			var pulse := 1.0 + float(_tun.get("tile.pulse", 0.0)) * sin(time * TAU * float(_tun.get("tile.pulseHz", 0.5)) + _phase)
-			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob) * _squash()
+			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob) * _squash() * life_scale(time)
 			glyph.rotation = _lean()
 			_mat.set_shader_parameter("bubble_time", time + _phase)
 		current_tilt = Vector2.ZERO
 		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 		return
+	if not reduced_motion:
+		body.scale = _body_scale * life_scale(time)  # visual only: the rule position never moves
 	if not reduced_motion and not is_back:
 		var maxd: float = _tun["tile.maxTiltDeg"]
 		var sway_deg: float = _tun["tile.swayDeg"]
@@ -307,6 +313,23 @@ func _track_motion(p: Vector2, time: float) -> void:
 		_squash_t = maxf(0.0, _squash_t - dt)
 	_last_pos = p
 	_last_time = time
+
+
+## Idle life (WP-F.18): a slow breathing pulse, and a stretch along the direction of travel while the
+## letter moves faster than a gentle drift. Always 1 under reduced motion. Never moves the tile.
+func life_scale(time: float) -> Vector2:
+	if reduced_motion:
+		return Vector2.ONE
+	var br := 1.0 + float(_tun.get("tile.breathe", 0.0)) * sin(time * TAU * float(_tun.get("tile.breatheHz", 0.0)) + _phase)
+	var out := Vector2(br, br)
+	var speed := _vel_px.length()
+	var thr := size_px  # px per second: a gentle drift is slower than one body length a second
+	var k := clampf((speed - thr) / (3.0 * thr), 0.0, 1.0)
+	if k > 0.0:
+		var a := float(_tun.get("tile.stretch", 0.0)) * k
+		var d := _vel_px / speed
+		out *= Vector2(1.0 + a * (absf(d.x) - 0.5 * absf(d.y)), 1.0 + a * (absf(d.y) - 0.5 * absf(d.x)))
+	return out
 
 
 func _bounce(axis: Vector2) -> void:
@@ -340,8 +363,47 @@ func grow_in(dur: float) -> void:
 	_apply_grow(0.0)
 
 
+## A letter Babel shoots mid-play: it leaves `origin` (his muzzle) and lands at its place with a
+## small overshoot, growing and fading in on the way. place() keeps passing the true position, so
+## a letter that drifts meanwhile is still caught where the rules put it.
+func launch_from(origin: Vector2, dur: float, overshoot: float) -> void:
+	_launch_dur = maxf(0.01, dur)
+	_launch_t = _launch_dur
+	_launch_from = origin
+	_launch_over = overshoot
+	_grow_alpha = modulate.a
+	_apply_launch()
+
+
+func is_launching() -> bool:
+	return _launch_t > 0.0
+
+
+func _launch_u() -> float:
+	return 1.0 - _launch_t / _launch_dur
+
+
+func _launch_pos(screen_pos: Vector2) -> Vector2:
+	if _launch_t <= 0.0:
+		return screen_pos
+	var w := _launch_u() - 1.0
+	var e := 1.0 + (_launch_over + 1.0) * w * w * w + _launch_over * w * w  # back ease-out
+	return _launch_from.lerp(screen_pos, e)
+
+
+func _apply_launch() -> void:
+	var u := _launch_u()
+	var g := clampf(u * 2.0, 0.0, 1.0)
+	scale = Vector2.ONE * lerpf(0.15, 1.0, g * g * (3.0 - 2.0 * g))
+	modulate.a = _grow_alpha * clampf(u * 6.0, 0.0, 1.0)
+
+
 ## A fly, dissolve or scatter takes over from a grow-in: start it from the full size and alpha.
 func _cancel_grow() -> void:
+	if _launch_t > 0.0:
+		_launch_t = 0.0
+		scale = Vector2.ONE
+		modulate.a = _grow_alpha
 	if _grow_t > 0.0:
 		_grow_t = 0.0
 		scale = Vector2.ONE
@@ -452,6 +514,15 @@ func tick(delta: float) -> bool:
 		if is_star:
 			var fc := Color.WHITE.lerp(STAR_FLASH, _flash_t / _flash_dur)
 			modulate = Color(fc.r, fc.g, fc.b, modulate.a)
+	if _launch_t > 0.0:
+		if anim != "":
+			_launch_t = 0.0
+		else:
+			_launch_t = maxf(0.0, _launch_t - delta)
+			_apply_launch()
+			if _launch_t <= 0.0:
+				scale = Vector2.ONE
+				modulate.a = _grow_alpha
 	if _grow_t > 0.0:
 		if anim != "":
 			_grow_t = 0.0  # a fly, dissolve or scatter takes over

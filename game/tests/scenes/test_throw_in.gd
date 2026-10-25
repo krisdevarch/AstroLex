@@ -81,7 +81,7 @@ func test_reduced_motion_has_no_travel() -> void:
 	f.free()
 
 
-func test_autoplay_waits_for_the_throw_and_babel_leaves() -> void:
+func test_autoplay_waits_for_the_throw_and_babel_stays() -> void:
 	var f := _make()
 	f.autoplay = true
 	for _i in 30:
@@ -91,34 +91,30 @@ func test_autoplay_waits_for_the_throw_and_babel_leaves() -> void:
 	_run_intro(f)
 	for _i in 60:
 		f.advance(1.0 / 60.0)
-	assert_false(f._babel.visible, "Babel gone once the throw is over")
+	assert_true(f._babel.visible, "Babel stays in his corner once the throw is over")
 	f.free()
 
 
-func test_babel_flies_in_from_the_left_at_mid_screen_and_leaves() -> void:
+func test_babel_pops_in_at_the_corner_and_stays_through_play() -> void:
 	var f := _make_level()
 	var b: Node2D = f._babel
-	var p0: Vector2 = b.body_position()
-	assert_true(p0.x < 0.0, "starts off-screen left")
-	assert_true(absf(p0.y - f.view_size.y * 0.5) < f.view_size.y * 0.2, "at mid-screen height")
-	assert_true(b.perch_position().x < f.view_size.x * 0.5, "perches on the left")
-	for _i in 6:
-		f.advance(1.0 / 60.0)
-	assert_true(b.body_position().distance_to(b.perch_position()) > 100.0, "still in flight")
+	var c: Vector2 = b.corner_position()
+	assert_true(absf(c.x - f.view_size.x * float(f._tun["babel.cornerX"])) < 0.5, "corner x from the tunable")
+	assert_true(absf(c.y - f.view_size.y * float(f._tun["babel.cornerY"])) < 0.5, "corner y from the tunable")
+	assert_true(c.x < f.view_size.x * 0.5 and c.y < f.view_size.y * 0.25, "top-left corner")
 	var enter: float = float(f._tun["babel.enterSec"])
 	for _i in int(enter * 60.0) + 4:
 		f.advance(1.0 / 60.0)
-	assert_eq(b.state, "perch", "landed")
-	assert_true(b.body_position().distance_to(b.perch_position()) < 1.0, "at the perch")
-	var left_seen := false
+	assert_eq(b.state, "perch", "popped in")
+	assert_true(b.body_position().distance_to(c) <= float(f._tun["babel.bobPx"]), "at the corner, only bobbing")
 	for _i in 60 * 30:
-		if not f.intro_active() and not b.visible:
+		if not f.intro_active():
 			break
 		f.advance(1.0 / 60.0)
-		if b.state == "exit":
-			left_seen = true
-	assert_true(left_seen, "flew out")
-	assert_false(b.visible, "gone at the end")
+	for _i in 60 * 6:
+		f.advance(1.0 / 60.0)
+		assert_true(b.visible and b.state == "perch", "Babel stays visible through play")
+		assert_true(b.body_position().distance_to(c) <= float(f._tun["babel.bobPx"]), "never leaves the corner")
 	f.free()
 
 
@@ -138,7 +134,7 @@ func test_babel_says_the_level_quote() -> void:
 			break
 	assert_true(label.visible_characters >= quote.length(), "typed in full")
 	var bubble: Control = b.get_node("Bubble")
-	assert_true(bubble.position.y + bubble.size.y < b.perch_position().y, "bubble sits above Babel")
+	assert_true(bubble.position.x > b.corner_position().x + b.corner_radius(), "bubble sits to the right of the porthole")
 	assert_true(bubble.position.x + bubble.size.x <= f.view_size.x, "bubble stays on screen")
 	assert_true(label.position.y + label.size.y <= bubble.size.y + 1.0, "the line stays inside the bubble")
 	assert_true(bubble.position.y > 140.0, "the bubble sits below the top chips")
@@ -164,7 +160,8 @@ func test_letters_leave_from_the_muzzle() -> void:
 				var origin: Vector2 = f._intro_origin[id]
 				assert_true(v.position.distance_to(origin) < 0.3 * origin.distance_to(real), "a fresh letter is still near the muzzle")
 				assert_true(origin.distance_to(b.muzzle_position()) < 60.0, "the origin is the muzzle")
-				assert_true(origin.x > b.perch_position().x, "the muzzle is on his right, the side he faces")
+				assert_true(origin.distance_to(b.corner_position()) < b.corner_radius(), "the muzzle is inside the porthole")
+				assert_true(origin.x > b.corner_position().x, "the muzzle is on his right, the side he faces")
 				checked += 1
 	assert_true(checked > 0, "launches observed")
 	f.free()
@@ -180,24 +177,68 @@ func test_a_long_first_frame_does_not_skip_the_throw() -> void:
 	f.free()
 
 
-func test_new_letters_grow_in() -> void:
+func test_new_letters_are_shot_from_the_muzzle() -> void:
 	var f := _make()
 	_run_intro(f)
 	f.advance(1.0 / 60.0)
+	var b: Node2D = f._babel
 	var before: Array = f._views.keys()
 	f.game_round._spawn("e", true, 0)
 	f.advance(1.0 / 60.0)
 	var fresh: Node2D = null
+	var fid := -1
 	for id in f._views.keys():
 		if not before.has(id):
 			fresh = f._views[id]
+			fid = id
 	assert_true(fresh != null, "a new view appeared")
+	var real: Vector2 = f.to_screen(f.game_round.find_tile(fid).pos)
+	assert_true(fresh.position.distance_to(b.muzzle_position()) < 0.35 * b.muzzle_position().distance_to(real) + 30.0, "starts at the muzzle")
 	assert_true(fresh.scale.x < 0.6, "starts small")
 	assert_true(fresh.modulate.a < 0.5, "starts faint")
-	for _i in 30:
+	var flew := false
+	for _i in 60:
 		f.advance(1.0 / 60.0)
-	assert_true(absf(fresh.scale.x - 1.0) < 0.001, "full size after the grow")
-	assert_true(fresh.modulate.a > 0.99, "fully visible after the grow")
+		flew = flew or fresh.position.distance_to(real) > 20.0
+	assert_true(flew, "it travelled")
+	assert_true(fresh.position.distance_to(f.to_screen(f.game_round.find_tile(fid).pos)) < 1.0, "ends at the tile's position")
+	assert_true(absf(fresh.scale.x - 1.0) < 0.001, "full size after the flight")
+	assert_true(fresh.modulate.a > 0.99, "fully visible after the flight")
+	f.free()
+
+
+func test_reduced_motion_new_letters_fade_in_place_and_babel_does_not_recoil() -> void:
+	var f := _make(true)
+	_run_intro(f)
+	f.advance(1.0 / 60.0)
+	var b: Node2D = f._babel
+	var before: Array = f._views.keys()
+	var rest: Vector2 = b.body_position()
+	f.game_round._spawn("e", true, 0)
+	f.advance(1.0 / 60.0)
+	var fresh: Node2D = null
+	var fid := -1
+	for id in f._views.keys():
+		if not before.has(id):
+			fresh = f._views[id]
+			fid = id
+	assert_true(fresh != null, "a new view appeared")
+	assert_true(fresh.position.distance_to(f.to_screen(f.game_round.find_tile(fid).pos)) < 1.0, "fades in at its place")
+	assert_true(fresh.modulate.a < 1.0, "still fading in")
+	assert_eq(b.body_position(), rest, "no recoil, no bob")
+	f.free()
+
+
+func test_babel_view_clips_to_the_porthole_and_recoils() -> void:
+	var f := _make()
+	var b: Node2D = f._babel
+	for _i in 60:
+		f.advance(1.0 / 60.0)
+	var rest: Vector2 = b.body_position()
+	b.shoot(Vector2(900, 900))
+	b.tick(0.03)
+	assert_true(b.body_position().distance_to(rest) > 1.0, "the porthole kicks on a shot")
+	assert_true(b.muzzle_position().distance_to(b.body_position()) < b.corner_radius(), "muzzle inside the porthole")
 	f.free()
 
 

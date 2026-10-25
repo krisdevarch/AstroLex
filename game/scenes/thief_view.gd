@@ -1,11 +1,13 @@
 extends Node2D
 ## One Babel thief drone, drawn procedurally: a dark periwinkle hull with a glowing eye.
-## Hovers with a slow bob, brighter and pulsing while it carries a letter, drops in from the top.
+## Hovers with a slow bob, brighter and pulsing while it carries a letter. It enters from the edge
+## it spawned on: dropping in from the top, or sliding in from the left or right.
 
 const PERIWINKLE := Color(0.561, 0.612, 0.949)  # #8f9cf2
 const HULL := Color(0.09, 0.1, 0.2)
 const DROP_SEC := 0.45
 const DROP_PX := 160.0
+const SLIDE_PX := 240.0
 const BOB_PX := 6.0
 const BOB_HZ := 0.9
 const FLASH_SEC := 0.3
@@ -17,6 +19,7 @@ var age: float = 0.0
 var flash_left: float = 0.0
 var base_pos: Vector2 = Vector2.ZERO
 var _phase: float = 0.0
+var entry_side: int = 0  # -1 enters from the left edge, 1 from the right, 0 from the top
 
 
 func setup(radius: float, reduced: bool, phase: float) -> void:
@@ -24,6 +27,10 @@ func setup(radius: float, reduced: bool, phase: float) -> void:
 	reduced_motion = reduced
 	_phase = phase
 	z_index = 5
+
+
+func set_entry(side: int) -> void:
+	entry_side = clampi(side, -1, 1)
 
 
 func place(p: Vector2) -> void:
@@ -53,7 +60,11 @@ func _apply() -> void:
 		modulate.a = u
 	else:
 		var e := 1.0 - (1.0 - u) * (1.0 - u)
-		off.y = -DROP_PX * (1.0 - e) + sin((age + _phase) * TAU * BOB_HZ) * BOB_PX
+		off.y = sin((age + _phase) * TAU * BOB_HZ) * BOB_PX
+		if entry_side == 0:
+			off.y -= DROP_PX * (1.0 - e)
+		else:
+			off.x = float(entry_side) * SLIDE_PX * (1.0 - e)
 		modulate.a = clampf(u * 2.0, 0.0, 1.0)
 	position = base_pos + off
 
