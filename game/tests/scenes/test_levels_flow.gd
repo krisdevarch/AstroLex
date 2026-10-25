@@ -125,10 +125,14 @@ func test_begin_level_uses_the_level_words_in_order() -> void:
 	f.free()
 
 
-func test_act_one_burst_is_sixty_seconds_and_the_bar_fits_it() -> void:
+func test_act_one_burst_is_at_least_sixty_seconds_and_the_bar_fits_it() -> void:
 	var lv := _level(0)
-	var secs := float((lv["tuning"] as Dictionary)["burst.seconds"])
-	assert_true(secs >= 30.0, "burst comes from the level tuning (WP-F.9 curve)")
+	var tuning: Dictionary = lv["tuning"]
+	var letters := 0
+	for w: String in lv["words"]:
+		letters += w.length()
+	var secs := float(tuning["burst.seconds"]) + float(tuning.get("burst.perLetterSec", 0.0)) * letters
+	assert_true(secs >= 60.0, "burst comes from the level tuning and its letters (WP-F.15 curve)")
 	var f: Node2D = FieldScene.instantiate()
 	f.print_ready = false
 	tree.root.add_child(f)
