@@ -52,6 +52,9 @@ var _flash: Node2D
 var _bubble: Panel
 var _bubble_label: Label
 var _tail: Polygon2D
+var _tell: Tell
+var _tell_left := 0.0
+var _tell_total := 1.0
 
 
 func setup(view_size: Vector2, tun: Dictionary, p_reduced: bool) -> void:
@@ -93,6 +96,11 @@ func setup(view_size: Vector2, tun: Dictionary, p_reduced: bool) -> void:
 	ring.name = "Ring"
 	ring.radius = _radius
 	_rig.add_child(ring)
+	_tell = Tell.new()
+	_tell.name = "Tell"
+	_tell.radius = _radius
+	_tell.visible = false
+	_rig.add_child(_tell)
 	var pill := Panel.new()
 	pill.name = "NamePill"
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -193,6 +201,30 @@ func hide_now() -> void:
 	_flash_t = 0.0
 	_recoil_t = 0.0
 	_recoil = Vector2.ZERO
+	_tell_left = 0.0
+	if _tell != null:
+		_tell.visible = false
+
+
+## WP-F.19: Babel is about to make `move` ("volley", "gust", "shield", "scramble"). The porthole
+## glows and pulses for `sec` seconds with the move's pictogram on a badge at its upper right.
+## Reduced motion: a steady glow, no pulse; the pictogram still shows.
+func tell(move: String, sec: float) -> void:
+	_tell_total = maxf(0.01, sec)
+	_tell_left = _tell_total
+	_tell.move = move
+	_tell.calm = reduced_motion
+	_tell.u = 0.0
+	_tell.visible = true
+	_tell.queue_redraw()
+
+
+func tell_move() -> String:
+	return _tell.move if _tell_left > 0.0 else ""
+
+
+func tell_active() -> bool:
+	return _tell_left > 0.0
 
 
 func is_talking() -> bool:
@@ -265,6 +297,12 @@ func shoot(target: Vector2) -> void:
 func tick(delta: float) -> void:
 	if state == "off":
 		return
+	if _tell_left > 0.0:
+		_tell_left = maxf(0.0, _tell_left - delta)
+		_tell.u = 1.0 - _tell_left / _tell_total
+		_tell.clock += delta
+		_tell.visible = _tell_left > 0.0
+		_tell.queue_redraw()
 	_clock += delta
 	_t += delta
 	if state == "enter" and _t >= _enter_sec:
@@ -337,6 +375,58 @@ class Ring extends Node2D:
 	func _draw() -> void:
 		draw_arc(Vector2.ZERO, radius - 5.0, 0.0, TAU, 72, Color("7579f0"), 10.0, true)
 		draw_arc(Vector2.ZERO, radius + 9.0, 0.0, TAU, 72, Color(0.46, 0.47, 0.94, 0.45), 3.0, true)
+
+
+## The glow around the porthole and the move's pictogram on a badge (all draw_* calls).
+class Tell extends Node2D:
+	const PERI := Color("7579f0")
+	const CREAM_C := Color(0.96, 0.93, 0.85)
+	var radius: float = 100.0
+	var move: String = ""
+	var u: float = 0.0
+	var clock: float = 0.0
+	var calm: bool = false
+
+	func _draw() -> void:
+		var pulse := 1.0 if calm else 0.5 + 0.5 * sin(clock * 11.0)
+		var fade := clampf((1.0 - u) * 4.0, 0.0, 1.0)
+		for i in 3:
+			var r := radius * (1.12 + 0.1 * float(i)) + (0.0 if calm else 6.0 * pulse)
+			draw_arc(Vector2.ZERO, r, 0.0, TAU, 72, Color(PERI.r, PERI.g, PERI.b, (0.55 - 0.15 * float(i)) * (0.55 + 0.45 * pulse) * fade), 8.0 - 2.0 * float(i), true)
+		var c := Vector2(radius * 0.74, -radius * 0.74)
+		var b := radius * 0.44
+		draw_circle(c, b, Color(0.1, 0.1, 0.26, 0.97))
+		draw_arc(c, b, 0.0, TAU, 40, CREAM_C, 4.0, true)
+		_pictogram(c, b * 0.62)
+
+	func _pictogram(c: Vector2, s: float) -> void:
+		var w := maxf(3.0, s * 0.18)
+		match move:
+			"volley":
+				for i in 3:
+					draw_circle(c + Vector2(-s * 0.7 + s * 0.7 * float(i), s * 0.4 - s * 0.4 * float(i)), s * 0.24, CREAM_C)
+			"gust":
+				for i in 3:
+					var y := -s * 0.55 + s * 0.55 * float(i)
+					var x0 := -s * 0.8 + (s * 0.2 if i == 1 else 0.0)
+					var pts := PackedVector2Array()
+					for k in 9:
+						var x := x0 + (s * 1.6 - (s * 0.2 if i == 1 else 0.0)) * float(k) / 8.0
+						pts.append(c + Vector2(x, y + s * 0.12 * sin(float(k) * 1.2 + float(i))))
+					draw_polyline(pts, CREAM_C, w, true)
+			"shield":
+				var sh := PackedVector2Array([c + Vector2(-s * 0.7, -s * 0.8), c + Vector2(s * 0.7, -s * 0.8), c + Vector2(s * 0.7, -s * 0.05), c + Vector2(0.0, s * 0.9), c + Vector2(-s * 0.7, -s * 0.05), c + Vector2(-s * 0.7, -s * 0.8)])
+				draw_colored_polygon(sh.slice(0, 5), Color(PERI.r, PERI.g, PERI.b, 0.7))
+				draw_polyline(sh, CREAM_C, w, true)
+			"scramble":
+				_arrow(c + Vector2(-s * 0.8, s * 0.7), c + Vector2(s * 0.8, -s * 0.7), s, w)
+				_arrow(c + Vector2(-s * 0.8, -s * 0.7), c + Vector2(s * 0.8, s * 0.7), s, w)
+
+	func _arrow(a: Vector2, z: Vector2, s: float, w: float) -> void:
+		draw_line(a, z, CREAM_C, w, true)
+		var d := (z - a).normalized()
+		var n := Vector2(-d.y, d.x)
+		draw_polyline(PackedVector2Array([z - d * s * 0.5 + n * s * 0.35, z, z - d * s * 0.5 - n * s * 0.35]), CREAM_C, w, true)
 
 
 class Flash extends Node2D:
