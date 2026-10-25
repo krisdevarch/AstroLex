@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from collections import Counter
 
 from jsonschema import Draft202012Validator
 
@@ -51,8 +52,53 @@ def spoiler_problems(levels: list[dict]) -> list[str]:
     return problems
 
 
+def _letters(text: str) -> Counter:
+    """Letter counts of a line: a-z only, case-folded, spaces and punctuation ignored."""
+    return Counter(re.findall(r"[a-z]", text.lower()))
+
+
+def babel_comms_problems(lv: dict) -> list[str]:
+    """Babel's lines in commsBefore/commsAfter may use only letters on the level's board (with
+    multiplicity). babelIntro is skipped: it is Babel's own line (story bible rule 4 exception)."""
+    board = Counter()
+    for w in lv["words"]:
+        board += _letters(w)
+    problems = []
+    for key in ("commsBefore", "commsAfter"):
+        for c in lv[key]:
+            if c["who"] != "babel":
+                continue
+            extra = sorted(_letters(c["text"]) - board)
+            if extra:
+                problems.append(f"{lv['id']}: babel line '{c['text']}' needs letters not in the board: {', '.join(extra)}")
+    return problems
+
+
+def codex_problems(levels_by_act: dict[str, list[dict]], entries: list[dict]) -> list[str]:
+    """Every level id has exactly one codex entry, and its word is one of that level's words."""
+    words = {lv["id"]: lv["words"] for lvs in levels_by_act.values() for lv in lvs}
+    problems = []
+    count = Counter(e["level"] for e in entries)
+    for lid in words:
+        if count[lid] == 0:
+            problems.append(f"codex: {lid} has no note")
+        elif count[lid] > 1:
+            problems.append(f"codex: {lid} has {count[lid]} notes (expected 1)")
+    for e in entries:
+        lid = e["level"]
+        if lid not in words:
+            problems.append(f"codex: {lid} is not a level id")
+        elif e["word"] not in words[lid]:
+            problems.append(f"codex: {lid} note is for '{e['word']}', not one of {', '.join(words[lid])}")
+    return problems
+
+
 def levels_dir():
     return data_dir() / "levels"
+
+
+def codex_path():
+    return data_dir() / "story" / "codex.json"
 
 
 def level_files() -> list:
@@ -112,6 +158,7 @@ def check_levels(doc: dict, act_words, blocklist: Blocklist, db: WordDB | None =
             n = sum(len(c["text"].split()) for c in lv[key])
             if n > MAX_COMMS_WORDS:
                 problems.append(f"{lid}: {key} has {n} words (max {MAX_COMMS_WORDS})")
+        problems += babel_comms_problems(lv)
     problems += spoiler_problems(doc["levels"])
     return problems
 
@@ -129,6 +176,9 @@ def check_all() -> list[str]:
     out: list[str] = []
     for p in level_files():
         out += check_file(p)
+    if codex_path().exists():
+        by_act = {p.stem: load_levels(p.stem) for p in level_files()}
+        out += codex_problems(by_act, json.loads(codex_path().read_text())["entries"])
     return out
 
 

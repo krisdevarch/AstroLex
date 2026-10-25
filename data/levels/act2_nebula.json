@@ -1,12 +1,12 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "approved",
+  "status": "draft",
   "act": "act2_nebula",
   "tuning": {"burst.seconds": 50},
   "levels": [
     {
-      "id": "2-01", "order": 1, "title": "Pink Gas", "beat": "Opening: Kit asks if the pink gas is normal; Ade: do not touch the pink.",
-      "pacing": "teach", "words": ["joy", "awe", "love"], "seed": 2101, "babel": true, "babelIntro": "Pink gas. Pretty. I see you looking at it.",
+      "id": "2-01", "order": 1, "title": "Pink Gas", "beat": "Opening: the crew's wonder. Kit asks if the pink gas is normal; Ade: do not touch the pink.",
+      "pacing": "teach", "words": ["joy", "awe", "glee"], "seed": 2101, "babel": true, "babelIntro": "Pink gas. Pretty. I see you looking at it.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
       "commsBefore": [
         {"who": "kit", "text": "The gas is pink. Is that normal?"},
@@ -14,11 +14,12 @@
         {"who": "rhee", "text": "It is normal here. Feelings pool in gas, Kit. Hold the shape, and the feeling follows."}
       ],
       "commsAfter": [
-        {"who": "ade", "text": "I touched it. It tingled. Do not tell Rhee."}
+        {"who": "kit", "text": "Awe, I think. And joy. Wait, is the whole crew glowing?"},
+        {"who": "ade", "text": "I touched it. It tingled. Pure glee. Do not tell Rhee."}
       ]
     },
     {
-      "id": "2-02", "order": 2, "title": "First Feelings", "beat": "Teach: small feelings drift in. VANTA sends a time and a challenge.",
+      "id": "2-02", "order": 2, "title": "A Time to Beat", "beat": "VANTA's first message: a time and a challenge. After: the feelings it stirs up.",
       "pacing": "teach", "words": ["fear", "rage", "envy"], "seed": 2102, "babel": true, "babelIntro": "Feelings already? Careful, they are catching.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
       "commsBefore": [
@@ -27,43 +28,49 @@
         {"who": "rhee", "text": "Another Catcher. Very fast. Do not let the clock hurry your hands."}
       ],
       "commsAfter": [
+        {"who": "kit", "text": "I feel envy. VANTA is so fast. Wait, is that the gas or me?"},
         {"who": "ade", "text": "Fear, rage, envy. ok ok ok. I only ordered one of those."}
       ]
     },
     {
-      "id": "2-03", "order": 3, "title": "Glass Cloud", "beat": "Core: pity and shame hang in the gas.",
-      "pacing": "core", "words": ["glee", "pity", "shame"], "seed": 2103, "babel": true, "babelIntro": "Glass looks solid. So do most clouds.",
+      "id": "2-03", "order": 3, "title": "Signal Below", "beat": "A message from below the cloud: Tomas, small and far away.",
+      "pacing": "core", "words": ["lonely", "sad", "gloom"], "seed": 2103, "babel": true, "babelIntro": "A voice under the cloud? Be careful what you answer.",
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
       "commsBefore": [
-        {"who": "kit", "text": "Wait, why does the gas look like glass now?"},
-        {"who": "rhee", "text": "Some feelings are clear until you hold them. Look twice."}
+        {"who": "kit", "text": "Wait, a signal from under the cloud? Someone is down there."},
+        {"who": "rhee", "text": "A small voice, a long way down. Hold the shape, and bring it closer."}
       ],
       "commsAfter": [
-        {"who": "ade", "text": "Glee, pity and shame in one cloud. It is a very odd buffet."}
+        {"who": "tomas", "text": "Gran? It is lonely here. I am sad. Are you ___?"},
+        {"who": "rhee", "text": "Hm. Lonely and sad, in all that gloom. Keep going, Catcher."}
       ]
     },
     {
-      "id": "2-04", "order": 4, "title": "Heavy Air", "beat": "Core: darker colours gather.",
-      "pacing": "core", "words": ["guilt", "doubt", "gloom"], "seed": 2104, "babel": true, "babelIntro": "Heavy in here. Keep your head up, Catcher.",
+      "id": "2-04", "order": 4, "title": "Heavy Air", "beat": "Kit starts to doubt Rhee; the air feels heavy.",
+      "pacing": "core", "words": ["doubt", "worry", "dread"], "seed": 2104, "babel": true, "babelIntro": "Heavy in here. Keep your head up, Catcher.",
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
       "commsBefore": [
         {"who": "ade", "text": "The air feels heavy. Is it me? Please tell me it is me."},
-        {"who": "rhee", "text": "It is the gas. Dark words weigh more. Go slowly."}
+        {"who": "rhee", "text": "It is the gas. Dark words weigh more. Go slowly."},
+        {"who": "kit", "text": "Rhee always knows what comes next. Wait, how?"}
       ],
       "commsAfter": [
-        {"who": "rhee", "text": "Hm. Some words are heavy because we carry them."}
+        {"who": "kit", "text": "Ade, I doubt Rhee a little now. Is that bad? I worry I am wrong."},
+        {"who": "rhee", "text": "Hm. Doubt is fair, Kit. Dread is doubt with the lights off."}
       ]
     },
     {
-      "id": "2-05", "order": 5, "title": "Slow Colour", "beat": "Core: bright and sharp words mixed.",
-      "pacing": "core", "words": ["bliss", "peace", "spite"], "seed": 2105, "babel": true, "babelIntro": "Slow down. I am starting to watch you play.",
+      "id": "2-05", "order": 5, "title": "Game Face", "beat": "Ade covers fear with jokes.",
+      "pacing": "core", "words": ["panic", "cheer", "brave"], "seed": 2105, "babel": true, "babelIntro": "Slow down. I am starting to watch you play.",
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
       "commsBefore": [
-        {"who": "kit", "text": "Bright words and sharp words, all mixed up. Wait, how do you tell them apart?"},
-        {"who": "rhee", "text": "Read the shape, not the colour."}
+        {"who": "ade", "text": "ok ok ok, I am fine. I am hilarious. Nobody look at my hands."},
+        {"who": "kit", "text": "Ade, your hands are shaking. Wait, why all the jokes?"},
+        {"who": "rhee", "text": "Everyone holds fear their own way. Let Ade hold it that way."}
       ],
       "commsAfter": [
-        {"who": "ade", "text": "Bliss, peace, spite. That was basically my last holiday."}
+        {"who": "ade", "text": "ok ok ok. I panic a little. I cheer louder. It is a system."},
+        {"who": "rhee", "text": "Hm. Brave is not the lack of panic, Ade. It is the next step anyway."}
       ]
     },
     {
@@ -76,72 +83,80 @@
       ],
       "commsAfter": [
         {"who": "babel", "text": "SO CALM."},
-        {"who": "rhee", "text": "Hm. The next cloud is thicker."}
+        {"who": "rhee", "text": "Hm. Keep hope, calm and trust close. Tomas will need all three."}
       ]
     },
     {
-      "id": "2-07", "order": 7, "title": "Undertow", "beat": "Core: first four-word level.",
-      "pacing": "core", "words": ["dread", "cheer", "grace", "panic"], "seed": 2107, "babel": true, "babelIntro": "Pulled under yet? Surface, then. I will wait.",
+      "id": "2-07", "order": 7, "title": "Going Quiet", "beat": "Kit asks why Rhee went quiet. These are the feelings Rhee hides.",
+      "pacing": "core", "words": ["shame", "guilt", "pity", "mercy"], "seed": 2107, "babel": true, "babelIntro": "Pulled under yet? Surface, then. I will wait.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
       "commsBefore": [
         {"who": "kit", "text": "Rhee, you went quiet when Babel spoke. Wait, why?"},
-        {"who": "rhee", "text": "Habit. Four words now, and they pull. Hold your line."}
+        {"who": "rhee", "text": "Habit. Four more now, and they pull. Hold your line."}
       ],
       "commsAfter": [
-        {"who": "ade", "text": "That one pulled me under, and I was not even there. I need a cracker."}
+        {"who": "ade", "text": "Shame and guilt are a pebble in a shoe. Pity and mercy take it out."},
+        {"who": "rhee", "text": "Hm. Next."}
       ]
     },
     {
-      "id": "2-08", "order": 8, "title": "Hard Edges", "beat": "Core: pride and anger, VANTA is dismissive of Rhee.",
-      "pacing": "core", "words": ["anger", "pride", "scorn", "worry"], "seed": 2108, "babel": true, "babelIntro": "Sharp ones now. Mind your fingers.",
+      "id": "2-08", "order": 8, "title": "Hard Edges", "beat": "VANTA is dismissive of Rhee; the crew's anger and pride.",
+      "pacing": "core", "words": ["anger", "pride", "spite", "scorn"], "seed": 2108, "babel": true, "babelIntro": "Sharp ones now. Mind your fingers.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "Sharp words, same clock. I did it in 36. Rhee reads cards. I read the clock."},
         {"who": "ade", "text": "VANTA is very fast. I am also fast. At lunch."}
       ],
       "commsAfter": [
-        {"who": "rhee", "text": "Hm. Speed is useful. So is care. Do both when you can."}
+        {"who": "kit", "text": "Scorn from VANTA, and now I feel anger for Rhee. Wait, is that allowed?"},
+        {"who": "ade", "text": "Fine, a little spite. But mostly pride in this crew."}
       ]
     },
     {
-      "id": "2-09", "order": 9, "title": "Aching Drift", "beat": "Core: quiet, aching words. Kit spots Rhee's phrase in Babel's line.",
-      "pacing": "core", "words": ["lonely", "regret", "wonder", "mercy"], "seed": 2109, "babel": true, "babelIntro": "Quiet out here, is it not? I know that quiet.",
+      "id": "2-09", "order": 9, "title": "Quiet Drift", "beat": "Quiet, hurting words. Kit spots Rhee's clue phrase in Babel's line.",
+      "pacing": "core", "words": ["regret", "longing", "sorrow", "ache"], "seed": 2109, "babel": true, "babelIntro": "Quiet out here, is it not? I know that quiet.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
       "commsBefore": [
         {"who": "ade", "text": "A quiet one. I will talk the whole time so it does not get weird."},
-        {"who": "rhee", "text": "Take it softly. These ache a little."}
+        {"who": "rhee", "text": "Take it softly. These sting a little."}
       ],
       "commsAfter": [
+        {"who": "ade", "text": "Regret, longing, sorrow, ache. That is a lot of words for one sad nap."},
         {"who": "kit", "text": "Rhee, your clue card says I know that quiet. Babel said it too. Why?"},
         {"who": "rhee", "text": "It is a common phrase, Kit. Next target, please."}
       ]
     },
     {
-      "id": "2-10", "order": 10, "title": "Warm Front", "beat": "Core: comfort in the gas.",
+      "id": "2-10", "order": 10, "title": "Soft Front", "beat": "Someone seems to be looking after the crew.",
       "pacing": "core", "words": ["warmth", "comfort", "tender", "relief"], "seed": 2110, "babel": true, "babelIntro": "Cozy cloud. Do not nod off, Catcher.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 7, "thief.interval": 7, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1},
       "commsBefore": [
-        {"who": "kit", "text": "A warm front. Wait, why does it feel like someone is looking after us?"},
-        {"who": "ade", "text": "Warm gas, soft light. I am not saying nap. I am saying horizontal."},
-        {"who": "rhee", "text": "Take the warm while it lasts. You will want it later."}
+        {"who": "kit", "text": "Wait, why does it feel like someone is looking after us?"},
+        {"who": "ade", "text": "Soft gas, soft light. I am not saying nap. I am saying horizontal."},
+        {"who": "rhee", "text": "Take it while it lasts. You will want it later."}
       ],
-      "commsAfter": []
+      "commsAfter": [
+        {"who": "ade", "text": "Warmth, comfort, relief. Somebody is being very tender with us."},
+        {"who": "rhee", "text": "Hm. Let it. Kindness does not always need a reason."}
+      ]
     },
     {
-      "id": "2-11", "order": 11, "title": "Deep Pink", "beat": "Late: the gas thickens; VANTA is near.",
-      "pacing": "core", "words": ["sorrow", "delight", "courage", "longing"], "seed": 2111, "babel": true, "babelIntro": "Thicker now. Even I lose track in here.",
+      "id": "2-11", "order": 11, "title": "Deep Pink", "beat": "Late: the gas thickens and turns cold; VANTA is two rings ahead; the crew finds courage.",
+      "pacing": "core", "words": ["courage", "scared", "peace", "delight"], "seed": 2111, "babel": true, "babelIntro": "Thicker now. Even I lose track in here.",
       "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "I am two rings ahead of you. Do not wait up."},
         {"who": "kit", "text": "The gas is thick enough to chew. Wait, why is it so cold?"}
       ],
       "commsAfter": [
+        {"who": "ade", "text": "I am scared. I am also here. That is courage, right?"},
+        {"who": "kit", "text": "Wait, the cold eased. I felt peace, then delight. Is that normal?"},
         {"who": "rhee", "text": "One cloud left after this. Stay with me, Catcher."}
       ]
     },
     {
       "id": "2-12", "order": 12, "title": "The Ghost", "beat": "Encounter: Rhee recovers grief and her voice breaks. VANTA sets a last time. Tomas names a feeling.",
-      "pacing": "encounter", "words": ["solace", "grief"], "seed": 2112, "babel": true, "babelIntro": "Two words left in this cloud. I know both. Do you?",
+      "pacing": "encounter", "words": ["love", "grief"], "seed": 2112, "babel": true, "babelIntro": "Two words left in this cloud. I know both. Do you?",
       "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "Two words. 30 seconds, my time. Beat it."},
