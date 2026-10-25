@@ -17,6 +17,7 @@
   "babel.throwSec": 0.55,
   "babel.throwStagger": 0.06,
   "burst.hintCost": 3,
+  "burst.perLetterSec": 0,
   "burst.restoreBonus": 0,
   "burst.seconds": 30,
   "burst.wrongCost": 1,

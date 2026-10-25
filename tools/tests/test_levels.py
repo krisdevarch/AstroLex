@@ -126,13 +126,28 @@ def test_comms_after_may_name_caught_words_but_not_later_ones(doc, words):
     assert check(doc, words) == [f"1-01: commsAfter gives away '{words[3]}' before it is caught"]
 
 
+def _clock(lv: dict) -> float:
+    t = lv["tuning"]
+    return t["burst.seconds"] + t.get("burst.perLetterSec", 0) * sum(len(w) for w in lv["words"])
+
+
 def test_act_tuning_merges_under_level_tuning():
-    """Act keys apply to every level of the act; level keys win over them. The act clock (burst.seconds)
-    is the default; a level overrides it only where the curve model (tools/astrolex_tools/curve.py) needs
-    more room (or less, for the finale), so every merged level carries a 30 s clock or more."""
+    """Act keys apply to every level of the act; level keys win over them. The clock is the act's
+    burst.seconds plus burst.perLetterSec for every letter of the level's words (WP-F.15)."""
     import json
     doc = json.loads((L.levels_dir() / "act1_low_orbit.json").read_text())
-    assert doc["tuning"]["burst.seconds"] == 60
+    assert doc["tuning"]["burst.seconds"] == 50 and doc["tuning"]["burst.perLetterSec"] == 1.0
     merged = L.load_levels("act1_low_orbit")
-    assert all(m["tuning"]["burst.seconds"] == 60 for m in merged)
-    assert all(m["tuning"]["burst.seconds"] >= 30 for a in ("act2_nebula", "act3_tower", "act4_core") for m in L.load_levels(a))
+    assert all(m["tuning"]["burst.seconds"] == 50 for m in merged)
+    assert all(_clock(m) >= 60 for m in merged)
+
+
+# Clocks before WP-F.15 (flat burst per act, a few per-level overrides).
+OLD_CLOCKS = {"act1_low_orbit": 60, "act2_nebula": 50, "act3_tower": 45, "act4_core": 40,
+              "3-10": 55, "3-11": 60, "4-09": 55, "4-10": 60, "4-11": 70, "4-12": 30}
+
+
+def test_no_level_gets_less_time_than_before():
+    for act in ("act1_low_orbit", "act2_nebula", "act3_tower", "act4_core"):
+        for lv in L.load_levels(act):
+            assert _clock(lv) >= OLD_CLOCKS.get(lv["id"], OLD_CLOCKS[act]), lv["id"]

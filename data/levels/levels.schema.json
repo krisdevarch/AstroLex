@@ -20,6 +20,7 @@
         "drift.speed": {"type": "number"},
         "oxygen.drainPerSec": {"type": "number"},
         "burst.seconds": {"type": "number", "minimum": 1},
+        "burst.perLetterSec": {"type": "number", "minimum": 0},
         "thief.interval": {"type": "number"},
         "thief.firstAt": {"type": "number"},
         "thief.speed": {"type": "number"},

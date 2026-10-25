@@ -18,3 +18,15 @@ def test_flags_are_listed_and_shipped_levels_have_none():
 def test_a_hopeless_level_is_flagged():
     t = {**curve.game_tunables(), "burst.seconds": 5}
     assert curve.estimate(["bread", "cup"], t)["slack"] < curve.SLACK_MIN
+
+
+def test_per_letter_seconds_lengthen_the_clock():
+    t = {**curve.game_tunables(), "burst.seconds": 10, "burst.perLetterSec": 2}
+    r = curve.estimate(["bread", "cup"], t)
+    assert r["burst"] == 26
+    assert curve.estimate(["bread", "cup"], t, "intermediate")["est"] > r["est"]
+
+
+def test_an_intermediate_player_keeps_slack_on_every_shipped_level():
+    rows, _ = curve.build()
+    assert min(r["int_slack"] for r in rows) >= curve.INTERMEDIATE_MIN

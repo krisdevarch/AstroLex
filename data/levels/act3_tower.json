@@ -2,7 +2,7 @@
   "$schema": "./levels.schema.json",
   "status": "approved",
   "act": "act3_tower",
-  "tuning": {"burst.seconds": 45},
+  "tuning": {"burst.seconds": 15, "burst.perLetterSec": 4.0},
   "levels": [
     {
       "id": "3-01", "order": 1, "title": "Tower Door", "beat": "Opening: Rhee goes quiet; Kit notes the door code matches her handwriting.",
@@ -117,7 +117,7 @@
     {
       "id": "3-10", "order": 10, "title": "Archive", "beat": "Core: memory and silence.",
       "pacing": "core", "words": ["reason", "memory", "silence", "wisdom"], "seed": 3110, "babel": true, "babelIntro": "Dusty shelves. Every page here was once shouted.",
-      "tuning": {"burst.seconds": 55, "spawner.decoys": 4, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "Wait, why does Babel keep the whole archive?"},
         {"who": "rhee", "text": "It could not bear to lose one page. It is thorough. So am I."}
@@ -127,7 +127,7 @@
     {
       "id": "3-11", "order": 11, "title": "Open Window", "beat": "Late: Babel states what it believes in the Catcher letters.",
       "pacing": "core", "words": ["dignity", "liberty", "consent", "purpose"], "seed": 3111, "babel": true, "babelIntro": "Look closely. My whole case is in your letters.",
-      "tuning": {"burst.seconds": 60, "spawner.decoys": 5, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.19, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "Babel talks in your letters now. It is not cruel. That is the worrying part."},
         {"who": "rhee", "text": "Read it. Argue with it if you want. Do not look away."}
