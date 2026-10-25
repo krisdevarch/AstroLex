@@ -562,7 +562,7 @@ func test_thieves_off_when_interval_is_zero() -> void:
 
 
 func _thief_round(seed_value := 5, extra := {}) -> Round:
-	var tuning := {"thief.firstAt": 1.0, "thief.interval": 100.0, "thief.max": 1}
+	var tuning := {"thief.firstAt": 1.0, "thief.interval": 100.0, "thief.max": 1, "thief.sideShare": 0}
 	tuning.merge(extra, true)
 	return Round.create_level(_tun, _content, "act1_low_orbit", {"id": "th", "seed": seed_value, "words": ["moon", "star", "orbit", "dust"], "tuning": tuning})
 

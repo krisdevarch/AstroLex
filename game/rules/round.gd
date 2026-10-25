@@ -39,6 +39,10 @@ const HAZARD_SEED_XOR := 0x4A2A2D
 const TRAP_MIN_LEN := 3
 const TRAP_MAX_LEN := 4
 const THIEF_IDLE_MUL := 0.25
+const STYLE_SEED_XOR := 0x57A1E5
+const ORBIT_MIN_K := 0.25
+const DART_LOW := 0.3  # a darting letter eases toward this share of its cruise speed before a burst
+const DART_RAMP := 0.15  # share of the glide spent recovering from the burst
 ## Letter weights for decoys and back tiles: English frequency is language data, not a feel number.
 const FREQ := {"e": 127, "t": 91, "a": 82, "o": 75, "i": 70, "n": 67, "s": 63, "h": 61, "r": 60, "d": 43, "l": 40, "c": 28, "u": 28, "m": 24, "w": 24, "f": 22, "g": 20, "y": 20, "p": 19, "b": 15, "v": 10, "k": 8, "j": 2, "x": 2, "q": 1, "z": 1}
 const EPS := 1e-6
@@ -95,6 +99,7 @@ var _pool: Dictionary = {}
 var _shown: Dictionary = {}
 var _thief_by_id: Dictionary = {}
 var _next_thief_at: float = INF
+var _shot_dur: float = 0.0  # flight time of the shot being resolved (widens a dart's tolerance)
 var _pending_respawn: Array[Dictionary] = []
 
 
@@ -401,10 +406,51 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 		speed *= _num("plane.midSpeedMul")  # parallax: the deeper layer drifts a little slower
 	tile.vel = Vector2(cos(angle), sin(angle)) * speed
 	tile.base_speed = speed
+	if not decoy:
+		_assign_style(tile)
 	tiles.append(tile)
 	_by_id[tile.id] = tile
-	_emit({"type": "spawn", "tile_id": tile.id, "ch": ch, "plane": plane, "decoy": decoy, "pos": tile.pos})
+	_emit({"type": "spawn", "tile_id": tile.id, "ch": ch, "plane": plane, "decoy": decoy, "pos": tile.pos, "style": tile.style})
 	return tile
+
+
+## Motion style from a throwaway rng keyed on (seed, tile id), so the spawner's own sequence is untouched.
+func _assign_style(tile: Tile) -> void:
+	var g := RandomNumberGenerator.new()
+	g.seed = hash([seed_value, tile.id, STYLE_SEED_XOR])
+	var roll := g.randf()
+	var orbit_share := _num("drift.orbitShare")
+	var dart_share := _num("drift.dartShare")
+	if roll < orbit_share:
+		tile.style = "orbit"
+		tile.orbit_angle = g.randf() * TAU
+		var tang := _num("drift.orbitRadius") * TAU * _num("drift.orbitHz")
+		var ratio := tang / maxf(tile.base_speed, EPS)
+		tile.orbit_k = sqrt(maxf(ORBIT_MIN_K * ORBIT_MIN_K, 1.0 - ratio * ratio))
+	elif roll < orbit_share + dart_share:
+		tile.style = "dart"
+		tile.dart_len = maxf(_num("drift.dartEvery") * g.randf_range(0.85, 1.15), _num("drift.dartSec") * 2.0)
+		tile.dart_phase = g.randf() * tile.dart_len
+		# Normalise the cycle so the mean speed equals the base speed (cruise speed = base / norm).
+		var n := 64
+		var sum := 0.0
+		for i in n:
+			sum += _dart_mul(tile, (float(i) + 0.5) / float(n) * tile.dart_len)
+		tile.dart_norm = maxf(sum / float(n), 0.1)
+
+
+## Dart speed multiplier at u seconds into a cycle: eases from the cruise speed toward DART_LOW over the
+## glide, then a burst up to drift.dartBoost for drift.dartSec; a short ramp-up after the burst.
+func _dart_mul(t: Tile, u: float) -> float:
+	var burst := _num("drift.dartSec")
+	var glide := t.dart_len - burst
+	if u >= glide:
+		var b := (u - glide) / burst
+		return DART_LOW + (_num("drift.dartBoost") - DART_LOW) * sin(PI * b)
+	var g := u / glide
+	var ease_down := 1.0 - (1.0 - DART_LOW) * sin(g * PI * 0.5)
+	var k := clampf(g / DART_RAMP, 0.0, 1.0)
+	return ease_down * (DART_LOW + (1.0 - DART_LOW) * k * k * (3.0 - 2.0 * k))
 
 
 ## The smallest clearance between a tile of radius r at p and any live catchable tile on the same
@@ -619,6 +665,7 @@ func _tick(h: float) -> void:
 	for t: Tile in tiles:
 		if t.carried_by < 0:
 			_drift(t, h)
+	_react(h)
 	for _pass in 4:  # a few passes settle crowded clusters
 		_separate_tiles()
 	_tick_thieves(h)
@@ -699,9 +746,20 @@ func _spawn_thief() -> void:
 	var th: Thief = Thief.new()
 	th.id = _next_id
 	_next_id += 1
-	th.pos = Vector2(_thief_rng.randf_range(0.0, 1.0), _num("field.topMargin"))
+	var top := _num("field.topMargin")
+	var side := _num("thief.sideShare")
+	var from_side := side > 0.0 and _thief_rng.randf() < side
+	if from_side:
+		# The left (x = 0) or right (x = 1) edge, in the upper part of the play area; the view reads x.
+		var right := _thief_rng.randf() < 0.5
+		var max_y := top + _num("thief.sideMaxY") * (_num("field.height") - top)
+		th.pos = Vector2(1.0 if right else 0.0, _thief_rng.randf_range(top, max_y))
+	else:
+		th.pos = Vector2(_thief_rng.randf_range(0.0, 1.0), top)
 	var angle := _thief_rng.randf() * TAU
 	th.vel = Vector2(cos(angle), sin(angle)) * _num("thief.speed") * THIEF_IDLE_MUL
+	if from_side:
+		th.vel.x = -absf(th.vel.x) if th.pos.x > 0.5 else absf(th.vel.x)
 	thieves.append(th)
 	_thief_by_id[th.id] = th
 	_emit({"type": "thief_spawn", "thief_id": th.id, "pos": th.pos})
@@ -757,7 +815,16 @@ func _seek(th: Thief, h: float) -> void:
 		tgt.carried_by = th.id
 		th.target_id = -1
 		th.state = "flee"
-		th.vel = Vector2(0.0, -_num("thief.fleeSpeed"))
+		# Flee to the nearest of the left, right and top edges (never the bottom); ties go to the top.
+		var to_left := th.pos.x
+		var to_right := 1.0 - th.pos.x
+		var to_top := th.pos.y
+		var dir := Vector2(0.0, -1.0)
+		if to_left < to_top and to_left <= to_right:
+			dir = Vector2(-1.0, 0.0)
+		elif to_right < to_top and to_right < to_left:
+			dir = Vector2(1.0, 0.0)
+		th.vel = dir * _num("thief.fleeSpeed")
 		_emit({"type": "thief_grab", "thief_id": th.id, "tile_id": tgt.id})
 
 
@@ -766,7 +833,7 @@ func _flee(th: Thief, h: float) -> void:
 	var tile: Tile = _by_id.get(th.carrying_id)
 	if tile != null:
 		tile.pos = th.pos
-	if th.pos.y < 0.0:
+	if th.pos.y < 0.0 or th.pos.x < 0.0 or th.pos.x > 1.0:
 		var tile_id := th.carrying_id
 		var ch := ""
 		if tile != null:
@@ -787,7 +854,10 @@ func _remove_thief(th: Thief) -> void:
 func _drift(t: Tile, h: float) -> void:
 	_steer(t, h)
 	var r := t.radius
-	t.pos += t.vel * h * drift_scale
+	if t.style == "orbit" and t.base_speed > 0.0 and t.vel.length() >= EPS:
+		_orbit_move(t, h)
+	else:
+		t.pos += t.vel * h * drift_scale
 	if t.pos.x < r:
 		t.pos.x = r
 		t.vel.x = absf(t.vel.x)
@@ -804,6 +874,76 @@ func _drift(t: Tile, h: float) -> void:
 		t.vel.y = -absf(t.vel.y)
 
 
+## Orbit: the tile circles a centre that wanders like a plain letter (bouncing off the walls with the
+## circle's radius as extra inset). The centre is recovered from the position each step, so separation
+## pushes carry over.
+func _orbit_move(t: Tile, h: float) -> void:
+	var rad := _num("drift.orbitRadius")
+	var anchor := t.pos - t.orbit_off
+	anchor += t.vel * h * drift_scale
+	var inset := t.radius + rad
+	var top := _num("field.topMargin") + inset
+	var bottom := _num("field.height") - inset
+	if anchor.x < inset:
+		anchor.x = inset
+		t.vel.x = absf(t.vel.x)
+	elif anchor.x > 1.0 - inset:
+		anchor.x = 1.0 - inset
+		t.vel.x = -absf(t.vel.x)
+	if anchor.y < top:
+		anchor.y = top
+		t.vel.y = absf(t.vel.y)
+	elif anchor.y > bottom:
+		anchor.y = bottom
+		t.vel.y = -absf(t.vel.y)
+	t.orbit_angle += TAU * _num("drift.orbitHz") * h * drift_scale
+	t.orbit_off = Vector2(cos(t.orbit_angle), sin(t.orbit_angle)) * rad
+	t.pos = anchor + t.orbit_off
+
+
+## Shy and ripple: letters edge away from a seeking drone and are shoved outward by a catch.
+func _react(h: float) -> void:
+	var shy_r := _num("drift.shyRadius")
+	var shy_push := _num("drift.shyPush")
+	var ripple_sec := maxf(_num("drift.rippleSec"), EPS)
+	var shot_id := int(shot["tile_id"]) if not shot.is_empty() and shot.get("kind", "tile") == "tile" else -1
+	for t: Tile in tiles:
+		if t.carried_by >= 0 or t.plane >= 2 or t.id == shot_id or t.id == queued_id:
+			continue
+		var move := Vector2.ZERO
+		if t.vel.length() >= EPS:
+			for th: Thief in thieves:
+				if th.state != "seek":
+					continue
+				var away := t.pos - th.pos
+				var d := away.length()
+				if d < shy_r:
+					var dir := away / d if d > EPS else Vector2(0.0, 1.0)
+					move += dir * shy_push * (1.0 - d / shy_r)
+		if t.kick_t > 0.0:
+			move += t.kick * (t.kick_t / ripple_sec)
+			t.kick_t = maxf(0.0, t.kick_t - h)
+		if move != Vector2.ZERO:
+			t.pos += move * h * drift_scale
+			_clamp_to_field(t)
+
+
+## A catch at `at` shoves the nearby letters outward (decaying over drift.rippleSec).
+func _ripple(at: Vector2, except_id: int) -> void:
+	var rad := _num("drift.rippleRadius")
+	var shot_id := int(shot["tile_id"]) if not shot.is_empty() and shot.get("kind", "tile") == "tile" else -1
+	for t: Tile in tiles:
+		if t.id == except_id or t.carried_by >= 0 or t.plane >= 2 or t.id == shot_id or t.id == queued_id:
+			continue
+		var away := t.pos - at
+		var d := away.length()
+		if d >= rad:
+			continue
+		var dir := away / d if d > EPS else Vector2(0.0, 1.0)
+		t.kick = dir * _num("drift.ripplePush") * (1.0 - d / rad)
+		t.kick_t = _num("drift.rippleSec")
+
+
 ## Letters swoop instead of sliding in straight lines (owner, 13 Oct 2026: "very slow"): the heading
 ## turns one way then the other, and the speed surges and eases. Both follow sine waves whose phase
 ## comes from the tile id, so neighbours move out of step and the drift stays deterministic.
@@ -814,8 +954,28 @@ func _steer(t: Tile, h: float) -> void:
 	var ph := float(t.id) * GOLDEN_ANGLE
 	var secs := float(stats["secs"])
 	var turn := _num("drift.curve") * sin(secs * TAU * _num("drift.curveHz") + ph)
+	if t.style == "dart":
+		_steer_dart(t, h, turn)
+		return
 	var surge := 1.0 + _num("drift.surge") * sin(secs * TAU * _num("drift.surgeHz") + ph * 1.7)
-	t.vel = t.vel.normalized().rotated(turn * h) * t.base_speed * surge
+	t.vel = t.vel.normalized().rotated(turn * h) * t.base_speed * surge * (t.orbit_k if t.style == "orbit" else 1.0)
+
+
+## Dart: glide (curving like a wanderer) and ease off, then a burst in a fresh direction. The cycle clock
+## is the round clock plus a per-tile phase; the new heading is hashed from (seed, tile id, cycle).
+func _steer_dart(t: Tile, h: float, turn: float) -> void:
+	var tt := float(stats["secs"]) + t.dart_phase
+	var idx := int(floorf(tt / t.dart_len))
+	var u := tt - float(idx) * t.dart_len
+	var bursting := u >= t.dart_len - _num("drift.dartSec")
+	var dir := t.vel.normalized().rotated(turn * h)
+	if bursting and not t.dart_burst:
+		var g := RandomNumberGenerator.new()
+		g.seed = hash([seed_value, t.id, idx, STYLE_SEED_XOR])
+		dir = Vector2.RIGHT.rotated(g.randf() * TAU)
+	t.dart_burst = bursting
+	t.dart_idx = idx
+	t.vel = dir * (t.base_speed / t.dart_norm) * _dart_mul(t, u)
 
 
 func _start_shot_at(target_id: int, at: Vector2, kind: String) -> void:
@@ -840,6 +1000,7 @@ func _resolve_shot() -> void:
 	var id := int(shot["tile_id"])
 	var kind: String = shot["kind"]
 	var target: Vector2 = shot["to"]
+	_shot_dur = float(shot["dur"])
 	shot = {}
 	var next_id := queued_id
 	queued_id = -1
@@ -853,8 +1014,12 @@ func _resolve_shot() -> void:
 		_start_queued(next_id)
 
 
-func _tolerance() -> float:
-	return _num("tether.hitTolerance") * _num("tether.driftToleranceMul")
+func _tolerance(tile: Tile = null) -> float:
+	var tol := _num("tether.hitTolerance") * _num("tether.driftToleranceMul")
+	# A letter in a dart burst covers ground while the tether flies: widen by half that distance.
+	if tile != null and tile.style == "dart" and tile.dart_burst:
+		tol += 0.5 * tile.vel.length() * _shot_dur
+	return tol
 
 
 func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
@@ -877,7 +1042,7 @@ func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
 
 
 func _resolve_hit(tile: Tile, target: Vector2) -> void:
-	if tile.carried_by >= 0 or tile.pos.distance_to(target) > _tolerance():
+	if tile.carried_by >= 0 or tile.pos.distance_to(target) > _tolerance(tile):
 		stats["escapes"] = int(stats["escapes"]) + 1
 		_emit({"type": "escape", "tile_id": tile.id})
 		return
@@ -897,6 +1062,7 @@ func _resolve_hit(tile: Tile, target: Vector2) -> void:
 	slots[idx]["filled"] = true
 	combo = minf(_num("combo.max"), combo + _num("combo.step"))
 	_remove(tile)
+	_ripple(tile.pos, tile.id)
 	_emit({"type": "catch", "tile_id": tile.id, "where": where, "slot": idx, "ch": tile.ch, "pos": tile.pos})
 	if _all_filled(active):
 		_restore_words()
