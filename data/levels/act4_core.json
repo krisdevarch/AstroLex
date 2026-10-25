@@ -1,20 +1,21 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "approved",
+  "status": "draft",
   "act": "act4_core",
   "tuning": {"burst.seconds": 10, "burst.perLetterSec": 4.75},
   "levels": [
     {
       "id": "4-01", "order": 1, "title": "Channel Open", "beat": "Opening: the crew gather, even VANTA; no jokes for one beat, then Ade makes one.",
-      "pacing": "teach", "words": ["war", "verb", "noun"], "seed": 4101, "babel": true, "babelIntro": "Full channel today. I am not used to company.",
+      "pacing": "teach", "words": ["war", "crew", "call"], "seed": 4101, "babel": true, "babelIntro": "Full channel today. I am not used to company.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "rhee", "text": "Kit. Ade. VANTA. Tomas. Everyone is on the channel. Thank you for coming."},
         {"who": "vanta", "text": "Here. Do not make a thing of it."}
       ],
       "commsAfter": [
-        {"who": "kit", "text": "Ade, you have not made a joke yet. Wait, why?"},
-        {"who": "ade", "text": "Fine. The core has no snacks. Terrible planning."}
+        {"who": "kit", "text": "The whole crew is here, and Ade has not made a joke yet. Wait, why?"},
+        {"who": "ade", "text": "Fine. The core has no snacks. Terrible planning."},
+        {"who": "rhee", "text": "Hm. Babel began as a call to end a war. Let us finish it better."}
       ]
     },
     {
@@ -35,7 +36,7 @@
       "tuning": {"spawner.decoys": 3, "drift.speed": 0.18, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 12, "hazard.stroopSec": 3},
       "commsBefore": [
         {"who": "kit", "text": "A colour just came back. From the first ring, I think. Wait, why now?"},
-        {"who": "rhee", "text": "Each piece carries its colour home. That is how it works."}
+        {"who": "rhee", "text": "Each piece carries its colour back. That is how it works."}
       ],
       "commsAfter": [
         {"who": "ade", "text": "That was the colour of my first breakfast. I may cry into the soup."}
@@ -91,26 +92,30 @@
     },
     {
       "id": "4-08", "order": 8, "title": "Far Out", "beat": "Core: colours of Act II return. Kit forgives Rhee out loud.",
-      "pacing": "core", "words": ["shout", "orbit", "ocean", "sorry"], "seed": 4108, "babel": true, "babelIntro": "Far out, Catcher. Farther than I ever went alone.",
+      "pacing": "core", "words": ["shout", "sorry", "forgive", "sky"], "seed": 4108, "babel": true, "babelIntro": "Far out, Catcher. Farther than I ever went alone.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.45, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 10, "hazard.stroopSec": 3.5},
       "commsBefore": [
-        {"who": "kit", "text": "Pink is back out there. The nebula pink. Wait, it is coming home?"},
+        {"who": "kit", "text": "Pink is back out there. The nebula pink. Wait, it is coming back?"},
         {"who": "vanta", "text": "Far out. Farther than my best run. I am following you."}
       ],
       "commsAfter": [
+        {"who": "ade", "text": "Out here under this sky, nobody has to shout. Still no snacks."},
+        {"who": "rhee", "text": "I am sorry, Kit. I never said it out loud."},
         {"who": "kit", "text": "Rhee, for science and for me: I forgive you. The Catcher can take their time."},
         {"who": "rhee", "text": "Thank you, Kit. I did not expect it."}
       ]
     },
     {
-      "id": "4-09", "order": 9, "title": "Kin", "beat": "Core: people words.",
-      "pacing": "core", "words": ["tongue", "friend", "mother", "murmur"], "seed": 4109, "babel": true, "babelIntro": "Everyone here has someone. I had a tower.",
+      "id": "4-09", "order": 9, "title": "Kin", "beat": "Core: people words; Tomas's family.",
+      "pacing": "core", "words": ["mother", "friend", "family", "home"], "seed": 4109, "babel": true, "babelIntro": "Everyone here has someone. I had a tower.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.2, "plane.backTiles": 8, "thief.interval": 5, "hazard.counterfeitRatio": 0.5, "hazard.traps": 1, "hazard.stroop": 1, "hazard.stroopEverySec": 8, "hazard.stroopSec": 4},
       "commsBefore": [
         {"who": "ade", "text": "No joke. I froze in the Tower and you waited. Thank you."},
         {"who": "rhee", "text": "People words now. Hold them gently."}
       ],
-      "commsAfter": []
+      "commsAfter": [
+        {"who": "tomas", "text": "My family is at home. My mother, she ___ for me. A friend, too. I can say it now."}
+      ]
     },
     {
       "id": "4-10", "order": 10, "title": "Call and Reply", "beat": "Core: signals cross. VANTA says good job, once.",

@@ -94,6 +94,7 @@ def test_export_includes_levels(doc, tmp_path, monkeypatch):
     (tmp_path / "levels.schema.json").write_text(json.dumps(L.load_schema()))
     (tmp_path / f"{ACT}.json").write_text(json.dumps(doc))
     monkeypatch.setattr(L, "levels_dir", lambda: tmp_path)
+    monkeypatch.setattr(L, "codex_path", lambda: tmp_path / "none.json")
     assert L.check_all() == []
     assert build_content()["levels"] == {ACT: doc["levels"]}
 
@@ -151,3 +152,23 @@ def test_no_level_gets_less_time_than_before():
     for act in ("act1_low_orbit", "act2_nebula", "act3_tower", "act4_core"):
         for lv in L.load_levels(act):
             assert _clock(lv) >= OLD_CLOCKS.get(lv["id"], OLD_CLOCKS[act]), lv["id"]
+
+
+def test_babel_comms_letters_pass_and_fail(words):
+    lv = _level(6, ["box", "cat"], commsBefore=[{"who": "babel", "text": "Cab, tox."}],
+                commsAfter=[{"who": "rhee", "text": "Zzz."}])
+    assert L.babel_comms_problems(lv) == []
+    lv["commsAfter"] = [{"who": "babel", "text": "SO CALM."}]
+    assert L.babel_comms_problems(lv) == ["1-06: babel line 'SO CALM.' needs letters not in the board: l, m, s"]
+    lv["commsAfter"] = [{"who": "babel", "text": "Tt"}]  # multiplicity: one t on the board
+    assert any("needs letters" in p for p in L.babel_comms_problems(lv))
+
+
+def test_codex_problems_pass_and_fail():
+    by_act = {"a": [_level(4, ["coat", "hat"]), _level(5, ["book", "shelf", "box"])]}
+    ok = [{"level": "1-04", "word": "coat", "text": "x"}, {"level": "1-05", "word": "box", "text": "y"}]
+    assert L.codex_problems(by_act, ok) == []
+    bad = [{"level": "1-04", "word": "boat", "text": "x"}, {"level": "1-04", "word": "hat", "text": "z"}]
+    assert L.codex_problems(by_act, bad) == [
+        "codex: 1-04 has 2 notes (expected 1)", "codex: 1-05 has no note",
+        "codex: 1-04 note is for 'boat', not one of coat, hat"]

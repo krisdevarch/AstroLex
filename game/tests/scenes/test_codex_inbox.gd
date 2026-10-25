@@ -39,7 +39,7 @@ func test_codex_shows_notes_only_for_won_levels_and_counts_them() -> void:
 	var w := main.find_child("Locked_1-04", true, false).find_child("Word", true, false) as Label
 	assert_eq(w.text, "???")
 	var won_w := main.find_child("Note_1-01", true, false).find_child("Word", true, false) as Label
-	assert_eq(won_w.text, "MILK")
+	assert_eq(won_w.text, "SUIT")
 	Flow.press(main, "BackButton")
 	assert_true(Flow.has(main, "LevelMap"), "back returns to the map")
 	main.free()

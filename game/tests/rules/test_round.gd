@@ -242,8 +242,15 @@ func test_wrong_catch_unneeded_resets_combo_and_flips_velocity() -> void:
 	decoy.vel = Vector2(0.05, -0.02)
 	var before: Vector2 = decoy.vel
 	r.fire(decoy.id)
-	r.step(0.5)
-	var ev := r.drain_events()
+	# compare with the velocity just before the catch, so a bump with a neighbour while the line flies
+	# (or a wall bounce after) cannot hide the flip
+	var ev: Array[Dictionary] = []
+	for i in 30:
+		before = decoy.vel
+		r.step(1.0 / 60.0)
+		ev.append_array(r.drain_events())
+		if not _of_type(ev, "wrong").is_empty():
+			break
 	var w := _of_type(ev, "wrong")[0]
 	assert_eq(w["kind"], "unneeded")
 	assert_eq(r.combo, 1.0)
@@ -886,7 +893,12 @@ func test_letters_swoop_on_curved_paths_and_surge() -> void:
 		turned = maxf(turned, absf(angle_difference(heading0, t.vel.angle())))
 	assert_true(turned > 0.2, "heading turns without a wall (%f rad)" % turned)
 	assert_true(speeds.max() > speeds.min() * 1.2, "speed surges and eases")
-	assert_true(speeds.max() <= t.base_speed * (1.0 + float(_tun["drift.surge"])) * 1.6 + 1e-6, "surge stays bounded")
+	# a bump with a neighbour on the same plane swaps velocity along the contact, so bound by the fastest one
+	var top_base := 0.0
+	for c in r.tiles:
+		if c.plane == t.plane:
+			top_base = maxf(top_base, c.base_speed)
+	assert_true(speeds.max() <= top_base * (1.0 + float(_tun["drift.surge"])) * 1.6 + 1e-6, "surge stays bounded")
 
 
 func test_a_stopped_letter_stays_stopped() -> void:
