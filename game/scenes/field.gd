@@ -36,9 +36,6 @@ const SLOT_RIM := Color("9ff8ff")  # with a bright cyan rim
 const CLOCK_TEXT := Color(1.0, 0.85, 0.78)
 const PERIWINKLE := Color("7579f0")
 const TEXT_CREAM := Color("efe8d6")  # the mock's warm off-white for HUD text
-const BAND_FILL := Color(0.1, 0.11, 0.26, 0.9)
-const BAND_FONT := 40
-const BAND_TAG := "Babel:"
 const NEON := Color("4fe3ff")  # the console's cyan glow (target mock)
 const RED := Color(1.0, 0.3, 0.3)
 # Pure layout and pacing constants (screen pixels at 1080 wide, seconds). Bottom items are offsets
@@ -57,12 +54,6 @@ const EDGE := 44.0
 const CHIP_Y := 50.0
 const CHIP_H := 80.0
 const CHIP_MID_W := 356.0  # widest the level name chip grows before its font shrinks
-const BAND_Y := 168.0  # Babel's speech bubble: sized to the line, centred
-const BAND_MAX_W := 700.0
-const BAND_LINE_H := 50.0
-const BAND_PAD_X := 34.0
-const BAND_PAD_Y := 20.0
-const BAND_TAIL := 34.0
 const FIELD_TOP := 320.0  # top of the play field (below Babel's bubble)
 const FIELD_BOTTOM_UP := 560.0  # bottom of the play field, just above Earth's rim
 const PANEL_TOP_UP := 530.0  # highest point of Earth's rim
@@ -99,7 +90,6 @@ const COST_FLOAT_UP := 600.0
 # Babel's throw: look of a single flight (timing and perch are tunables under babel.*).
 const THROW_START_SCALE := 0.15
 const INTRO_MAX_STEP := 0.1  # a load hitch (up to 0.25 s) must not skip the first launches; slow phones still run at speed
-const EXIT_LEAD := 0.12  # Babel leaves this long after the last launch
 
 signal round_finished(summary: Dictionary)
 ## Every rules event, as the field applies it (for telemetry and other listeners).
@@ -145,7 +135,6 @@ var _intro_order: Dictionary = {}  # tile_id -> launch index
 var _intro_origin: Dictionary = {}  # tile_id -> muzzle position at launch (launched tiles only)
 var _intro_quote: String = ""  # this level's Babel line; empty for the endless rounds
 var _intro_throw_at: float = 0.0  # intro time the first letter leaves
-var _intro_exiting: bool = false
 var _spawn_grow: bool = false  # letters made mid-play grow in
 var _babel: Node2D
 var _coach: Coach
@@ -172,6 +161,7 @@ var _toast_t: float = 0.0
 ## Hazards that have bitten already this run: each gets its one-line toast the first time only (WP-F.1).
 var _hazard_seen: Dictionary = {}
 var _babel_t: float = 99.0
+var _babel_shown: String = ""  # the last_babel line already handed to the porthole bubble
 var _pulse_t: float = 99.0
 var _tether_fade: float = 0.0
 var _tether_end: Vector2 = Vector2.ZERO
@@ -195,9 +185,6 @@ var _liquid: Control
 var _hint_icon: Control
 var _level_chip: Control
 var _counter_chip: Control
-var _band_tail: Control
-var _band_home: Vector2 = Vector2.ZERO
-var _band_shown: String = ""
 var _slot_empty_sb: StyleBoxFlat
 var _wires: Control
 var _anim_t: float = 0.0  # idle animation clock for the HUD (stops while paused)
@@ -223,8 +210,6 @@ var _preview_row: Control
 var _score_label: Label
 var _combo_label: Label
 var _toast: Label
-var _band: Panel
-var _band_label: RichTextLabel
 var _fps_meter: CanvasLayer
 ## Game feel (WP-3.N): placeholder sounds, the combo pop, the restored-word banner, the shake.
 var sfx: Sfx
@@ -338,7 +323,7 @@ func _reset_for_level() -> void:
 	if _backdrop != null:
 		_backdrop.set_act(game_round.act)
 	last_babel = ""  # a new level: Babel has not spoken yet
-	_band_shown = ""
+	_babel_shown = ""
 	_babel_t = 99.0
 	_cleared = false
 	_intro_on = false
@@ -636,12 +621,13 @@ func intro_active() -> bool:
 
 
 func _start_intro(seed_value: int) -> void:
+	_ensure_babel()
+	_babel.hide_now()
 	if not intro_enabled:
+		_babel.fly_in()  # he still sits in his corner; there is no throw
 		_spawn_grow = true
 		_coach_begin()
 		return
-	_ensure_babel()
-	_babel.hide_now()
 	_intro_order.clear()
 	_intro_origin.clear()
 	var ids: Array = []
@@ -665,11 +651,36 @@ func _start_intro(seed_value: int) -> void:
 	_intro_dur = _intro_throw_at + throw_sec + spread
 	_intro_t = 0.0
 	_intro_on = true
-	_intro_exiting = false
 	_babel.fly_in()
 	if _intro_quote != "":
 		_babel.say(_intro_quote)
 	_pose_intro()
+
+
+## A letter made mid-play (a refill, a stolen letter coming back) is shot out of Babel's muzzle to
+## its place. Reduced motion: it fades in where it is, and he does not recoil.
+func _shoot_in(v: TileViewScript, t: Object) -> void:
+	_ensure_babel()
+	if settings.reduced_motion or _babel.state == "off":
+		v.grow_in(_n("tile.spawnInSec"))
+		return
+	v.launch_from(_babel.muzzle_position(), _n("babel.throwSec"), _n("babel.throwOvershoot"))
+	_babel.shoot(to_screen(t.pos))
+
+
+## Puts a new last_babel line (a story line, a taunt) into the porthole bubble.
+func _sync_babel_line() -> void:
+	if last_babel == _babel_shown:
+		return
+	_babel_shown = last_babel
+	if last_babel == "":
+		return
+	_ensure_babel()
+	if _babel.state == "off":
+		_babel.fly_in()
+	if _babel.is_talking() and _babel.quote_text() == last_babel:
+		return  # the intro already says it
+	_babel.say(last_babel, _n("babel.showSeconds"))
 
 
 func _ensure_babel() -> void:
@@ -695,7 +706,7 @@ func _end_intro(babel_leaves_now: bool) -> void:
 	_spawn_grow = true
 	_settle_t = 0.0 if not settings.reduced_motion else 99.0
 	if _babel != null and babel_leaves_now:
-		_babel.hide_now()
+		_babel.close_bubble()  # he stays in his corner; only the intro line closes
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
 		v.scale = Vector2.ONE
@@ -717,12 +728,8 @@ func _pose_intro() -> void:
 	var throw_sec := maxf(_n("babel.throwSec"), 0.01)
 	var stagger := _n("babel.throwStagger")
 	var s := _n("babel.throwOvershoot")
-	var last_launch := _intro_throw_at + stagger * float(maxi(_intro_order.size() - 1, 0))
 	if _babel.is_talking() and _intro_t >= _intro_throw_at:
 		_babel.close_bubble()
-	if not _intro_exiting and _intro_t >= (_intro_throw_at + throw_sec if settings.reduced_motion else last_launch + EXIT_LEAD):
-		_intro_exiting = true
-		_babel.fly_out()
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
 		var real := to_screen(game_round.find_tile(id).pos)
@@ -899,6 +906,7 @@ func _sync_thieves() -> void:
 			v = ThiefViewScript.new()
 			v.name = "Thief_%d" % th.id
 			v.setup(_n("thief.radius") * _scale, settings.reduced_motion, float(th.id) * 1.3)
+			v.set_entry(-1 if th.pos.x <= 0.001 else (1 if th.pos.x >= 0.999 else 0))
 			_tiles_root.add_child(v)
 			v.place(to_screen(th.pos))
 			_thief_views[th.id] = v
@@ -954,7 +962,7 @@ func _apply_events() -> void:
 					var fresh := not _views.has(t.id)
 					var nv := _ensure_view(t)
 					if fresh and _spawn_grow and not _intro_on:
-						nv.grow_in(_n("tile.spawnInSec"))
+						_shoot_in(nv, t)
 			"fire":
 				sfx.fire()
 			"catch":
@@ -1019,6 +1027,8 @@ func _apply_events() -> void:
 				_babel_t = 0.0
 			"round_end":
 				_end_t = 0.0
+				if _babel != null:
+					_babel.fly_out()
 				_coach_reset()
 				_coach_stage = 3
 				_clear_field()
@@ -1465,33 +1475,6 @@ func _build_hud() -> void:
 	_combo_label.name = "ComboLabel"
 	_combo_label.add_theme_constant_override("outline_size", 0)
 	_score_row.add_child(_ignore(_combo_label))
-	# Babel's speech bubble under the chips (target mock): sized to the line, its tail curling down left.
-	_band = Panel.new()
-	_band.name = "BabelBand"
-	_band.position = Vector2(BAND_PAD_X, BAND_Y)
-	_band.size = Vector2(BAND_MAX_W, BAND_LINE_H + 2.0 * BAND_PAD_Y)
-	var bsb := Ui.box(BAND_FILL, 30, PERIWINKLE, 5)
-	bsb.shadow_color = Color(PERIWINKLE.r, PERIWINKLE.g, PERIWINKLE.b, 0.25)
-	bsb.shadow_size = 14
-	_band.add_theme_stylebox_override("panel", bsb)
-	_band.visible = false
-	_hud.add_child(_ignore(_band))
-	var tail: Control = HudArt.BubbleTail.new()
-	tail.name = "BabelTail"
-	tail.set("colour", PERIWINKLE)
-	tail.set("fill", BAND_FILL)
-	tail.size = Vector2(BAND_TAIL * 1.3, BAND_TAIL)
-	_band.add_child(_ignore(tail))
-	_band_tail = tail
-	_band_label = RichTextLabel.new()
-	_band_label.name = "BabelText"
-	_band_label.bbcode_enabled = true
-	_band_label.scroll_active = false
-	_band_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_band_label.add_theme_font_size_override("normal_font_size", GameFont.scaled(BAND_FONT))
-	_band_label.add_theme_color_override("default_color", TEXT_CREAM)
-	_band_label.position = Vector2(BAND_PAD_X, BAND_PAD_Y - 4.0)
-	_band.add_child(_ignore(_band_label))
 	_toast = Ui.label("", 44, Ui.INK)
 	_toast.name = "Toast"
 	_toast.position = Vector2(0, _ft + 24.0)
@@ -1587,33 +1570,6 @@ func _set_clock_colours(low: bool) -> void:
 	_liquid.set("c1", HudArt.CRIMSON if low else HudArt.CORAL)
 	_liquid.set("c2", HudArt.CRIMSON_LIGHT if low else HudArt.CORAL_LIGHT)
 
-
-## Sizes Babel's bubble to his line: one line if it fits, else wrapped (at most BAND_MAX_W wide).
-func _layout_band(text: String) -> void:
-	var font: Font = _band_label.get_theme_font("normal_font")
-	var fs := GameFont.scaled(BAND_FONT)
-	var inner := BAND_MAX_W - 2.0 * BAND_PAD_X
-	var lines := 1
-	var line_w := 0.0
-	var widest := 0.0
-	var space := font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-	for word in text.split(" ", false):
-		var ww := font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		if line_w > 0.0 and line_w + space + ww > inner:
-			lines += 1
-			widest = maxf(widest, line_w)
-			line_w = ww
-		else:
-			line_w += (space if line_w > 0.0 else 0.0) + ww
-	widest = minf(inner, maxf(widest, line_w))
-	var bw := widest + 2.0 * BAND_PAD_X + 8.0
-	var bh := float(lines) * BAND_LINE_H + 2.0 * BAND_PAD_Y
-	_band.size = Vector2(bw, bh)
-	_band.position = Vector2((view_size.x - bw) * 0.5 - 40.0, BAND_Y)
-	_band_label.size = Vector2(widest + 8.0, bh - 2.0 * BAND_PAD_Y + 8.0)
-	_band_tail.position = Vector2(bw * 0.12, bh - 4.0)
-	_band.pivot_offset = Vector2(bw * 0.12, bh + BAND_TAIL)
-	_band_home = _band.position
 
 
 # --- first-play coach ------------------------------------------------------------------
@@ -1895,22 +1851,9 @@ func _tick_hud(delta: float) -> void:
 	if _toast_t > 0.0:
 		_toast_t -= delta
 		_toast.modulate.a = clampf(_toast_t / 0.35, 0.0, 1.0)
-	# Babel's bubble stays up once he has spoken; each new line pops in from its tail and types itself in.
+	# Babel's line types itself into the bubble at his porthole and stays for babel.showSeconds.
 	_babel_t += delta
-	_band.visible = last_babel != ""
-	if _band.visible:
-		var line := "“%s”" % last_babel  # quoted, as in the mock
-		if line != _band_shown:
-			_band_shown = line
-			_layout_band(BAND_TAG + " " + line)
-			_band_label.text = "[color=#%s]%s[/color] %s" % [Color("a9adff").to_html(false), BAND_TAG, line]
-		_band_label.visible_characters = BAND_TAG.length() + 1 + int(_babel_t * TYPE_CPS) + 1
-		if calm:
-			_band.scale = Vector2.ONE
-			_band.position = _band_home
-		else:
-			_band.scale = Vector2.ONE * lerpf(0.5, 1.0, _back_ease(clampf(_babel_t / 0.35, 0.0, 1.0)))
-			_band.position = _band_home + Vector2(0.0, 4.0 * sin(t * 1.5))
+	_sync_babel_line()
 	if _low and not calm:
 		var cp := 1.0 + 0.12 * absf(sin(_time * TAU))
 		_clock_label.scale = Vector2(cp, cp)

@@ -26,7 +26,7 @@ func _has(f: Node, n: String) -> bool:
 
 func test_hud_nodes_exist_and_portrait_only_with_a_character() -> void:
 	var f := _field("wren")
-	for n in ["NightPanel", "Console", "Portrait", "PortraitBust", "SlotTray", "Liquid", "ActiveSlots", "PreviewSlots", "ScoreLabel", "ComboLabel", "HintButton", "PauseButton", "SoundButton", "SettingsButton", "TimeBar", "ClockLabel", "LevelCounterChip", "BabelBand"]:
+	for n in ["NightPanel", "Console", "Portrait", "PortraitBust", "SlotTray", "Liquid", "ActiveSlots", "PreviewSlots", "ScoreLabel", "ComboLabel", "HintButton", "PauseButton", "SoundButton", "SettingsButton", "TimeBar", "ClockLabel", "LevelCounterChip"]:
 		assert_true(_has(f, n), "node %s exists" % n)
 	assert_eq((f.find_child("LevelCounter", true, false) as Label).text, "Level 1 / 12", "counter text")
 	assert_true(not _has(f, "PortraitName"), "no name pill under the porthole (target mock)")
@@ -211,17 +211,33 @@ func test_slot_grid_suits_every_word_length() -> void:
 
 func test_babel_bubble_fits_his_line() -> void:
 	var f := _field("wren")
-	var band := f.find_child("BabelBand", true, false) as Control
+	assert_false(_has(f, "BabelBand"), "the separate top band is gone")
 	f.last_babel = "HI."
 	f.advance(0.5)
-	var short_w: float = band.size.x
-	assert_true(band.visible, "bubble shows once Babel speaks")
+	var b: Node2D = f._babel
+	var bubble: Control = b.get_node("Bubble")
+	assert_true(bubble.visible, "bubble shows once Babel speaks")
+	assert_eq(b.quote_text(), "HI.", "the porthole bubble holds the line")
+	var short_w: float = bubble.size.x
 	f.last_babel = "THE COSMOS IS SILENT WITHOUT WORDS AND YOU WILL NOT FIND THEM"
 	f.advance(0.5)
-	assert_true(band.size.x > short_w, "a longer line makes a wider bubble")
-	assert_true(band.size.x <= f.BAND_MAX_W + 0.5, "never wider than the cap")
-	assert_true(band.size.y > f.BAND_LINE_H * 2.0, "a long line wraps to more rows")
-	assert_true(band.position.x >= 0.0 and band.position.x + band.size.x <= 1080.0, "on screen")
+	assert_true(bubble.size.x >= short_w, "a longer line is no narrower")
+	assert_true(bubble.size.y > 60.0 + 40.0, "a long line wraps to more rows")
+	assert_true(bubble.position.x >= b.corner_position().x + b.corner_radius(), "the bubble sits to the right of the porthole")
+	assert_true(bubble.position.x + bubble.size.x <= 1080.0, "on screen")
+	assert_true(bubble.position.y >= 140.0, "under the top pills")
+	var chips_bottom: float = f.CHIP_Y + f.CHIP_H
+	assert_true(b.corner_position().y - b.corner_radius() - 9.0 >= chips_bottom, "the porthole clears the top pills")
+	for chip in ["LevelChip", "LevelCounterChip"]:
+		var c := f.find_child(chip, true, false) as Control
+		var r := Rect2(c.position, c.size)
+		assert_false(r.intersects(Rect2(bubble.position, bubble.size)), "%s clear of the bubble" % chip)
+		assert_false(r.intersects(Rect2(b.corner_position() - Vector2.ONE * b.corner_radius(), Vector2.ONE * b.corner_radius() * 2.0)), "%s clear of the porthole" % chip)
+	# The bubble closes babel.showSeconds after the line has typed.
+	var hold := float(f._tun["babel.showSeconds"])
+	for _i in int((hold + 4.0) * 30.0):
+		f.advance(1.0 / 30.0)
+	assert_false(bubble.visible, "the bubble closes after showSeconds")
 	f.free()
 
 
