@@ -273,6 +273,7 @@ func test_wrong_catch_surplus_when_letter_is_in_word_but_no_open_slot() -> void:
 	assert_true(ch != "")
 	_catch(r, _first_real(r, ch))
 	var extra = r._spawn(ch, true, 0)
+	extra.landing = 0.0  # already landed (WP-F.18: a mid-round spawn flies in first)
 	r.drain_events()
 	_catch(r, extra)
 	var w := _of_type(r.drain_events(), "wrong")

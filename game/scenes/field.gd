@@ -398,6 +398,7 @@ func play_story(messages: Array, then: Callable) -> void:
 	s.skip_top = CHIP_Y + CHIP_H + 16.0 - FIELD_TOP  # just under the top-right chip
 	s.babel_line.connect(func(text: String) -> void:
 		last_babel = text
+		_babel_shown = ""
 		_babel_t = 0.0)
 	s.finished.connect(func() -> void:
 		_story_on = false
@@ -674,8 +675,12 @@ func _sync_babel_line() -> void:
 		return
 	_babel_shown = last_babel
 	if last_babel == "":
+		if _babel != null:
+			_babel.close_bubble()
 		return
 	_ensure_babel()
+	if _babel.state == "exit":
+		return
 	if _babel.state == "off":
 		_babel.fly_in()
 	if _babel.is_talking() and _babel.quote_text() == last_babel:
@@ -906,7 +911,7 @@ func _sync_thieves() -> void:
 			v = ThiefViewScript.new()
 			v.name = "Thief_%d" % th.id
 			v.setup(_n("thief.radius") * _scale, settings.reduced_motion, float(th.id) * 1.3)
-			v.set_entry(-1 if th.pos.x <= 0.001 else (1 if th.pos.x >= 0.999 else 0))
+			v.set_entry(th.entry)
 			_tiles_root.add_child(v)
 			v.place(to_screen(th.pos))
 			_thief_views[th.id] = v
@@ -1024,6 +1029,7 @@ func _apply_events() -> void:
 				_celebrate(str(e["word"]))
 			"babel":
 				last_babel = str(e["text"])
+				_babel_shown = ""  # the same taunt twice still pops the bubble again
 				_babel_t = 0.0
 			"round_end":
 				_end_t = 0.0

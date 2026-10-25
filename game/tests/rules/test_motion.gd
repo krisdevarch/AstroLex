@@ -317,3 +317,46 @@ func test_bot_still_wins_with_all_motion_on() -> void:
 		var r2 := _make(sd + 20, {"burst.seconds": 60.0}, "act2_nebula")
 		Bot.play(r2, DT, 120.0)
 		assert_eq(r2.state, "won", "act2 seed %d" % (sd + 20))
+
+
+func test_spawn_event_names_the_entry_side() -> void:
+	for sd in 60:
+		var r := _thief_round(sd + 1, {"thief.sideShare": 0.6})
+		var th := _spawned_thief(r)
+		var ev: Array = r.drain_events().filter(func(e): return e["type"] == "thief_spawn")
+		var p: Vector2 = ev[0]["pos"]
+		var want := -1 if p.x == 0.0 else (1 if p.x == 1.0 else 0)
+		assert_eq(int(ev[0]["entry"]), want, "event entry matches the edge")
+		assert_eq(th.entry, want, "thief keeps its entry after it moves")
+
+
+func test_orbit_letter_does_not_jump_on_its_first_step() -> void:
+	var r := _make(7, {"drift.orbitShare": 1.0, "drift.dartShare": 0, "drift.shyRadius": 0, "drift.rippleRadius": 0})
+	var before := {}
+	for t in _real_tiles(r):
+		before[t.id] = t.pos
+	r.step(DT)
+	for t in _real_tiles(r):
+		if t.style == "orbit":
+			assert_true(t.pos.distance_to(before[t.id]) < 0.03, "orbit step is small: %f" % t.pos.distance_to(before[t.id]))
+
+
+func test_slow_letters_wander_instead_of_orbiting() -> void:
+	var r := _make(3, {"drift.orbitShare": 1.0, "drift.dartShare": 0, "drift.speed": 0.03})
+	for t in _real_tiles(r):
+		assert_eq(t.style, "wander", "too slow to orbit without speeding up")
+
+
+func test_letter_fired_mid_round_cannot_be_caught_until_it_lands() -> void:
+	var r := _make(5)
+	r.step(0.5)
+	var any: Array = _real_tiles(r)
+	var stolen: RefCounted = any[0]
+	r._remove(stolen)
+	r._refill()
+	var fresh: Array = r.tiles.filter(func(t): return t.landing > 0.0)
+	assert_true(not fresh.is_empty(), "a mid-round spawn is landing")
+	var id: int = fresh[0].id
+	assert_true(not r.fire(id), "cannot be caught while it flies in")
+	r.step(float(_tun["babel.throwSec"]) + 0.05)
+	assert_true(r.fire(id) or not r.shot.is_empty(), "catchable once landed")

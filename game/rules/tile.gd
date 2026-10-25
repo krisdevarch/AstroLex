@@ -35,3 +35,5 @@ var dart_burst: bool = false
 ## Ripple impulse: outward velocity at full strength and the seconds of it left.
 var kick: Vector2 = Vector2.ZERO
 var kick_t: float = 0.0
+## Seconds until a letter Babel fired mid-round lands (babel.throwSec); until then it cannot be caught or grabbed.
+var landing: float = 0.0

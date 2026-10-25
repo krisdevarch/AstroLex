@@ -11,7 +11,7 @@ extends RefCounted
 ##   dissolve{tile_id,ch,decoy,pos} restore{word,score} babel{text} round_end{won}
 ##   time_cost{amount,reason} (reason "wrong", "stolen" or "hint"; time_left already reduced)
 ##   hint{tile_id} (use_hint(): the tile to highlight; its time_cost follows)
-##   thief_spawn{thief_id,pos} thief_grab{thief_id,tile_id} (the tile stops being catchable)
+##   thief_spawn{thief_id,pos,entry} (entry -1 left edge, 1 right, 0 top) thief_grab{thief_id,tile_id} (the tile stops being catchable)
 ##   stolen{thief_id,tile_id,ch} (thief left the top with the tile; both are gone, the letter respawns later)
 ##   thief_down{thief_id,tile_id,pos} (shot; tile_id is the released tile or -1)
 ##   thief_miss{thief_id} (a shot at a thief missed or the thief was gone; counts as an escape)
@@ -41,6 +41,8 @@ const TRAP_MAX_LEN := 4
 const THIEF_IDLE_MUL := 0.25
 const STYLE_SEED_XOR := 0x57A1E5
 const ORBIT_MIN_K := 0.25
+## Slow letters whose circling alone would reach this share of their speed wander instead (keeps the mean speed).
+const ORBIT_MAX_RATIO := 0.9
 const DART_LOW := 0.3  # a darting letter eases toward this share of its cruise speed before a burst
 const DART_RAMP := 0.15  # share of the glide spent recovering from the burst
 ## Letter weights for decoys and back tiles: English frequency is language data, not a feel number.
@@ -201,7 +203,7 @@ func fire(tile_id: int) -> bool:
 	var thief: Thief = _thief_by_id.get(tile_id)
 	var tile: Tile = _by_id.get(tile_id)
 	if thief == null:
-		if tile == null or not tile.alive or tile.plane >= 2 or tile.carried_by >= 0:
+		if tile == null or not tile.alive or tile.plane >= 2 or tile.carried_by >= 0 or tile.landing > 0.0:
 			return false
 	if not shot.is_empty():
 		if shot["tile_id"] == tile_id or queued_id == tile_id:
@@ -408,6 +410,8 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	tile.base_speed = speed
 	if not decoy:
 		_assign_style(tile)
+	if float(stats.get("secs", 0.0)) > 0.0:
+		tile.landing = _num("babel.throwSec")
 	tiles.append(tile)
 	_by_id[tile.id] = tile
 	_emit({"type": "spawn", "tile_id": tile.id, "ch": ch, "plane": plane, "decoy": decoy, "pos": tile.pos, "style": tile.style})
@@ -421,11 +425,16 @@ func _assign_style(tile: Tile) -> void:
 	var roll := g.randf()
 	var orbit_share := _num("drift.orbitShare")
 	var dart_share := _num("drift.dartShare")
+	var orbit_angle := g.randf() * TAU
+	var tang := _num("drift.orbitRadius") * TAU * _num("drift.orbitHz")
+	var ratio := tang / maxf(tile.base_speed, EPS)
 	if roll < orbit_share:
+		if ratio >= ORBIT_MAX_RATIO:
+			return  # too slow to circle without speeding up: wanders
 		tile.style = "orbit"
-		tile.orbit_angle = g.randf() * TAU
-		var tang := _num("drift.orbitRadius") * TAU * _num("drift.orbitHz")
-		var ratio := tang / maxf(tile.base_speed, EPS)
+		tile.orbit_angle = orbit_angle
+		# Start on the circle (the centre sits one radius away), so the first step does not jump.
+		tile.orbit_off = Vector2(cos(orbit_angle), sin(orbit_angle)) * _num("drift.orbitRadius")
 		tile.orbit_k = sqrt(maxf(ORBIT_MIN_K * ORBIT_MIN_K, 1.0 - ratio * ratio))
 	elif roll < orbit_share + dart_share:
 		tile.style = "dart"
@@ -663,6 +672,7 @@ func _tick(h: float) -> void:
 	stats["secs"] = float(stats["secs"]) + h
 	_tick_jam()
 	for t: Tile in tiles:
+		t.landing = maxf(0.0, t.landing - h)
 		if t.carried_by < 0:
 			_drift(t, h)
 	_react(h)
@@ -754,6 +764,7 @@ func _spawn_thief() -> void:
 		var right := _thief_rng.randf() < 0.5
 		var max_y := top + _num("thief.sideMaxY") * (_num("field.height") - top)
 		th.pos = Vector2(1.0 if right else 0.0, _thief_rng.randf_range(top, max_y))
+		th.entry = 1 if right else -1
 	else:
 		th.pos = Vector2(_thief_rng.randf_range(0.0, 1.0), top)
 	var angle := _thief_rng.randf() * TAU
@@ -762,7 +773,7 @@ func _spawn_thief() -> void:
 		th.vel.x = -absf(th.vel.x) if th.pos.x > 0.5 else absf(th.vel.x)
 	thieves.append(th)
 	_thief_by_id[th.id] = th
-	_emit({"type": "thief_spawn", "thief_id": th.id, "pos": th.pos})
+	_emit({"type": "thief_spawn", "thief_id": th.id, "pos": th.pos, "entry": th.entry})
 
 
 func _targeted_by_other(tile_id: int, me: Thief) -> bool:
@@ -777,7 +788,7 @@ func _pick_target(th: Thief) -> int:
 	var best := -1
 	var best_d := INF
 	for t: Tile in tiles:
-		if t.decoy or t.plane >= 2 or t.carried_by >= 0 or t.id == shot_id or t.id == queued_id:
+		if t.decoy or t.plane >= 2 or t.carried_by >= 0 or t.landing > 0.0 or t.id == shot_id or t.id == queued_id:
 			continue
 		if _targeted_by_other(t.id, th):
 			continue
