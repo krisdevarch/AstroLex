@@ -80,6 +80,8 @@
   "music.defaultVolume": 70,
   "music.duckDb": -10,
   "music.stingDb": -10,
+  "perf.menuFps": 32,
+  "perf.playFps": 64,
   "plane.backAlpha": 0.9,
   "plane.backDesaturate": 0.7,
   "plane.backScale": 0.75,

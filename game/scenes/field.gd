@@ -257,7 +257,12 @@ const SLOT_IN_STAGGER := 0.05
 const LAND_SEC := 0.45
 
 
+const ASLEEP_SEC := 2.0  # a frame this late means the tab was hidden; the player has been away
+
+
 func _process(delta: float) -> void:
+	if delta > ASLEEP_SEC and _in_play() and not _intro_on and not _story_on:
+		pause_requested.emit()
 	if game_round != null:
 		advance(minf(delta, 0.25))
 
@@ -538,6 +543,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		pause_requested.emit()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT and _in_play():
+		pause_requested.emit()
+
+
+## A round is running: not finished, not paused.
+func _in_play() -> bool:
+	return game_round != null and not finished and not paused
 
 
 ## Freezes or resumes everything: rules, intro, effects; taps are ignored while paused.

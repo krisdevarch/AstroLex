@@ -185,6 +185,39 @@ body {
 	to { transform: translate(calc(var(--w) * 0.05), calc(var(--w) * -0.09)) rotate(8deg); }
 }
 
+/* Shown when the browser drops the game's graphics (WebGL context lost, WP-F.15). */
+#lost {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	padding: 0 32px;
+	background: rgba(5, 8, 20, 0.92);
+	color: #efe8d6;
+	text-align: center;
+	font-family: 'Fredoka', 'Arial Rounded MT Bold', 'Nunito', ui-rounded, system-ui, sans-serif;
+	font-weight: 600;
+	font-size: 20px;
+	line-height: 1.4;
+}
+
+#lost.on {
+	display: flex;
+}
+
+#lost button {
+	font: inherit;
+	padding: 12px 36px;
+	border: 0;
+	border-radius: 999px;
+	background: #ff9a3d;
+	color: #1b2333;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.bubble, #status-progress:indeterminate { animation: none; }
 	#status { transition-duration: 0.01s; }
@@ -220,8 +253,46 @@ body {
 			</div>
 		</div>
 
+		<div id="lost">
+			<div>The browser reset the game's graphics.<br>Your progress is saved.</div>
+			<button type="button" onclick="window.location.reload()">Reload</button>
+		</div>
+
 		<script src="$GODOT_URL"></script>
 		<script>
+// Phone heat (WP-F.15): Godot sizes the canvas by window.devicePixelRatio, so a 3x phone draws
+// 2.25 times the pixels of a 2x one, every frame, for little visible gain. Cap the ratio at 2;
+// ?dpr=<n> sets another cap for testing.
+(function () {
+	const q = Number(new URLSearchParams(window.location.search).get('dpr'));
+	const cap = q > 0 ? q : 2;
+	const own = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')
+		|| Object.getOwnPropertyDescriptor(Window.prototype, 'devicePixelRatio');
+	if (!own) {
+		return;
+	}
+	const real = own.get ? () => own.get.call(window) : () => own.value;
+	try {
+		Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: () => Math.min(cap, real() || 1) });
+	} catch (err) {
+		console.warn('AstroLex: pixel ratio cap not applied', err);
+	}
+}());
+
+// When the browser drops WebGL (memory pressure, a GPU reset) Godot cannot recover and calls
+// alert(); show a Reload notice instead of a frozen picture, and log it for playtest reports.
+(function () {
+	const nativeAlert = window.alert.bind(window);
+	window.alert = function (msg) {
+		if (/WebGL context lost/i.test(String(msg))) {
+			console.error('AstroLex: WebGL context lost');
+			document.getElementById('lost').classList.add('on');
+			return;
+		}
+		nativeAlert(msg);
+	};
+}());
+
 const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
