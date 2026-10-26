@@ -91,6 +91,7 @@ func record_level(act: String, level_id: String, index: int, won: bool, score: i
 	levels[level_id] = _level(levels.get(level_id))
 	var l: Dictionary = levels[level_id]
 	l["plays"] = int(l.get("plays", 0)) + 1
+	_d.erase("resume")
 	if won:
 		l["best_score"] = maxi(int(l.get("best_score", 0)), score)
 		l["best_stars"] = maxi(int(l.get("best_stars", 0)), clampi(stars, 1, 3))
@@ -188,6 +189,33 @@ func set_inbox_read(n: int) -> void:
 	_write()
 
 
+## The story level being played (WP-F.20): {act, index, level_id}. Missing means none.
+func set_resume(act: String, index: int, level_id: String) -> void:
+	_d["resume"] = {"act": act, "index": index, "level_id": level_id}
+	_write()
+
+
+func clear_resume() -> void:
+	if _d.has("resume"):
+		_d.erase("resume")
+		_write()
+
+
+## {} when nothing is remembered or the act or index no longer exists.
+func resume() -> Dictionary:
+	var r: Variant = _d.get("resume")
+	if not r is Dictionary:
+		return {}
+	var rd: Dictionary = r
+	if typeof(rd.get("act")) != TYPE_STRING or typeof(rd.get("level_id")) != TYPE_STRING or typeof(rd.get("index")) not in [TYPE_INT, TYPE_FLOAT]:
+		return {}
+	var a: String = rd["act"]
+	var i := int(rd["index"])
+	if not act_order.has(a) or i < 0 or i >= _size(a):
+		return {}
+	return {"act": a, "index": i, "level_id": str(rd["level_id"])}
+
+
 static func _int(v: Variant) -> int:
 	return maxi(int(v), 0) if typeof(v) in [TYPE_INT, TYPE_FLOAT] else 0
 
@@ -195,6 +223,7 @@ static func _int(v: Variant) -> int:
 ## Wipes progress, keeps the anonymous player_id.
 func reset() -> void:
 	_d["progress"] = {}
+	_d.erase("resume")
 	_write()
 
 
@@ -253,6 +282,8 @@ static func _migrate(d: Variant) -> Dictionary:
 	dict["progress"] = clean
 	if not dict.get("flags") is Dictionary:
 		dict["flags"] = {}
+	if not dict.get("resume") is Dictionary:
+		dict.erase("resume")
 	return dict
 
 

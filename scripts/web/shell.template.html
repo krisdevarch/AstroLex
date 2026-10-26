@@ -218,6 +218,25 @@ body {
 	color: #1b2333;
 }
 
+#lost-btns {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	align-items: center;
+}
+
+#lost-btns.off {
+	display: none;
+}
+
+#lost button.alt {
+	background: transparent;
+	color: #efe8d6;
+	box-shadow: inset 0 0 0 2px rgba(239, 232, 214, 0.5);
+	padding: 10px 28px;
+	font-size: 17px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.bubble, #status-progress:indeterminate { animation: none; }
 	#status { transition-duration: 0.01s; }
@@ -254,10 +273,255 @@ body {
 		</div>
 
 		<div id="lost">
-			<div>The browser reset the game's graphics.<br>Your progress is saved.</div>
-			<button type="button" onclick="window.location.reload()">Reload</button>
+			<div id="lost-msg">The browser reset the game's graphics.<br>Your progress is saved.</div>
+			<div id="lost-btns">
+				<button type="button" id="lost-reload">Reload</button>
+				<button type="button" id="lost-report" class="alt">Report a problem</button>
+				<button type="button" id="lost-copy" class="alt">Copy report</button>
+			</div>
 		</div>
 
+		<script>
+// Lifecycle log, crash detection and automatic recovery (WP-F.20). Runs before the engine script so
+// requestAnimationFrame can be wrapped and the engine's WebGL alert intercepted.
+(function () {
+	'use strict';
+	const LOG_CAP = 80;
+	const T0 = performance.now();
+	const log = [];
+	window.__alxLog = log;
+	let started = false;
+	let lost = false;
+	let lostCount = 0;
+	let lastRaf = performance.now();
+	let recovering = false;
+	let deadShown = false;
+
+	function ls(fn) {
+		try { return fn(window.localStorage); } catch (e) { return null; }
+	}
+	function ss(fn) {
+		try { return fn(window.sessionStorage); } catch (e) { return null; }
+	}
+	ls((s) => {
+		const old = s.getItem('alx_log');
+		if (old !== null) { s.setItem('alx_prev_log', old); }
+	});
+	function note(ev) {
+		log.push({ t: Math.round((performance.now() - T0) / 100) / 10, ev: String(ev) });
+		if (log.length > LOG_CAP) { log.splice(0, log.length - LOG_CAP); }
+		ls((s) => s.setItem('alx_log', JSON.stringify(log)));
+	}
+	window.__alxNote = note;
+	note('boot');
+
+	// Watchdog stamp: every animation-frame callback records the time.
+	const nativeRaf = window.requestAnimationFrame.bind(window);
+	window.requestAnimationFrame = function (cb) {
+		return nativeRaf(function (ts) {
+			lastRaf = performance.now();
+			return cb(ts);
+		});
+	};
+	function resetStamp() { lastRaf = performance.now(); }
+
+	document.addEventListener('visibilitychange', () => {
+		note(document.visibilityState === 'hidden' ? 'visibility hidden' : 'visibility visible');
+		if (document.visibilityState === 'visible') {
+			resetStamp();
+			if (pendingRecover) { recover(); }
+		}
+	});
+	document.addEventListener('freeze', () => note('freeze'));
+	document.addEventListener('resume', () => { note('resume'); resetStamp(); });
+	window.addEventListener('pagehide', (e) => note('pagehide persisted=' + !!e.persisted));
+	window.addEventListener('pageshow', (e) => { note('pageshow persisted=' + !!e.persisted); resetStamp(); });
+	window.addEventListener('blur', () => note('blur'));
+	window.addEventListener('focus', () => note('focus'));
+
+	const canvas = document.getElementById('canvas');
+	canvas.addEventListener('webglcontextlost', () => {
+		lost = true;
+		lostCount += 1;
+		note('webglcontextlost');
+		recover();
+	});
+	canvas.addEventListener('webglcontextrestored', () => { lost = false; note('webglcontextrestored'); });
+
+	const box = document.getElementById('lost');
+	const msg = document.getElementById('lost-msg');
+	const btns = document.getElementById('lost-btns');
+	function showNotice(text, withButtons) {
+		msg.innerHTML = text;
+		btns.classList.toggle('off', !withButtons);
+		box.classList.add('on');
+	}
+
+	// Automatic recovery from a lost context: reload (now if visible, else when the player returns),
+	// unless that has already happened 3 times in the last 2 minutes.
+	let pendingRecover = false;
+	function recover() {
+		if (recovering) { return; }
+		const now = Date.now();
+		let stamps = [];
+		ss((s) => { stamps = JSON.parse(s.getItem('alx_recover_ts') || '[]').filter((x) => now - x < 120000); });
+		if (stamps.length >= 3) {
+			note('recovery loop guard');
+			showNotice('The browser reset the game\'s graphics.<br>Your progress is saved.', true);
+			return;
+		}
+		showNotice('Restoring your game…', false);
+		if (document.visibilityState !== 'visible') {
+			pendingRecover = true;
+			note('recovery waits for visible');
+			return;
+		}
+		recovering = true;
+		pendingRecover = false;
+		stamps.push(now);
+		ss((s) => { s.setItem('alx_recover', '1'); s.setItem('alx_recover_ts', JSON.stringify(stamps)); });
+		note('recovery reload');
+		window.location.reload();
+	}
+
+	function dead(why) {
+		if (deadShown || recovering) { return; }
+		deadShown = true;
+		note(why);
+		showNotice('The game stopped responding.<br>Your progress is saved.', true);
+	}
+
+	const nativeAlert = window.alert.bind(window);
+	window.alert = function (m) {
+		if (/WebGL context lost/i.test(String(m))) {
+			console.error('AstroLex: WebGL context lost');
+			note('alert intercepted: WebGL context lost');
+			if (!recovering && !deadShown) { lost = true; recover(); }
+			return;
+		}
+		nativeAlert(m);
+	};
+
+	const ABORT = /abort|RuntimeError|out of memory|unreachable/i;
+	window.addEventListener('error', (e) => {
+		const m = String(e.message || (e.error && e.error.message) || '');
+		note('error ' + m.slice(0, 120));
+		if (started && ABORT.test(m)) { dead('abort: ' + m.slice(0, 60)); }
+	});
+	window.addEventListener('unhandledrejection', (e) => {
+		const r = e.reason;
+		const m = String((r && r.message) || r || '');
+		note('unhandledrejection ' + m.slice(0, 120));
+		if (started && ABORT.test(m)) { dead('abort: ' + m.slice(0, 60)); }
+	});
+
+	window.__alxStarted = function () {
+		started = true;
+		note('engine started');
+		resetStamp();
+		setInterval(() => {
+			if (document.visibilityState === 'visible' && performance.now() - lastRaf > 5000) {
+				dead('stall');
+			}
+		}, 1000);
+	};
+
+	let renderer = null;
+	function gpu() {
+		if (renderer) { return renderer; }
+		renderer = { renderer: 'unknown', version: 'unknown' };
+		try {
+			const c = document.createElement('canvas');
+			const gl = c.getContext('webgl2') || c.getContext('webgl');
+			if (gl) {
+				renderer.version = String(gl.getParameter(gl.VERSION));
+				const ext = gl.getExtension('WEBGL_debug_renderer_info');
+				renderer.renderer = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+				const lc = gl.getExtension('WEBGL_lose_context');
+				if (lc) { lc.loseContext(); }
+			}
+		} catch (e) { /* keep unknown */ }
+		return renderer;
+	}
+	function readLog(key) {
+		return ls((s) => JSON.parse(s.getItem(key) || 'null')) || [];
+	}
+	window.alxReport = function () {
+		const g = gpu();
+		const real = window.__alxRealDpr ? window.__alxRealDpr() : window.devicePixelRatio;
+		const out = {
+			webgl: { renderer: g.renderer, version: g.version, lost: lost, lost_count: lostCount },
+			log: log.slice(),
+			prev_log: readLog('alx_prev_log'),
+			dpr: { real: real, capped: window.devicePixelRatio },
+			ua: navigator.userAgent,
+			visibility: document.visibilityState,
+		};
+		if (performance.memory) {
+			out.memory = {
+				used_mb: Math.round(performance.memory.usedJSHeapSize / 1048576),
+				total_mb: Math.round(performance.memory.totalJSHeapSize / 1048576),
+				limit_mb: Math.round(performance.memory.jsHeapSizeLimit / 1048576),
+			};
+		}
+		return JSON.stringify(out);
+	};
+
+	function reportMarkdown(maxUrl) {
+		const r = JSON.parse(window.alxReport());
+		const base = 'https://github.com/krisdevarch/AstroLex/issues/new?labels=bug&title=';
+		const title = '[bug] Game stopped or lost graphics';
+		function build() {
+			const summary = 'Page report: ' + r.webgl.renderer + ', context lost=' + r.webgl.lost + ' (' + r.webgl.lost_count + '), '
+				+ r.visibility + ', dpr ' + r.dpr.real + '/' + r.dpr.capped + '.';
+			return summary + '\n\n```json\n' + JSON.stringify(r, null, 1) + '\n```\n';
+		}
+		let body = build();
+		const url = () => base + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+		if (maxUrl) {
+			r.prev_log = [];
+			body = build();
+			while (url().length > maxUrl && r.log.length > 1) {
+				r.log.splice(0, Math.max(1, Math.floor(r.log.length / 4)));
+				body = build();
+			}
+			return { url: url(), body: body };
+		}
+		return { url: url(), body: body };
+	}
+	function fullThenTrim() {
+		const full = reportMarkdown(0);
+		const trimmed = full.url.length <= 6000 ? full : reportMarkdown(6000);
+		return { url: trimmed.url, body: full.body };
+	}
+	document.getElementById('lost-reload').addEventListener('click', () => {
+		ss((s) => s.setItem('alx_recover', '1'));
+		note('manual reload');
+		window.location.reload();
+	});
+	document.getElementById('lost-report').addEventListener('click', () => {
+		window.open(fullThenTrim().url, '_blank', 'noopener');
+	});
+	document.getElementById('lost-copy').addEventListener('click', () => {
+		const text = fullThenTrim().body;
+		const fallback = () => {
+			const ta = document.createElement('textarea');
+			ta.value = text;
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild(ta);
+			ta.select();
+			try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+			ta.remove();
+		};
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).catch(fallback);
+		} else {
+			fallback();
+		}
+	});
+}());
+		</script>
 		<script src="$GODOT_URL"></script>
 		<script>
 // Phone heat (WP-F.16): Godot sizes the canvas by window.devicePixelRatio, so a 3x phone draws
@@ -272,25 +536,12 @@ body {
 		return;
 	}
 	const real = own.get ? () => own.get.call(window) : () => own.value;
+	window.__alxRealDpr = real;
 	try {
 		Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: () => Math.min(cap, real() || 1) });
 	} catch (err) {
 		console.warn('AstroLex: pixel ratio cap not applied', err);
 	}
-}());
-
-// When the browser drops WebGL (memory pressure, a GPU reset) Godot cannot recover and calls
-// alert(); show a Reload notice instead of a frozen picture, and log it for playtest reports.
-(function () {
-	const nativeAlert = window.alert.bind(window);
-	window.alert = function (msg) {
-		if (/WebGL context lost/i.test(String(msg))) {
-			console.error('AstroLex: WebGL context lost');
-			document.getElementById('lost').classList.add('on');
-			return;
-		}
-		nativeAlert(msg);
-	};
 }());
 
 const GODOT_CONFIG = $GODOT_CONFIG;
@@ -403,6 +654,7 @@ const engine = new Engine(GODOT_CONFIG);
 				}
 			},
 		}).then(() => {
+			window.__alxStarted();
 			setStatusMode('hidden');
 		}, displayFailureNotice);
 	}
