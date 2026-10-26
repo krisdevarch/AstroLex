@@ -18,6 +18,7 @@ const GameFont := preload("res://scenes/game_font.gd")
 const BabelViewScript := preload("res://scenes/babel_view.gd")
 const ThiefViewScript := preload("res://scenes/thief_view.gd")
 const Sfx := preload("res://scenes/sfx.gd")
+const BabelMovesFx := preload("res://scenes/babel_moves_fx.gd")
 const Coach := preload("res://scenes/coach.gd")
 const StoryStrip := preload("res://scenes/story_strip.gd")
 const DEFAULT_ACT := "act1_low_orbit"
@@ -161,6 +162,7 @@ var _toast_t: float = 0.0
 ## Hazards that have bitten already this run: each gets its one-line toast the first time only (WP-F.1).
 var _hazard_seen: Dictionary = {}
 var _babel_t: float = 99.0
+var _gust_fx: Node2D  # WP-F.19: wind streaks while a gust blows (null otherwise)
 var _babel_shown: String = ""  # the last_babel line already handed to the porthole bubble
 var _pulse_t: float = 99.0
 var _tether_fade: float = 0.0
@@ -325,6 +327,7 @@ func _reset_for_level() -> void:
 	last_babel = ""  # a new level: Babel has not spoken yet
 	_babel_shown = ""
 	_babel_t = 99.0
+	_drop_gust()
 	_cleared = false
 	_intro_on = false
 	_coach_reset()
@@ -579,6 +582,7 @@ func advance(delta: float) -> void:
 	if _fps_meter != null:
 		_fps_meter.tiles = _views.size()
 	_tick_views(delta)
+	_tick_gust(delta)
 	_update_tether(delta)
 	_update_hud()
 	_tick_hud(delta)
@@ -667,6 +671,63 @@ func _shoot_in(v: TileViewScript, t: Object) -> void:
 		return
 	v.launch_from(_babel.muzzle_position(), _n("babel.throwSec"), _n("babel.throwOvershoot"))
 	_babel.shoot(to_screen(t.pos))
+
+
+## WP-F.19: one of Babel's move events (babel_tell, babel_move, shield_bounce) from the rules.
+## A volley needs nothing here: each decoy also arrives as a spawn event and flies from the muzzle.
+func _on_babel_move_event(e: Dictionary) -> void:
+	var type: String = e["type"]
+	match type:
+		"babel_tell":
+			_ensure_babel()
+			if _babel.state == "off":
+				_babel.fly_in()
+			_babel.tell(str(e["move"]), float(e.get("sec", _n("babel.tellSec"))))
+			sfx.babel_tell()
+		"babel_move":
+			var move := str(e["move"])
+			sfx.babel_move(move)
+			match move:
+				"gust":
+					_start_gust(e.get("dir", Vector2.RIGHT), float(e.get("sec", _n("babel.gustSec"))))
+				"shield":
+					var sv: TileViewScript = _views.get(int(e.get("tile_id", -1)))
+					if sv != null:
+						sv.shield(float(e.get("sec", _n("babel.shieldSec"))))
+				"scramble":
+					var sec := float(e.get("sec", _n("babel.scrambleSec")))
+					for m in e.get("moves", []):
+						var mv: TileViewScript = _views.get(int(m["tile_id"]))
+						if mv != null:
+							mv.scramble(to_screen(m["from"]), sec)
+		"shield_bounce":
+			var bv: TileViewScript = _views.get(int(e["tile_id"]))
+			if bv != null:
+				bv.shield_bounce()
+				if not settings.reduced_motion:
+					_burst(bv.position, PERIWINKLE, 8)
+			sfx.shield_bounce()
+
+
+func _start_gust(dir: Vector2, sec: float) -> void:
+	_drop_gust()
+	if settings.reduced_motion:
+		return
+	_gust_fx = BabelMovesFx.new()
+	_gust_fx.name = "GustFx"
+	_fx_layer.add_child(_gust_fx)
+	_gust_fx.start(dir, sec, Rect2(0.0, _ft, view_size.x, maxf(100.0, panel_top() - _ft)))
+
+
+func _tick_gust(delta: float) -> void:
+	if _gust_fx != null and _gust_fx.tick(delta):
+		_drop_gust()
+
+
+func _drop_gust() -> void:
+	if _gust_fx != null:
+		_gust_fx.queue_free()
+		_gust_fx = null
 
 
 ## Puts a new last_babel line (a story line, a taunt) into the porthole bubble.
@@ -865,6 +926,7 @@ func _sync_views() -> void:
 		live[t.id] = true
 		var v := _ensure_view(t)
 		v.set_jam(game_round.jammed and t.plane < 2, t.decoy)
+		v.sync_shield(float(t.get("shield_t") if t.get("shield_t") != null else 0.0))
 		v.place(to_screen(t.pos), _time, t.pos.x)
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
@@ -1031,8 +1093,11 @@ func _apply_events() -> void:
 				last_babel = str(e["text"])
 				_babel_shown = ""  # the same taunt twice still pops the bubble again
 				_babel_t = 0.0
+			"babel_tell", "babel_move", "shield_bounce":
+				_on_babel_move_event(e)
 			"round_end":
 				_end_t = 0.0
+				_drop_gust()
 				if _babel != null:
 					_babel.fly_out()
 				_coach_reset()

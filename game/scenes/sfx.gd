@@ -83,6 +83,29 @@ func heartbeat() -> void:
 	_play("heartbeat", func() -> AudioStreamWAV: return _thump(), 2.0)
 
 
+## WP-F.19: Babel's moves. A soft low warning when the porthole starts to glow.
+func babel_tell() -> void:
+	_play("babel_tell", func() -> AudioStreamWAV: return _bell([293.66, 311.13], 0.4, 0.09), -9.0)
+
+
+## One quiet sound per move: volley three pops, gust an airy fall, shield a ping, scramble a flutter.
+func babel_move(move: String) -> void:
+	match move:
+		"volley":
+			_play("move_volley", func() -> AudioStreamWAV: return _bell([392.0, 392.0, 392.0], 0.14, 0.09), -8.0)
+		"gust":
+			_play("move_gust", func() -> AudioStreamWAV: return _sweep(900.0, 300.0, 0.5, 0.22), -9.0)
+		"shield":
+			_play("move_shield", func() -> AudioStreamWAV: return _bell([880.0, 1318.51], 0.35, 0.0), -9.0)
+		"scramble":
+			_play("move_scramble", func() -> AudioStreamWAV: return _sweep(300.0, 1200.0, 0.3, 0.22), -9.0)
+
+
+## A shot bounced off a shield.
+func shield_bounce() -> void:
+	_play("shield_bounce", func() -> AudioStreamWAV: return _bell([1046.5, 1568.0], 0.18, 0.0), -7.0)
+
+
 func _play(key: String, make: Callable, gain_db: float) -> void:
 	played.append(key)
 	if played.size() > 64:

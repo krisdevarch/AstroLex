@@ -21,6 +21,13 @@ extends RefCounted
 ##   trap{word,cost} (two letters of Babel's counter-word caught within hazard.trapWindowSec; once per round;
 ##   a babel{text} event with the word follows and a time_cost reason "trap")
 ##   jam_on{} jam_off{} (every hazard.stroopEverySec the slot hints go dark for hazard.stroopSec: `jammed`)
+## Babel's moves (WP-F.19; babel.moveEvery 0 turns them off, none while state != "play"):
+##   babel_tell{move,sec} (move "volley"|"gust"|"shield"|"scramble"; babel.tellSec before the move)
+##   babel_move{move,...} volley: tile_ids (new decoys, each also gets a normal spawn event and lands after babel.throwSec;
+##   each dissolves after babel.volleyLifeSec)
+##   gust: dir (unit Vector2, y <= 0.2, never down), sec  shield: tile_id, sec
+##   scramble: moves (Array of {tile_id,from,to}), sec (letters are uncatchable for that long)
+##   shield_bounce{tile_id} (a shot reached a shielded letter: no catch, no time cost, no wrong, combo unchanged, the letter stays)
 ## Thieves live in `thieves` (thief.gd: id, pos, vel, target_id, carrying_id, state "seek"/"flee") and
 ## share the tile id space; fire(id) accepts a thief id. A shot dict has "kind": "tile" or "thief".
 ## Tiles leave `tiles` when caught or dissolved; the view keeps its own node per tile_id.
@@ -40,6 +47,8 @@ const TRAP_MIN_LEN := 3
 const TRAP_MAX_LEN := 4
 const THIEF_IDLE_MUL := 0.25
 const STYLE_SEED_XOR := 0x57A1E5
+const MOVE_SEED_XOR := 0x3B0E5A
+const MOVE_NAMES: Array[String] = ["volley", "gust", "shield", "scramble"]
 const ORBIT_MIN_K := 0.25
 ## Slow letters whose circling alone would reach this share of their speed wander instead (keeps the mean speed).
 const ORBIT_MAX_RATIO := 0.9
@@ -92,6 +101,14 @@ var _rng := RandomNumberGenerator.new()
 var _babel_rng := RandomNumberGenerator.new()
 var _thief_rng := RandomNumberGenerator.new()
 var _hazard_rng := RandomNumberGenerator.new()
+var _move_rng := RandomNumberGenerator.new()
+## Babel's moves: when the next tell fires, the move chosen at the tell, when it lands, the last move made.
+var _move_at: float = INF
+var _move_tell_sent: bool = false
+var _move_next: String = ""
+var _move_last: String = ""
+var _gust_dir: Vector2 = Vector2.ZERO
+var _gust_t: float = 0.0
 var _trap_hits: Array[Dictionary] = []
 var _events: Array[Dictionary] = []
 var _by_id: Dictionary = {}
@@ -157,6 +174,7 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	_babel_rng.seed = seed_value_in ^ BABEL_SEED_XOR
 	_thief_rng.seed = seed_value_in ^ THIEF_SEED_XOR
 	_hazard_rng.seed = seed_value_in ^ HAZARD_SEED_XOR
+	_move_rng.seed = seed_value_in ^ MOVE_SEED_XOR
 	_next_thief_at = _num("thief.firstAt") if _num("thief.interval") > 0.0 else INF
 	if fixed_words.is_empty():
 		_pick_words()
@@ -168,6 +186,7 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	burst_seconds = _num("burst.seconds") + _num("burst.perLetterSec") * letters
 	time_left = burst_seconds
 	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0, "counterfeits": 0, "traps": 0, "jams": 0}
+	_move_at = _num("babel.moveFirstAt") if _num("babel.moveEvery") > 0.0 else INF
 	_pick_trap_word()
 	active = _slots_of(words[0])
 	preview = _slots_of(words[1]) if words.size() > 1 else ([] as Array[Dictionary])
@@ -265,7 +284,7 @@ func _active_key() -> String:
 
 ## Catchable now and its letter fills an open slot of the active word.
 func _hint_ok(t: Tile) -> bool:
-	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0 or t.kind == "counterfeit":
+	if t == null or not t.alive or t.plane >= 2 or t.carried_by >= 0 or t.kind == "counterfeit" or t.shield_t > 0.0 or t.landing > 0.0:
 		return false
 	if (not shot.is_empty() and shot["tile_id"] == t.id) or queued_id == t.id:
 		return false
@@ -671,8 +690,18 @@ func _remove(t: Tile) -> void:
 func _tick(h: float) -> void:
 	stats["secs"] = float(stats["secs"]) + h
 	_tick_jam()
-	for t: Tile in tiles:
+	_tick_moves()
+	if _gust_t > 0.0:
+		_gust_t = maxf(0.0, _gust_t - h)
+	for t: Tile in tiles.duplicate():
 		t.landing = maxf(0.0, t.landing - h)
+		t.shield_t = maxf(0.0, t.shield_t - h)
+		if t.expire_t > 0.0:
+			t.expire_t -= h
+			if t.expire_t <= 0.0 and t.carried_by < 0 and t.id != int(shot.get("tile_id", -1)) and t.id != queued_id:
+				_remove(t)
+				_emit({"type": "dissolve", "tile_id": t.id, "ch": t.ch, "decoy": t.decoy, "pos": t.pos})
+				continue
 		if t.carried_by < 0:
 			_drift(t, h)
 	_react(h)
@@ -736,6 +765,161 @@ func _tick_respawns(h: float) -> void:
 		_refill()
 
 
+# --- Babel's moves (WP-F.19) ---------------------------------------------------------------
+
+## The moves Babel's act and level allow.
+func _allowed_moves() -> Array[String]:
+	var out: Array[String] = []
+	if not babel_on or _num("babel.moveEvery") <= 0.0:
+		return out
+	var act_no := 1
+	if act.begins_with("act") and act.length() > 3 and act[3].is_valid_int():
+		act_no = int(act[3])
+	var order := 1 << 30
+	var parts := level_id.split("-")
+	if parts.size() == 2 and parts[0].is_valid_int() and parts[1].is_valid_int():
+		order = int(parts[1])
+	if act_no >= 2 or order >= int(_num("babel.movesFromLevel")):
+		out.append("volley")
+	if act_no >= int(_num("babel.gustFromAct")):
+		out.append("gust")
+	if act_no >= int(_num("babel.shieldFromAct")):
+		out.append("shield")
+	if act_no >= int(_num("babel.scrambleFromAct")):
+		out.append("scramble")
+	return out
+
+
+func _move_feasible(m: String) -> bool:
+	match m:
+		"volley":
+			return _decoy_room() > 0
+		"shield":
+			return _shield_target() != null
+		"scramble":
+			for t: Tile in tiles:
+				if t.plane < 2 and t.carried_by < 0:
+					return true
+			return false
+	return true
+
+
+func _decoy_room() -> int:
+	var n := 0
+	for t: Tile in tiles:
+		if t.plane < 2 and t.decoy:
+			n += 1
+	return int(_num("ramp.decoyMax")) - n
+
+
+func _tick_moves() -> void:
+	if state != "play" or _move_at == INF:
+		return
+	var secs := float(stats["secs"]) + EPS
+	var tell := _num("babel.tellSec")
+	if not _move_tell_sent and secs >= _move_at - tell:
+		var options: Array[String] = []
+		for m in _allowed_moves():
+			if _move_feasible(m):
+				options.append(m)
+		if options.size() > 1 and options.has(_move_last):
+			options.erase(_move_last)
+		if options.is_empty():
+			_move_at += _num("babel.moveEvery")
+			return
+		_move_next = options[_move_rng.randi_range(0, options.size() - 1)]
+		_move_tell_sent = true
+		_emit({"type": "babel_tell", "move": _move_next, "sec": tell})
+	if _move_tell_sent and secs >= _move_at:
+		_move_tell_sent = false
+		_move_at += _num("babel.moveEvery")
+		if _move_feasible(_move_next):
+			_do_move(_move_next)
+			_move_last = _move_next
+
+
+func _do_move(m: String) -> void:
+	match m:
+		"volley":
+			var ids: Array = []
+			var excluded := _word_letters()
+			for _i in mini(int(_num("babel.volleyDecoys")), _decoy_room()):
+				var d: Tile = _spawn(_weighted_letter(excluded), true, _pick_plane())
+				d.expire_t = _num("babel.volleyLifeSec")
+				ids.append(d.id)
+			for _pass in 16:
+				if not _separate_tiles():
+					break
+			_emit({"type": "babel_move", "move": m, "tile_ids": ids})
+		"gust":
+			var y := _move_rng.randf_range(-1.0, 0.2)
+			var x := sqrt(maxf(0.0, 1.0 - y * y)) * (1.0 if _move_rng.randf() < 0.5 else -1.0)
+			_gust_dir = Vector2(x, y)
+			_gust_t = _num("babel.gustSec")
+			_emit({"type": "babel_move", "move": m, "dir": _gust_dir, "sec": _gust_t})
+		"shield":
+			var tgt := _shield_target()
+			tgt.shield_t = _num("babel.shieldSec")
+			_emit({"type": "babel_move", "move": m, "tile_id": tgt.id, "sec": tgt.shield_t})
+		"scramble":
+			_scramble()
+
+
+## The letter the next open slot wants if it is on the field and catchable, else any needed real letter.
+func _shield_target() -> Tile:
+	for t: Tile in tiles:
+		if t.shield_t > 0.0:
+			return null
+	for slots: Array[Dictionary] in [active]:
+		var want := ""
+		for s in slots:
+			if not s["filled"]:
+				want = s["ch"]
+				break
+		var fallback: Tile = null
+		for t: Tile in tiles:
+			if t.plane >= 2 or t.decoy or t.carried_by >= 0 or not t.alive or t.landing > 0.0 or t.id == _hinted_id:
+				continue
+			if t.ch == want:
+				return t
+			if fallback == null and _open_slot(active, t.ch) >= 0:
+				fallback = t
+		return fallback
+	return null
+
+
+func _scramble() -> void:
+	var moves: Array = []
+	var gap := _num("tile.minGap")
+	var shot_id := int(shot.get("tile_id", -1))
+	for t: Tile in tiles:
+		if t.plane >= 2 or t.carried_by >= 0 or not t.alive or t.id == shot_id or t.id == queued_id:
+			continue  # a letter the tether is already flying at (or queued for) stays put
+		var r := t.radius
+		var best_slack := -INF
+		var best_pos := t.pos
+		for _try in 64:
+			var p := Vector2(_move_rng.randf_range(r, 1.0 - r), _move_rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
+			var worst := INF
+			for o: Tile in tiles:
+				if o != t and o.alive and o.plane == t.plane:
+					worst = minf(worst, p.distance_to(o.pos) - (r + o.radius + gap))
+			if worst > best_slack:
+				best_slack = worst
+				best_pos = p
+			if worst >= 0.0:
+				break
+		moves.append({"tile_id": t.id, "from": t.pos, "to": best_pos})
+		t.pos = best_pos
+		t.landing = maxf(t.landing, _num("babel.scrambleSec"))
+	for _pass in 16:
+		if not _separate_tiles():
+			break
+	for m: Dictionary in moves:
+		m["to"] = find_tile(int(m["tile_id"])).pos
+	_emit({"type": "babel_move", "move": "scramble", "moves": moves, "sec": _num("babel.scrambleSec")})
+
+
 # --- thieves -----------------------------------------------------------------------------
 
 func _tick_thieves(h: float) -> void:
@@ -788,7 +972,7 @@ func _pick_target(th: Thief) -> int:
 	var best := -1
 	var best_d := INF
 	for t: Tile in tiles:
-		if t.decoy or t.plane >= 2 or t.carried_by >= 0 or t.landing > 0.0 or t.id == shot_id or t.id == queued_id:
+		if t.decoy or t.plane >= 2 or t.carried_by >= 0 or t.landing > 0.0 or t.shield_t > 0.0 or t.id == shot_id or t.id == queued_id:
 			continue
 		if _targeted_by_other(t.id, th):
 			continue
@@ -802,7 +986,7 @@ func _pick_target(th: Thief) -> int:
 func _seek(th: Thief, h: float) -> void:
 	var tgt: Tile = _by_id.get(th.target_id)
 	var shot_id := int(shot["tile_id"]) if not shot.is_empty() and shot.get("kind", "tile") == "tile" else -1
-	if tgt == null or not tgt.alive or tgt.carried_by >= 0 or tgt.id == shot_id or tgt.id == queued_id:
+	if tgt == null or not tgt.alive or tgt.carried_by >= 0 or tgt.shield_t > 0.0 or tgt.id == shot_id or tgt.id == queued_id:
 		var had_target := th.target_id >= 0
 		th.target_id = _pick_target(th)
 		tgt = _by_id.get(th.target_id)
@@ -869,6 +1053,8 @@ func _drift(t: Tile, h: float) -> void:
 		_orbit_move(t, h)
 	else:
 		t.pos += t.vel * h * drift_scale
+	if _gust_t > 0.0 and t.plane < 2:
+		t.pos += _gust_dir * _num("babel.gustPush") * (_gust_t / _num("babel.gustSec")) * h * drift_scale
 	if t.pos.x < r:
 		t.pos.x = r
 		t.vel.x = absf(t.vel.x)
@@ -1003,7 +1189,7 @@ func _start_queued(id: int) -> void:
 		_start_shot_at(id, th.pos, "thief")
 		return
 	var nt: Tile = _by_id.get(id)
-	if nt != null and nt.alive and nt.carried_by < 0:
+	if nt != null and nt.alive and nt.carried_by < 0 and nt.landing <= 0.0:
 		_start_shot_at(id, nt.pos, "tile")
 
 
@@ -1056,6 +1242,9 @@ func _resolve_hit(tile: Tile, target: Vector2) -> void:
 	if tile.carried_by >= 0 or tile.pos.distance_to(target) > _tolerance(tile):
 		stats["escapes"] = int(stats["escapes"]) + 1
 		_emit({"type": "escape", "tile_id": tile.id})
+		return
+	if tile.shield_t > 0.0:
+		_emit({"type": "shield_bounce", "tile_id": tile.id})
 		return
 	if tile.kind == "counterfeit":
 		_counterfeit_catch(tile)

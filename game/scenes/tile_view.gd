@@ -69,6 +69,14 @@ var _launch_t: float = 0.0  # a letter shot out of Babel's muzzle (see launch_fr
 var _launch_dur: float = 1.0
 var _launch_from: Vector2 = Vector2.ZERO
 var _launch_over: float = 0.6
+var _scr_t: float = 0.0  # a scramble in flight (WP-F.19): seconds left
+var _scr_dur: float = 1.0
+var _scr_from: Vector2 = Vector2.ZERO
+var _scr_alpha: float = 1.0
+var _shield: ShieldRing
+var _shield_left: float = 0.0
+var _shield_flash: float = 0.0
+const SHIELD_FLASH_SEC := 0.4
 
 
 func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_treatment: String, p_reduced: bool, tun: Dictionary, p_phase: float) -> void:
@@ -180,6 +188,22 @@ func _tick_ring(time: float) -> void:
 	_ring.queue_redraw()
 
 
+class ShieldRing extends Node2D:
+	var radius: float = 60.0
+	var width: float = 6.0
+	var flash: float = 0.0
+	var clock: float = 0.0
+	var calm: bool = false
+
+	func _draw() -> void:
+		var pulse := 0.8 if calm else 0.7 + 0.3 * sin(clock * 6.0)
+		var c := Color("7579f0")
+		c.a = pulse
+		var hot := Color(0.92, 0.93, 1.0)
+		draw_arc(Vector2.ZERO, radius + width * flash * 2.0, 0.0, TAU, 56, Color(c.r, c.g, c.b, 0.3 + 0.3 * flash), width * (2.2 + flash * 2.0), true)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, c.lerp(hot, flash), width, true)
+
+
 class HazardRing extends Node2D:
 	var radius: float = 60.0
 	var width: float = 5.0
@@ -263,7 +287,7 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 	if anim != "":
 		return
 	_track_motion(screen_pos, time)
-	position = _launch_pos(screen_pos)
+	position = _scramble_pos(screen_pos) if _scr_t > 0.0 else _launch_pos(screen_pos)
 	_tick_ring(time)
 	var tilt := Vector2.ZERO
 	if is_star:
@@ -373,6 +397,76 @@ func launch_from(origin: Vector2, dur: float, overshoot: float) -> void:
 	_launch_over = overshoot
 	_grow_alpha = modulate.a
 	_apply_launch()
+
+
+## WP-F.19 scramble: Babel throws the letter to a new place. The view flies from `from_px` to the
+## place() position over `dur`; reduced motion fades it out and in at the new place instead.
+func scramble(from_px: Vector2, dur: float) -> void:
+	_cancel_grow()
+	_scr_dur = maxf(0.01, dur)
+	_scr_t = _scr_dur
+	_scr_from = from_px
+	_scr_alpha = modulate.a
+
+
+func is_scrambling() -> bool:
+	return _scr_t > 0.0
+
+
+func _scramble_pos(screen_pos: Vector2) -> Vector2:
+	if reduced_motion:
+		return screen_pos
+	var u := 1.0 - _scr_t / _scr_dur
+	return _scr_from.lerp(screen_pos, u * u * (3.0 - 2.0 * u))
+
+
+func _apply_scramble() -> void:
+	if reduced_motion:
+		var u := 1.0 - _scr_t / _scr_dur
+		modulate.a = _scr_alpha * absf(2.0 * u - 1.0)  # out, then in
+	else:
+		modulate.a = _scr_alpha
+
+
+## WP-F.19 shield: a periwinkle ring while the letter is shielded. `sec` starts a countdown here;
+## sync_shield() follows the rules' own shield_t when it has one.
+func shield(sec: float) -> void:
+	_shield_left = maxf(_shield_left, sec)
+	_refresh_shield()
+
+
+func sync_shield(rule_t: float) -> void:
+	if rule_t > 0.0:
+		_shield_left = rule_t
+	_refresh_shield()
+
+
+func shield_on() -> bool:
+	return _shield != null
+
+
+func shield_flashing() -> bool:
+	return _shield_flash > 0.0
+
+
+## A shot bounced off the shield: the ring flashes white-hot for a moment.
+func shield_bounce() -> void:
+	if _shield == null:
+		shield(0.5)
+	_shield_flash = SHIELD_FLASH_SEC
+
+
+func _refresh_shield() -> void:
+	if _shield_left > 0.0 and _shield == null and not is_star:
+		_shield = ShieldRing.new()
+		_shield.name = "ShieldRing"
+		_shield.radius = size_px * 0.5 * (float(_tun.get("glass.bubbleScale", 1.0)) if treatment == "bubble" else 1.0) + maxf(5.0, size_px * 0.08)
+		_shield.width = maxf(4.0, size_px * 0.06)
+		_shield.calm = reduced_motion
+		add_child(_shield)
+	elif _shield_left <= 0.0 and _shield != null:
+		_shield.queue_free()
+		_shield = null
 
 
 func is_launching() -> bool:
@@ -514,6 +608,23 @@ func tick(delta: float) -> bool:
 		if is_star:
 			var fc := Color.WHITE.lerp(STAR_FLASH, _flash_t / _flash_dur)
 			modulate = Color(fc.r, fc.g, fc.b, modulate.a)
+	if _shield_left > 0.0:
+		_shield_left = maxf(0.0, _shield_left - delta)
+		if _shield_left <= 0.0:
+			_refresh_shield()
+	if _shield != null:
+		_shield_flash = maxf(0.0, _shield_flash - delta)
+		_shield.flash = _shield_flash / SHIELD_FLASH_SEC
+		_shield.clock += delta
+		_shield.queue_redraw()
+	if _scr_t > 0.0:
+		if anim != "":
+			_scr_t = 0.0
+		else:
+			_scr_t = maxf(0.0, _scr_t - delta)
+			_apply_scramble()
+			if _scr_t <= 0.0:
+				modulate.a = _scr_alpha
 	if _launch_t > 0.0:
 		if anim != "":
 			_launch_t = 0.0

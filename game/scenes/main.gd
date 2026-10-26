@@ -113,6 +113,7 @@ func _ready() -> void:
 	if GlassBench.bench_requested():
 		_show_bench(GlassBench.auto_requested())
 	elif autoplay:
+		_autoplay_level_hook()
 		_begin_level_with_comms()
 	else:
 		_show_start()
@@ -152,6 +153,25 @@ func _save_debug_hook() -> void:
 			save.set_profile("wren", "they", _default_difficulty(), "KIT")
 		_show_ending.call_deferred()
 	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
+
+
+## Web-only autoplay hook: ?autoplay=1&level=4-05 plays that level instead of 1-01 (evidence clips of later acts).
+func _autoplay_level_hook() -> void:
+	if not OS.has_feature("web"):
+		return
+	var q := str(JavaScriptBridge.eval("window.location.search"))
+	var at := q.find("level=")
+	if at < 0:
+		return
+	var want := q.substr(at + 6).get_slice("&", 0)
+	for a: String in dictionary.act_order():
+		var lv: Array = dictionary.levels(a)
+		for i in lv.size():
+			if str((lv[i] as Dictionary).get("id", "")) == want:
+				act = a
+				levels = lv
+				level_index = i
+				return
 
 
 # --- profile helpers ---------------------------------------------------------------------
