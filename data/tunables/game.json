@@ -175,5 +175,10 @@
   "hop.firstAt": 3,
   "hop.windSec": 0.35,
   "hop.flySec": 0.45,
-  "hop.fromLevel": 3
+  "hop.fromLevel": 3,
+  "hop.arcPx": 70,
+  "hop.ringPx": 90,
+  "hop.ringSec": 0.35,
+  "tile.flinchSquash": 0.1,
+  "tether.comboWarm": 0.6
 }

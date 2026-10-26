@@ -58,6 +58,16 @@ var _last_time: float = 0.0
 var _vel_px: Vector2 = Vector2.ZERO
 var _squash_t: float = 0.0
 var _squash_axis: Vector2 = Vector2.ZERO
+var _fx_squash: bool = false  # a flinch or landing squash (shown on every treatment, not only bubbles)
+var _squash_amp: float = 0.0  # the share of its size the current squash flattens (bounce or flinch)
+## WP-F.21 hop feel: wind-up (tell), flight lift and the gold tell ring. View only.
+const HOP_GOLD := Color("F8BC04")  # the gold of field.gd AMBER (no colour tunables exist yet)
+var _tell_t: float = 0.0
+var _tell_dur: float = 1.0
+var _hop_t: float = 0.0
+var _hop_dur: float = 1.0
+var _hop_z: int = 0
+var _tell_ring: Node2D
 const SQUASH_DUR := 0.28  # seconds a bounce squash takes to spring back
 const GROW_FROM := 0.35  # a letter made mid-play starts at this share of its size
 const GROW_OVERSHOOT := 1.0
@@ -155,6 +165,15 @@ func set_jam(on: bool, decoy: bool) -> void:
 		return
 	jam_colour = c
 	_refresh_ring()
+
+
+class HopTellRing extends Node2D:
+	var radius: float = 60.0
+	var width: float = 6.0
+	var alpha: float = 1.0
+
+	func _draw() -> void:
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 48, Color(HOP_GOLD.r, HOP_GOLD.g, HOP_GOLD.b, alpha), width, true)
 
 
 func _refresh_ring() -> void:
@@ -288,6 +307,7 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		return
 	_track_motion(screen_pos, time)
 	position = _scramble_pos(screen_pos) if _scr_t > 0.0 else _launch_pos(screen_pos)
+	position.y -= hop_lift()
 	_tick_ring(time)
 	var tilt := Vector2.ZERO
 	if is_star:
@@ -303,14 +323,14 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 		if not reduced_motion:
 			var wob := 0.03 * sin(time * 2.3 + _phase * 2.0)
 			var pulse := 1.0 + float(_tun.get("tile.pulse", 0.0)) * sin(time * TAU * float(_tun.get("tile.pulseHz", 0.5)) + _phase)
-			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob) * _squash() * life_scale(time)
+			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob) * _squash() * _wind_scale() * life_scale(time)
 			glyph.rotation = _lean()
 			_mat.set_shader_parameter("bubble_time", time + _phase)
 		current_tilt = Vector2.ZERO
 		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 		return
 	if not reduced_motion:
-		body.scale = _body_scale * life_scale(time)  # visual only: the rule position never moves
+		body.scale = _body_scale * life_scale(time) * _wind_scale() * (_squash() if _fx_squash else Vector2.ONE)  # visual only: the rule position never moves
 	if not reduced_motion and not is_back:
 		var maxd: float = _tun["tile.maxTiltDeg"]
 		var sway_deg: float = _tun["tile.swayDeg"]
@@ -349,7 +369,9 @@ func life_scale(time: float) -> Vector2:
 	var speed := _vel_px.length()
 	var thr := size_px  # px per second: a gentle drift is slower than one body length a second
 	var k := clampf((speed - thr) / (3.0 * thr), 0.0, 1.0)
-	if k > 0.0:
+	if _hop_t > 0.0:
+		k = maxf(k, 0.8 * sin(PI * (1.0 - _hop_t / _hop_dur)))  # a hop always stretches along its path
+	if k > 0.0 and speed > 0.01:
 		var a := float(_tun.get("tile.stretch", 0.0)) * k
 		var d := _vel_px / speed
 		out *= Vector2(1.0 + a * (absf(d.x) - 0.5 * absf(d.y)), 1.0 + a * (absf(d.y) - 0.5 * absf(d.x)))
@@ -358,6 +380,8 @@ func life_scale(time: float) -> Vector2:
 
 func _bounce(axis: Vector2) -> void:
 	_squash_axis = axis
+	_fx_squash = false
+	_squash_amp = float(_tun.get("tile.bounceSquash", 0.0))
 	_squash_t = SQUASH_DUR
 
 
@@ -366,8 +390,91 @@ func _squash() -> Vector2:
 	if _squash_t <= 0.0:
 		return Vector2.ONE
 	var u := 1.0 - _squash_t / SQUASH_DUR
-	var a := float(_tun.get("tile.bounceSquash", 0.0)) * sin(u * PI * 1.5) * (1.0 - u)
+	var a := _squash_amp * sin(u * PI * 1.5) * (1.0 - u)
 	return Vector2.ONE - _squash_axis * a + Vector2(_squash_axis.y, _squash_axis.x) * a * 0.6
+
+
+## WP-F.21 miss flinch: the letter nearest a missed shot flattens a little. Not in reduced motion.
+func flinch() -> void:
+	if reduced_motion:
+		return
+	_squash_axis = Vector2.DOWN
+	_fx_squash = true
+	_squash_amp = float(_tun.get("tile.flinchSquash", 0.0))
+	_squash_t = SQUASH_DUR
+
+
+func squash_active() -> bool:
+	return _squash_t > 0.0
+
+
+## WP-F.21 hop tell: a gold ring and a wind-up squash for `sec`.
+func hop_tell(sec: float) -> void:
+	_tell_dur = maxf(0.01, sec)
+	_tell_t = _tell_dur
+	if _tell_ring == null:
+		_tell_ring = HopTellRing.new()
+		_tell_ring.name = "HopTellRing"
+		add_child(_tell_ring)
+		move_child(_tell_ring, glyph.get_index())
+	_tell_ring.radius = size_px * 0.5 * (float(_tun.get("glass.bubbleScale", 1.0)) if treatment == "bubble" else 1.0) * 0.97
+	_tell_ring.width = maxf(4.0, size_px * 0.06)
+	_tell_ring.alpha = 1.0
+	_tell_ring.queue_redraw()
+
+
+func is_telling() -> bool:
+	return _tell_t > 0.0
+
+
+func _wind_scale() -> Vector2:
+	if _tell_t <= 0.0 or reduced_motion:
+		return Vector2.ONE
+	var k := float(_tun.get("tile.bounceSquash", 0.0)) * (1.0 - _tell_t / _tell_dur)
+	return Vector2(1.0 + 0.6 * k, 1.0 - k)
+
+
+func _end_tell() -> void:
+	_tell_t = 0.0
+	if _tell_ring != null:
+		_tell_ring.queue_free()
+		_tell_ring = null
+
+
+## WP-F.21 hop flight: lift along an arc over `sec`, drawn above the others. Reduced motion fades
+## out and in instead (as a scramble does) and never lifts.
+func hop(from_px: Vector2, sec: float) -> void:
+	_end_tell()
+	if reduced_motion:
+		scramble(from_px, sec)
+		return
+	if _hop_t <= 0.0:
+		_hop_z = z_index
+	_hop_dur = maxf(0.01, sec)
+	_hop_t = _hop_dur
+	z_index = 20
+
+
+func hop_land() -> void:
+	if _hop_t > 0.0:
+		_hop_t = 0.0
+		z_index = _hop_z
+	if not reduced_motion:
+		_squash_axis = Vector2.DOWN
+		_fx_squash = true
+		_squash_amp = float(_tun.get("tile.bounceSquash", 0.0))
+		_squash_t = SQUASH_DUR
+
+
+func is_hopping() -> bool:
+	return _hop_t > 0.0
+
+
+## Screen px the view is lifted above the rule position right now.
+func hop_lift() -> float:
+	if _hop_t <= 0.0 or reduced_motion:
+		return 0.0
+	return float(_tun.get("hop.arcPx", 0.0)) * sin(PI * (1.0 - _hop_t / _hop_dur))
 
 
 ## The letter leans into its motion, as if the bubble were being towed.
@@ -617,6 +724,17 @@ func tick(delta: float) -> bool:
 		_shield.flash = _shield_flash / SHIELD_FLASH_SEC
 		_shield.clock += delta
 		_shield.queue_redraw()
+	if _tell_t > 0.0:
+		_tell_t = maxf(0.0, _tell_t - delta)
+		if _tell_ring != null:
+			_tell_ring.alpha = 0.55 + 0.45 * (1.0 if reduced_motion else sin((1.0 - _tell_t / _tell_dur) * TAU * 2.0) * 0.5 + 0.5)
+			_tell_ring.queue_redraw()
+		if _tell_t <= 0.0:
+			_end_tell()
+	if _hop_t > 0.0:
+		_hop_t = maxf(0.0, _hop_t - delta)
+		if _hop_t <= 0.0:
+			z_index = _hop_z
 	if _scr_t > 0.0:
 		if anim != "":
 			_scr_t = 0.0
