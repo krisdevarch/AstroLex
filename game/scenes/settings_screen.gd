@@ -15,6 +15,9 @@ signal character_pressed
 signal difficulty_pressed
 ## The player asked for the credits and privacy screen (WP-F.9).
 signal credits_pressed
+## Report a problem: open a prefilled issue, or copy the same report (WP-F.20).
+signal report_pressed
+signal copy_report_pressed
 
 var settings: AppSettings = AppSettings.new()
 var save_path: String = AppSettings.PATH
@@ -153,6 +156,18 @@ func _ready() -> void:
 	bench.name = "BenchButton"
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
 	box.add_child(bench)
+	var rrow := HBoxContainer.new()
+	rrow.alignment = BoxContainer.ALIGNMENT_CENTER
+	rrow.add_theme_constant_override("separation", 16)
+	box.add_child(rrow)
+	var rep := Ui.secondary("Report a problem", 40, Vector2(402, 100))
+	rep.name = "ReportButton"
+	rep.pressed.connect(func() -> void: report_pressed.emit())
+	rrow.add_child(rep)
+	var cpy := Ui.secondary("Copy report", 40, Vector2(402, 100))
+	cpy.name = "CopyReportButton"
+	cpy.pressed.connect(func() -> void: copy_report_pressed.emit())
+	rrow.add_child(cpy)
 	var back := Ui.primary("Done", 52, Vector2(560, 136))
 	back.name = "BackButton"
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

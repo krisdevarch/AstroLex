@@ -147,3 +147,28 @@ func test_device_family_comes_from_the_user_agent() -> void:
 	assert_eq(T.device_from_ua("Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X)", "GenericDevice"), "iPhone")
 	assert_eq(T.device_from_ua("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)", "GenericDevice"), "Mac")
 	assert_eq(T.device_from_ua("curl/8", "GenericDevice"), "GenericDevice")
+
+
+func test_bug_report_url_is_bounded_and_names_the_level() -> void:
+	var tel: RefCounted = Telemetry.fake()
+	for i in 60:
+		tel.report_error("boom %d %s" % [i, "x".repeat(150)])
+	var ctx := {"act": "act1_low_orbit", "level": "1-04", "screen": "field", "next": {"act1_low_orbit": 3}, "difficulty": "normal", "character": "wren"}
+	var r: Dictionary = tel.bug_report(ctx)
+	assert_true(str(r["url"]).begins_with(Telemetry.ISSUE_BASE), "issue base")
+	assert_true(str(r["url"]).contains("labels=bug"), "bug label")
+	assert_true(str(r["url"]).contains("1-04"), "level id")
+	assert_true(str(r["url"]).length() < Telemetry.URL_LIMIT, "under the limit")
+	assert_true(str(r["title"]).begins_with("[bug] 1-04"), "title")
+	assert_true(str(r["text"]).contains("1-04"), "full text")
+	assert_true(str(r["text"]).length() >= str(r["body"]).length(), "text is untrimmed")
+
+
+func test_bug_report_send_and_copy_use_the_callables() -> void:
+	var tel: RefCounted = Telemetry.fake()
+	var ctx := {"act": "act1_low_orbit", "level": "", "screen": "settings"}
+	var u: String = tel.send_bug_report(ctx)
+	assert_eq(tel.opened_urls, [u])
+	assert_true(u.contains("settings"), "falls back to the screen name")
+	tel.copy_bug_report(ctx)
+	assert_true(tel.clipboard_text.contains("Bug report"), "clipboard has the report")

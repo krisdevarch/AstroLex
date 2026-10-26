@@ -201,3 +201,45 @@ func test_stale_tmp_is_used_when_main_file_is_bad_and_removed_after_write() -> v
 	assert_true(not FileAccess.file_exists("user://test_save_a.json.tmp"), "tmp removed")
 	assert_eq(Save.real("user://test_save_a.json").next_level(A), 4)
 	_clean()
+
+
+func test_resume_set_clear_and_validity() -> void:
+	_each(func(s: RefCounted) -> void:
+		assert_true(s.resume().is_empty(), "none at first")
+		s.set_resume(A, 2, "1-03")
+		assert_eq(s.resume(), {"act": A, "index": 2, "level_id": "1-03"})
+		s.clear_resume()
+		assert_true(s.resume().is_empty(), "cleared")
+		s.set_resume("act9_missing", 0, "9-01")
+		assert_true(s.resume().is_empty(), "unknown act")
+		s.act_sizes = {A: 3}
+		s.set_resume(A, 3, "1-04")
+		assert_true(s.resume().is_empty(), "index past the act")
+		s.set_resume(A, -1, "x")
+		assert_true(s.resume().is_empty(), "negative index"))
+
+
+func test_record_level_and_reset_clear_resume() -> void:
+	_each(func(s: RefCounted) -> void:
+		s.set_resume(A, 0, "1-01")
+		s.record_level(A, "1-01", 0, false, 10)
+		assert_true(s.resume().is_empty(), "a finished level forgets it")
+		s.set_resume(A, 0, "1-01")
+		s.reset()
+		assert_true(s.resume().is_empty(), "reset forgets it"))
+
+
+func test_resume_survives_a_reload_from_file() -> void:
+	_clean()
+	var s: RefCounted = Save.real("user://test_save_a.json")
+	s.set_resume(A, 1, "1-02")
+	var again: RefCounted = Save.real("user://test_save_a.json")
+	assert_eq(again.resume(), {"act": A, "index": 1, "level_id": "1-02"})
+	again.clear_resume()
+	assert_true(Save.real("user://test_save_a.json").resume().is_empty(), "clear is written")
+	_clean()
+
+
+func test_bad_resume_in_a_file_is_dropped() -> void:
+	var d := Save._migrate({"version": 3, "player_id": "abc", "progress": {}, "resume": "junk"})
+	assert_false(d.has("resume"))

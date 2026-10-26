@@ -61,6 +61,8 @@ var daily_today: String = ""
 ## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
 var music: MusicScript
 var _ready_printed: bool = false
+## Tests set this before _ready to stand in for the page's recovery flag ("1" = reloaded by the recovery).
+var recover_override: String = ""
 
 
 static func autoplay_requested() -> bool:
@@ -115,9 +117,44 @@ func _ready() -> void:
 	elif autoplay:
 		_autoplay_level_hook()
 		_begin_level_with_comms()
+	elif _recovered() and not save.resume().is_empty():
+		_resume_level(false)
 	else:
 		_show_start()
 	telemetry.mark_ready()
+
+
+## True when the page reloaded itself after losing graphics (WP-F.20); reads and clears the flag.
+func _recovered() -> bool:
+	if recover_override != "":
+		return recover_override == "1"
+	if not OS.has_feature("web"):
+		return false
+	var v: Variant = JavaScriptBridge.eval("(function(){try{var v=sessionStorage.getItem('alx_recover');sessionStorage.removeItem('alx_recover');return v||''}catch(e){return ''}})()", true)
+	return str(v) == "1"
+
+
+## Drops into the remembered level from its start. `with_comms` plays the level's opening chatter.
+func _resume_level(with_comms: bool) -> void:
+	var r: Dictionary = save.resume()
+	var lv: Array = dictionary.levels(str(r["act"]))
+	# Found by id: a content update may have moved the level; gone means back to the map.
+	var at := -1
+	for i in lv.size():
+		if str((lv[i] as Dictionary).get("id", "")) == str(r["level_id"]):
+			at = i
+	if at < 0:
+		save.clear_resume()
+		_show_map()
+		return
+	act = str(r["act"])
+	levels = lv
+	level_index = at
+	print("AstroLex resumed level=%s" % str(r["level_id"]))
+	if with_comms:
+		_begin_level_with_comms()
+	else:
+		_start_level([])
 
 
 static func _savetest_query() -> String:
@@ -140,7 +177,8 @@ func _sync_level_index() -> void:
 
 
 ## Web-only test hook: ?savetest=1 (own save file) prints the saved next level, &win=1 first records 1-01 as won,
-## &ending=1 opens the ending screen straight away (a preview for the owner; no save is changed).
+## &ending=1 opens the ending screen straight away (a preview for the owner; no save is changed),
+## &setresume=<id> remembers that level as the one being played (the recovery check, WP-F.20).
 func _save_debug_hook() -> void:
 	var q := _savetest_query()
 	if q == "" or autoplay or levels.is_empty():
@@ -148,6 +186,12 @@ func _save_debug_hook() -> void:
 	if q.contains("win=1"):
 		save.record_level(act, str((levels[0] as Dictionary)["id"]), 0, true, 100, 1)
 		_sync_level_index()
+	var at := q.find("setresume=")
+	if at >= 0:
+		var want := q.substr(at + 10).get_slice("&", 0)
+		for i in levels.size():
+			if str((levels[i] as Dictionary).get("id", "")) == want:
+				save.set_resume(act, i, want)
 	if q.contains("ending=1"):
 		if save.player_name() == "":
 			save.set_profile("wren", "they", _default_difficulty(), "KIT")
@@ -250,7 +294,10 @@ func _show_start() -> void:
 	s.start_label = "Continue" if save.has_profile() else "New game"
 	s.start_pressed.connect(func() -> void:
 		if save.has_profile():
-			_show_map()
+			if save.resume().is_empty():
+				_show_map()
+			else:
+				_resume_level(true)
 		else:
 			_show_character(false, func() -> void: _show_difficulty(false, _show_map)))
 	s.settings_pressed.connect(_show_settings.bind(_show_start))
@@ -338,7 +385,27 @@ func _show_settings(back: Callable) -> void:
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
 	s.codex_pressed.connect(_show_codex.bind(_show_settings.bind(back)))
 	s.credits_pressed.connect(func() -> void: _show_credits(_show_settings.bind(back)))
+	_wire_report(s, "settings")
 	_swap(s)
+
+
+## Report a problem / Copy report on a settings screen (WP-F.20).
+func _wire_report(s: Control, screen_name: String) -> void:
+	s.report_pressed.connect(func() -> void: telemetry.send_bug_report(_report_context(screen_name)))
+	s.copy_report_pressed.connect(func() -> void: telemetry.copy_bug_report(_report_context(screen_name)))
+
+
+func _report_context(screen_name: String) -> Dictionary:
+	var next: Dictionary = {}
+	for a: String in save.act_order:
+		next[a] = save.next_level(a)
+	var level_id := ""
+	if _field() != null and not levels.is_empty():
+		level_id = "daily-%s" % daily_date if daily_date != "" else str((levels[level_index] as Dictionary).get("id", ""))
+	return {
+		"act": act, "level": level_id, "screen": screen_name, "next": next,
+		"difficulty": str(save.profile().get("difficulty", "")), "character": str(save.profile().get("character", "")),
+	}
 
 
 func _show_codex(back: Callable) -> void:
@@ -416,6 +483,8 @@ func _start_level(story: Array = []) -> void:
 		level = Daily.make_level(daily_date, dictionary.content())
 	elif _is_final_level():
 		level = finale_level(level, save.player_name())
+	if not autoplay and daily_date == "":
+		save.set_resume(act, level_index, str(level["id"]))
 	if act == "act3_tower" and str(level["id"]) == "3-06" and not autoplay and not save.flag("flashback_seen"):
 		_play_flashback(_start_level.bind(story))  # the Loud Wars flashback, once
 		return
@@ -579,6 +648,7 @@ func _show_pause(f: Node) -> void:
 	p.quit.connect(func() -> void:
 		_close_pause()
 		telemetry.playing = false
+		save.clear_resume()
 		_show_map())
 	pause_menu = p
 	var layer := CanvasLayer.new()  # above the field's HUD layer
@@ -606,6 +676,7 @@ func _show_field_settings(f: Node) -> void:
 	s.name = "SettingsScreen"
 	s.settings = settings
 	s.show_sky = false
+	_wire_report(s, "field")
 	s.closed.connect(func() -> void:
 		layer.queue_free()
 		if pause_menu != null:

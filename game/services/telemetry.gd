@@ -378,3 +378,84 @@ func send_results() -> String:
 
 func copy_results() -> void:
 	clipboard.call(copy_text())
+
+
+# --- bug report (WP-F.20) ----------------------------------------------------------------
+
+## Page lifecycle info from the shell (window.alxReport): {} off the web or when absent.
+func page_info() -> Dictionary:
+	if not web:
+		return {}
+	var raw: Variant = JavaScriptBridge.eval("window.alxReport ? window.alxReport() : ''", true)
+	if raw == null or str(raw) == "":
+		return {}
+	var parsed: Variant = JSON.parse_string(str(raw))
+	return parsed if parsed is Dictionary else {}
+
+
+func _device_short() -> String:
+	var m := str(device.get("model", ""))
+	return m if m != "" else str(device.get("os", "device"))
+
+
+func _report_md(ctx: Dictionary, page: Dictionary) -> String:
+	var where := str(ctx.get("level", ""))
+	var lines := PackedStringArray()
+	lines.append("**Bug report** build `%s` (%s) · session `%s`" % [build["commit"], build["platform"], session])
+	lines.append("- level: %s · act: %s · screen: %s" % [where if where != "" else "-", str(ctx.get("act", "")), str(ctx.get("screen", ""))])
+	lines.append("- difficulty: %s · character: %s · next level per act: %s" % [str(ctx.get("difficulty", "")), str(ctx.get("character", "")), JSON.stringify(ctx.get("next", {}))])
+	lines.append("- device: %s" % JSON.stringify(device))
+	lines.append("- settings: %s" % JSON.stringify(settings))
+	lines.append("- perf: %s" % JSON.stringify(perf()))
+	lines.append("- recent errors: %s" % JSON.stringify(errors.slice(maxi(0, errors.size() - 10))))
+	lines.append("")
+	lines.append("### What happened?\n<!-- Type here: what you did, what you saw. -->\n")
+	lines.append("```json\n%s\n```" % JSON.stringify(page))
+	return "\n".join(lines)
+
+
+## {title, body, url, text}. `text` is the full report (clipboard); the url is trimmed under URL_LIMIT.
+func bug_report(context: Dictionary) -> Dictionary:
+	pull_errors()
+	var page := page_info()
+	var where := str(context.get("level", ""))
+	if where == "":
+		where = str(context.get("screen", "app"))
+	var title := "[bug] %s · %s" % [where, _device_short()]
+	var text := _report_md(context, page)
+	var trimmed := page.duplicate(true)
+	var body := text
+	var url := _bug_url(title, body)
+	if url.length() >= URL_LIMIT:
+		trimmed.erase("prev_log")
+		body = _report_md(context, trimmed)
+		url = _bug_url(title, body)
+	var log: Array = trimmed.get("log", []) if trimmed.get("log") is Array else []
+	while url.length() >= URL_LIMIT and log.size() > 5:
+		log = log.slice(maxi(5, log.size() / 2))
+		trimmed["log"] = log
+		body = _report_md(context, trimmed)
+		url = _bug_url(title, body)
+	if url.length() >= URL_LIMIT:
+		trimmed.erase("log")
+		trimmed.erase("ua")
+		body = _report_md(context, trimmed)
+		url = _bug_url(title, body)
+	while url.length() >= URL_LIMIT and body.length() > 200:  # last resort: cut the body text
+		body = body.substr(0, body.length() * 3 / 4)
+		url = _bug_url(title, body)
+	return {"title": title, "body": body, "url": url, "text": text}
+
+
+func _bug_url(title: String, body: String) -> String:
+	return "%s?labels=bug&title=%s&body=%s" % [ISSUE_BASE, title.uri_encode(), body.uri_encode()]
+
+
+func send_bug_report(context: Dictionary) -> String:
+	var u: String = bug_report(context)["url"]
+	open_url.call(u)
+	return u
+
+
+func copy_bug_report(context: Dictionary) -> void:
+	clipboard.call(bug_report(context)["text"])

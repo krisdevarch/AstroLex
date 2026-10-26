@@ -101,6 +101,9 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
           node smoke.cjs ../../../build/web ../../../build/web-smoke.png --autoplay
+      - name: Recover from lost graphics and a stalled game (WP-F.20)
+        working-directory: scripts/godot/web-smoke
+        run: node recover.cjs ../../../build/web
       - name: Load time on a 10 Mbit/s phone connection (diagnostic)
         continue-on-error: true
         timeout-minutes: 5
