@@ -120,7 +120,7 @@ func test_no_repeat_when_alternatives_exist() -> void:
 
 
 func test_volley_adds_decoys_through_the_spawn_path_and_respects_the_cap() -> void:
-	var r := _make(2, "act2_nebula", "2-02", {"babel.moveEvery": 2.0, "babel.moveFirstAt": 2.0, "babel.gustFromAct": 9, "babel.shieldFromAct": 9, "babel.scrambleFromAct": 9, "ramp.decoyMax": 20, "babel.volleyLifeSec": 1000.0})
+	var r := _make(2, "act2_nebula", "2-02", {"babel.moveEvery": 2.0, "babel.moveFirstAt": 2.0, "babel.gustFromAct": 9, "babel.shieldFromAct": 9, "babel.scrambleFromAct": 9, "ramp.decoyMax": 20, "babel.volleyLifeSec": 1000.0, "spawner.decoys": 0, "spawner.decoyRatio": 0})
 	var max_decoys := 20
 	var volleys := 0
 	while r.state == "play" and float(r.stats["secs"]) < 60.0:
@@ -145,7 +145,11 @@ func test_volley_adds_decoys_through_the_spawn_path_and_respects_the_cap() -> vo
 	for t in r.tiles:
 		if t.plane < 2 and t.decoy:
 			total += 1
-	assert_eq(total, max_decoys, "volleys fill the field up to the cap and no further")
+	var real := 0
+	for t in r.tiles:
+		if t.plane < 2 and not t.decoy:
+			real += 1
+	assert_eq(total, mini(max_decoys, r.anchor_count() - real), "volleys fill the free anchors up to the cap and no further")
 
 
 func test_gust_never_down_and_letters_stay_in_the_field() -> void:
@@ -164,19 +168,17 @@ func test_gust_never_down_and_letters_stay_in_the_field() -> void:
 					assert_eq(float(e["sec"]), _tun["babel.gustSec"], "sec")
 			for t in r.tiles:
 				if t.plane < 2:
-					assert_true(t.pos.x >= t.radius - 1e-6 and t.pos.x <= 1.0 - t.radius + 1e-6, "x in field")
-					assert_true(t.pos.y >= float(_tun["field.topMargin"]) + t.radius - 1e-6 and t.pos.y <= float(_tun["field.height"]) - t.radius + 1e-6, "y in field")
+					# The body offset is clamped so a gust never takes an anchored letter's centre out of the field.
+					assert_true(t.pos.x >= -1e-6 and t.pos.x <= 1.0 + 1e-6, "x in field")
+					assert_true(t.pos.y >= float(_tun["field.topMargin"]) - 1e-6 and t.pos.y <= float(_tun["field.height"]) + 1e-6, "y in field")
 	assert_true(gusts >= 3, "gusts happened")
 
 
 func test_gust_pushes_letters() -> void:
-	var r := _make(4, "act2_nebula", "2-02", {"babel.moveEvery": 100.0, "drift.speed": 0.0001, "drift.speedVariation": 0.0, "drift.orbitShare": 0, "drift.dartShare": 0, "drift.shyRadius": 0, "drift.rippleRadius": 0})
+	var r := _make(4, "act2_nebula", "2-02", {"babel.moveEvery": 100.0, "hop.every": 0, "drift.shyRadius": 0, "drift.rippleRadius": 0})
 	r._gust_dir = Vector2(1, 0)
 	r._gust_t = float(_tun["babel.gustSec"])
 	var t = r.tiles[r.tiles.size() - 1]
-	t.pos = Vector2(0.2, 0.8)
-	t.vel = Vector2.ZERO
-	t.base_speed = 0.0
 	var x0: float = t.pos.x
 	r.step(0.5)
 	assert_true(t.pos.x > x0 + 0.02, "pushed along the gust")
@@ -193,8 +195,6 @@ func test_shield_bounce_costs_nothing_and_expires() -> void:
 	assert_eq(tgt.ch, r.active[0]["ch"], "the next open slot's letter")
 	tgt.shield_t = float(_tun["babel.shieldSec"])
 	tgt.landing = 0.0
-	tgt.vel = Vector2.ZERO
-	tgt.base_speed = 0.0
 	r.drain_events()
 	var time_before := r.time_left
 	var secs_before := float(r.stats["secs"])
@@ -219,7 +219,6 @@ func test_shield_bounce_costs_nothing_and_expires() -> void:
 		r.step(DT)
 	assert_true(r.stats["secs"] > float(_tun["babel.shieldSec"]), "after shieldSec")
 	r.drain_events()
-	tgt.pos = Vector2(0.5, 0.8)
 	r.fire(tgt.id)
 	for _i in 120:
 		r.step(DT)
@@ -229,8 +228,6 @@ func test_shield_bounce_costs_nothing_and_expires() -> void:
 func test_shield_in_flight_bounces_on_resolution() -> void:
 	var r := _shield_round(7)
 	var tgt = r._shield_target()
-	tgt.vel = Vector2.ZERO
-	tgt.base_speed = 0.0
 	tgt.landing = 0.0
 	r.drain_events()
 	assert_true(r.fire(tgt.id), "fired")
@@ -285,8 +282,8 @@ func test_scramble_moves_letters_inside_the_field_and_blocks_catches() -> void:
 		assert_true(m["to"] == t.pos, "to is the new spot")
 		if t.pos != before[t.id]:
 			moved += 1
-		assert_true(t.pos.x >= t.radius - 1e-6 and t.pos.x <= 1.0 - t.radius + 1e-6, "x in field")
-		assert_true(t.pos.y >= float(_tun["field.topMargin"]) + t.radius - 1e-6 and t.pos.y <= float(_tun["field.height"]) - t.radius + 1e-6, "y in field")
+		assert_true(t.pos.x >= 0.0 and t.pos.x <= 1.0, "x in field")
+		assert_true(t.pos.y >= float(_tun["field.topMargin"]) and t.pos.y <= float(_tun["field.height"]), "y in field")
 		assert_true(t.landing > 0.0, "uncatchable")
 		assert_false(r.fire(t.id), "fire refused meanwhile")
 	assert_true(moved >= mv[0]["moves"].size() - 1, "letters moved")

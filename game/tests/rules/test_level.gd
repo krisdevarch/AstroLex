@@ -45,13 +45,16 @@ func test_tuning_overrides() -> void:
 	assert_eq(_spawn_stats(base, base.drain_events())["decoys"], int(_tun["spawner.decoys"]), "base decoys")
 	assert_eq(_spawn_stats(tuned, tuned.drain_events())["decoys"], 7, "tuned decoys")
 	assert_eq(float(_tun["drift.speed"]), 0.17, "base tunables untouched")
-	var max_base := 0.0
-	var max_tuned := 0.0
+	var shard_base := 0.0
+	var shard_tuned := 0.0
 	for t in base.tiles:
-		max_base = maxf(max_base, t.vel.length())
+		if t.plane >= 2:
+			shard_base = maxf(shard_base, t.vel.length())
 	for t in tuned.tiles:
-		max_tuned = maxf(max_tuned, t.vel.length())
-	assert_true(max_tuned > max_base * 2.0, "tuned tiles faster")
+		if t.plane >= 2:
+			shard_tuned = maxf(shard_tuned, t.vel.length())
+	assert_true(shard_tuned > shard_base * 2.0, "tuned pace is faster")
+	assert_true(absf(tuned._pace() / base._pace() - 0.6 / 0.17) < 1e-6, "drift.speed sets the pace of sway, wave and hops")
 
 
 func test_deterministic() -> void:

@@ -48,12 +48,12 @@ func test_tap_on_a_tile_fires_and_a_far_tap_does_not() -> void:
 func test_a_tap_on_overlapping_letters_picks_the_front_one() -> void:
 	var f := _make_field(false)
 	var front = null
-	var mid = null
 	for t in f.game_round.tiles:
 		if t.alive and t.plane == 0 and front == null:
 			front = t
-		elif t.alive and t.plane == 1 and mid == null:
-			mid = t
+	# The mid layer is retired from play (spawner.frontShare 1.0) but the view still supports it.
+	var mid = f.game_round._spawn("x", false, 1)
+	f.advance(1.0 / 60.0)
 	assert_true(front != null and mid != null, "both letter layers are used")
 	mid.pos = front.pos + Vector2(0.01, 0.0)  # the mid letter drifts right behind the front one
 	assert_eq(f.tap(f.to_screen(mid.pos)), front.id, "the front letter wins, even if the tap is nearer the mid one")

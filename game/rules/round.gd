@@ -2,7 +2,7 @@ extends RefCounted
 ## One round of AstroLex: seeded spawner, fixed-step drift, tether shots, catch taxonomy,
 ## preview carry-over, surplus dissolve, a time-only 30 s burst clock, Babel-army thief drones,
 ## score and combo, per-round ramp, tunable modifiers (difficulty, character perks).
-## Reference behaviour is toy v1.3 (web/toy/index.html). The view animates from drain_events()
+## Letters are anchored (WP-F.21); the toy v1.3 free drift is retired in the game. The view animates from drain_events()
 ## and never re-derives rules. Pure GDScript: no Node, no wall clock, one seeded RNG.
 ##
 ## Events (dictionaries with "type" plus the fields below; extras such as ch and pos are for the view):
@@ -15,6 +15,10 @@ extends RefCounted
 ##   stolen{thief_id,tile_id,ch} (thief left the top with the tile; both are gone, the letter respawns later)
 ##   thief_down{thief_id,tile_id,pos} (shot; tile_id is the released tile or -1)
 ##   thief_miss{thief_id} (a shot at a thief missed or the thief was gone; counts as an escape)
+## Anchored drift (WP-F.21): every catchable tile holds one anchor of a honeycomb over the field and floats around it.
+##   hop_tell{tile_id,to} (anchor index; the letter will hop after hop.windSec)
+##   hop{tile_id,from,to,sec} (take-off; from and to are field positions, the flight is a straight line over sec)
+##   hop_land{tile_id}
 ## Hazards (WP-F.1, all off unless the hazard.* tunables enable them):
 ##   counterfeit{tile_id,ch,pos} (a forged copy of a needed letter was caught: it is gone, burst.wrongCost
 ##   comes off with a time_cost reason "counterfeit", the real letter is still out there)
@@ -46,14 +50,17 @@ const HAZARD_SEED_XOR := 0x4A2A2D
 const TRAP_MIN_LEN := 3
 const TRAP_MAX_LEN := 4
 const THIEF_IDLE_MUL := 0.25
-const STYLE_SEED_XOR := 0x57A1E5
+const HOP_SEED_XOR := 0x57A1E5
 const MOVE_SEED_XOR := 0x3B0E5A
 const MOVE_NAMES: Array[String] = ["volley", "gust", "shield", "scramble"]
-const ORBIT_MIN_K := 0.25
-## Slow letters whose circling alone would reach this share of their speed wander instead (keeps the mean speed).
-const ORBIT_MAX_RATIO := 0.9
-const DART_LOW := 0.3  # a darting letter eases toward this share of its cruise speed before a burst
-const DART_RAMP := 0.15  # share of the glide spent recovering from the burst
+## Shapes of the motion (not feel numbers): the sway's y runs at this multiple of its x frequency,
+## the wave's phase advances by x plus this share of y, a bob component carries this share of its amplitude.
+const SWAY_Y_RATIO := 1.37
+const WAVE_SKEW := 0.5
+const INV_SQRT2 := 0.70710678
+const BOB_PHASE_MUL := 1.7
+## A scramble reshuffles at most this many times to leave no letter on its own anchor.
+const SCRAMBLE_TRIES := 16
 ## Letter weights for decoys and back tiles: English frequency is language data, not a feel number.
 const FREQ := {"e": 127, "t": 91, "a": 82, "o": 75, "i": 70, "n": 67, "s": 63, "h": 61, "r": 60, "d": 43, "l": 40, "c": 28, "u": 28, "m": 24, "w": 24, "f": 22, "g": 20, "y": 20, "p": 19, "b": 15, "v": 10, "k": 8, "j": 2, "x": 2, "q": 1, "z": 1}
 const EPS := 1e-6
@@ -109,6 +116,18 @@ var _move_next: String = ""
 var _move_last: String = ""
 var _gust_dir: Vector2 = Vector2.ZERO
 var _gust_t: float = 0.0
+## Anchored drift: anchor positions, the tile id holding each (or reserved by a hop, -1 free), the hop clock and rng,
+## the field's body offset this tick (sway plus gust) and the gust's own spring.
+var _anchors: Array[Vector2] = []
+var _owner: Array[int] = []
+var _hop_rng := RandomNumberGenerator.new()
+var _hop_at: float = INF
+var _body: Vector2 = Vector2.ZERO
+## How far the body offset may go each way before an anchored letter's centre (with its offset) would leave the field.
+var _body_lo: Vector2 = Vector2.ZERO
+var _body_hi: Vector2 = Vector2.ZERO
+var _gust_off: Vector2 = Vector2.ZERO
+var _gust_vel: Vector2 = Vector2.ZERO
 var _trap_hits: Array[Dictionary] = []
 var _events: Array[Dictionary] = []
 var _by_id: Dictionary = {}
@@ -118,7 +137,6 @@ var _pool: Dictionary = {}
 var _shown: Dictionary = {}
 var _thief_by_id: Dictionary = {}
 var _next_thief_at: float = INF
-var _shot_dur: float = 0.0  # flight time of the shot being resolved (widens a dart's tolerance)
 var _pending_respawn: Array[Dictionary] = []
 
 
@@ -175,6 +193,7 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	_thief_rng.seed = seed_value_in ^ THIEF_SEED_XOR
 	_hazard_rng.seed = seed_value_in ^ HAZARD_SEED_XOR
 	_move_rng.seed = seed_value_in ^ MOVE_SEED_XOR
+	_hop_rng.seed = seed_value_in ^ HOP_SEED_XOR
 	_next_thief_at = _num("thief.firstAt") if _num("thief.interval") > 0.0 else INF
 	if fixed_words.is_empty():
 		_pick_words()
@@ -188,6 +207,8 @@ func _setup(content: Dictionary, act_key: String, seed_value_in: int, round_numb
 	stats = {"catches": 0, "wrong": 0, "escapes": 0, "secs": 0.0, "min_time": time_left, "stolen": 0, "thieves_down": 0, "hints": 0, "counterfeits": 0, "traps": 0, "jams": 0}
 	_move_at = _num("babel.moveFirstAt") if _num("babel.moveEvery") > 0.0 else INF
 	_pick_trap_word()
+	_build_anchors()
+	_hop_at = _num("hop.firstAt") if _hops_enabled() else INF
 	active = _slots_of(words[0])
 	preview = _slots_of(words[1]) if words.size() > 1 else ([] as Array[Dictionary])
 	for _i in int(_num("plane.backTiles")):
@@ -233,7 +254,7 @@ func fire(tile_id: int) -> bool:
 	if thief != null:
 		_start_shot_at(tile_id, thief.pos, "thief")
 	else:
-		_start_shot_at(tile_id, tile.pos, "tile")
+		_start_shot_at(tile_id, _aim_pos(tile), "tile", _hop_left(tile))
 	return true
 
 
@@ -396,7 +417,17 @@ func _scale_of(plane: int) -> float:
 	return _num("plane.backScale")
 
 
+## A new tile. Catchable tiles take the free anchor with the best spread; a decoy returns null when none is
+## free, a needed letter dissolves a plain decoy to make room. Back-plane shards drift in straight lines.
 func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
+	var anchor := -1
+	if plane < 2:
+		anchor = _pick_anchor()
+		if anchor < 0:
+			if decoy:
+				return null
+			if _make_room():
+				anchor = _pick_anchor()
 	var tile: Tile = Tile.new()
 	tile.id = _next_id
 	_next_id += 1
@@ -404,95 +435,178 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	tile.decoy = decoy
 	tile.plane = plane
 	tile.radius = _num("tile.size") * _scale_of(plane) / 2.0
-	var r := tile.radius
-	var gap := _num("tile.minGap")
-	# Rejection-sample a free spot; if none turns up, keep the roomiest try (separation does the rest).
-	var best_slack := -INF
-	var best_pos := Vector2.ZERO
-	for _try in 256:
-		var p := Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
-		var slack := INF if plane >= 2 else _catchable_slack(p, r, gap, plane)
-		if slack > best_slack:
-			best_slack = slack
-			best_pos = p
-		if slack >= 0.0:
-			break
-	tile.pos = best_pos
-	var angle := _rng.randf() * TAU
-	var var_frac := _num("drift.speedVariation")
-	var speed := _num("drift.speed") * float(ramp()["drift"]) * (1.0 + _rng.randf_range(-var_frac, var_frac))
 	if plane >= 2:
-		speed *= _num("plane.backSpeedMul")
-	elif plane == 1:
-		speed *= _num("plane.midSpeedMul")  # parallax: the deeper layer drifts a little slower
-	tile.vel = Vector2(cos(angle), sin(angle)) * speed
-	tile.base_speed = speed
-	if not decoy:
-		_assign_style(tile)
+		var r := tile.radius
+		tile.pos = Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
+		var speed := _num("drift.speed") * float(ramp()["drift"]) * _num("plane.backSpeedMul")
+		var angle := _rng.randf() * TAU
+		tile.vel = Vector2(cos(angle), sin(angle)) * speed
+	elif anchor >= 0:
+		tile.anchor = anchor
+		_owner[anchor] = tile.id
+		tile.pos = _rest_pos(tile, anchor)
+	else:
+		# No anchor anywhere (more real letters than anchors): sit mid-field and let separation sort it out.
+		tile.pos = Vector2(0.5, (_num("field.topMargin") + _num("field.height")) * 0.5)
 	if float(stats.get("secs", 0.0)) > 0.0:
 		tile.landing = _num("babel.throwSec")
 	tiles.append(tile)
 	_by_id[tile.id] = tile
-	_emit({"type": "spawn", "tile_id": tile.id, "ch": ch, "plane": plane, "decoy": decoy, "pos": tile.pos, "style": tile.style})
+	_emit({"type": "spawn", "tile_id": tile.id, "ch": ch, "plane": plane, "decoy": decoy, "pos": tile.pos})
 	return tile
 
 
-## Motion style from a throwaway rng keyed on (seed, tile id), so the spawner's own sequence is untouched.
-func _assign_style(tile: Tile) -> void:
-	var g := RandomNumberGenerator.new()
-	g.seed = hash([seed_value, tile.id, STYLE_SEED_XOR])
-	var roll := g.randf()
-	var orbit_share := _num("drift.orbitShare")
-	var dart_share := _num("drift.dartShare")
-	var orbit_angle := g.randf() * TAU
-	var tang := _num("drift.orbitRadius") * TAU * _num("drift.orbitHz")
-	var ratio := tang / maxf(tile.base_speed, EPS)
-	if roll < orbit_share:
-		if ratio >= ORBIT_MAX_RATIO:
-			return  # too slow to circle without speeding up: wanders
-		tile.style = "orbit"
-		tile.orbit_angle = orbit_angle
-		# Start on the circle (the centre sits one radius away), so the first step does not jump.
-		tile.orbit_off = Vector2(cos(orbit_angle), sin(orbit_angle)) * _num("drift.orbitRadius")
-		tile.orbit_k = sqrt(maxf(ORBIT_MIN_K * ORBIT_MIN_K, 1.0 - ratio * ratio))
-	elif roll < orbit_share + dart_share:
-		tile.style = "dart"
-		tile.dart_len = maxf(_num("drift.dartEvery") * g.randf_range(0.85, 1.15), _num("drift.dartSec") * 2.0)
-		tile.dart_phase = g.randf() * tile.dart_len
-		# Normalise the cycle so the mean speed equals the base speed (cruise speed = base / norm).
-		var n := 64
-		var sum := 0.0
-		for i in n:
-			sum += _dart_mul(tile, (float(i) + 0.5) / float(n) * tile.dart_len)
-		tile.dart_norm = maxf(sum / float(n), 0.1)
+# --- anchors (WP-F.21) ---------------------------------------------------------------------
+
+## A honeycomb over the field: rows from field.topMargin to field.height, spaced spacing * sqrt(3) / 2 apart,
+## odd rows shifted half a spacing; any anchor that would leave the field (with maxOffset to spare) is dropped.
+func _build_anchors() -> void:
+	_anchors = []
+	_owner = []
+	var spacing := _num("anchors.spacing")
+	var inset := _num("tile.size") * 0.5 + _num("anchors.maxOffset")
+	# The lattice stops anchors.bodyRoom short of the walls so the sway and the gust have room to move it.
+	var lat := inset + _num("anchors.bodyRoom")
+	var pitch := spacing * sqrt(3.0) * 0.5
+	var y := _num("field.topMargin") + lat
+	var row := 0
+	while y <= _num("field.height") - lat + EPS:
+		var x := lat + (spacing * 0.5 if row % 2 == 1 else 0.0)
+		while x <= 1.0 - lat + EPS:
+			_anchors.append(Vector2(x, y))
+			_owner.append(-1)
+			x += spacing
+		y += pitch
+		row += 1
+	if _anchors.is_empty():
+		return
+	var lo := _anchors[0]
+	var hi := _anchors[0]
+	for a in _anchors:
+		lo = Vector2(minf(lo.x, a.x), minf(lo.y, a.y))
+		hi = Vector2(maxf(hi.x, a.x), maxf(hi.y, a.y))
+	# The body may move the lattice only as far as keeps every anchored tile (edge plus its offset) in the field.
+	_body_lo = Vector2(inset - lo.x, _num("field.topMargin") + inset - lo.y)
+	_body_hi = Vector2(1.0 - inset - hi.x, _num("field.height") - inset - hi.y)
 
 
-## Dart speed multiplier at u seconds into a cycle: eases from the cruise speed toward DART_LOW over the
-## glide, then a burst up to drift.dartBoost for drift.dartSec; a short ramp-up after the burst.
-func _dart_mul(t: Tile, u: float) -> float:
-	var burst := _num("drift.dartSec")
-	var glide := t.dart_len - burst
-	if u >= glide:
-		var b := (u - glide) / burst
-		return DART_LOW + (_num("drift.dartBoost") - DART_LOW) * sin(PI * b)
-	var g := u / glide
-	var ease_down := 1.0 - (1.0 - DART_LOW) * sin(g * PI * 0.5)
-	var k := clampf(g / DART_RAMP, 0.0, 1.0)
-	return ease_down * (DART_LOW + (1.0 - DART_LOW) * k * k * (3.0 - 2.0 * k))
+func anchor_count() -> int:
+	return _anchors.size()
 
 
-## The smallest clearance between a tile of radius r at p and any live catchable tile on the same
-## plane (negative: overlap). The front and mid planes may overlap: a letter can drift behind another
-## (2.5D, owner 13 Oct 2026: "letters ... one behind another").
-func _catchable_slack(p: Vector2, r: float, gap: float, plane: int) -> float:
-	var worst := INF
-	for o: Tile in tiles:
-		if o.alive and o.plane == plane:
-			worst = minf(worst, p.distance_to(o.pos) - (r + o.radius + gap))
-	return worst
+func anchor_pos(i: int) -> Vector2:
+	return _anchors[i]
 
 
-## Pushes overlapping catchable tiles on the same plane apart and bounces them (equal masses), in list order.
+func _free_count() -> int:
+	var n := 0
+	for o in _owner:
+		if o < 0:
+			n += 1
+	return n
+
+
+## The free anchor farthest from the occupied ones (ties broken from the spawn rng); -1 when none is free.
+func _pick_anchor() -> int:
+	var best := -1.0
+	var ties: Array[int] = []
+	for i in _anchors.size():
+		if _owner[i] >= 0:
+			continue
+		var score := 1e9
+		for j in _anchors.size():
+			if _owner[j] >= 0:
+				score = minf(score, _anchors[i].distance_to(_anchors[j]))
+		if score > best + EPS:
+			best = score
+			ties = [i]
+		elif score >= best - EPS:
+			ties.append(i)
+	if ties.is_empty():
+		return -1
+	return ties[_rng.randi_range(0, ties.size() - 1)]
+
+
+## The free anchor nearest to p, -1 when none is free.
+func _nearest_free_anchor(p: Vector2) -> int:
+	var best := -1
+	var best_d := INF
+	for i in _anchors.size():
+		if _owner[i] < 0 and p.distance_to(_anchors[i]) < best_d:
+			best_d = p.distance_to(_anchors[i])
+			best = i
+	return best
+
+
+## Dissolves the oldest plain decoy nobody is using, to free its anchor. False when there is none.
+func _make_room() -> bool:
+	var shot_id := int(shot.get("tile_id", -1))
+	for t: Tile in tiles:
+		if t.plane < 2 and t.decoy and t.kind == "" and t.carried_by < 0 and t.hop_to < 0 and t.id != shot_id and t.id != queued_id and t.anchor >= 0:
+			_remove(t)
+			_emit({"type": "dissolve", "tile_id": t.id, "ch": t.ch, "decoy": t.decoy, "pos": t.pos})
+			return true
+	return false
+
+
+func _release(t: Tile) -> void:
+	for i in _owner.size():
+		if _owner[i] == t.id:
+			_owner[i] = -1
+	t.anchor = -1
+	t.hop_to = -1
+	t.hop_air = false
+
+
+## How fast the sway, the wave and the hops run: 1 at drift.speed == anchors.speedRef.
+func _pace() -> float:
+	return _num("drift.speed") * float(ramp()["drift"]) / maxf(_num("anchors.speedRef"), EPS)
+
+
+## The field's body offset at round time: a slow sway plus the gust's spring (set each tick by _update_body).
+func _body_at(secs: float) -> Vector2:
+	var hz := TAU * _num("anchors.swayHz") * _pace()
+	return Vector2(_num("anchors.swayX") * sin(secs * hz), _num("anchors.swayY") * sin(secs * hz * SWAY_Y_RATIO + 1.0)) * drift_scale
+
+
+## Wave, bob and spring offset of tile t as if it held anchor i, the total clamped to anchors.maxOffset.
+func _dev(t: Tile, i: int) -> Vector2:
+	var secs := float(stats.get("secs", 0.0))
+	var a := _anchors[i]
+	var phase := TAU * (_num("anchors.waveHz") * _pace() * secs - (a.x + WAVE_SKEW * a.y) / _num("anchors.waveLen"))
+	var wave := Vector2(0.0, sin(phase)) * _num("anchors.waveAmp") * drift_scale
+	var ph := float(t.id) * GOLDEN_ANGLE
+	var bt := TAU * _num("drift.bobHz") * secs
+	var bob := Vector2(sin(bt + ph), cos(bt * SWAY_Y_RATIO + ph * BOB_PHASE_MUL)) * (_num("drift.bob") * INV_SQRT2) * drift_scale
+	var d := wave + bob + t.off
+	var m := _num("anchors.maxOffset")
+	if d.length() > m:
+		d = d.normalized() * m
+	return d
+
+
+func _rest_pos(t: Tile, i: int) -> Vector2:
+	return _anchors[i] + _body + _dev(t, i)
+
+
+## Where a shot at the tile should aim: its destination when it is hopping.
+func _aim_pos(t: Tile) -> Vector2:
+	if t.hop_to >= 0:
+		return _rest_pos(t, t.hop_to)
+	return t.pos
+
+
+## Seconds until a hopping tile has landed (0 when it is not hopping).
+func _hop_left(t: Tile) -> float:
+	if t.hop_to < 0:
+		return 0.0
+	if t.hop_air:
+		return maxf(0.0, t.hop_sec - t.hop_t)
+	return t.hop_wind + _num("hop.flySec")
+
+
+## Safety net: pushes overlapping catchable tiles on the same plane apart, in list order. Anchored drift never needs it;
+## a hopping letter in flight is lifted over the others and ignored.
 ## Returns true when it moved any tile.
 func _separate_tiles() -> bool:
 	var moved := false
@@ -500,11 +614,11 @@ func _separate_tiles() -> bool:
 	var n := tiles.size()
 	for i in n:
 		var a: Tile = tiles[i]
-		if not a.alive or a.plane >= 2 or a.carried_by >= 0:
+		if not a.alive or a.plane >= 2 or a.carried_by >= 0 or a.hop_air:
 			continue
 		for j in range(i + 1, n):
 			var b: Tile = tiles[j]
-			if not b.alive or b.plane != a.plane or b.carried_by >= 0:
+			if not b.alive or b.plane != a.plane or b.carried_by >= 0 or b.hop_air:
 				continue
 			var need := a.radius + b.radius + gap
 			var d := b.pos - a.pos
@@ -521,10 +635,6 @@ func _separate_tiles() -> bool:
 			b.pos += normal * push
 			_clamp_to_field(a)
 			_clamp_to_field(b)
-			var rel := (b.vel - a.vel).dot(normal)
-			if rel < 0.0:
-				a.vel += normal * rel
-				b.vel -= normal * rel
 	return moved
 
 
@@ -658,21 +768,29 @@ func _ensure_decoys() -> void:
 		want_forged = maxi(1, roundi(want * _hnum("hazard.counterfeitRatio")))
 		want = maxi(want, want_forged + trap_len)
 	for c: String in trap_missing:
-		_spawn(c, true, _pick_plane()).kind = "trap"
+		var trap_tile: Tile = _spawn(c, true, _pick_plane())
+		if trap_tile == null:
+			return  # every anchor is held
+		trap_tile.kind = "trap"
 		n += 1
 	while forged < want_forged:
 		var letters: Array = _needed_counts().keys()
 		letters.sort()
-		_spawn(letters[_hazard_rng.randi_range(0, letters.size() - 1)], true, _pick_plane()).kind = "counterfeit"
+		var forged_tile: Tile = _spawn(letters[_hazard_rng.randi_range(0, letters.size() - 1)], true, _pick_plane())
+		if forged_tile == null:
+			return
+		forged_tile.kind = "counterfeit"
 		forged += 1
 		n += 1
 	var excluded := _word_letters()
 	while n < want:
-		_spawn(_weighted_letter(excluded), true, _pick_plane())
+		if _spawn(_weighted_letter(excluded), true, _pick_plane()) == null:
+			return
 		n += 1
 
 
 func _remove(t: Tile) -> void:
+	_release(t)
 	if t.carried_by >= 0:
 		var th: Thief = _thief_by_id.get(t.carried_by)
 		if th != null:
@@ -691,8 +809,6 @@ func _tick(h: float) -> void:
 	stats["secs"] = float(stats["secs"]) + h
 	_tick_jam()
 	_tick_moves()
-	if _gust_t > 0.0:
-		_gust_t = maxf(0.0, _gust_t - h)
 	for t: Tile in tiles.duplicate():
 		t.landing = maxf(0.0, t.landing - h)
 		t.shield_t = maxf(0.0, t.shield_t - h)
@@ -702,9 +818,10 @@ func _tick(h: float) -> void:
 				_remove(t)
 				_emit({"type": "dissolve", "tile_id": t.id, "ch": t.ch, "decoy": t.decoy, "pos": t.pos})
 				continue
-		if t.carried_by < 0:
-			_drift(t, h)
-	_react(h)
+		if t.carried_by < 0 and t.plane >= 2:
+			_drift_back(t, h)
+	_tick_hops(h)
+	_move_tiles(h)
 	for _pass in 4:  # a few passes settle crowded clusters
 		_separate_tiles()
 	_tick_thieves(h)
@@ -772,13 +889,8 @@ func _allowed_moves() -> Array[String]:
 	var out: Array[String] = []
 	if not babel_on or _num("babel.moveEvery") <= 0.0:
 		return out
-	var act_no := 1
-	if act.begins_with("act") and act.length() > 3 and act[3].is_valid_int():
-		act_no = int(act[3])
-	var order := 1 << 30
-	var parts := level_id.split("-")
-	if parts.size() == 2 and parts[0].is_valid_int() and parts[1].is_valid_int():
-		order = int(parts[1])
+	var act_no := _act_no()
+	var order := _level_order()
 	if act_no >= 2 or order >= int(_num("babel.movesFromLevel")):
 		out.append("volley")
 	if act_no >= int(_num("babel.gustFromAct")):
@@ -788,6 +900,20 @@ func _allowed_moves() -> Array[String]:
 	if act_no >= int(_num("babel.scrambleFromAct")):
 		out.append("scramble")
 	return out
+
+
+func _act_no() -> int:
+	if act.begins_with("act") and act.length() > 3 and act[3].is_valid_int():
+		return int(act[3])
+	return 1
+
+
+## The level's number within its act ("2-05" is 5); effectively infinite for a round without a level id.
+func _level_order() -> int:
+	var parts := level_id.split("-")
+	if parts.size() == 2 and parts[0].is_valid_int() and parts[1].is_valid_int():
+		return int(parts[1])
+	return 1 << 30
 
 
 func _move_feasible(m: String) -> bool:
@@ -804,12 +930,13 @@ func _move_feasible(m: String) -> bool:
 	return true
 
 
+## Decoys that may still be added: the room under ramp.decoyMax, capped by the free anchors.
 func _decoy_room() -> int:
 	var n := 0
 	for t: Tile in tiles:
 		if t.plane < 2 and t.decoy:
 			n += 1
-	return int(_num("ramp.decoyMax")) - n
+	return mini(int(_num("ramp.decoyMax")) - n, _free_count())
 
 
 func _tick_moves() -> void:
@@ -845,11 +972,10 @@ func _do_move(m: String) -> void:
 			var excluded := _word_letters()
 			for _i in mini(int(_num("babel.volleyDecoys")), _decoy_room()):
 				var d: Tile = _spawn(_weighted_letter(excluded), true, _pick_plane())
+				if d == null:
+					break
 				d.expire_t = _num("babel.volleyLifeSec")
 				ids.append(d.id)
-			for _pass in 16:
-				if not _separate_tiles():
-					break
 			_emit({"type": "babel_move", "move": m, "tile_ids": ids})
 		"gust":
 			var y := _move_rng.randf_range(-1.0, 0.2)
@@ -888,35 +1014,46 @@ func _shield_target() -> Tile:
 	return null
 
 
+## Every eligible letter lands on a distinct anchor of a seeded permutation of its own anchors and the free
+## ones. The rules move them at once and make them uncatchable for babel.scrambleSec; the view flies them
+## from `from` to `to` over `sec` (straight lines would cross, so no letter is simulated in flight).
 func _scramble() -> void:
-	var moves: Array = []
-	var gap := _num("tile.minGap")
+	for t: Tile in tiles.duplicate():
+		if t.hop_to >= 0:
+			_land(t)  # a hop in progress finishes first
 	var shot_id := int(shot.get("tile_id", -1))
+	var group: Array[Tile] = []
+	var slots: Array[int] = []
 	for t: Tile in tiles:
-		if t.plane >= 2 or t.carried_by >= 0 or not t.alive or t.id == shot_id or t.id == queued_id:
+		if t.plane >= 2 or t.carried_by >= 0 or not t.alive or t.id == shot_id or t.id == queued_id or t.anchor < 0:
 			continue  # a letter the tether is already flying at (or queued for) stays put
-		var r := t.radius
-		var best_slack := -INF
-		var best_pos := t.pos
-		for _try in 64:
-			var p := Vector2(_move_rng.randf_range(r, 1.0 - r), _move_rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
-			var worst := INF
-			for o: Tile in tiles:
-				if o != t and o.alive and o.plane == t.plane:
-					worst = minf(worst, p.distance_to(o.pos) - (r + o.radius + gap))
-			if worst > best_slack:
-				best_slack = worst
-				best_pos = p
-			if worst >= 0.0:
-				break
-		moves.append({"tile_id": t.id, "from": t.pos, "to": best_pos})
-		t.pos = best_pos
-		t.landing = maxf(t.landing, _num("babel.scrambleSec"))
-	for _pass in 16:
-		if not _separate_tiles():
+		group.append(t)
+		slots.append(t.anchor)
+	for i in _anchors.size():
+		if _owner[i] < 0:
+			slots.append(i)
+	for _try in SCRAMBLE_TRIES:  # reshuffle until every letter really moves (or give up)
+		for i in range(slots.size() - 1, 0, -1):
+			var j := _move_rng.randi_range(0, i)
+			var tmp := slots[i]
+			slots[i] = slots[j]
+			slots[j] = tmp
+		var stays := false
+		for k in group.size():
+			stays = stays or slots[k] == group[k].anchor
+		if not stays:
 			break
-	for m: Dictionary in moves:
-		m["to"] = find_tile(int(m["tile_id"])).pos
+	for t: Tile in group:
+		_owner[t.anchor] = -1
+	var moves: Array = []
+	for k in group.size():
+		var t: Tile = group[k]
+		var from := t.pos
+		t.anchor = slots[k]
+		_owner[t.anchor] = t.id
+		t.pos = _rest_pos(t, t.anchor)
+		t.landing = maxf(t.landing, _num("babel.scrambleSec"))
+		moves.append({"tile_id": t.id, "from": from, "to": t.pos})
 	_emit({"type": "babel_move", "move": "scramble", "moves": moves, "sec": _num("babel.scrambleSec")})
 
 
@@ -972,7 +1109,7 @@ func _pick_target(th: Thief) -> int:
 	var best := -1
 	var best_d := INF
 	for t: Tile in tiles:
-		if t.decoy or t.plane >= 2 or t.carried_by >= 0 or t.landing > 0.0 or t.shield_t > 0.0 or t.id == shot_id or t.id == queued_id:
+		if t.decoy or t.plane >= 2 or t.carried_by >= 0 or t.landing > 0.0 or t.shield_t > 0.0 or t.hop_to >= 0 or t.id == shot_id or t.id == queued_id:
 			continue
 		if _targeted_by_other(t.id, th):
 			continue
@@ -1008,6 +1145,7 @@ func _seek(th: Thief, h: float) -> void:
 	if th.pos.distance_to(tgt.pos) <= _num("thief.radius") + tgt.radius:
 		th.carrying_id = tgt.id
 		tgt.carried_by = th.id
+		_release(tgt)  # a drone lifts the letter off its anchor
 		th.target_id = -1
 		th.state = "flee"
 		# Flee to the nearest of the left, right and top edges (never the bottom); ties go to the top.
@@ -1046,15 +1184,10 @@ func _remove_thief(th: Thief) -> void:
 	_thief_by_id.erase(th.id)
 
 
-func _drift(t: Tile, h: float) -> void:
-	_steer(t, h)
+## Back-plane shards: straight drift, bouncing off the walls.
+func _drift_back(t: Tile, h: float) -> void:
 	var r := t.radius
-	if t.style == "orbit" and t.base_speed > 0.0 and t.vel.length() >= EPS:
-		_orbit_move(t, h)
-	else:
-		t.pos += t.vel * h * drift_scale
-	if _gust_t > 0.0 and t.plane < 2:
-		t.pos += _gust_dir * _num("babel.gustPush") * (_gust_t / _num("babel.gustSec")) * h * drift_scale
+	t.pos += t.vel * h * drift_scale
 	if t.pos.x < r:
 		t.pos.x = r
 		t.vel.x = absf(t.vel.x)
@@ -1071,61 +1204,60 @@ func _drift(t: Tile, h: float) -> void:
 		t.vel.y = -absf(t.vel.y)
 
 
-## Orbit: the tile circles a centre that wanders like a plain letter (bouncing off the walls with the
-## circle's radius as extra inset). The centre is recovered from the position each step, so separation
-## pushes carry over.
-func _orbit_move(t: Tile, h: float) -> void:
-	var rad := _num("drift.orbitRadius")
-	var anchor := t.pos - t.orbit_off
-	anchor += t.vel * h * drift_scale
-	var inset := t.radius + rad
-	var top := _num("field.topMargin") + inset
-	var bottom := _num("field.height") - inset
-	if anchor.x < inset:
-		anchor.x = inset
-		t.vel.x = absf(t.vel.x)
-	elif anchor.x > 1.0 - inset:
-		anchor.x = 1.0 - inset
-		t.vel.x = -absf(t.vel.x)
-	if anchor.y < top:
-		anchor.y = top
-		t.vel.y = absf(t.vel.y)
-	elif anchor.y > bottom:
-		anchor.y = bottom
-		t.vel.y = -absf(t.vel.y)
-	t.orbit_angle += TAU * _num("drift.orbitHz") * h * drift_scale
-	t.orbit_off = Vector2(cos(t.orbit_angle), sin(t.orbit_angle)) * rad
-	t.pos = anchor + t.orbit_off
+## The anchored letters' motion for one step: the body offset (sway, gust), shy and ripple forces, the
+## offset springs, then every tile's position = anchor + body + wave + bob + offset (or its hop flight).
+func _move_tiles(h: float) -> void:
+	if _gust_t > 0.0:
+		_gust_off += _gust_dir * _num("babel.gustPush") * (_gust_t / _num("babel.gustSec")) * h * drift_scale
+		_gust_t = maxf(0.0, _gust_t - h)
+	_gust_vel += (-_num("anchors.spring") * _gust_off - _num("anchors.damping") * _gust_vel) * h
+	_gust_off += _gust_vel * h
+	_body = (_body_at(float(stats["secs"])) + _gust_off).clamp(_body_lo, _body_hi)
+	_react(h)
+	var m := _num("anchors.maxOffset")
+	for t: Tile in tiles:
+		if t.plane >= 2 or t.carried_by >= 0 or t.anchor < 0:
+			continue
+		t.off_vel += (-_num("anchors.spring") * t.off - _num("anchors.damping") * t.off_vel) * h
+		t.off += t.off_vel * h
+		if t.off.length() > m:
+			var n := t.off.normalized()
+			t.off = n * m
+			t.off_vel -= n * maxf(0.0, t.off_vel.dot(n))
+		if t.hop_air:
+			var s := smoothstep(0.0, 1.0, t.hop_t / maxf(t.hop_sec, EPS))
+			t.pos = _body + t.hop_from.lerp(_anchors[t.hop_to] + _dev(t, t.hop_to), s)
+		else:
+			t.pos = _rest_pos(t, t.anchor)
 
 
-## Shy and ripple: letters edge away from a seeking drone and are shoved outward by a catch.
+## Shy and ripple: letters lean away from a seeking drone and are shoved outward by a catch. Both add to
+## the offset spring's velocity; the spring brings the letter home.
 func _react(h: float) -> void:
 	var shy_r := _num("drift.shyRadius")
-	var shy_push := _num("drift.shyPush")
+	var shy_push := _num("drift.shyPush") * _num("anchors.damping")
 	var ripple_sec := maxf(_num("drift.rippleSec"), EPS)
 	var shot_id := int(shot["tile_id"]) if not shot.is_empty() and shot.get("kind", "tile") == "tile" else -1
 	for t: Tile in tiles:
 		if t.carried_by >= 0 or t.plane >= 2 or t.id == shot_id or t.id == queued_id:
 			continue
-		var move := Vector2.ZERO
-		if t.vel.length() >= EPS:
-			for th: Thief in thieves:
-				if th.state != "seek":
-					continue
-				var away := t.pos - th.pos
-				var d := away.length()
-				if d < shy_r:
-					var dir := away / d if d > EPS else Vector2(0.0, 1.0)
-					move += dir * shy_push * (1.0 - d / shy_r)
+		var push := Vector2.ZERO
+		for th: Thief in thieves:
+			if th.state != "seek":
+				continue
+			var away := t.pos - th.pos
+			var d := away.length()
+			if d < shy_r:
+				var dir := away / d if d > EPS else Vector2(0.0, 1.0)
+				push += dir * shy_push * (1.0 - d / shy_r)
 		if t.kick_t > 0.0:
-			move += t.kick * (t.kick_t / ripple_sec)
+			push += t.kick * (t.kick_t / ripple_sec) * (2.0 / ripple_sec)
 			t.kick_t = maxf(0.0, t.kick_t - h)
-		if move != Vector2.ZERO:
-			t.pos += move * h * drift_scale
-			_clamp_to_field(t)
+		if push != Vector2.ZERO:
+			t.off_vel += push * h * drift_scale
 
 
-## A catch at `at` shoves the nearby letters outward (decaying over drift.rippleSec).
+## A catch at `at` shoves the nearby letters outward (a velocity kick on their offset spring, spread over drift.rippleSec).
 func _ripple(at: Vector2, except_id: int) -> void:
 	var rad := _num("drift.rippleRadius")
 	var shot_id := int(shot["tile_id"]) if not shot.is_empty() and shot.get("kind", "tile") == "tile" else -1
@@ -1141,44 +1273,117 @@ func _ripple(at: Vector2, except_id: int) -> void:
 		t.kick_t = _num("drift.rippleSec")
 
 
-## Letters swoop instead of sliding in straight lines (owner, 13 Oct 2026: "very slow"): the heading
-## turns one way then the other, and the speed surges and eases. Both follow sine waves whose phase
-## comes from the tile id, so neighbours move out of step and the drift stays deterministic.
-## A tile someone stopped (vel zero) stays stopped.
-func _steer(t: Tile, h: float) -> void:
-	if t.base_speed <= 0.0 or t.vel.length() < EPS:
+# --- hops (WP-F.21) ------------------------------------------------------------------------
+
+## Hops need hop.every above 0 and Act II or later, or a level at or past hop.fromLevel.
+func _hops_enabled() -> bool:
+	if _num("hop.every") <= 0.0:
+		return false
+	return _act_no() >= 2 or _level_order() >= int(_num("hop.fromLevel"))
+
+
+func _hop_in_progress() -> bool:
+	for t: Tile in tiles:
+		if t.hop_to >= 0:
+			return true
+	return false
+
+
+## Advances hops in progress (wind-up, flight, landing) and starts the next one when it is due.
+func _tick_hops(h: float) -> void:
+	for t: Tile in tiles.duplicate():
+		if t.hop_to < 0:
+			continue
+		if not t.hop_air:
+			t.hop_wind -= h
+			if t.hop_wind <= EPS:
+				_takeoff(t)
+		else:
+			t.hop_t += h
+			if t.hop_t + EPS >= t.hop_sec:
+				_land(t)
+	if _hop_at == INF or float(stats["secs"]) + EPS < _hop_at or _hop_in_progress():
 		return
-	var ph := float(t.id) * GOLDEN_ANGLE
-	var secs := float(stats["secs"])
-	var turn := _num("drift.curve") * sin(secs * TAU * _num("drift.curveHz") + ph)
-	if t.style == "dart":
-		_steer_dart(t, h, turn)
+	var every := _num("hop.every") + _hop_rng.randf_range(-_num("hop.jitter"), _num("hop.jitter"))
+	_hop_at = float(stats["secs"]) + maxf(every, _num("hop.windSec") + _num("hop.flySec") + EPS) / maxf(_pace(), EPS)
+	_start_hop()
+
+
+## A real letter nothing is using and a free anchor are chosen from the hop rng; nothing happens when the
+## field has no free anchor. The flight is a straight line: a flying letter is lifted over the others.
+func _start_hop() -> void:
+	var shot_id := int(shot.get("tile_id", -1))
+	var targeted := {}
+	for th: Thief in thieves:
+		targeted[th.target_id] = true
+		targeted[th.carrying_id] = true
+	var pairs: Array[Vector2i] = []
+	for t: Tile in tiles:
+		if t.plane >= 2 or t.decoy or not t.alive or t.carried_by >= 0 or t.anchor < 0 or t.hop_to >= 0 or t.landing > 0.0 or t.shield_t > 0.0:
+			continue
+		if t.id == shot_id or t.id == queued_id or t.id == _hinted_id or targeted.has(t.id):
+			continue
+		for j in _anchors.size():
+			if _owner[j] < 0:
+				pairs.append(Vector2i(t.id, j))
+	if pairs.is_empty():
 		return
-	var surge := 1.0 + _num("drift.surge") * sin(secs * TAU * _num("drift.surgeHz") + ph * 1.7)
-	t.vel = t.vel.normalized().rotated(turn * h) * t.base_speed * surge * (t.orbit_k if t.style == "orbit" else 1.0)
+	var pick := pairs[_hop_rng.randi_range(0, pairs.size() - 1)]
+	var tile: Tile = _by_id[pick.x]
+	tile.hop_to = pick.y
+	tile.hop_wind = _num("hop.windSec")
+	tile.hop_air = false
+	tile.hop_t = 0.0
+	_owner[pick.y] = tile.id  # reserved until it lands
+	_emit({"type": "hop_tell", "tile_id": tile.id, "to": pick.y})
+	if tile.hop_wind <= EPS:
+		_takeoff(tile)
 
 
-## Dart: glide (curving like a wanderer) and ease off, then a burst in a fresh direction. The cycle clock
-## is the round clock plus a per-tile phase; the new heading is hashed from (seed, tile id, cycle).
-func _steer_dart(t: Tile, h: float, turn: float) -> void:
-	var tt := float(stats["secs"]) + t.dart_phase
-	var idx := int(floorf(tt / t.dart_len))
-	var u := tt - float(idx) * t.dart_len
-	var bursting := u >= t.dart_len - _num("drift.dartSec")
-	var dir := t.vel.normalized().rotated(turn * h)
-	if bursting and not t.dart_burst:
-		var g := RandomNumberGenerator.new()
-		g.seed = hash([seed_value, t.id, idx, STYLE_SEED_XOR])
-		dir = Vector2.RIGHT.rotated(g.randf() * TAU)
-	t.dart_burst = bursting
-	t.dart_idx = idx
-	t.vel = dir * (t.base_speed / t.dart_norm) * _dart_mul(t, u)
+func _takeoff(t: Tile) -> void:
+	var from_pos := t.pos
+	if t.anchor >= 0:
+		_owner[t.anchor] = -1
+	t.anchor = t.hop_to
+	t.hop_air = true
+	t.hop_t = 0.0
+	t.hop_sec = _num("hop.flySec")
+	t.hop_from = t.pos - _body
+	_emit({"type": "hop", "tile_id": t.id, "from": from_pos, "to": _rest_pos(t, t.hop_to), "sec": t.hop_sec})
 
 
-func _start_shot_at(target_id: int, at: Vector2, kind: String) -> void:
+func _land(t: Tile) -> void:
+	if not t.hop_air:
+		_takeoff(t)
+	t.hop_to = -1
+	t.hop_air = false
+	t.hop_t = 0.0
+	t.pos = _rest_pos(t, t.anchor)
+	_emit({"type": "hop_land", "tile_id": t.id})
+
+
+## A letter a downed drone dropped takes the nearest free anchor (a decoy dissolves if none is free) and flies there.
+func _drop_to_anchor(t: Tile) -> void:
+	var i := _nearest_free_anchor(t.pos)
+	if i < 0 and _make_room():
+		i = _nearest_free_anchor(t.pos)
+	if i < 0:
+		return
+	t.anchor = i
+	_owner[i] = t.id
+	t.hop_to = i
+	t.hop_from = t.pos - _body
+	t.hop_air = true
+	t.hop_t = 0.0
+	t.hop_sec = _num("hop.flySec")
+	_emit({"type": "hop", "tile_id": t.id, "from": t.pos, "to": _rest_pos(t, i), "sec": t.hop_sec})
+
+
+func _start_shot_at(target_id: int, at: Vector2, kind: String, min_dur: float = 0.0) -> void:
 	var from := origin()
 	var dist := from.distance_to(at)
 	var dur := _num("tether.travelTime") * (_num("tether.travelMinMul") + _num("tether.travelDistMul") * dist / _num("field.height"))
+	dur = maxf(dur, min_dur)  # a shot at a hopping letter lasts until it has landed
 	shot = {"tile_id": target_id, "kind": kind, "from": from, "to": at, "elapsed": 0.0, "dur": dur}
 	_emit({"type": "fire", "tile_id": target_id})
 
@@ -1190,14 +1395,13 @@ func _start_queued(id: int) -> void:
 		return
 	var nt: Tile = _by_id.get(id)
 	if nt != null and nt.alive and nt.carried_by < 0 and nt.landing <= 0.0:
-		_start_shot_at(id, nt.pos, "tile")
+		_start_shot_at(id, _aim_pos(nt), "tile", _hop_left(nt))
 
 
 func _resolve_shot() -> void:
 	var id := int(shot["tile_id"])
 	var kind: String = shot["kind"]
 	var target: Vector2 = shot["to"]
-	_shot_dur = float(shot["dur"])
 	shot = {}
 	var next_id := queued_id
 	queued_id = -1
@@ -1211,12 +1415,8 @@ func _resolve_shot() -> void:
 		_start_queued(next_id)
 
 
-func _tolerance(tile: Tile = null) -> float:
-	var tol := _num("tether.hitTolerance") * _num("tether.driftToleranceMul")
-	# A letter in a dart burst covers ground while the tether flies: widen by half that distance.
-	if tile != null and tile.style == "dart" and tile.dart_burst:
-		tol += 0.5 * tile.vel.length() * _shot_dur
-	return tol
+func _tolerance() -> float:
+	return _num("tether.hitTolerance") * _num("tether.driftToleranceMul")
 
 
 func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
@@ -1231,6 +1431,7 @@ func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
 	if tile != null:
 		tile.carried_by = -1
 		tile.pos = Vector2(clampf(pos.x, tile.radius, 1.0 - tile.radius), clampf(pos.y, _num("field.topMargin") + tile.radius, _num("field.height") - tile.radius))
+		_drop_to_anchor(tile)
 	else:
 		tile_id = -1
 	_remove_thief(th)
@@ -1239,7 +1440,7 @@ func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
 
 
 func _resolve_hit(tile: Tile, target: Vector2) -> void:
-	if tile.carried_by >= 0 or tile.pos.distance_to(target) > _tolerance(tile):
+	if tile.carried_by >= 0 or tile.pos.distance_to(target) > _tolerance():
 		stats["escapes"] = int(stats["escapes"]) + 1
 		_emit({"type": "escape", "tile_id": tile.id})
 		return
@@ -1287,7 +1488,6 @@ func _all_filled(slots: Array[Dictionary]) -> bool:
 func _wrong_catch(tile: Tile) -> void:
 	stats["wrong"] = int(stats["wrong"]) + 1
 	combo = 1.0
-	tile.vel = -tile.vel
 	var in_words := _word_letters().has(tile.ch)
 	_emit({"type": "wrong", "tile_id": tile.id, "kind": "surplus" if in_words else "unneeded", "ch": tile.ch})
 	_cost(_num("burst.wrongCost"), "wrong")
