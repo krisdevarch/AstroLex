@@ -137,9 +137,19 @@ func _recovered() -> bool:
 ## Drops into the remembered level from its start. `with_comms` plays the level's opening chatter.
 func _resume_level(with_comms: bool) -> void:
 	var r: Dictionary = save.resume()
+	var lv: Array = dictionary.levels(str(r["act"]))
+	# Found by id: a content update may have moved the level; gone means back to the map.
+	var at := -1
+	for i in lv.size():
+		if str((lv[i] as Dictionary).get("id", "")) == str(r["level_id"]):
+			at = i
+	if at < 0:
+		save.clear_resume()
+		_show_map()
+		return
 	act = str(r["act"])
-	levels = dictionary.levels(act)
-	level_index = int(r["index"])
+	levels = lv
+	level_index = at
 	print("AstroLex resumed level=%s" % str(r["level_id"]))
 	if with_comms:
 		_begin_level_with_comms()
@@ -473,11 +483,11 @@ func _start_level(story: Array = []) -> void:
 		level = Daily.make_level(daily_date, dictionary.content())
 	elif _is_final_level():
 		level = finale_level(level, save.player_name())
+	if not autoplay and daily_date == "":
+		save.set_resume(act, level_index, str(level["id"]))
 	if act == "act3_tower" and str(level["id"]) == "3-06" and not autoplay and not save.flag("flashback_seen"):
 		_play_flashback(_start_level.bind(story))  # the Loud Wars flashback, once
 		return
-	if not autoplay and daily_date == "":
-		save.set_resume(act, level_index, str(level["id"]))
 	var ch := _profile_character()
 	var cosmetic := not autoplay or demo
 	_close_pause()

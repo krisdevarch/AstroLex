@@ -100,3 +100,19 @@ func test_settings_from_pause_reports_the_current_level() -> void:
 	Flow.press(main, "CopyReportButton")
 	assert_true(main.telemetry.clipboard_text.contains("1-01"), "copied report names the level")
 	main.free()
+
+
+func test_resume_finds_a_moved_level_by_id_and_forgets_a_missing_one() -> void:
+	var s: RefCounted = Save.fake()
+	s.set_resume(A, 0, "1-03")  # index stale: the level is found by its id
+	var main := _returning(s)
+	Flow.press(main, "StartButton")
+	assert_eq(main.level_index, 2)
+	main.free()
+	var s2: RefCounted = Save.fake()
+	s2.set_resume(A, 0, "1-99")
+	var main2 := _returning(s2)
+	Flow.press(main2, "StartButton")
+	assert_true(Flow.has(main2, "LevelMap"), "unknown level: the map")
+	assert_true(s2.resume().is_empty())
+	main2.free()
