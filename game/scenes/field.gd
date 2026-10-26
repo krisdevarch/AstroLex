@@ -154,6 +154,7 @@ var _ft: float = FIELD_TOP  # screen y of the field top (field y = topMargin)
 var _field_x: float = 0.0  # screen x of the field left edge (the field is centred)
 var _time: float = 0.0
 var _ap_timer: float = 0.0
+var _ap_interval_v: float = -1.0  # seconds between autoplay taps; the web query ?tap=<sec> slows the bot for evidence clips
 var _views: Dictionary = {}  # tile_id -> TileView
 var _pending: Dictionary = {}  # Vector2i(absolute word, slot) -> true while a caught tile flies
 var _view_word: int = 0
@@ -828,9 +829,21 @@ func _pose_intro() -> void:
 
 # --- autoplay --------------------------------------------------------------------------
 
+## Seconds between autoplay taps: autoplay.tapInterval, or ?tap=<sec> on the web (slower bot for filming hops).
+func _ap_interval() -> float:
+	if _ap_interval_v < 0.0:
+		_ap_interval_v = _n("autoplay.tapInterval")
+		if OS.has_feature("web"):
+			var q := str(JavaScriptBridge.eval("window.location.search"))
+			var at := q.find("tap=")
+			if at >= 0:
+				_ap_interval_v = maxf(0.05, float(q.substr(at + 4).get_slice("&", 0)))
+	return _ap_interval_v
+
+
 func _autoplay_tick(delta: float) -> void:
 	_ap_timer += delta
-	if _ap_timer < _n("autoplay.tapInterval"):
+	if _ap_timer < _ap_interval():
 		return
 	if game_round.state != "play" or not game_round.shot.is_empty():
 		return

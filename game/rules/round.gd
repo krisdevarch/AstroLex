@@ -467,14 +467,17 @@ func _build_anchors() -> void:
 	var inset := _num("tile.size") * 0.5 + _num("anchors.maxOffset")
 	# The lattice stops anchors.bodyRoom short of the walls so the sway and the gust have room to move it.
 	var lat := inset + _num("anchors.bodyRoom")
+	var clear := Vector2(_num("anchors.clearX"), _num("anchors.clearY"))
 	var pitch := spacing * sqrt(3.0) * 0.5
 	var y := _num("field.topMargin") + lat
 	var row := 0
 	while y <= _num("field.height") - lat + EPS:
 		var x := lat + (spacing * 0.5 if row % 2 == 1 else 0.0)
 		while x <= 1.0 - lat + EPS:
-			_anchors.append(Vector2(x, y))
-			_owner.append(-1)
+			# No anchor under Babel's porthole (anchors.clear* mirror babel.corner* in field units).
+			if Vector2(x, y).distance_to(clear) >= _num("anchors.clearRadius") + _num("tile.size") * 0.5:
+				_anchors.append(Vector2(x, y))
+				_owner.append(-1)
 			x += spacing
 		y += pitch
 		row += 1

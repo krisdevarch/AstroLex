@@ -155,7 +155,10 @@ func _types(evs: Array) -> Array:
 func test_anchor_layout_is_a_honeycomb_inside_the_field() -> void:
 	var r := _make(1)
 	var n: int = r.anchor_count()
-	assert_eq(n, 18, "anchor count at the default tunables")
+	assert_eq(n, 17, "anchor count at the default tunables: 5 rows of 4/3/4/3/4 less the one under Babel's porthole")
+	var clear := Vector2(float(_tun["anchors.clearX"]), float(_tun["anchors.clearY"]))
+	for i in n:
+		assert_true(r.anchor_pos(i).distance_to(clear) >= float(_tun["anchors.clearRadius"]) + float(_tun["tile.size"]) * 0.5, "no anchor under the porthole")
 	var spacing := float(_tun["anchors.spacing"])
 	var inset := float(_tun["tile.size"]) * 0.5 + float(_tun["anchors.maxOffset"])
 	var closest := INF

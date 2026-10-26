@@ -1,6 +1,9 @@
 {
   "_generated": "by python -m astrolex_tools.export_game_data; do not edit",
   "anchors.bodyRoom": 0.02,
+  "anchors.clearRadius": 0.17,
+  "anchors.clearX": 0.01,
+  "anchors.clearY": 0.234,
   "anchors.damping": 7,
   "anchors.maxOffset": 0.012,
   "anchors.spacing": 0.246,
