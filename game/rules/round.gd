@@ -815,6 +815,8 @@ func _tick(h: float) -> void:
 	for t: Tile in tiles.duplicate():
 		t.landing = maxf(0.0, t.landing - h)
 		t.shield_t = maxf(0.0, t.shield_t - h)
+		if t.plane < 2 and t.anchor < 0 and t.carried_by < 0 and t.alive:
+			_drop_to_anchor(t)  # a letter that found no anchor when it arrived takes the first one that frees up
 		if t.expire_t > 0.0:
 			t.expire_t -= h
 			if t.expire_t <= 0.0 and t.carried_by < 0 and t.id != int(shot.get("tile_id", -1)) and t.id != queued_id:

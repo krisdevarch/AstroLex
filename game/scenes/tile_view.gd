@@ -458,7 +458,8 @@ func hop(from_px: Vector2, sec: float) -> void:
 func hop_land() -> void:
 	if _hop_t > 0.0:
 		_hop_t = 0.0
-		z_index = _hop_z
+		if anim == "":
+			z_index = _hop_z
 	if not reduced_motion:
 		_squash_axis = Vector2.DOWN
 		_fx_squash = true
@@ -733,7 +734,7 @@ func tick(delta: float) -> bool:
 			_end_tell()
 	if _hop_t > 0.0:
 		_hop_t = maxf(0.0, _hop_t - delta)
-		if _hop_t <= 0.0:
+		if _hop_t <= 0.0 and anim == "":  # a catch or dissolve mid-flight keeps its own z
 			z_index = _hop_z
 	if _scr_t > 0.0:
 		if anim != "":

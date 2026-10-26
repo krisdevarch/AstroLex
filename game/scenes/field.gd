@@ -834,10 +834,10 @@ func _ap_interval() -> float:
 	if _ap_interval_v < 0.0:
 		_ap_interval_v = _n("autoplay.tapInterval")
 		if OS.has_feature("web"):
-			var q := str(JavaScriptBridge.eval("window.location.search"))
-			var at := q.find("tap=")
-			if at >= 0:
-				_ap_interval_v = maxf(0.05, float(q.substr(at + 4).get_slice("&", 0)))
+			var q := str(JavaScriptBridge.eval("window.location.search")).trim_prefix("?")
+			for part: String in q.split("&"):
+				if part.begins_with("tap=") and part.substr(4).is_valid_float() and float(part.substr(4)) > 0.0:
+					_ap_interval_v = maxf(0.05, float(part.substr(4)))
 	return _ap_interval_v
 
 
@@ -1142,7 +1142,7 @@ func _apply_events() -> void:
 				if lv != null:
 					lv.hop_land()
 					if not settings.reduced_motion:
-						_add_ripple(lv.position + Vector2(0.0, lv.hop_lift()))
+						_add_ripple(lv.position)
 			"counterfeit":
 				var fv: TileViewScript = _views.get(int(e["tile_id"]))
 				if fv != null:
