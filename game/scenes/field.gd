@@ -1055,7 +1055,8 @@ func _apply_events() -> void:
 					fv.flash(0.45)
 					fv.dissolve(_n("fx.dissolveSec"))
 				_burst(to_screen(e["pos"]), PERIWINKLE, 18)
-				_hazard_toast("counterfeit", "Forged letter   −%d s" % int(_n("burst.wrongCost")))
+				# Every time, with the letter: a silent rejection of a letter the word needs reads as a bug.
+				_show_toast("Forged %s, find the real one   −%d s" % [str(e["ch"]).to_upper(), int(_n("burst.wrongCost"))], PERIWINKLE)
 				sfx.wrong()
 				_shake(_n("fx.shakePx") * 0.5)
 				_buzz(60)
@@ -1450,7 +1451,7 @@ func _hud_button(node_name: String) -> Button:
 func _squish(b: Control, to: float) -> void:
 	if settings.reduced_motion or not b.is_inside_tree():
 		return
-	var old: Variant = b.get_meta("squish", null)
+	var old: Variant = b.get_meta("squish") if b.has_meta("squish") else null  # get_meta errors on a missing key
 	if old is Tween and (old as Tween).is_valid():
 		(old as Tween).kill()
 	var tw := b.create_tween()

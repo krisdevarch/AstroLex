@@ -16,7 +16,7 @@ const DEFAULT_LOOK := "bubble"
 ## and while the colour channel is jammed decoys pulse the Catcher's cyan and needed letters periwinkle.
 const HAZARD_PERIWINKLE := Color("7579f0")
 const SHIMMER_ARC := 1.1  # radians of the sweeping glint
-const SHIMMER_RIM_ALPHA := 0.16  # the faint rim a forgery always has
+const SHIMMER_RIM_ALPHA := 0.5  # the rim a forgery always has, plain enough to see on a phone
 const TRAP_RING_ALPHA := 0.32
 const JAM_PULSE_HZ := 1.6
 
@@ -225,7 +225,7 @@ class HazardRing extends Node2D:
 		elif kind == "counterfeit":
 			var rim := Color("7579f0")
 			rim.a = SHIMMER_RIM_ALPHA
-			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, rim, width * 0.6, true)
+			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, rim, width * 0.9, true)
 			var centre := sweep * TAU
 			for i in 6:  # a glint that fades off at both ends
 				var u := float(i) / 5.0

@@ -113,8 +113,32 @@ func test_forged_letter_toast_and_summary_counter() -> void:
 	forged.vel = Vector2.ZERO
 	f.game_round.fire(forged.id)
 	_run(f, 0.5)
-	assert_true(str(f._toast.text).begins_with("Forged letter"), "toast the first time")
-	assert_eq(int(f.summary()["counterfeits"]), 1, "counter in the summary")
+	assert_true(str(f._toast.text).begins_with("Forged %s," % forged.ch.to_upper()), "toast names the letter")
+	# Playtest 26 Oct 2026: after the first forgery the rejection was silent and read as a bug.
+	f._toast.text = ""
+	var again = null
+	for t in f.game_round.tiles:
+		if t.kind == "counterfeit" and t.plane < 2:
+			again = t
+			break
+	assert_true(again != null, "another forgery to catch")
+	again.vel = Vector2.ZERO
+	f.game_round.fire(again.id)
+	_run(f, 0.5)
+	assert_true(str(f._toast.text).begins_with("Forged %s" % again.ch.to_upper()), "toast every time")
+	assert_eq(int(f.summary()["counterfeits"]), 2, "counter in the summary")
 	assert_eq(int(f.summary()["traps"]), 0, "traps counter present")
 	assert_eq(int(f.summary()["jams"]), 0, "jams counter present")
+	f.free()
+
+
+## Playtest 26 Oct 2026: the first press of a HUD button logged an engine error (get_meta on a missing key).
+func test_first_button_press_squishes_without_meta() -> void:
+	var f := _field()
+	var b: Button = f._hud_button("SquishProbe")
+	assert_false(b.has_meta("squish"), "no tween yet")
+	f._squish(b, 0.86)
+	assert_true(b.get_meta("squish") is Tween, "tween kept for the next press")
+	f._squish(b, 1.0)
+	assert_true(b.get_meta("squish") is Tween, "replaced")
 	f.free()
