@@ -25,6 +25,7 @@
         "thief.firstAt": {"type": "number"},
         "thief.speed": {"type": "number"},
         "thief.max": {"type": "integer", "minimum": 0},
+        "thief.sideShare": {"type": "number", "minimum": 0, "maximum": 1},
         "plane.backTiles": {"type": "integer", "minimum": 0},
         "hazard.counterfeitRatio": {"type": "number", "minimum": 0, "maximum": 1},
         "hazard.traps": {"type": "integer", "minimum": 0, "maximum": 1},

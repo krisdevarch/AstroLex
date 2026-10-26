@@ -137,7 +137,27 @@
     "hazard.stroopSec",
     "hazard.shimmerSec",
     "perf.playFps",
-    "perf.menuFps"
+    "perf.menuFps",
+    "drift.orbitShare",
+    "drift.orbitRadius",
+    "drift.orbitHz",
+    "drift.dartShare",
+    "drift.dartEvery",
+    "drift.dartBoost",
+    "drift.dartSec",
+    "drift.shyRadius",
+    "drift.shyPush",
+    "drift.rippleRadius",
+    "drift.ripplePush",
+    "drift.rippleSec",
+    "thief.sideShare",
+    "thief.sideMaxY",
+    "babel.cornerX",
+    "babel.cornerY",
+    "babel.cornerSize",
+    "tile.breathe",
+    "tile.breatheHz",
+    "tile.stretch"
   ],
   "properties": {
     "$schema": {
@@ -832,6 +852,26 @@
       "type": "integer",
       "minimum": 15,
       "description": "frame cap on menus, the pause menu and other screens. Sits a little above 30 on purpose, for the same reason as perf.playFps"
-    }
+    },
+    "drift.orbitShare": {"type": "number", "minimum": 0, "maximum": 1, "description": "share of real letters that circle a slowly wandering centre instead of wandering (WP-F.18)"},
+    "drift.orbitRadius": {"type": "number", "minimum": 0, "description": "orbit radius, field units"},
+    "drift.orbitHz": {"type": "number", "minimum": 0, "description": "orbit turns per second"},
+    "drift.dartShare": {"type": "number", "minimum": 0, "maximum": 1, "description": "share of real letters that glide, slow almost to a stop, then dart off in a new direction (WP-F.18)"},
+    "drift.dartEvery": {"type": "number", "minimum": 0.5, "description": "mean seconds between darts"},
+    "drift.dartBoost": {"type": "number", "minimum": 1, "maximum": 3, "description": "peak speed multiplier of a dart; capped so taps still land"},
+    "drift.dartSec": {"type": "number", "minimum": 0.05, "description": "how long a dart lasts, seconds"},
+    "drift.shyRadius": {"type": "number", "minimum": 0, "description": "letters within this distance of a drone edge away from it, field units (0 = off)"},
+    "drift.shyPush": {"type": "number", "minimum": 0, "description": "speed of the shy push, field units per second at zero distance"},
+    "drift.rippleRadius": {"type": "number", "minimum": 0, "description": "a catch pushes letters within this distance outward, field units (0 = off)"},
+    "drift.ripplePush": {"type": "number", "minimum": 0, "description": "initial speed of the ripple push, field units per second"},
+    "drift.rippleSec": {"type": "number", "minimum": 0.01, "description": "ripple push decay time, seconds"},
+    "thief.sideShare": {"type": "number", "minimum": 0, "maximum": 1, "description": "chance a drone enters from the left or right edge instead of the top (never from the bottom); Act I levels set 0 (WP-F.18)"},
+    "thief.sideMaxY": {"type": "number", "minimum": 0.1, "maximum": 1, "description": "side entries come in only within this share of the play area below field.topMargin"},
+    "babel.cornerX": {"type": "number", "minimum": 0, "maximum": 1, "description": "centre of Babel's corner porthole, share of view width (WP-F.18)"},
+    "babel.cornerY": {"type": "number", "minimum": 0, "maximum": 1, "description": "centre of Babel's corner porthole, share of view height"},
+    "babel.cornerSize": {"type": "number", "minimum": 0.05, "maximum": 0.5, "description": "diameter of Babel's corner porthole, share of view width"},
+    "tile.breathe": {"type": "number", "minimum": 0, "maximum": 0.2, "description": "idle scale pulse of a letter, share of its size (0 = off)"},
+    "tile.breatheHz": {"type": "number", "minimum": 0, "description": "idle scale pulse rate, cycles per second"},
+    "tile.stretch": {"type": "number", "minimum": 0, "maximum": 0.4, "description": "squash and stretch along the motion when a letter darts or is pushed, share of its size"}
   }
 }

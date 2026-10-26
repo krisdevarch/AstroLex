@@ -7,3 +7,5 @@ var vel: Vector2 = Vector2.ZERO
 var target_id: int = -1
 var carrying_id: int = -1
 var state: String = "seek"
+## Edge it came in from: -1 left, 1 right, 0 top (the view slides in from that side).
+var entry: int = 0

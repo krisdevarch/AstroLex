@@ -52,7 +52,7 @@
     {
       "id": "1-04", "order": 4, "title": "Thieves on the Wing", "beat": "Babel's thief drones appear and go for Rhee's records. Rhee hums while she works (foreshadowing 1).",
       "pacing": "core", "words": ["book", "shelf", "box"], "seed": 1104, "babel": true, "babelIntro": "Your records are lovely. Shame if they flew away.",
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "oxygen.drainPerSec": 0.8, "plane.backTiles": 5, "thief.interval": 12, "hazard.counterfeitRatio": 0},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "oxygen.drainPerSec": 0.8, "plane.backTiles": 5, "thief.sideShare": 0, "thief.interval": 12, "hazard.counterfeitRatio": 0},
       "commsBefore": [
         {"who": "rhee", "text": "Those are my records. Everything I wrote down is kept there. Babel wants them."},
         {"who": "kit", "text": "Wait, why are those little drones flying at us?"},
@@ -67,7 +67,7 @@
     {
       "id": "1-05", "order": 5, "title": "Through the Scope", "beat": "First sight of Tomas through the Scriptorium scope: a boy at a dark window, a radio with its light off.",
       "pacing": "core", "words": ["window", "radio", "candle"], "seed": 1105, "babel": true, "babelIntro": "Looking at something you cannot reach? I know the feeling.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "oxygen.drainPerSec": 0.9, "plane.backTiles": 5, "thief.interval": 11, "hazard.counterfeitRatio": 0},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "oxygen.drainPerSec": 0.9, "plane.backTiles": 5, "thief.sideShare": 0, "thief.interval": 11, "hazard.counterfeitRatio": 0},
       "commsBefore": [
         {"who": "rhee", "text": "Look through the Scriptorium scope, Catcher. Earth. A boy, alone in a dark room."},
         {"who": "kit", "text": "Wait, there are people down there?"},
@@ -82,7 +82,7 @@
     {
       "id": "1-06", "order": 6, "title": "Small Hours", "beat": "Rest: small things in the boy's room at night.",
       "pacing": "rest", "words": ["bed", "cat", "milk"], "seed": 1106, "babel": true, "babelIntro": "Quiet, finally. Do not get used to it.",
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.11, "oxygen.drainPerSec": 0.7, "plane.backTiles": 5, "thief.interval": 11, "hazard.counterfeitRatio": 0},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.11, "oxygen.drainPerSec": 0.7, "plane.backTiles": 5, "thief.sideShare": 0, "thief.interval": 11, "hazard.counterfeitRatio": 0},
       "commsBefore": [
         {"who": "kit", "text": "A calm one. The boy's room, in the small hours. Three quiet things, and none of them bite."}
       ],
@@ -95,7 +95,7 @@
     {
       "id": "1-07", "order": 7, "title": "A Note by Night", "beat": "Mid: the boy tries to write to his gran. Tomas's first half-empty message.",
       "pacing": "core", "words": ["pen", "paper", "stamp"], "seed": 1107, "babel": true, "babelIntro": "Writing to someone? How brave. How pointless.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "oxygen.drainPerSec": 0.9, "plane.backTiles": 6, "thief.interval": 10, "hazard.counterfeitRatio": 0},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "oxygen.drainPerSec": 0.9, "plane.backTiles": 6, "thief.sideShare": 0, "thief.interval": 10, "hazard.counterfeitRatio": 0},
       "commsBefore": [
         {"who": "rhee", "text": "The boy is trying to write to someone. He needs three small things. The decoys look alike, so check every tile."}
       ],
@@ -108,7 +108,7 @@
     {
       "id": "1-08", "order": 8, "title": "Dinner for Four", "beat": "Core: first four-word level. The boy's family table; one chair always empty.",
       "pacing": "core", "words": ["table", "chair", "plate", "spoon"], "seed": 1108, "babel": true, "babelIntro": "Four courses. Try not to drop the soup.",
-      "tuning": {"spawner.decoys": 4, "drift.speed": 0.16, "oxygen.drainPerSec": 1.0, "plane.backTiles": 6, "thief.interval": 10, "hazard.counterfeitRatio": 0},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.16, "oxygen.drainPerSec": 1.0, "plane.backTiles": 6, "thief.sideShare": 0, "thief.interval": 10, "hazard.counterfeitRatio": 0},
       "commsBefore": [
         {"who": "ade", "text": "ok ok ok, four words at once, and it is dinner time. Nobody sit down."},
         {"who": "rhee", "text": "The boy's family eats together. Set the scene, Catcher."}
@@ -122,7 +122,7 @@
     {
       "id": "1-09", "order": 9, "title": "Getting Ready", "beat": "Core: faster drift. The boy gets ready to go out.",
       "pacing": "core", "words": ["mirror", "jacket", "key"], "seed": 1109, "babel": true, "babelIntro": "Mind the corridor. Things get fast in here.",
-      "tuning": {"spawner.decoys": 5, "drift.speed": 0.18, "oxygen.drainPerSec": 1.1, "plane.backTiles": 7, "thief.interval": 9, "hazard.counterfeitRatio": 0},
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.18, "oxygen.drainPerSec": 1.1, "plane.backTiles": 7, "thief.sideShare": 0, "thief.interval": 9, "hazard.counterfeitRatio": 0},
       "commsBefore": [
         {"who": "rhee", "text": "He is getting ready to leave. Help him get ready. Take it slowly."}
       ],
@@ -135,7 +135,7 @@
     {
       "id": "1-10", "order": 10, "title": "Green Patch", "beat": "Rest: an old garden on his way. A breath before the end.",
       "pacing": "rest", "words": ["garden", "tree", "apple"], "seed": 1110, "babel": true, "babelIntro": "Green things, how nice. I wonder who planted them.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "oxygen.drainPerSec": 0.8, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0.25},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "oxygen.drainPerSec": 0.8, "plane.backTiles": 6, "thief.sideShare": 0, "thief.interval": 8, "hazard.counterfeitRatio": 0.25},
       "commsBefore": [
         {"who": "kit", "text": "Green, for once. Leaves, roots, fruit. I want all three, for science. Take your time."}
       ],
@@ -147,7 +147,7 @@
     {
       "id": "1-11", "order": 11, "title": "Lost and Found", "beat": "Late: the drones grow bolder and Babel grows louder; the boy follows the signs. Rhee warns, short.",
       "pacing": "core", "words": ["road", "sign", "map", "phone"], "seed": 1111, "babel": true, "babelIntro": "Lost something? My drones found it first.",
-      "tuning": {"spawner.decoys": 6, "drift.speed": 0.19, "oxygen.drainPerSec": 1.2, "plane.backTiles": 7, "thief.interval": 8, "hazard.counterfeitRatio": 0.25},
+      "tuning": {"spawner.decoys": 6, "drift.speed": 0.19, "oxygen.drainPerSec": 1.2, "plane.backTiles": 7, "thief.sideShare": 0, "thief.interval": 8, "hazard.counterfeitRatio": 0.25},
       "commsBefore": [
         {"who": "kit", "text": "The boy is walking now. Four things are guiding him."},
         {"who": "ade", "text": "The drones are circling. One looked at my sandwich. ok ok ok, it is fine."},
@@ -162,7 +162,7 @@
     {
       "id": "1-12", "order": 12, "title": "The Crossing", "beat": "Encounter: the drones crowd in. Closing: the boy reaches the river and says water.",
       "pacing": "encounter", "words": ["bridge", "river", "rock", "water"], "seed": 1112, "babel": true, "babelIntro": "Almost across. My drones are feeling brave tonight.",
-      "tuning": {"spawner.decoys": 7, "drift.speed": 0.22, "oxygen.drainPerSec": 1.4, "plane.backTiles": 8, "thief.interval": 7, "hazard.counterfeitRatio": 0.25},
+      "tuning": {"spawner.decoys": 7, "drift.speed": 0.22, "oxygen.drainPerSec": 1.4, "plane.backTiles": 8, "thief.sideShare": 0, "thief.interval": 7, "hazard.counterfeitRatio": 0.25},
       "commsBefore": [
         {"who": "rhee", "text": "Last one for this ring. Tap fast, and the line will hold."},
         {"who": "ade", "text": "ok ok ok, the drones are doing laps. I am calm. I am a very calm person holding a very loud snack."}

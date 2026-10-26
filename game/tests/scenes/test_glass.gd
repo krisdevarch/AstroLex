@@ -90,7 +90,7 @@ func test_bubble_pulse_is_extremely_subtle() -> void:
 		lo = minf(lo, a)
 		hi = maxf(hi, a)
 	assert_true(hi > lo, "the bubble breathes")
-	assert_true((hi - lo) / lo <= amp * 2.0 + 0.002, "but only by the tunable amount")
+	assert_true((hi - lo) / lo <= (amp + float(tun["tile.breathe"])) * 2.0 + 0.002, "but only by the tunable amounts (pulse plus breathe)")
 	v.reduced_motion = true
 	var still: Vector2 = v.body.scale
 	v.place(Vector2(200, 300), 9.3, 0.4)
