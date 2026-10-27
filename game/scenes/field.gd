@@ -173,6 +173,7 @@ var _fx: Array = []  # [node, ttl]
 var _thief_views: Dictionary = {}  # thief_id -> ThiefView
 var _floats: Array = []  # [Label, age] floating "-1 s" texts
 var _clock_label: Label
+var _pips: MistakePips  # wrong catches left before Babel wins the round (burst.maxWrong)
 var _time_bar: ProgressBar
 var _pause_button: Button
 var _pause_icon: Control
@@ -291,6 +292,7 @@ func _start(seed_value: int, story: Array = []) -> void:
 		_build_once()
 	_apply_events()
 	_sync_views()
+	_sync_pips()
 	_update_hud()
 	if story.is_empty():
 		_start_intro(seed_value)
@@ -609,6 +611,7 @@ func summary() -> Dictionary:
 		"secs": float(game_round.stats["secs"]),
 		"catches": int(game_round.stats["catches"]),
 		"wrong": int(game_round.stats["wrong"]),
+		"reason": game_round.end_reason,
 		"babel": last_babel,
 		"stars": game_round.stars(),
 		"time_left": game_round.time_left,
@@ -1032,6 +1035,32 @@ func _flinch_nearest(aim: Vector2) -> void:
 
 
 ## The landing ripple: an expanding, fading ring from the landing point.
+## The mistake pips: one ring per wrong catch the round allows; a used one fills coral.
+class MistakePips extends Control:
+	var total: int = 0
+	var used: int = 0
+	const R := 11.0
+	const STEP := 34.0
+
+	func set_state(total_in: int, used_in: int) -> void:
+		total = maxi(0, total_in)
+		used = clampi(used_in, 0, total)
+		custom_minimum_size = Vector2(STEP * float(total), R * 2.0 + 6.0)
+		size = custom_minimum_size
+		queue_redraw()
+
+	func _draw() -> void:
+		for i in total:
+			var c := Vector2(R + 3.0 + STEP * float(i), R + 3.0)
+			if i < used:
+				draw_circle(c, R, Color(1.0, 0.5, 0.45))
+				draw_line(c + Vector2(-5, -5), c + Vector2(5, 5), Color(0.1, 0.05, 0.1), 3.0, true)
+				draw_line(c + Vector2(-5, 5), c + Vector2(5, -5), Color(0.1, 0.05, 0.1), 3.0, true)
+			else:
+				draw_circle(c, R, Color(0.1, 0.16, 0.3, 0.8))
+				draw_arc(c, R, 0.0, TAU, 24, Color(0.46, 0.47, 0.94), 2.5, true)
+
+
 class RippleRing extends Node2D:
 	var radius: float = 0.0
 	var alpha: float = 0.0
@@ -1122,8 +1151,14 @@ func _apply_events() -> void:
 				var wv: TileViewScript = _views.get(int(e["tile_id"]))
 				if wv != null:
 					wv.flash(0.45)
+				var left := int(e.get("left", -1))
 				var msg := "Not in the record   −%d s" % int(_n("burst.wrongCost"))
+				if left == 1:
+					msg += "   ·   one more loses the sector"
+				elif left > 1:
+					msg += "   ·   %d more allowed" % left
 				_show_toast(msg, Color(1.0, 0.5, 0.45))
+				_sync_pips()
 				sfx.wrong()
 				_shake(_n("fx.shakePx") * 0.5)
 				_buzz(60)
@@ -1151,6 +1186,7 @@ func _apply_events() -> void:
 					fv.dissolve(_n("fx.dissolveSec"))
 				_burst(to_screen(e["pos"]), PERIWINKLE, 18)
 				_hazard_toast("counterfeit", "Forged letter   −%d s" % int(_n("burst.wrongCost")))
+				_sync_pips()
 				sfx.wrong()
 				_shake(_n("fx.shakePx") * 0.5)
 				_buzz(60)
@@ -1366,6 +1402,12 @@ func _hazard_toast(key: String, text: String) -> void:
 		return
 	_hazard_seen[key] = true
 	_show_toast(text, PERIWINKLE)
+
+
+func _sync_pips() -> void:
+	if _pips != null and game_round != null:
+		var cap := int(_n("burst.maxWrong"))
+		_pips.set_state(cap, cap - maxi(0, game_round.mistakes_left()))
 
 
 func _show_toast(text: String, color: Color) -> void:
@@ -1724,6 +1766,12 @@ func _build_hud() -> void:
 	_clock_label.pivot_offset = Vector2(CLOCK_LABEL_W, 24)
 	_clock_label.visible = false
 	_hud.add_child(_ignore(_clock_label))
+	# Mistake pips sit over the left end of the clock channel: every wrong catch fills one, the last loses the round.
+	_pips = MistakePips.new()
+	_pips.name = "MistakePips"
+	_pips.set_state(int(_n("burst.maxWrong")), 0)
+	_pips.position = Vector2(ch.position.x + 10.0, ch.position.y - _pips.size.y - 6.0)
+	_hud.add_child(_ignore(_pips))
 	_coach = Coach.new()
 	_coach.setup(_tun, settings.reduced_motion, view_size)
 	_hud.add_child(_coach)

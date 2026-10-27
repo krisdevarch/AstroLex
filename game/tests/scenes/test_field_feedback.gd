@@ -61,7 +61,7 @@ func test_wrong_catch_flashes_the_tile_and_shows_the_toast() -> void:
 		f.advance(DT)
 		steps += 1
 	assert_eq(int(f.game_round.stats["wrong"]), 1, "the catch was wrong")
-	assert_eq(f._toast.text, "Not in the record   −1 s", "toast text")
+	assert_true(f._toast.text.begins_with("Not in the record   −1 s"), "toast text: %s" % f._toast.text)
 	assert_true(f._toast.modulate.a > 0.0, "toast visible")
 	assert_true(view._flash_t > 0.0, "tile view is flashing")
 	assert_true(f._views.has(target.id), "wrong tile stays in play")
