@@ -143,7 +143,7 @@ func test_tiles_stay_inside_the_bounds_while_drifting() -> void:
 		for t in r.tiles:
 			# Back shards bounce inside the field; anchored letters keep their centre in it (the body offset is clamped).
 			var slack: float = t.radius if t.plane >= 2 else 0.0
-			assert_true(t.pos.x >= slack - 1e-6 and t.pos.x <= 1.0 - slack + 1e-6, "x")
+			assert_true(t.pos.x >= slack - 1e-6 and t.pos.x <= float(_tun["field.width"]) - slack + 1e-6, "x")
 			assert_true(t.pos.y >= 0.32 + slack - 1e-6 and t.pos.y <= 1.6 - slack + 1e-6, "y")
 	assert_true(float(r.stats["secs"]) > 9.9)
 
@@ -373,7 +373,7 @@ func test_travel_time_scales_with_distance() -> void:
 	r.fire(tile.id)
 	var d: float = r.origin().distance_to(tile.pos)
 	assert_true(absf(r.shot["dur"] - 0.2 * (0.7 + 0.3 * d / 1.6)) < 1e-9)
-	assert_eq(r.origin(), Vector2(0.5, 1.6))
+	assert_eq(r.origin(), Vector2(float(_tun["field.width"]) * 0.5, 1.6))
 
 
 func test_one_shot_in_flight_and_one_queued() -> void:

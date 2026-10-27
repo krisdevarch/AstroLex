@@ -320,7 +320,12 @@ func drain_events() -> Array[Dictionary]:
 
 ## Shot origin in field units.
 func origin() -> Vector2:
-	return Vector2(0.5, _num("field.height"))
+	return Vector2(_w() * 0.5, _num("field.height"))
+
+
+## Field width in field units (the height is field.height); the view fits the field to the screen.
+func _w() -> float:
+	return _num("field.width")
 
 
 func find_tile(tile_id: int) -> Tile:
@@ -437,7 +442,7 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	tile.radius = _num("tile.size") * _scale_of(plane) / 2.0
 	if plane >= 2:
 		var r := tile.radius
-		tile.pos = Vector2(_rng.randf_range(r, 1.0 - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
+		tile.pos = Vector2(_rng.randf_range(r, _w() - r), _rng.randf_range(_num("field.topMargin") + r, _num("field.height") - r))
 		var speed := _num("drift.speed") * float(ramp()["drift"]) * _num("plane.backSpeedMul")
 		var angle := _rng.randf() * TAU
 		tile.vel = Vector2(cos(angle), sin(angle)) * speed
@@ -447,7 +452,7 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 		tile.pos = _rest_pos(tile, anchor)
 	else:
 		# No anchor anywhere (more real letters than anchors): sit mid-field and let separation sort it out.
-		tile.pos = Vector2(0.5, (_num("field.topMargin") + _num("field.height")) * 0.5)
+		tile.pos = Vector2(_w() * 0.5, (_num("field.topMargin") + _num("field.height")) * 0.5)
 	if float(stats.get("secs", 0.0)) > 0.0:
 		tile.landing = _num("babel.throwSec")
 	tiles.append(tile)
@@ -468,19 +473,23 @@ func _build_anchors() -> void:
 	# The lattice stops anchors.bodyRoom short of the walls so the sway and the gust have room to move it.
 	var lat := inset + _num("anchors.bodyRoom")
 	var clear := Vector2(_num("anchors.clearX"), _num("anchors.clearY"))
-	var pitch := spacing * sqrt(3.0) * 0.5
-	var y := _num("field.topMargin") + lat
-	var row := 0
-	while y <= _num("field.height") - lat + EPS:
-		var x := lat + (spacing * 0.5 if row % 2 == 1 else 0.0)
-		while x <= 1.0 - lat + EPS:
+	# Rows and columns are spread evenly over the whole field (pitch at least the spacing), so the
+	# lattice reaches every edge instead of hugging the top-left corner.
+	var span_x := _w() - 2.0 * lat
+	var span_y := _num("field.height") - _num("field.topMargin") - 2.0 * lat
+	var cols := maxi(1, int(floorf(span_x / spacing + EPS)) + 1)
+	var rows := maxi(1, int(floorf(span_y / (spacing * sqrt(3.0) * 0.5) + EPS)) + 1)
+	var pitch_x := span_x / float(cols - 1) if cols > 1 else 0.0
+	var pitch_y := span_y / float(rows - 1) if rows > 1 else 0.0
+	for row in rows:
+		var y := _num("field.topMargin") + lat + pitch_y * float(row)
+		var n := cols - 1 if row % 2 == 1 else cols  # odd rows sit between the columns above
+		for c in n:
+			var x := lat + pitch_x * float(c) + (pitch_x * 0.5 if row % 2 == 1 else 0.0)
 			# No anchor under Babel's porthole (anchors.clear* mirror babel.corner* in field units).
 			if Vector2(x, y).distance_to(clear) >= _num("anchors.clearRadius") + _num("tile.size") * 0.5:
 				_anchors.append(Vector2(x, y))
 				_owner.append(-1)
-			x += spacing
-		y += pitch
-		row += 1
 	if _anchors.is_empty():
 		return
 	var lo := _anchors[0]
@@ -490,7 +499,7 @@ func _build_anchors() -> void:
 		hi = Vector2(maxf(hi.x, a.x), maxf(hi.y, a.y))
 	# The body may move the lattice only as far as keeps every anchored tile (edge plus its offset) in the field.
 	_body_lo = Vector2(inset - lo.x, _num("field.topMargin") + inset - lo.y)
-	_body_hi = Vector2(1.0 - inset - hi.x, _num("field.height") - inset - hi.y)
+	_body_hi = Vector2(_w() - inset - hi.x, _num("field.height") - inset - hi.y)
 
 
 func anchor_count() -> int:
@@ -643,11 +652,28 @@ func _separate_tiles() -> bool:
 
 func _clamp_to_field(t: Tile) -> void:
 	var r := t.radius
-	t.pos.x = clampf(t.pos.x, r, 1.0 - r)
+	t.pos.x = clampf(t.pos.x, r, _w() - r)
 	t.pos.y = clampf(t.pos.y, _num("field.topMargin") + r, _num("field.height") - r)
 
 
 ## A weighted-random letter that is not in `excluded` (an Array of single-character strings).
+## Letters that already show spawner.maxCopies times on the field (catchable tiles), so a plain decoy
+## never makes a third copy of one letter. 0 turns the cap off.
+func _capped_letters() -> Array:
+	var cap := int(_num("spawner.maxCopies"))
+	if cap <= 0:
+		return []
+	var counts := {}
+	for t: Tile in tiles:
+		if t.plane < 2 and t.alive:
+			counts[t.ch] = int(counts.get(t.ch, 0)) + 1
+	var out: Array = []
+	for c in counts:
+		if int(counts[c]) >= cap:
+			out.append(c)
+	return out
+
+
 func _weighted_letter(excluded: Array) -> String:
 	var letters: Array = []
 	var total := 0
@@ -785,8 +811,9 @@ func _ensure_decoys() -> void:
 		forged_tile.kind = "counterfeit"
 		forged += 1
 		n += 1
-	var excluded := _word_letters()
 	while n < want:
+		var excluded := _word_letters()
+		excluded.append_array(_capped_letters())
 		if _spawn(_weighted_letter(excluded), true, _pick_plane()) == null:
 			return
 		n += 1
@@ -1089,14 +1116,14 @@ func _spawn_thief() -> void:
 		# The left (x = 0) or right (x = 1) edge, in the upper part of the play area; the view reads x.
 		var right := _thief_rng.randf() < 0.5
 		var max_y := top + _num("thief.sideMaxY") * (_num("field.height") - top)
-		th.pos = Vector2(1.0 if right else 0.0, _thief_rng.randf_range(top, max_y))
+		th.pos = Vector2(_w() if right else 0.0, _thief_rng.randf_range(top, max_y))
 		th.entry = 1 if right else -1
 	else:
-		th.pos = Vector2(_thief_rng.randf_range(0.0, 1.0), top)
+		th.pos = Vector2(_thief_rng.randf_range(0.0, _w()), top)
 	var angle := _thief_rng.randf() * TAU
 	th.vel = Vector2(cos(angle), sin(angle)) * _num("thief.speed") * THIEF_IDLE_MUL
 	if from_side:
-		th.vel.x = -absf(th.vel.x) if th.pos.x > 0.5 else absf(th.vel.x)
+		th.vel.x = -absf(th.vel.x) if th.pos.x > _w() * 0.5 else absf(th.vel.x)
 	thieves.append(th)
 	_thief_by_id[th.id] = th
 	_emit({"type": "thief_spawn", "thief_id": th.id, "pos": th.pos, "entry": th.entry})
@@ -1140,9 +1167,9 @@ func _seek(th: Thief, h: float) -> void:
 	th.pos += th.vel * h
 	if tgt == null:
 		# Idle drift: bounce inside the field.
-		if th.pos.x < 0.0 or th.pos.x > 1.0:
+		if th.pos.x < 0.0 or th.pos.x > _w():
 			th.vel.x = -th.vel.x
-			th.pos.x = clampf(th.pos.x, 0.0, 1.0)
+			th.pos.x = clampf(th.pos.x, 0.0, _w())
 		if th.pos.y < _num("field.topMargin") or th.pos.y > _num("field.height"):
 			th.vel.y = -th.vel.y
 			th.pos.y = clampf(th.pos.y, _num("field.topMargin"), _num("field.height"))
@@ -1155,7 +1182,7 @@ func _seek(th: Thief, h: float) -> void:
 		th.state = "flee"
 		# Flee to the nearest of the left, right and top edges (never the bottom); ties go to the top.
 		var to_left := th.pos.x
-		var to_right := 1.0 - th.pos.x
+		var to_right := _w() - th.pos.x
 		var to_top := th.pos.y
 		var dir := Vector2(0.0, -1.0)
 		if to_left < to_top and to_left <= to_right:
@@ -1171,7 +1198,7 @@ func _flee(th: Thief, h: float) -> void:
 	var tile: Tile = _by_id.get(th.carrying_id)
 	if tile != null:
 		tile.pos = th.pos
-	if th.pos.y < 0.0 or th.pos.x < 0.0 or th.pos.x > 1.0:
+	if th.pos.y < 0.0 or th.pos.x < 0.0 or th.pos.x > _w():
 		var tile_id := th.carrying_id
 		var ch := ""
 		if tile != null:
@@ -1196,8 +1223,8 @@ func _drift_back(t: Tile, h: float) -> void:
 	if t.pos.x < r:
 		t.pos.x = r
 		t.vel.x = absf(t.vel.x)
-	elif t.pos.x > 1.0 - r:
-		t.pos.x = 1.0 - r
+	elif t.pos.x > _w() - r:
+		t.pos.x = _w() - r
 		t.vel.x = -absf(t.vel.x)
 	var top := _num("field.topMargin") + r
 	var bottom := _num("field.height") - r
@@ -1435,7 +1462,7 @@ func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
 	var tile: Tile = _by_id.get(tile_id)
 	if tile != null:
 		tile.carried_by = -1
-		tile.pos = Vector2(clampf(pos.x, tile.radius, 1.0 - tile.radius), clampf(pos.y, _num("field.topMargin") + tile.radius, _num("field.height") - tile.radius))
+		tile.pos = Vector2(clampf(pos.x, tile.radius, _w() - tile.radius), clampf(pos.y, _num("field.topMargin") + tile.radius, _num("field.height") - tile.radius))
 		_drop_to_anchor(tile)
 	else:
 		tile_id = -1

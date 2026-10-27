@@ -169,7 +169,7 @@ func test_gust_never_down_and_letters_stay_in_the_field() -> void:
 			for t in r.tiles:
 				if t.plane < 2:
 					# The body offset is clamped so a gust never takes an anchored letter's centre out of the field.
-					assert_true(t.pos.x >= -1e-6 and t.pos.x <= 1.0 + 1e-6, "x in field")
+					assert_true(t.pos.x >= -1e-6 and t.pos.x <= float(_tun["field.width"]) + 1e-6, "x in field")
 					assert_true(t.pos.y >= float(_tun["field.topMargin"]) - 1e-6 and t.pos.y <= float(_tun["field.height"]) + 1e-6, "y in field")
 	assert_true(gusts >= 3, "gusts happened")
 
@@ -282,7 +282,7 @@ func test_scramble_moves_letters_inside_the_field_and_blocks_catches() -> void:
 		assert_true(m["to"] == t.pos, "to is the new spot")
 		if t.pos != before[t.id]:
 			moved += 1
-		assert_true(t.pos.x >= 0.0 and t.pos.x <= 1.0, "x in field")
+		assert_true(t.pos.x >= 0.0 and t.pos.x <= float(_tun["field.width"]), "x in field")
 		assert_true(t.pos.y >= float(_tun["field.topMargin"]) and t.pos.y <= float(_tun["field.height"]), "y in field")
 		assert_true(t.landing > 0.0, "uncatchable")
 		assert_false(r.fire(t.id), "fire refused meanwhile")

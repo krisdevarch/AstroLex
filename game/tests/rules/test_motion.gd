@@ -53,10 +53,11 @@ func test_side_spawn_share_and_positions() -> void:
 		assert_true(th != null, "spawned")
 		var ev: Array = r.drain_events().filter(func(e): return e["type"] == "thief_spawn")
 		var p: Vector2 = ev[0]["pos"]
-		if p.x == 0.0 or p.x == 1.0:
+		var w := float(_tun["field.width"])
+		if p.x == 0.0 or absf(p.x - w) < 1e-5:  # Vector2 stores float32, the tunable is float64
 			sides += 1
 			lefts += 1 if p.x == 0.0 else 0
-			rights += 1 if p.x == 1.0 else 0
+			rights += 1 if absf(p.x - w) < 1e-5 else 0
 			assert_true(p.y >= top and p.y <= max_y + 1e-6, "side y in the upper band")
 		else:
 			assert_true(absf(p.y - top) < 1e-5, "top spawn on the top margin")
@@ -155,7 +156,7 @@ func _types(evs: Array) -> Array:
 func test_anchor_layout_is_a_honeycomb_inside_the_field() -> void:
 	var r := _make(1)
 	var n: int = r.anchor_count()
-	assert_eq(n, 17, "anchor count at the default tunables: 5 rows of 4/3/4/3/4 less the one under Babel's porthole")
+	assert_eq(n, 22, "anchor count at the default tunables: 5 rows of 5/4/5/4/5 less the one under Babel's porthole")
 	var clear := Vector2(float(_tun["anchors.clearX"]), float(_tun["anchors.clearY"]))
 	for i in n:
 		assert_true(r.anchor_pos(i).distance_to(clear) >= float(_tun["anchors.clearRadius"]) + float(_tun["tile.size"]) * 0.5, "no anchor under the porthole")
@@ -164,11 +165,33 @@ func test_anchor_layout_is_a_honeycomb_inside_the_field() -> void:
 	var closest := INF
 	for i in n:
 		var a: Vector2 = r.anchor_pos(i)
-		assert_true(a.x >= inset - 1e-6 and a.x <= 1.0 - inset + 1e-6, "anchor %d x inside" % i)
+		assert_true(a.x >= inset - 1e-6 and a.x <= float(_tun["field.width"]) - inset + 1e-6, "anchor %d x inside" % i)
 		assert_true(a.y >= float(_tun["field.topMargin"]) + inset - 1e-6 and a.y <= float(_tun["field.height"]) - inset + 1e-6, "anchor %d y inside" % i)
 		for j in range(i + 1, n):
 			closest = minf(closest, a.distance_to(r.anchor_pos(j)))
-	assert_true(absf(closest - spacing) < 1e-6, "neighbouring anchors sit one spacing apart: %f" % closest)
+	assert_true(closest >= spacing - 1e-6, "neighbouring anchors sit at least one spacing apart: %f" % closest)
+	# Spread: the lattice reaches both side walls and the top and bottom of the field (edge anchors at the inset plus bodyRoom).
+	var lat := inset + float(_tun["anchors.bodyRoom"])
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for i in n:
+		lo = Vector2(minf(lo.x, r.anchor_pos(i).x), minf(lo.y, r.anchor_pos(i).y))
+		hi = Vector2(maxf(hi.x, r.anchor_pos(i).x), maxf(hi.y, r.anchor_pos(i).y))
+	assert_true(absf(lo.x - lat) < 1e-6 and absf(hi.x - (float(_tun["field.width"]) - lat)) < 1e-6, "columns span the width")
+	assert_true(absf(lo.y - (float(_tun["field.topMargin"]) + lat)) < 1e-6 and absf(hi.y - (float(_tun["field.height"]) - lat)) < 1e-6, "rows span the height")
+
+
+func test_plain_decoys_never_make_a_third_copy() -> void:
+	for sd in 30:
+		var r := _make(sd + 1)
+		var counts := {}
+		for t in r.tiles:
+			if t.plane < 2 and t.alive:
+				counts[t.ch] = int(counts.get(t.ch, 0)) + 1
+		var need: Dictionary = r._needed_counts()
+		for c in counts:
+			var allowed: int = maxi(int(_tun["spawner.maxCopies"]), int(need.get(c, 0)))
+			assert_true(int(counts[c]) <= allowed, "seed %d: %d copies of %s (allowed %d)" % [sd + 1, int(counts[c]), c, allowed])
 
 
 func test_spacing_keeps_offset_letters_apart() -> void:
@@ -516,7 +539,7 @@ func test_ripple_pushes_neighbours_out_then_they_settle() -> void:
 				if away.dot((t.pos - c).normalized()) > 0.0:
 					peak = maxf(peak, away.length())
 	assert_true(peak > 0.003, "a neighbour bobbed outward: %f" % peak)
-	assert_true(peak <= float(_tun["anchors.maxOffset"]) + 1e-9, "never beyond maxOffset")
+	assert_true(peak <= float(_tun["anchors.maxOffset"]) + 1e-6, "never beyond maxOffset (float32 positions)")
 	for _i in 240:
 		r.step(DT)
 	for t: RefCounted in near:
@@ -581,7 +604,7 @@ func test_spawn_event_names_the_entry_side() -> void:
 		var th := _spawned_thief(r)
 		var ev: Array = r.drain_events().filter(func(e): return e["type"] == "thief_spawn")
 		var p: Vector2 = ev[0]["pos"]
-		var want := -1 if p.x == 0.0 else (1 if p.x == 1.0 else 0)
+		var want := -1 if p.x == 0.0 else (1 if absf(p.x - float(_tun["field.width"])) < 1e-5 else 0)
 		assert_eq(int(ev[0]["entry"]), want, "event entry matches the edge")
 		assert_eq(th.entry, want, "thief keeps its entry after it moves")
 
