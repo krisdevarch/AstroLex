@@ -154,6 +154,7 @@ var _ft: float = FIELD_TOP  # screen y of the field top (field y = topMargin)
 var _field_x: float = 0.0  # screen x of the field left edge (the field is centred)
 var _time: float = 0.0
 var _ap_timer: float = 0.0
+var _ap_interval_v: float = -1.0  # seconds between autoplay taps; the web query ?tap=<sec> slows the bot for evidence clips
 var _views: Dictionary = {}  # tile_id -> TileView
 var _pending: Dictionary = {}  # Vector2i(absolute word, slot) -> true while a caught tile flies
 var _view_word: int = 0
@@ -167,6 +168,7 @@ var _babel_shown: String = ""  # the last_babel line already handed to the porth
 var _pulse_t: float = 99.0
 var _tether_fade: float = 0.0
 var _tether_end: Vector2 = Vector2.ZERO
+var _ripples: Array = []  # [RippleRing, seconds elapsed] landing ripples (WP-F.21)
 var _fx: Array = []  # [node, ttl]
 var _thief_views: Dictionary = {}  # thief_id -> ThiefView
 var _floats: Array = []  # [Label, age] floating "-1 s" texts
@@ -827,9 +829,21 @@ func _pose_intro() -> void:
 
 # --- autoplay --------------------------------------------------------------------------
 
+## Seconds between autoplay taps: autoplay.tapInterval, or ?tap=<sec> on the web (slower bot for filming hops).
+func _ap_interval() -> float:
+	if _ap_interval_v < 0.0:
+		_ap_interval_v = _n("autoplay.tapInterval")
+		if OS.has_feature("web"):
+			var q := str(JavaScriptBridge.eval("window.location.search")).trim_prefix("?")
+			for part: String in q.split("&"):
+				if part.begins_with("tap=") and part.substr(4).is_valid_float() and float(part.substr(4)) > 0.0:
+					_ap_interval_v = maxf(0.05, float(part.substr(4)))
+	return _ap_interval_v
+
+
 func _autoplay_tick(delta: float) -> void:
 	_ap_timer += delta
-	if _ap_timer < _n("autoplay.tapInterval"):
+	if _ap_timer < _ap_interval():
 		return
 	if game_round.state != "play" or not game_round.shot.is_empty():
 		return
@@ -998,7 +1012,71 @@ func _unpend_for(id: int) -> void:
 		_fly_keys.erase(id)
 
 
+## WP-F.21: the letter nearest where the shot ended flinches (not in reduced motion).
+func _flinch_nearest(aim: Vector2) -> void:
+	if settings.reduced_motion:
+		return
+	var best: TileViewScript = null
+	var bd := INF
+	for id in _views:
+		var v: TileViewScript = _views[id]
+		if v.anim != "" or v.is_star:
+			continue
+		var d := v.position.distance_squared_to(aim)
+		if d < bd:
+			bd = d
+			best = v
+	if best != null:
+		best.flinch()
+
+
+## The landing ripple: an expanding, fading ring from the landing point.
+class RippleRing extends Node2D:
+	var radius: float = 0.0
+	var alpha: float = 0.0
+	var colour: Color = Color.WHITE
+
+	func _draw() -> void:
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 40, Color(colour.r, colour.g, colour.b, alpha), 5.0, true)
+
+
+func _add_ripple(at: Vector2) -> void:
+	var r := RippleRing.new()
+	r.name = "HopRipple"
+	r.position = at
+	r.colour = tether_colour
+	_fx_layer.add_child(r)
+	_ripples.append([r, 0.0])
+
+
+func _tick_ripples(delta: float) -> void:
+	var sec := maxf(0.05, _n("hop.ringSec"))
+	var i := _ripples.size() - 1
+	while i >= 0:
+		var rp: Array = _ripples[i]
+		rp[1] = float(rp[1]) + delta
+		var u := clampf(float(rp[1]) / sec, 0.0, 1.0)
+		var node: Node2D = rp[0]
+		node.radius = _n("hop.ringPx") * _scale * (1.0 - pow(1.0 - u, 2.0))
+		node.alpha = 0.45 * (1.0 - u)
+		node.queue_redraw()
+		if u >= 1.0:
+			node.queue_free()
+			_ripples.remove_at(i)
+		i -= 1
+
+
+## Tether colour: the Catcher colour warms toward coral with the combo (tether.comboWarm).
+func warm_tether_colour() -> Color:
+	var cmax := _n("combo.max")
+	var k := 0.0
+	if cmax > 1.0:
+		k = clampf((game_round.combo - 1.0) / (cmax - 1.0), 0.0, 1.0)
+	return tether_colour.lerp(Color(1.0, 0.42, 0.21), k * _n("tether.comboWarm"))
+
+
 func _update_tether(delta: float) -> void:
+	_tick_ripples(delta)
 	var shot: Dictionary = game_round.shot
 	if not shot.is_empty():
 		var u := clampf(float(shot["elapsed"]) / float(shot["dur"]), 0.0, 1.0)
@@ -1007,6 +1085,7 @@ func _update_tether(delta: float) -> void:
 		_tether_end = to_screen(a.lerp(b, u))
 		_tether_fade = TETHER_FADE
 		_tether.visible = true
+		_tether.default_color = warm_tether_colour()
 		_tether.modulate.a = 1.0
 		_tether.points = PackedVector2Array([to_screen(a), _tether_end])
 	elif _tether_fade > 0.0:
@@ -1049,6 +1128,21 @@ func _apply_events() -> void:
 				_buzz(60)
 			"escape":
 				_show_toast("It drifted off", Ui.DIM)
+				_flinch_nearest(_tether_end)
+			"hop_tell":
+				var tv: TileViewScript = _views.get(int(e["tile_id"]))
+				if tv != null:
+					tv.hop_tell(_n("hop.windSec"))
+			"hop":
+				var hv2: TileViewScript = _views.get(int(e["tile_id"]))
+				if hv2 != null:
+					hv2.hop(to_screen(e["from"]), float(e.get("sec", _n("hop.flySec"))))
+			"hop_land":
+				var lv: TileViewScript = _views.get(int(e["tile_id"]))
+				if lv != null:
+					lv.hop_land()
+					if not settings.reduced_motion:
+						_add_ripple(lv.position)
 			"counterfeit":
 				var fv: TileViewScript = _views.get(int(e["tile_id"]))
 				if fv != null:
@@ -1149,7 +1243,7 @@ func _on_catch(e: Dictionary) -> void:
 	if _fly_layer != null and v.get_parent() != _fly_layer:
 		v.reparent(_fly_layer, false)
 	v.fly_to(target, slot_px, _n("fx.flyToSlotSec"))
-	_burst(target, tether_colour.lightened(0.3))
+	_burst(target, warm_tether_colour().lightened(0.3))
 	if where == "active":
 		sfx.catch_note(slot)
 	else:
