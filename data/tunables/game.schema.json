@@ -41,6 +41,7 @@
     "tap.driftMarginMul",
     "drift.speed",
     "spawner.decoys",
+    "spawner.maxCopies",
     "spawner.decoyRatio",
     "spawner.frontShare",
     "spawner.wordsPerLevel",
@@ -66,6 +67,7 @@
     "babel.swayAmp",
     "babel.recoilPx",
     "sim.stepSec",
+    "field.width",
     "field.height",
     "field.topMargin",
     "tile.size",
@@ -264,6 +266,11 @@
       "minimum": 0,
       "description": "decoys on the board in round 1"
     },
+    "spawner.maxCopies": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "most copies of one letter a plain decoy may bring the field to (needed letters, counterfeits and trap letters are not capped); 0 turns the cap off"
+    },
     "spawner.decoyRatio": {
       "type": "number",
       "minimum": 0,
@@ -389,10 +396,15 @@
       "minimum": 0,
       "description": "fixed simulation step in seconds"
     },
+    "field.width": {
+      "type": "number",
+      "minimum": 0.5,
+      "description": "field width in field units; the view fits width x (height - topMargin) to the screen with one scale, so 1.33 spans a 1080x1920 screen edge to edge"
+    },
     "field.height": {
       "type": "number",
       "minimum": 0,
-      "description": "field height in field units (width is 1.0)"
+      "description": "field height in field units"
     },
     "field.topMargin": {
       "type": "number",

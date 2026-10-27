@@ -308,8 +308,9 @@ func _build_once() -> void:
 	view_size.y = maxf(view_size.y, 1600.0)
 	var avail := view_size.y - FIELD_BOTTOM_UP - FIELD_TOP
 	var span := _n("field.height") - _n("field.topMargin")
-	_scale = minf(view_size.x, avail / span)
-	_field_x = (view_size.x - _scale) * 0.5
+	var width := _n("field.width")
+	_scale = minf(view_size.x / width, avail / span)
+	_field_x = (view_size.x - width * _scale) * 0.5
 	_ft = FIELD_TOP + (avail - span * _scale) * 0.5
 	_build_world()
 	_build_hud()
