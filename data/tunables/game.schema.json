@@ -44,6 +44,8 @@
     "spawner.decoys",
     "spawner.maxCopies",
     "spawner.decoyRatio",
+    "spawner.refill",
+    "spawner.refillDelay",
     "spawner.frontShare",
     "spawner.wordsPerLevel",
     "score.letterValue",
@@ -278,6 +280,17 @@
       "type": "number",
       "minimum": 0,
       "description": "decoys kept per real catchable letter on the board; the floor is spawner.decoys"
+    },
+    "spawner.refill": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: the letters on the field stay as many as the two words' letters plus their decoys, so a caught letter is replaced (by a decoy on its own spot); 0: decoys follow the real letters left and the field thins out"
+    },
+    "spawner.refillDelay": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds after a right catch before the replacement letter appears on the caught letter's spot (0: at once)"
     },
     "spawner.frontShare": {
       "type": "number",

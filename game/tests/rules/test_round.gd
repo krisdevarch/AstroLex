@@ -279,6 +279,7 @@ func test_wrong_catch_surplus_when_letter_is_in_word_but_no_open_slot() -> void:
 				break
 	assert_true(ch != "")
 	_catch(r, _first_real(r, ch))
+	r.step(1.0)  # the refill (and its surplus trim) follows the catch after spawner.refillDelay (WP-F.25)
 	var extra = r._spawn(ch, true, 0)
 	extra.landing = 0.0  # already landed (WP-F.18: a mid-round spawn flies in first)
 	r.drain_events()
@@ -307,6 +308,7 @@ func test_surplus_real_copy_and_word_letter_decoy_dissolve_after_next_catch() ->
 	var decoy_extra = r._spawn(first, true, 1)
 	r.drain_events()
 	_catch(r, _first_real(r, first))
+	r.step(1.0)  # the refill (and its surplus trim) follows the catch after spawner.refillDelay (WP-F.25)
 	var dissolved := _of_type(r.drain_events(), "dissolve")
 	var ids := []
 	for d in dissolved:
@@ -314,12 +316,13 @@ func test_surplus_real_copy_and_word_letter_decoy_dissolve_after_next_catch() ->
 	assert_true(ids.has(real_extra.id), "extra real copy dissolved")
 	assert_true(ids.has(decoy_extra.id), "decoy of a word letter dissolved (letter first is now filled)")
 	assert_false(r.tiles.has(real_extra))
-	# decoy count is topped back up
+	# decoy count is topped back up: the field stays as full as it started (WP-F.25), so the caught
+	# letter is made up for by a fifth decoy (8 word letters + 4 decoys = 12 = 7 real + 5 decoys).
 	var decoys := 0
 	for t in r.tiles:
 		if t.plane < 2 and t.decoy:
 			decoys += 1
-	assert_eq(decoys, 4)
+	assert_eq(decoys, 5)
 
 
 func test_real_copies_dissolve_before_decoys_of_the_same_letter() -> void:

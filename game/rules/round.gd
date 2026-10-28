@@ -139,6 +139,8 @@ var _shown: Dictionary = {}
 var _thief_by_id: Dictionary = {}
 var _next_thief_at: float = INF
 var _pending_respawn: Array[Dictionary] = []
+var _refill_anchor: int = -1  # WP-F.25: the anchor a caught letter left; the next spawn takes it
+var _letters_target: int = 0  # WP-F.25: catchable letters the field keeps all round (first two words + their decoys)
 
 
 static func create(tunables: Dictionary, content: Dictionary, act_key: String, seed_value_in: int, round_number: int = 1, mods: Array = []) -> Self:
@@ -555,6 +557,7 @@ func _anchor_demand() -> int:
 	for i in mini(2, words.size()):
 		real += words[i].length()
 	var decoys := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	_letters_target = real + decoys
 	return real + decoys + int(_num("anchors.spare")) + 1
 
 
@@ -576,6 +579,12 @@ func _free_count() -> int:
 
 ## The free anchor farthest from the occupied ones (ties broken from the spawn rng); -1 when none is free.
 func _pick_anchor() -> int:
+	# WP-F.25: a letter made after a catch takes the caught letter's own spot.
+	if _refill_anchor >= 0 and _refill_anchor < _owner.size() and _owner[_refill_anchor] < 0:
+		var i := _refill_anchor
+		_refill_anchor = -1
+		return i
+	_refill_anchor = -1
 	# WP-F.24: fill from the middle out, so the letters sit as one tidy block and the spare anchors are the corners.
 	var best := INF
 	var ties: Array[int] = []
@@ -835,6 +844,11 @@ func _ensure_decoys() -> void:
 			elif t.alive:
 				real += 1
 	var want := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	if _num("spawner.refill") >= 1.0:
+		# WP-F.25 (owner: "always replace the letters when guessed"): the letters on the field stay as many as
+		# the round started with (the first two words' letters plus their decoys, _letters_target), so every
+		# caught real letter is made up for by a decoy, on the last word too.
+		want = mini(int(_num("ramp.decoyMax")), maxi(want, _letters_target - real))
 	# Babel's counter-word: its letters are decoys too, made again until the trap has gone off.
 	var trap_missing: Array[String] = []
 	var trap_len := 0
@@ -1571,12 +1585,18 @@ func _resolve_hit(tile: Tile, target: Vector2) -> void:
 	var slots: Array[Dictionary] = active if where == "active" else preview
 	slots[idx]["filled"] = true
 	combo = minf(_num("combo.max"), combo + _num("combo.step"))
+	var spot := tile.anchor
 	_remove(tile)
 	_ripple(tile.pos, tile.id)
 	_emit({"type": "catch", "tile_id": tile.id, "where": where, "slot": idx, "ch": tile.ch, "pos": tile.pos})
 	if _all_filled(active):
 		_restore_words()
+	elif _num("spawner.refill") >= 1.0 and _num("spawner.refillDelay") > 0.0:
+		# WP-F.25: the caught letter's spot is filled again a moment later (a new decoy, or a needed letter).
+		_refill_anchor = spot
+		_pending_respawn.append({"ch": "", "t": _num("spawner.refillDelay")})
 	else:
+		_refill_anchor = spot
 		_refill()
 
 
