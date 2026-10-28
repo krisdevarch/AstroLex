@@ -32,6 +32,7 @@ AstroLex is a mobile word game. Letter tiles drift in space, and the player teth
 | 8 Oct | #15, #18 | Playtest monitoring: Send or Copy results, dashboard; wrong catches split into surplus and unneeded |
 | 8 Oct | #21 | Word hints in the slots: all letters, first and last (default), or none |
 | 26 Oct | WP-F.21 | Anchored drift: letters on a honeycomb of anchors (never overlapping), a swaying field, telegraphed hops, spring ripples |
+| 28 Oct | WP-F.24 | Aligned grid sized to the round, letters gather mid-field, hops fill the innermost hole; wrong-catch counter pill; the view interpolates between fixed steps |
 
 PR #8 (the Swift TestFlight loop) is still open. Its upload half gets reworked for Godot iOS exports when iOS starts.
 

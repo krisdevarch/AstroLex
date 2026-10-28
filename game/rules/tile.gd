@@ -7,6 +7,7 @@ var ch: String = ""
 var decoy: bool = false
 var plane: int = 0
 var pos: Vector2 = Vector2.ZERO
+var prev_pos: Vector2 = Vector2.ZERO  # where the last fixed step left it (WP-F.24: the view interpolates)
 var alive: bool = true
 ## Draw radius in field units (tile.size * plane scale / 2); also the bounce inset.
 var radius: float = 0.0

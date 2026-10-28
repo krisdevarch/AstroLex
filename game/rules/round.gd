@@ -236,6 +236,21 @@ func step(dt: float) -> void:
 		_tick(h)
 
 
+## WP-F.24: how far the real clock is into the next fixed step (0..1). The view draws every tile between
+## where the last step left it and where it is now, so motion is even whatever the frame rate.
+func frame_alpha() -> float:
+	var h := _num("sim.stepSec")
+	return clampf(_acc / h, 0.0, 1.0) if h > 0.0 else 1.0
+
+
+## Where the view should draw tile t this frame: between its two latest positions by frame_alpha().
+## Tiles a drone carries, letters landing from Babel and back-plane shards drift the same way.
+func view_pos(t: Tile) -> Vector2:
+	if state != "play":
+		return t.pos
+	return t.prev_pos.lerp(t.pos, frame_alpha())
+
+
 ## Starts a shot at the tile, or queues one while another is in flight. False when the tile
 ## cannot be caught (unknown, gone, back plane, round over, already the target or queued).
 func fire(tile_id: int) -> bool:
@@ -454,6 +469,7 @@ func _spawn(ch: String, decoy: bool, plane: int) -> Tile:
 	else:
 		# No anchor anywhere (more real letters than anchors): sit mid-field and let separation sort it out.
 		tile.pos = Vector2(_w() * 0.5, (_num("field.topMargin") + _num("field.height")) * 0.5)
+	tile.prev_pos = tile.pos
 	if float(stats.get("secs", 0.0)) > 0.0:
 		tile.landing = _num("babel.throwSec")
 	tiles.append(tile)
@@ -474,40 +490,32 @@ func _build_anchors() -> void:
 	# The lattice stops anchors.bodyRoom short of the walls so the sway and the gust have room to move it.
 	var lat := inset + _num("anchors.bodyRoom")
 	var clear := Vector2(_num("anchors.clearX"), _num("anchors.clearY"))
-	# Rows and columns are spread evenly over the whole field (pitch at least the spacing), so the
-	# lattice reaches every edge instead of hugging the top-left corner. The lattice is sized to the
-	# round: as few rows and columns as hold this round's letters, decoys and spare spots, picked for the
-	# most honeycomb-like pitch, so a short-word level spreads its few letters over the whole field.
+	var keep_out := _num("anchors.clearRadius") + _num("tile.size") * 0.5
+	# WP-F.24: an aligned grid (rows and columns line up, no half-row offset), so the field reads as tidy
+	# rows of letters. Rows and columns are spread evenly over the whole field (pitch at least the spacing).
+	# The grid is sized to the round: as few rows and columns as hold this round's letters, decoys and spare
+	# spots (counting the spots Babel's porthole takes away), picked for the squarest cells.
 	var span_x := _w() - 2.0 * lat
 	var span_y := _num("field.height") - _num("field.topMargin") - 2.0 * lat
 	var max_cols := maxi(2, int(floorf(span_x / spacing + EPS)) + 1)
-	var max_rows := maxi(2, int(floorf(span_y / (spacing * sqrt(3.0) * 0.5) + EPS)) + 1)
+	var max_rows := maxi(2, int(floorf(span_y / spacing + EPS)) + 1)
 	var want := _anchor_demand()
-	var cols := max_cols
-	var rows := max_rows
+	var best: Array = []
 	var best_err := INF
 	for c in range(2, max_cols + 1):
 		for r in range(2, max_rows + 1):
-			var cap := c * r - int(r / 2)  # odd rows hold one fewer
-			if cap < want and not (c == max_cols and r == max_rows):
+			var pts := _grid_points(c, r, lat, span_x, span_y, clear, keep_out)
+			if pts.size() < want and not (c == max_cols and r == max_rows):
 				continue
-			var ratio := (span_y / float(r - 1)) / (span_x / float(c - 1))
-			var err := absf(ratio - sqrt(3.0) * 0.5) + 0.02 * float(maxi(0, cap - want))
+			var pitch_x := span_x / float(c - 1)
+			var pitch_y := span_y / float(r - 1)
+			var err := absf(pitch_y - pitch_x) / spacing + 0.1 * float(maxi(0, pts.size() - want))  # squarest cells, fewest spare anchors
 			if err < best_err:
 				best_err = err
-				cols = c
-				rows = r
-	var pitch_x := span_x / float(cols - 1)
-	var pitch_y := span_y / float(rows - 1)
-	for row in rows:
-		var y := _num("field.topMargin") + lat + pitch_y * float(row)
-		var n := cols - 1 if row % 2 == 1 else cols  # odd rows sit between the columns above
-		for c in n:
-			var x := lat + pitch_x * float(c) + (pitch_x * 0.5 if row % 2 == 1 else 0.0)
-			# No anchor under Babel's porthole (anchors.clear* mirror babel.corner* in field units).
-			if Vector2(x, y).distance_to(clear) >= _num("anchors.clearRadius") + _num("tile.size") * 0.5:
-				_anchors.append(Vector2(x, y))
-				_owner.append(-1)
+				best = pts
+	for a in best:
+		_anchors.append(a)
+		_owner.append(-1)
 	if _anchors.is_empty():
 		return
 	var lo := _anchors[0]
@@ -518,6 +526,26 @@ func _build_anchors() -> void:
 	# The body may move the lattice only as far as keeps every anchored tile (edge plus its offset) in the field.
 	_body_lo = Vector2(inset - lo.x, _num("field.topMargin") + inset - lo.y)
 	_body_hi = Vector2(_w() - inset - hi.x, _num("field.height") - inset - hi.y)
+
+
+## The anchors of a cols x rows grid over the field, in reading order, minus any under Babel's porthole
+## (anchors.clear* mirror babel.corner* in field units).
+func _grid_points(cols: int, rows: int, lat: float, span_x: float, span_y: float, clear: Vector2, keep_out: float) -> Array:
+	var pts: Array = []
+	var pitch_x := span_x / float(cols - 1)
+	var pitch_y := span_y / float(rows - 1)
+	for row in rows:
+		var y := _num("field.topMargin") + lat + pitch_y * float(row)
+		for c in cols:
+			var p := Vector2(lat + pitch_x * float(c), y)
+			if p.distance_to(clear) >= keep_out:
+				pts.append(p)
+	return pts
+
+
+## The middle of the field, where the letters gather: new letters and hops take the free anchor nearest it.
+func field_centre() -> Vector2:
+	return Vector2(_w() * 0.5, (_num("field.topMargin") + _num("field.height")) * 0.5)
 
 
 ## Anchors this round needs: the first two words' letters, the decoys they bring, anchors.spare free spots
@@ -548,19 +576,18 @@ func _free_count() -> int:
 
 ## The free anchor farthest from the occupied ones (ties broken from the spawn rng); -1 when none is free.
 func _pick_anchor() -> int:
-	var best := -1.0
+	# WP-F.24: fill from the middle out, so the letters sit as one tidy block and the spare anchors are the corners.
+	var best := INF
 	var ties: Array[int] = []
+	var centre := field_centre()
 	for i in _anchors.size():
 		if _owner[i] >= 0:
 			continue
-		var score := 1e9
-		for j in _anchors.size():
-			if _owner[j] >= 0:
-				score = minf(score, _anchors[i].distance_to(_anchors[j]))
-		if score > best + EPS:
+		var score := _anchors[i].distance_to(centre)
+		if score < best - EPS:
 			best = score
 			ties = [i]
-		elif score >= best - EPS:
+		elif score <= best + EPS:
 			ties.append(i)
 	if ties.is_empty():
 		return -1
@@ -865,6 +892,8 @@ func _remove(t: Tile) -> void:
 
 func _tick(h: float) -> void:
 	stats["secs"] = float(stats["secs"]) + h
+	for t: Tile in tiles:
+		t.prev_pos = t.pos
 	_tick_jam()
 	_tick_moves()
 	for t: Tile in tiles.duplicate():
@@ -996,7 +1025,7 @@ func _decoy_room() -> int:
 	for t: Tile in tiles:
 		if t.plane < 2 and t.decoy:
 			n += 1
-	return mini(int(_num("ramp.decoyMax")) - n, _free_count())
+	return maxi(0, mini(int(_num("ramp.decoyMax")) - n, _free_count()))
 
 
 func _tick_moves() -> void:
@@ -1112,6 +1141,7 @@ func _scramble() -> void:
 		t.anchor = slots[k]
 		_owner[t.anchor] = t.id
 		t.pos = _rest_pos(t, t.anchor)
+		t.prev_pos = t.pos  # a jump the view animates itself: nothing to interpolate
 		t.landing = maxf(t.landing, _num("babel.scrambleSec"))
 		moves.append({"tile_id": t.id, "from": from, "to": t.pos})
 	_emit({"type": "babel_move", "move": "scramble", "moves": moves, "sec": _num("babel.scrambleSec")})
@@ -1377,25 +1407,43 @@ func _start_hop() -> void:
 	for th: Thief in thieves:
 		targeted[th.target_id] = true
 		targeted[th.carrying_id] = true
-	var pairs: Array[Vector2i] = []
+	# WP-F.24: the hole nearest the middle is filled first, by a letter from further out when there is one
+	# (the block of letters stays compact), else by the eligible letter nearest the hole (a short, local hop).
+	var centre := field_centre()
+	var to := -1
+	var to_d := INF
+	for j in _anchors.size():
+		if _owner[j] < 0 and _anchors[j].distance_to(centre) < to_d - EPS:
+			to_d = _anchors[j].distance_to(centre)
+			to = j
+	if to < 0:
+		return
+	var outer: Array[int] = []
+	var near: Array[int] = []
+	var near_d := INF
 	for t: Tile in tiles:
 		if t.plane >= 2 or t.decoy or not t.alive or t.carried_by >= 0 or t.anchor < 0 or t.hop_to >= 0 or t.landing > 0.0 or t.shield_t > 0.0:
 			continue
 		if t.id == shot_id or t.id == queued_id or t.id == _hinted_id or targeted.has(t.id):
 			continue
-		for j in _anchors.size():
-			if _owner[j] < 0:
-				pairs.append(Vector2i(t.id, j))
-	if pairs.is_empty():
+		if _anchors[t.anchor].distance_to(centre) > to_d + EPS:
+			outer.append(t.id)
+		var d := _anchors[t.anchor].distance_to(_anchors[to])
+		if d < near_d - EPS:
+			near_d = d
+			near = [t.id]
+		elif d <= near_d + EPS:
+			near.append(t.id)
+	var from: Array[int] = outer if not outer.is_empty() else near
+	if from.is_empty():
 		return
-	var pick := pairs[_hop_rng.randi_range(0, pairs.size() - 1)]
-	var tile: Tile = _by_id[pick.x]
-	tile.hop_to = pick.y
+	var tile: Tile = _by_id[from[_hop_rng.randi_range(0, from.size() - 1)]]
+	tile.hop_to = to
 	tile.hop_wind = _num("hop.windSec")
 	tile.hop_air = false
 	tile.hop_t = 0.0
-	_owner[pick.y] = tile.id  # reserved until it lands
-	_emit({"type": "hop_tell", "tile_id": tile.id, "to": pick.y})
+	_owner[to] = tile.id  # reserved until it lands
+	_emit({"type": "hop_tell", "tile_id": tile.id, "to": to})
 	if tile.hop_wind <= EPS:
 		_takeoff(tile)
 
@@ -1491,6 +1539,7 @@ func _resolve_thief_hit(thief_id: int, target: Vector2) -> void:
 	if tile != null:
 		tile.carried_by = -1
 		tile.pos = Vector2(clampf(pos.x, tile.radius, _w() - tile.radius), clampf(pos.y, _num("field.topMargin") + tile.radius, _num("field.height") - tile.radius))
+		tile.prev_pos = tile.pos
 		_drop_to_anchor(tile)
 	else:
 		tile_id = -1

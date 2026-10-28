@@ -15,7 +15,7 @@ func _max_gap(f: Node2D) -> float:
 	var worst := 0.0
 	for t in f.game_round.tiles:
 		var v: Node2D = f._views[t.id]
-		worst = maxf(worst, v.position.distance_to(f.to_screen(t.pos)))
+		worst = maxf(worst, v.position.distance_to(f.to_screen(f.game_round.view_pos(t))))  # the view draws between the last two steps (WP-F.24)
 	return worst
 
 
