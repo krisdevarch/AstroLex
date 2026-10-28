@@ -131,6 +131,9 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	_mat.set_shader_parameter("gloss", float(_tun.get("glass.gloss", 0.0)))
 	shadow.modulate.a = 0.45  # clear glass casts a faint shadow
 	_mat.set_shader_parameter("max_tilt_deg", maxf(1.0, float(_tun["tile.maxTiltDeg"])))
+	_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
+	_mat.set_shader_parameter("bubble_phase", _phase)
+	_mat.set_shader_parameter("bubble_drift", 0.0 if reduced_motion else 0.4)
 	body.light_mask = 2
 	body.material = _mat
 	shadow.texture = TileTextures.shadow(_shadow_corner())
@@ -325,9 +328,8 @@ func place(screen_pos: Vector2, time: float, nx: float) -> void:
 			var pulse := 1.0 + float(_tun.get("tile.pulse", 0.0)) * sin(time * TAU * float(_tun.get("tile.pulseHz", 0.5)) + _phase)
 			body.scale = _body_scale * pulse * Vector2(1.0 + wob, 1.0 - wob) * _squash() * _wind_scale() * life_scale(time)
 			glyph.rotation = _lean()
-			_mat.set_shader_parameter("bubble_time", time + _phase)
+		# WP-F.24: the rim drifts on the shader's own clock (bubble_phase, set once); no per-frame uniform writes.
 		current_tilt = Vector2.ZERO
-		_mat.set_shader_parameter("tilt_deg", Vector2.ZERO)
 		return
 	if not reduced_motion:
 		body.scale = _body_scale * life_scale(time) * _wind_scale() * (_squash() if _fx_squash else Vector2.ONE)  # visual only: the rule position never moves

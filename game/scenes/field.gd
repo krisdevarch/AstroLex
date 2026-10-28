@@ -54,6 +54,7 @@ const SIDE_PAD := 44.0
 const EDGE := 44.0
 const CHIP_Y := 50.0
 const CHIP_H := 80.0
+const MISTAKE_GAP := 14.0  # between the level counter and the wrong-catch counter under it
 const CHIP_MID_W := 356.0  # widest the level name chip grows before its font shrinks
 const FIELD_TOP := 320.0  # top of the play field (below Babel's bubble)
 const FIELD_BOTTOM_UP := 560.0  # bottom of the play field, just above Earth's rim
@@ -155,6 +156,7 @@ var _field_x: float = 0.0  # screen x of the field left edge (the field is centr
 var _time: float = 0.0
 var _ap_timer: float = 0.0
 var _ap_interval_v: float = -1.0  # seconds between autoplay taps; the web query ?tap=<sec> slows the bot for evidence clips
+var _ap_wrong_left: int = 0  # web query ?wrong=<n>: the bot's first n taps catch letters the words do not need (evidence of the counter)
 var _views: Dictionary = {}  # tile_id -> TileView
 var _pending: Dictionary = {}  # Vector2i(absolute word, slot) -> true while a caught tile flies
 var _view_word: int = 0
@@ -173,7 +175,7 @@ var _fx: Array = []  # [node, ttl]
 var _thief_views: Dictionary = {}  # thief_id -> ThiefView
 var _floats: Array = []  # [Label, age] floating "-1 s" texts
 var _clock_label: Label
-var _pips: MistakePips  # wrong catches left before Babel wins the round (burst.maxWrong)
+var _mistakes: MistakeChip  # wrong catches so far, out of burst.maxWrong (WP-F.24: a pill under the level counter)
 var _time_bar: ProgressBar
 var _pause_button: Button
 var _pause_icon: Control
@@ -842,7 +844,22 @@ func _ap_interval() -> float:
 			for part: String in q.split("&"):
 				if part.begins_with("tap=") and part.substr(4).is_valid_float() and float(part.substr(4)) > 0.0:
 					_ap_interval_v = maxf(0.05, float(part.substr(4)))
+				if part.begins_with("wrong=") and part.substr(6).is_valid_int():
+					_ap_wrong_left = maxi(0, int(part.substr(6)))
 	return _ap_interval_v
+
+
+## A catchable letter no slot needs (for ?wrong=<n>), -1 when every letter on the field is needed.
+func _ap_wrong_target() -> int:
+	var need := {}
+	for s in game_round.active:
+		need[s["ch"]] = true
+	for s in game_round.preview:
+		need[s["ch"]] = true
+	for t in game_round.tiles:
+		if t.alive and t.plane < 2 and t.carried_by < 0 and t.landing <= 0.0 and t.shield_t <= 0.0 and not need.has(t.ch):
+			return t.id
+	return -1
 
 
 func _autoplay_tick(delta: float) -> void:
@@ -852,7 +869,13 @@ func _autoplay_tick(delta: float) -> void:
 	if game_round.state != "play" or not game_round.shot.is_empty():
 		return
 	_ap_timer = 0.0
-	var id := Targeting.target(game_round)
+	var id := -1
+	if _ap_wrong_left > 0:
+		id = _ap_wrong_target()
+		if id >= 0:
+			_ap_wrong_left -= 1
+	if id < 0:
+		id = Targeting.target(game_round)
 	if id >= 0:
 		game_round.fire(id)
 
@@ -931,7 +954,7 @@ func _ensure_view(t: Object) -> TileViewScript:
 		v.set_depth(_n("plane.midDim"))
 	if t.kind != "":
 		v.set_kind(t.kind)
-	v.place(to_screen(t.pos), _time, t.pos.x)
+	v.place(to_screen(game_round.view_pos(t)), _time, t.pos.x)
 	_views[t.id] = v
 	return v
 
@@ -945,7 +968,7 @@ func _sync_views() -> void:
 		var v := _ensure_view(t)
 		v.set_jam(game_round.jammed and t.plane < 2, t.decoy)
 		v.sync_shield(float(t.get("shield_t") if t.get("shield_t") != null else 0.0))
-		v.place(to_screen(t.pos), _time, t.pos.x)
+		v.place(to_screen(game_round.view_pos(t)), _time, t.pos.x)  # WP-F.24: between the last two steps, so motion is even at any frame rate
 	for id in _views.keys():
 		var v: TileViewScript = _views[id]
 		if not live.has(id) and v.anim == "":
@@ -1036,29 +1059,92 @@ func _flinch_nearest(aim: Vector2) -> void:
 
 ## The landing ripple: an expanding, fading ring from the landing point.
 ## The mistake pips: one ring per wrong catch the round allows; a used one fills coral.
-class MistakePips extends Control:
+## The wrong-catch counter (WP-F.24, owner: "make counter of wrong moves"): a pill under the level
+## counter with one pip per allowed mistake (used ones coral with a cross) and "n / N". It pops and
+## flashes coral on every wrong catch; with no cap (burst.maxWrong 0) it counts "n wrong".
+class MistakeChip extends Panel:
 	var total: int = 0
 	var used: int = 0
-	const R := 11.0
-	const STEP := 34.0
+	var calm: bool = false
+	const R := 14.0
+	const STEP := 40.0
+	const PAD := 26.0
+	const POP_SEC := 0.45
+	const H := 72.0
+	var _pop_t: float = POP_SEC
+	var _pips: Control
+	var _label: Label
+	var _box: StyleBoxFlat
+	const EDGE := Color(0.72, 0.78, 0.95, 0.55)
+	const CORAL := Color(1.0, 0.5, 0.45)
+
+	func _init() -> void:
+		name = "MistakeChip"
+		_box = Ui.box(Color(0.08, 0.1, 0.2, 0.78), int(H * 0.5), EDGE, 3)
+		_box.shadow_color = Color(0.0, 0.02, 0.08, 0.35)
+		_box.shadow_size = 10
+		add_theme_stylebox_override("panel", _box)
+		_pips = Control.new()
+		_pips.name = "Pips"
+		_pips.draw.connect(_draw_pips)
+		add_child(_pips)
+		_label = Ui.label("", 38, Color("efe8d6"), HORIZONTAL_ALIGNMENT_LEFT)
+		_label.name = "Count"
+		_label.add_theme_constant_override("outline_size", 0)
+		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		add_child(_label)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func set_state(total_in: int, used_in: int) -> void:
+		var was := used
 		total = maxi(0, total_in)
-		used = clampi(used_in, 0, total)
-		custom_minimum_size = Vector2(STEP * float(total), R * 2.0 + 6.0)
-		size = custom_minimum_size
-		queue_redraw()
+		used = clampi(used_in, 0, total) if total > 0 else maxi(0, used_in)
+		var pips_w := STEP * float(total) - (STEP - R * 2.0) if total > 0 else 0.0
+		_pips.position = Vector2(PAD, 0.0)
+		_pips.size = Vector2(pips_w, H)
+		_pips.visible = total > 0
+		var text := ("%d / %d" % [used, total]) if total > 0 else ("%d wrong" % used)
+		_label.text = text
+		var tw := ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 38).x
+		_label.position = Vector2(PAD + pips_w + (18.0 if total > 0 else 0.0), 0.0)
+		_label.size = Vector2(tw + 4.0, H)
+		size = Vector2(_label.position.x + tw + PAD, H)
+		pivot_offset = size * 0.5
+		var last := total > 0 and used >= total - 1
+		_label.add_theme_color_override("font_color", CORAL if last else Color("efe8d6"))
+		_pips.queue_redraw()
+		if used > was:
+			pop()
 
-	func _draw() -> void:
+	## One wrong catch left before the round is lost.
+	func on_last() -> bool:
+		return total > 0 and used == total - 1
+
+	func pop() -> void:
+		_pop_t = 0.0
+
+	func tick(delta: float) -> void:
+		if _pop_t >= POP_SEC:
+			return
+		_pop_t = minf(POP_SEC, _pop_t + delta)
+		var u := _pop_t / POP_SEC
+		var k := 0.0 if calm else sin(PI * u) * (1.0 - 0.5 * u)
+		scale = Vector2.ONE * (1.0 + 0.22 * k)
+		_box.border_color = EDGE.lerp(CORAL, (1.0 - u) * (1.0 - u))
+		_box.bg_color = Color(0.08, 0.1, 0.2, 0.78).lerp(Color(0.5, 0.16, 0.18, 0.9), (1.0 - u) * (1.0 - u))
+
+	func _draw_pips() -> void:
 		for i in total:
-			var c := Vector2(R + 3.0 + STEP * float(i), R + 3.0)
+			var c := Vector2(R + STEP * float(i), H * 0.5)
 			if i < used:
-				draw_circle(c, R, Color(1.0, 0.5, 0.45))
-				draw_line(c + Vector2(-5, -5), c + Vector2(5, 5), Color(0.1, 0.05, 0.1), 3.0, true)
-				draw_line(c + Vector2(-5, 5), c + Vector2(5, -5), Color(0.1, 0.05, 0.1), 3.0, true)
+				_pips.draw_circle(c, R, CORAL)
+				_pips.draw_line(c + Vector2(-6, -6), c + Vector2(6, 6), Color(0.1, 0.05, 0.1), 3.5, true)
+				_pips.draw_line(c + Vector2(-6, 6), c + Vector2(6, -6), Color(0.1, 0.05, 0.1), 3.5, true)
 			else:
-				draw_circle(c, R, Color(0.1, 0.16, 0.3, 0.8))
-				draw_arc(c, R, 0.0, TAU, 24, Color(0.46, 0.47, 0.94), 2.5, true)
+				_pips.draw_circle(c, R, Color(0.1, 0.16, 0.3, 0.8))
+				_pips.draw_arc(c, R, 0.0, TAU, 28, Color(0.46, 0.47, 0.94), 3.0, true)
 
 
 class RippleRing extends Node2D:
@@ -1405,9 +1491,10 @@ func _hazard_toast(key: String, text: String) -> void:
 
 
 func _sync_pips() -> void:
-	if _pips != null and game_round != null:
+	if _mistakes != null and game_round != null:
 		var cap := int(_n("burst.maxWrong"))
-		_pips.set_state(cap, cap - maxi(0, game_round.mistakes_left()))
+		var used := cap - maxi(0, game_round.mistakes_left()) if cap > 0 else int(game_round.stats["wrong"]) + int(game_round.stats["counterfeits"])
+		_mistakes.set_state(cap, used)
 
 
 func _show_toast(text: String, color: Color) -> void:
@@ -1766,12 +1853,12 @@ func _build_hud() -> void:
 	_clock_label.pivot_offset = Vector2(CLOCK_LABEL_W, 24)
 	_clock_label.visible = false
 	_hud.add_child(_ignore(_clock_label))
-	# Mistake pips sit over the left end of the clock channel: every wrong catch fills one, the last loses the round.
-	_pips = MistakePips.new()
-	_pips.name = "MistakePips"
-	_pips.set_state(int(_n("burst.maxWrong")), 0)
-	_pips.position = Vector2(ch.position.x + 10.0, ch.position.y - _pips.size.y - 6.0)
-	_hud.add_child(_ignore(_pips))
+	# The wrong-catch counter sits under the level counter, right-aligned with it (WP-F.24).
+	_mistakes = MistakeChip.new()
+	_mistakes.calm = settings.reduced_motion
+	_mistakes.set_state(int(_n("burst.maxWrong")), 0)
+	_mistakes.position = Vector2(w - SIDE_PAD - _mistakes.size.x, CHIP_Y + CHIP_H + MISTAKE_GAP)
+	_hud.add_child(_ignore(_mistakes))
 	_coach = Coach.new()
 	_coach.setup(_tun, settings.reduced_motion, view_size)
 	_hud.add_child(_coach)
@@ -2001,6 +2088,9 @@ func _fill_row(row: Control, where: String, slots: Array[Dictionary]) -> void:
 
 
 func _tick_hud(delta: float) -> void:
+	if _mistakes != null:
+		_mistakes.tick(delta)
+		_mistakes.position.x = view_size.x - SIDE_PAD - _mistakes.size.x  # the pill grows with its count
 	if _refill_t >= 0.0:
 		_refill_t += delta
 		if _refill_t >= _n("flow.refillSec"):

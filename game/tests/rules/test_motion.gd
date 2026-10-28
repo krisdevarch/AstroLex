@@ -85,6 +85,15 @@ func test_act1_side_share_zero_is_top_only() -> void:
 
 ## Puts the thief on the tile and steps until it grabs; returns the thief.
 func _grab_at(r: Round, th: RefCounted, p: Vector2) -> RefCounted:
+	# A drone that already snatched a letter next to its spawn point (the letters gather mid-field since
+	# WP-F.24) puts it back first, so the grab under test is the one at p.
+	if th.carrying_id >= 0:
+		var held: RefCounted = r._by_id[th.carrying_id]
+		held.carried_by = -1
+		th.carrying_id = -1
+		r._drop_to_anchor(held)
+	th.state = "seek"
+	th.vel = Vector2.ZERO
 	var tile: RefCounted = _real_tiles(r)[0]
 	r._anchors[tile.anchor] = p
 	tile.pos = p
@@ -106,7 +115,7 @@ func test_flee_to_nearest_edge_and_stolen_when_crossing() -> void:
 		{"p": Vector2(0.3, 1.4), "dir": Vector2(-1.0, 0.0)},
 	]
 	for c in cases:
-		var r := _thief_round(5, {"thief.sideShare": 0})
+		var r := _thief_round(5, {"thief.sideShare": 0, "hop.every": 0})  # no hops: the moved letter must stay where the test puts it
 		var th := _spawned_thief(r)
 		_grab_at(r, th, c["p"])
 		var dir: Vector2 = th.vel.normalized()
@@ -153,7 +162,7 @@ func _types(evs: Array) -> Array:
 	return evs.map(func(e): return e["type"])
 
 
-func test_anchor_layout_is_a_honeycomb_inside_the_field() -> void:
+func test_anchor_layout_is_an_aligned_grid_inside_the_field() -> void:
 	var r := _make(1)
 	var n: int = r.anchor_count()
 	# Sized to the round: moon + star need 8 letters, 5 decoys, 2 spare and the porthole spot = 16 demand.
@@ -180,6 +189,100 @@ func test_anchor_layout_is_a_honeycomb_inside_the_field() -> void:
 		hi = Vector2(maxf(hi.x, r.anchor_pos(i).x), maxf(hi.y, r.anchor_pos(i).y))
 	assert_true(absf(lo.x - lat) < 1e-6 and absf(hi.x - (float(_tun["field.width"]) - lat)) < 1e-6, "columns span the width")
 	assert_true(absf(lo.y - (float(_tun["field.topMargin"]) + lat)) < 1e-6 and absf(hi.y - (float(_tun["field.height"]) - lat)) < 1e-6, "rows span the height")
+	# WP-F.24: rows and columns line up (no half-row offset): few distinct x and y values, evenly pitched.
+	var xs: Array[float] = []
+	var ys: Array[float] = []
+	for i in n:
+		var a: Vector2 = r.anchor_pos(i)
+		if xs.filter(func(v): return absf(v - a.x) < 1e-5).is_empty():
+			xs.append(a.x)
+		if ys.filter(func(v): return absf(v - a.y) < 1e-5).is_empty():
+			ys.append(a.y)
+	xs.sort()
+	ys.sort()
+	assert_true(xs.size() <= 5 and ys.size() <= 5, "at most 5 columns and 5 rows: %d x %d" % [xs.size(), ys.size()])
+	assert_true(xs.size() * ys.size() >= n, "every anchor sits on a column and a row")
+	for i in range(2, xs.size()):
+		assert_true(absf((xs[i] - xs[i - 1]) - (xs[1] - xs[0])) < 1e-5, "columns evenly pitched")
+	for i in range(2, ys.size()):
+		assert_true(absf((ys[i] - ys[i - 1]) - (ys[1] - ys[0])) < 1e-5, "rows evenly pitched")
+
+
+## WP-F.24: new letters take the free anchors nearest the middle, so the letters sit as one block and the
+## spare anchors are the corners.
+func test_letters_fill_the_grid_from_the_middle() -> void:
+	for sd in 8:
+		var r := _make(sd + 1)
+		var centre: Vector2 = r.field_centre()
+		var far_taken := -INF
+		var near_free := INF
+		for i in r.anchor_count():
+			var d: float = r.anchor_pos(i).distance_to(centre)
+			if r._owner[i] >= 0:
+				far_taken = maxf(far_taken, d)
+			else:
+				near_free = minf(near_free, d)
+		assert_true(r.anchor_count() - r._free_count() >= 10, "seed %d: a full field" % (sd + 1))
+		assert_true(r._free_count() >= 1, "seed %d: at least one spare anchor" % (sd + 1))
+		assert_true(near_free + 1e-6 >= far_taken, "seed %d: no free anchor nearer the middle than a taken one (%f vs %f)" % [sd + 1, near_free, far_taken])
+
+
+## WP-F.24: a hop fills the hole nearest the middle, with a letter from further out.
+func test_hop_fills_the_innermost_hole_from_outside() -> void:
+	var r := _make(4, {"hop.every": 1.0, "hop.firstAt": 0.5, "hop.jitter": 0.0})
+	var centre: Vector2 = r.field_centre()
+	# Open a hole in the middle: drop the catchable letter nearest the centre.
+	var inner: Object = null
+	for t in _catchables(r):
+		if inner == null or t.pos.distance_to(centre) < inner.pos.distance_to(centre):
+			inner = t
+	var hole: int = inner.anchor
+	r._remove(inner)
+	assert_true(r._owner[hole] < 0, "the inner anchor is free")
+	var tell := {}
+	for _i in 240:
+		if not tell.is_empty():
+			break
+		r.step(1.0 / 60.0)
+		for e in r.drain_events():
+			if e["type"] == "hop_tell" and tell.is_empty():
+				tell = e
+	assert_false(tell.is_empty(), "a hop was told")
+	assert_eq(int(tell["to"]), hole, "the hop goes to the innermost hole")
+	var hopper: Object = r.find_tile(int(tell["tile_id"]))
+	assert_true(hopper != null and hopper.hop_to == hole, "the hopper heads for it")
+	# Its old anchor is now free and lies further out than the hole it fills.
+	var from_d := INF
+	for i in r.anchor_count():
+		if r._owner[i] < 0:
+			from_d = minf(from_d, r.anchor_pos(i).distance_to(centre))
+	assert_true(from_d > r.anchor_pos(hole).distance_to(centre) - 1e-6, "the letter came from further out")
+
+
+## WP-F.24: the view position moves every frame at 120 Hz, while the fixed 60 Hz step moves only every other frame.
+func test_view_position_is_even_between_fixed_steps() -> void:
+	var r := _make(5)
+	for _i in 60:
+		r.step(1.0 / 60.0)
+	var t = _catchables(r)[0]
+	var still_pos := 0
+	var still_view := 0
+	var last_pos: Vector2 = t.pos
+	var last_view: Vector2 = r.view_pos(t)
+	var frames := 120
+	for _i in frames:
+		r.step(1.0 / 120.0)
+		var a: float = r.frame_alpha()
+		assert_true(a >= 0.0 and a < 1.0 - 1e-9, "frame alpha in [0, 1): %f" % a)
+		if t.pos == last_pos:
+			still_pos += 1
+		if r.view_pos(t) == last_view:
+			still_view += 1
+		assert_true(r.view_pos(t).distance_to(t.pos) <= t.pos.distance_to(t.prev_pos) + 1e-9, "the view never leaves the segment between the last two steps")
+		last_pos = t.pos
+		last_view = r.view_pos(t)
+	assert_true(still_pos >= frames / 2 - 2, "the fixed step holds still on about every other 120 Hz frame: %d" % still_pos)
+	assert_true(still_view <= 2, "the view position moves on (almost) every frame: %d still" % still_view)
 
 
 func test_plain_decoys_never_make_a_third_copy() -> void:

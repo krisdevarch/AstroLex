@@ -26,7 +26,7 @@ func _has(f: Node, n: String) -> bool:
 
 func test_hud_nodes_exist_and_portrait_only_with_a_character() -> void:
 	var f := _field("wren")
-	for n in ["NightPanel", "Console", "Portrait", "PortraitBust", "SlotTray", "Liquid", "ActiveSlots", "PreviewSlots", "ScoreLabel", "ComboLabel", "HintButton", "PauseButton", "SoundButton", "SettingsButton", "TimeBar", "ClockLabel", "LevelCounterChip"]:
+	for n in ["NightPanel", "Console", "Portrait", "PortraitBust", "SlotTray", "Liquid", "ActiveSlots", "PreviewSlots", "ScoreLabel", "ComboLabel", "HintButton", "PauseButton", "SoundButton", "SettingsButton", "TimeBar", "ClockLabel", "LevelCounterChip", "MistakeChip"]:
 		assert_true(_has(f, n), "node %s exists" % n)
 	assert_eq((f.find_child("LevelCounter", true, false) as Label).text, "Level 1 / 12", "counter text")
 	assert_true(not _has(f, "PortraitName"), "no name pill under the porthole (target mock)")
@@ -155,6 +155,10 @@ func test_hud_follows_the_target_mock() -> void:
 		assert_true(absf(counter.position.x + counter.size.x - right) < 0.5, "Level n / N pill on the right margin")
 		assert_true(absf(chip.position.x - f.SIDE_PAD) < 0.5, "level name pill on the left margin")
 		assert_true(chip.position.x + chip.size.x < counter.position.x, "the two pills do not overlap")
+		var mist := f.find_child("MistakeChip", true, false) as Control
+		assert_true(absf(mist.position.x + mist.size.x - right) < 0.5, "wrong-catch counter on the right margin")
+		assert_true(absf(mist.position.y - (counter.position.y + counter.size.y + f.MISTAKE_GAP)) < 0.5, "wrong-catch counter right under the level counter")
+		assert_eq((mist.find_child("Count", true, false) as Label).text, "0 / %d" % int(f._tun["burst.maxWrong"]), "counter starts at 0 / cap")
 		assert_true(f.find_child("TitleChip", true, false) == null, "no AstroLex chip")
 		# The right column: hint bulb, pause, sound, settings, top to bottom, one x.
 		for c: Control in [hint, sound, gear]:
