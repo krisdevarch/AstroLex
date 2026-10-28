@@ -265,7 +265,7 @@ func test_wrong_catch_unneeded_resets_combo() -> void:
 	assert_eq(r.stats["wrong"], 1)
 	assert_true(r.tiles.has(decoy), "wrong tile stays alive")
 	assert_true(decoy.alive)
-	assert_true(absf(r.time_left - (30.0 - 1.0 - float(r.stats["secs"]))) < 0.01, "wrong costs 1 s: %f" % r.time_left)
+	assert_true(absf(r.time_left - (30.0 - float(_tun["burst.wrongCost"]) - float(r.stats["secs"]))) < 0.01, "wrong costs burst.wrongCost: %f" % r.time_left)
 
 
 func test_wrong_catch_surplus_when_letter_is_in_word_but_no_open_slot() -> void:
@@ -407,7 +407,7 @@ func test_clock_runs_out_and_loses() -> void:
 	assert_eq(r.state, "lost")
 	assert_eq(r.time_left, 0.0)
 	var ev := r.drain_events()
-	assert_eq(ev[ev.size() - 1], {"type": "round_end", "won": false})
+	assert_eq(ev[ev.size() - 1], {"type": "round_end", "won": false, "reason": "time"})
 	assert_eq(_of_type(ev, "round_end").size(), 1)
 	assert_true(float(r.stats["secs"]) > 29.9 and float(r.stats["secs"]) < 30.1)
 	assert_eq(r.stats["min_time"], 0.0)

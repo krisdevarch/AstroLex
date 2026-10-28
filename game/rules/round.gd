@@ -79,6 +79,7 @@ var thieves: Array = []
 var score: float = 0.0
 var combo: float = 1.0
 var state: String = "play"
+var end_reason: String = ""  # "" while playing or won; "time" or "mistakes" when lost
 var stats: Dictionary = {}
 var shot: Dictionary = {}
 var queued_id: int = -1
@@ -474,13 +475,30 @@ func _build_anchors() -> void:
 	var lat := inset + _num("anchors.bodyRoom")
 	var clear := Vector2(_num("anchors.clearX"), _num("anchors.clearY"))
 	# Rows and columns are spread evenly over the whole field (pitch at least the spacing), so the
-	# lattice reaches every edge instead of hugging the top-left corner.
+	# lattice reaches every edge instead of hugging the top-left corner. The lattice is sized to the
+	# round: as few rows and columns as hold this round's letters, decoys and spare spots, picked for the
+	# most honeycomb-like pitch, so a short-word level spreads its few letters over the whole field.
 	var span_x := _w() - 2.0 * lat
 	var span_y := _num("field.height") - _num("field.topMargin") - 2.0 * lat
-	var cols := maxi(1, int(floorf(span_x / spacing + EPS)) + 1)
-	var rows := maxi(1, int(floorf(span_y / (spacing * sqrt(3.0) * 0.5) + EPS)) + 1)
-	var pitch_x := span_x / float(cols - 1) if cols > 1 else 0.0
-	var pitch_y := span_y / float(rows - 1) if rows > 1 else 0.0
+	var max_cols := maxi(2, int(floorf(span_x / spacing + EPS)) + 1)
+	var max_rows := maxi(2, int(floorf(span_y / (spacing * sqrt(3.0) * 0.5) + EPS)) + 1)
+	var want := _anchor_demand()
+	var cols := max_cols
+	var rows := max_rows
+	var best_err := INF
+	for c in range(2, max_cols + 1):
+		for r in range(2, max_rows + 1):
+			var cap := c * r - int(r / 2)  # odd rows hold one fewer
+			if cap < want and not (c == max_cols and r == max_rows):
+				continue
+			var ratio := (span_y / float(r - 1)) / (span_x / float(c - 1))
+			var err := absf(ratio - sqrt(3.0) * 0.5) + 0.02 * float(maxi(0, cap - want))
+			if err < best_err:
+				best_err = err
+				cols = c
+				rows = r
+	var pitch_x := span_x / float(cols - 1)
+	var pitch_y := span_y / float(rows - 1)
 	for row in rows:
 		var y := _num("field.topMargin") + lat + pitch_y * float(row)
 		var n := cols - 1 if row % 2 == 1 else cols  # odd rows sit between the columns above
@@ -500,6 +518,16 @@ func _build_anchors() -> void:
 	# The body may move the lattice only as far as keeps every anchored tile (edge plus its offset) in the field.
 	_body_lo = Vector2(inset - lo.x, _num("field.topMargin") + inset - lo.y)
 	_body_hi = Vector2(_w() - inset - hi.x, _num("field.height") - inset - hi.y)
+
+
+## Anchors this round needs: the first two words' letters, the decoys they bring, anchors.spare free spots
+## for hops and volleys, and one for the spot Babel's porthole may take.
+func _anchor_demand() -> int:
+	var real := 0
+	for i in mini(2, words.size()):
+		real += words[i].length()
+	var decoys := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	return real + decoys + int(_num("anchors.spare")) + 1
 
 
 func anchor_count() -> int:
@@ -868,7 +896,7 @@ func _tick(h: float) -> void:
 		_note_time()
 		if time_left <= 0.0:
 			time_left = 0.0
-			_end(false)
+			_end(false, "time")
 
 
 ## The Stroop jam: dark for hazard.stroopSec at every multiple of hazard.stroopEverySec (first at that mark).
@@ -1521,10 +1549,25 @@ func _wrong_catch(tile: Tile) -> void:
 	stats["wrong"] = int(stats["wrong"]) + 1
 	combo = 1.0
 	var in_words := _word_letters().has(tile.ch)
-	_emit({"type": "wrong", "tile_id": tile.id, "kind": "surplus" if in_words else "unneeded", "ch": tile.ch})
+	_emit({"type": "wrong", "tile_id": tile.id, "kind": "surplus" if in_words else "unneeded", "ch": tile.ch, "left": mistakes_left()})
 	_cost(_num("burst.wrongCost"), "wrong")
 	if tile.kind == "trap" and state == "play":
 		_note_trap(tile)
+	_check_mistakes()
+
+
+## Wrong catches (plain and forged) the round still allows before Babel wins it; -1 when burst.maxWrong is 0 (no limit).
+func mistakes_left() -> int:
+	var cap := int(_num("burst.maxWrong"))
+	if cap <= 0:
+		return -1
+	return maxi(0, cap - int(stats["wrong"]) - int(stats["counterfeits"]))
+
+
+## Tapping everything must not be a way to win: at burst.maxWrong wrong catches the round is lost.
+func _check_mistakes() -> void:
+	if state == "play" and mistakes_left() == 0:
+		_end(false, "mistakes")
 
 
 ## A forged letter: it costs a wrong catch, resets the combo and is gone; the real one is still out there.
@@ -1532,8 +1575,9 @@ func _counterfeit_catch(tile: Tile) -> void:
 	stats["counterfeits"] = int(stats["counterfeits"]) + 1
 	combo = 1.0
 	_remove(tile)
-	_emit({"type": "counterfeit", "tile_id": tile.id, "ch": tile.ch, "pos": tile.pos})
+	_emit({"type": "counterfeit", "tile_id": tile.id, "ch": tile.ch, "pos": tile.pos, "left": mistakes_left()})
 	_cost(_num("burst.wrongCost"), "counterfeit")
+	_check_mistakes()
 	if state == "play":
 		_refill()
 
@@ -1604,9 +1648,11 @@ func _finale_line(w: String) -> String:
 	return "%s. %s" % [w.to_upper(), FINALE_SINCERE]
 
 
-func _end(won: bool) -> void:
+## reason: "" when won, "time" when the clock ran out, "mistakes" at burst.maxWrong wrong catches.
+func _end(won: bool, reason: String = "") -> void:
 	state = "won" if won else "lost"
+	end_reason = "" if won else (reason if reason != "" else "time")
 	jammed = false
 	shot = {}
 	queued_id = -1
-	_emit({"type": "round_end", "won": won})
+	_emit({"type": "round_end", "won": won, "reason": end_reason})

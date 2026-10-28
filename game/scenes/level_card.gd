@@ -81,7 +81,8 @@ func _ready() -> void:
 	_card.pivot_offset = _card.size * 0.5
 	_card.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_card)
-	var title := Ui.label(("Signal caught" if won else "Signal lost") if daily else ("Sector cleared" if won else "Out of time"), 66, TEXT_CREAM if won else LOSS)
+	var lost_title := "Too many wrong catches" if str(summary.get("reason", "")) == "mistakes" else "Out of time"
+	var title := Ui.label(("Signal caught" if won else "Signal lost") if daily else ("Sector cleared" if won else lost_title), 66, TEXT_CREAM if won else LOSS)
 	title.name = "EndTitle"
 	title.add_theme_constant_override("outline_size", 0)
 	title.position = Vector2(0, 34)

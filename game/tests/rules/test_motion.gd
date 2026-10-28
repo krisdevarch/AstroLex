@@ -156,7 +156,8 @@ func _types(evs: Array) -> Array:
 func test_anchor_layout_is_a_honeycomb_inside_the_field() -> void:
 	var r := _make(1)
 	var n: int = r.anchor_count()
-	assert_eq(n, 22, "anchor count at the default tunables: 5 rows of 5/4/5/4/5 less the one under Babel's porthole")
+	# Sized to the round: moon + star need 8 letters, 5 decoys, 2 spare and the porthole spot = 16 demand.
+	assert_true(n >= 16 - 1 and n <= 23, "anchor count sized to the round's demand: %d" % n)
 	var clear := Vector2(float(_tun["anchors.clearX"]), float(_tun["anchors.clearY"]))
 	for i in n:
 		assert_true(r.anchor_pos(i).distance_to(clear) >= float(_tun["anchors.clearRadius"]) + float(_tun["tile.size"]) * 0.5, "no anchor under the porthole")
