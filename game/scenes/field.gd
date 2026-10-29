@@ -73,15 +73,16 @@ const MOCK_ROW1_Y := 809.0  # centre of the active word's row
 const MOCK_ROW2_Y := 871.5  # centre of the next word's row
 const MOCK_SLOT := 42.4
 const MOCK_SLOT_GAP := 12.0
-const MOCK_BTN_X := 526.3  # the round buttons, stacked at the right
+const MOCK_BTN_X := 531.4  # the round buttons, stacked at the right: their rim sits as far from the right edge as the porthole does from the left
 const MOCK_PAUSE_Y := 793.0
 const MOCK_SOUND_Y := 874.0
 const MOCK_SETTINGS_Y := 955.0
 const MOCK_BTN_R := 37.0
 const MOCK_ICON_R := 23.0  # the icon disc inside a button's neon ring
 const MOCK_RING_R := 25.5
-const MOCK_BULB := Rect2(497, 650, 54, 91)  # the hint bulb
-const MOCK_BULB_GLASS := Vector2(523.2, 678.5)
+const BTN_ART := 150.0  # the round button textures, game px square
+const MOCK_BULB := Rect2(504.4, 650, 54, 91)  # the hint bulb, on the buttons' centre line
+const MOCK_BULB_GLASS := Vector2(531.4, 678.5)
 const MOCK_CHANNEL := Rect2(72, 964, 389, 33)  # the clock bar's channel, where the liquid runs
 const TRAY_PAD := 22.0
 const SLOT_MAX := MOCK_SLOT * 1080.0 / MOCK_W
@@ -1614,9 +1615,8 @@ func _icon_button(node_name: String, kind: String, mock_y: float, ring: Color) -
 	b.size = Vector2(d, d)
 	b.position = _m(Vector2(MOCK_BTN_X, mock_y)) - b.size * 0.5
 	b.pivot_offset = b.size * 0.5
-	# The textures were cut from whole mock pixels round the button (cut_hud.py).
-	var corner := Vector2(floorf(MOCK_BTN_X - MOCK_BTN_R - 2.0), floorf(mock_y - MOCK_BTN_R - 2.0))
-	var tex_pos := (corner - Vector2(MOCK_BTN_X - MOCK_BTN_R, mock_y - MOCK_BTN_R)) * _mk()
+	# The button textures are 150 game px square (scripts/art/hud/gen_hud_svgs.py), centred on the button.
+	var tex_pos := b.size * 0.5 - Vector2(BTN_ART, BTN_ART) * 0.5
 	var art: Control = HudArt.RingArt.new()
 	art.name = "Ring"
 	art.set("tex", _hud_tex("btn_%s.png" % kind))
@@ -1700,6 +1700,7 @@ func _build_portrait() -> void:
 		bust.size = holder.size
 		bust.pivot_offset = bust.size * Vector2(0.5, 0.9)
 		bust.material = HudArt.clip_material()
+		bust.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		_ignore(bust)
 		holder.add_child(bust)
 		_bust = bust
@@ -1734,7 +1735,7 @@ func _build_hud() -> void:
 	con.set("k", _mk())
 	con.set("origin", MOCK_CONSOLE)
 	con.position = _m(MOCK_CONSOLE)
-	con.size = ctex.get_size()
+	con.size = ctex.get_size() / HudArt.ART_SCALE
 	con.set("screen", Rect2(_tray_rect().position - con.position, _tray_rect().size))
 	con.set("calm", settings.reduced_motion)
 	_hud.add_child(_ignore(con))

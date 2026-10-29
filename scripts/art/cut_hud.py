@@ -1,4 +1,7 @@
-"""Cuts the play-screen HUD art out of the owner's target mock (19 Oct 2026, 572x1024).
+"""SUPERSEDED for the console, buttons and bulb (WP-F.28): they are now vector art, see
+scripts/art/hud/gen_hud_svgs.py and scripts/art/make_hud.sh. Kept for reference.
+
+Cuts the play-screen HUD art out of the owner's target mock (19 Oct 2026, 572x1024).
 
   python3 scripts/art/cut_hud.py <mock.jpeg> [out_dir]   # default out_dir: game/art/hud
 
