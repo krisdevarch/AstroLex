@@ -8,6 +8,7 @@ const EDGE_DROP := 100.0  # how far the curve falls from the crest to either scr
 const VEIL_MAX := 0.45  # how dark Earth is veiled before any word is restored
 const VEIL_GAP := 26.0  # the veil starts this far under the rim
 const VEIL_FADE := 70.0
+const ART_SCALE := 0.5  # the console, button and bulb textures are rendered at 2x (scripts/art/make_hud.sh); drawn at this scale
 const ART_D := 356.0  # the portrait art's own size; the field scales it to fit its column
 const CORAL := Color("ff6468")  # the mock's clock liquid: coral at the left end, peach at the front
 const CORAL_LIGHT := Color("feab7b")
@@ -155,9 +156,12 @@ class Console extends Control:
 	var t: float = 0.0
 	var calm: bool = false
 
+	func _init() -> void:
+		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+
 	func _draw() -> void:
 		if tex != null:
-			draw_texture(tex, Vector2.ZERO)
+			draw_texture_rect(tex, Rect2(Vector2.ZERO, tex.get_size() * ART_SCALE), false)
 		for i in LIGHTS.size():
 			var l: Array = LIGHTS[i]
 			var on := 0.6 if calm else clampf(0.5 + 0.9 * sin(t * (0.9 + 0.23 * float(i)) + float(i) * 2.1), 0.0, 1.0)
@@ -211,9 +215,12 @@ class RingArt extends Control:
 	var t: float = 0.0
 	var calm: bool = false
 
+	func _init() -> void:
+		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+
 	func _draw() -> void:
 		if tex != null:
-			draw_texture(tex, tex_pos)
+			draw_texture_rect(tex, Rect2(tex_pos, tex.get_size() * ART_SCALE), false)
 		var c := size * 0.5
 		var glow := 0.5 if calm else 0.5 + 0.5 * sin(t * 1.7)
 		draw_arc(c, ring_r, 0.0, TAU, 64, Color(ring.r, ring.g, ring.b, 0.1 * glow), 10.0, true)
@@ -372,6 +379,9 @@ class Icon extends Control:
 	var halo: Vector2 = Vector2.ZERO  # hint: the bulb glass centre, local px
 	var halo_r: float = 47.0
 
+	func _init() -> void:
+		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+
 	func _draw() -> void:
 		var c := size * 0.5
 		match kind:
@@ -402,7 +412,7 @@ class Icon extends Control:
 	func _disc(tex: Variant, c: Vector2, cut: float = 1.0) -> void:
 		if not tex is Texture2D:
 			return
-		var ts := (tex as Texture2D).get_size()
+		var ts := (tex as Texture2D).get_size() * ART_SCALE
 		var pts := PackedVector2Array()
 		var uvs := PackedVector2Array()
 		for i in 48:
