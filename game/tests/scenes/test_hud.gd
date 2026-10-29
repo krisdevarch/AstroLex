@@ -162,8 +162,8 @@ func test_hud_follows_the_target_mock() -> void:
 		assert_true(f.find_child("TitleChip", true, false) == null, "no AstroLex chip")
 		# The right column: hint bulb, pause, sound, settings, top to bottom, one x.
 		for c: Control in [hint, sound, gear]:
-			# The mock's bulb sits a hair left of the buttons' centre line.
-			var tol := 6.0 if c == hint else 0.5
+			# The bulb shares the buttons' centre line (WP-F.28).
+			var tol := 0.5
 			assert_true(absf(c.position.x + c.size.x * 0.5 - (pause.position.x + pause.size.x * 0.5)) < tol, "%s in the button column" % c.name)
 		assert_true(hint.position.y + hint.size.y <= pause.position.y + 1.0, "hint above pause")
 		assert_true(pause.position.y < sound.position.y and sound.position.y < gear.position.y, "pause, sound, settings stacked")

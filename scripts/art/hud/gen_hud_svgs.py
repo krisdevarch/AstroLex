@@ -72,33 +72,48 @@ def console():
     ]
     for c in cables:
         d = smooth([(round(x, 1), round(y, 1)) for x, y in c])
-        parts.append(f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>')
-        parts.append(f'<path d="{d}" fill="none" stroke="url(#cable)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>')
-        parts.append(f'<path d="{d}" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round" transform="translate(-1.5,-1.5)"/>')
-    # body
-    body = ("M240,70 C380,44 700,40 826,46 Q884,50 890,104 L894,246 Q892,296 862,318 "
-            "C790,336 640,352 470,354 C380,355 300,346 236,318 Z")
+        parts.append(f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>')
+        parts.append(f'<path d="{d}" fill="none" stroke="url(#cable)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>')
+        parts.append(f'<path d="{d}" fill="none" stroke="#f2f8ff" stroke-opacity=".85" stroke-width="3.5" stroke-linecap="round" transform="translate(-2,-2)"/>')
+    # body: flows out of the porthole (top and bottom swoop into the ring), bevelled
+    body = ("M200,70 C330,50 700,40 826,46 Q896,50 902,104 L906,246 Q904,300 872,326 "
+            "C790,348 640,364 470,366 C360,367 270,352 197,318 Z")
+    parts.append('<clipPath id="bodyclip"><path d="%s"/></clipPath>' % body)
     parts.append(f'<path d="{body}" fill="url(#steel)" stroke="{INK}" stroke-width="9" stroke-linejoin="round"/>')
-    # lower lip with trapezoid notches
-    parts.append(f'<path d="M268,322 C380,346 700,350 850,326 L846,338 C700,356 380,356 276,334 Z" fill="url(#steelD)" stroke="{INK}" stroke-width="3"/>')
-    parts.append(f'<path d="{poly([(420,318),(440,336),(745,336),(768,318)])} Z" fill="#2a4272" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>')
-    parts.append('<path d="M452,326 H735" stroke="#6f9bd0" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round"/>')
-    # top cyan tab
-    parts.append(f'<path d="{poly([(452,42),(470,54),(722,54),(742,42)])} Z" fill="#17496e" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>')
-    parts.append(f'<path d="M470,50 H722" stroke="{CYAN}" stroke-width="3" stroke-linecap="round"/><path d="M460,44 H736" stroke="#8fe9f5" stroke-opacity=".7" stroke-width="2"/>')
-    # slot screen
-    scr = ("M338,66 H852 Q870,66 870,84 V150 L864,160 V230 L870,242 V300 Q870,312 858,312 H340 "
-           "Q326,312 326,298 V244 L332,234 V150 L326,140 V82 Q326,66 338,66 Z")
-    parts.append(f'<path d="{scr}" fill="{INK}" stroke="{INK}" stroke-width="16" stroke-linejoin="round"/>')
-    parts.append(f'<path d="{scr}" fill="url(#glass)" stroke="{CYAN}" stroke-width="7" stroke-linejoin="round" filter="url(#glowS)" opacity=".7"/>')
-    parts.append(f'<path d="{scr}" fill="url(#glass)" stroke="{CYAN}" stroke-width="4" stroke-linejoin="round"/>')
-    parts.append('<path d="M344,76 H850 Q860,76 860,86 V132 Q600,150 340,132 V86 Q340,76 344,76 Z" fill="#fff" opacity=".07"/>')
-    parts.append('<path d="M345,300 H852" stroke="#7fe9f5" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/>')
+    # bevel: light upper edge just inside the ink, darker shadow along the lower lip
+    parts.append(f'<g clip-path="url(#bodyclip)"><path d="M200,70 C330,50 700,40 826,46 Q896,50 902,104" fill="none" stroke="#bfdcfa" stroke-opacity=".75" stroke-width="5" transform="translate(0,6)"/>'
+                 '<path d="M200,70 C330,50 700,40 826,46 Q896,50 902,104" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" transform="translate(0,11)"/>'
+                 f'<rect x="190" y="326" width="720" height="80" fill="#14264c" opacity=".55"/>'
+                 '<path d="M190,326 H900" stroke="#7fa6d6" stroke-opacity=".65" stroke-width="2.5"/>'
+                 '<path d="M197,318 C270,350 360,361 470,360 C640,358 790,342 862,320" fill="none" stroke="#0b1633" stroke-opacity=".7" stroke-width="10" transform="translate(0,-5)"/></g>')
+    # angled notches in the lower lip around the centre plate
+    parts.append(f'<path d="{poly([(414,326),(436,346),(752,346),(774,326)])} Z" fill="#2c4676" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>')
+    parts.append('<path d="M446,336 H742" stroke="#7fb0e2" stroke-opacity=".7" stroke-width="2.5" stroke-linecap="round"/>')
+    for sx in (-1, 1):
+        x = 425 if sx < 0 else 765
+        parts.append(f'<path d="M{x-6*sx},322 L{x+8*sx},346" stroke="{INK}" stroke-width="3" stroke-linecap="round"/><path d="M{x-6*sx+2*sx},322 L{x+8*sx+2*sx},346" stroke="#9cc4ee" stroke-opacity=".5" stroke-width="1.5"/>')
+    # raised tab on the top edge
+    parts.append(f'<path d="{poly([(446,50),(466,30),(728,30),(748,50)])} Z" fill="#3d6396" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>')
+    parts.append(f'<path d="M470,39 H724" stroke="{CYAN}" stroke-width="3.5" stroke-linecap="round"/><path d="M466,34 H728" stroke="#cfeaff" stroke-opacity=".7" stroke-width="2"/>')
+    # slot screen: steel bezel, thin cyan line, glossy glass lighter at the top
+    scr = ("M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 "
+           "Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z")
+    parts.append(f'<clipPath id="scrclip"><path d="{scr}"/></clipPath>')
+    parts.append(f'<path d="{scr}" fill="{INK}" stroke="{INK}" stroke-width="26" stroke-linejoin="round"/>')
+    parts.append(f'<path d="{scr}" fill="#2d4d7e" stroke="#2d4d7e" stroke-width="20" stroke-linejoin="round"/>')
+    parts.append(f'<path d="{scr}" fill="none" stroke="#7aa6d8" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round" transform="translate(0,-9)" clip-path="url(#bodyclip)"/>')
+    parts.append(f'<path d="{scr}" fill="{INK}" stroke="{INK}" stroke-width="8" stroke-linejoin="round"/>')
+    parts.append(f'<path d="{scr}" fill="url(#glass)"/>')
+    parts.append(f'<g clip-path="url(#scrclip)"><path d="{scr}" fill="none" stroke="#082a48" stroke-opacity=".55" stroke-width="22" stroke-linejoin="round"/>'
+                 '<path d="M326,66 H870 V150 Q600,185 326,150 Z" fill="#fff" opacity=".12"/>'
+                 '<path d="M326,66 H870 V100 Q600,112 326,100 Z" fill="#fff" opacity=".07"/></g>')
+    parts.append(f'<path d="{scr}" fill="none" stroke="{CYAN}" stroke-width="6" stroke-linejoin="round" filter="url(#glowS)" opacity=".55"/>')
+    parts.append(f'<path d="{scr}" fill="none" stroke="#7ff0fb" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,0)"/>')
+    parts.append('<path d="M360,300 H838" stroke="#7fe9f5" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/>')
     # lights
     parts.append(pill(290, 62, 32, 9, ORANGE))
     parts.append(f'<path d="M846,70 Q872,72 880,106 L880,118" fill="none" stroke="{INK}" stroke-width="12" stroke-linecap="round"/>'
                  f'<path d="M846,70 Q872,72 880,106 L880,118" fill="none" stroke="{ORANGE}" stroke-width="6" stroke-linecap="round"/>')
-    parts.append(pill(140, 309, 38, 11, CYAN))
     parts.append(pill(333, 335, 30, 8, CYAN))
     parts.append(pill(813, 334, 32, 8, CYAN))
     for x in (354, 775, 788):
@@ -125,6 +140,7 @@ def console():
     parts.append(f'<circle cx="{pcx}" cy="{pcy}" r="104" fill="none" stroke="{CYAN}" stroke-width="7"/>')
     parts.append(f'<circle cx="{pcx}" cy="{pcy}" r="100" fill="url(#pglass)" stroke="{INK}" stroke-width="2"/>')
     parts.append(f'<path d="{arc(pcx, pcy, 88, 200, 255)}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="7" stroke-linecap="round"/>')
+    parts.append(pill(141, 304, 38, 11, CYAN))
     # clock bar frame, channel and legs
     for x0, x1 in ((221, 244), (796, 829)):
         parts.append(f'<path d="M{x0},488 H{x1} L{x1+4},532 H{x0-4} Z" fill="url(#steelD)" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>'
@@ -179,8 +195,8 @@ def icon_svg(kind):
     if kind == "pause":
         out = []
         for x in (-19, 5):
-            out.append(f'<rect x="{c+x}" y="{c-27}" width="14" height="54" rx="6" fill="{ICON}" stroke="{INK}" stroke-width="3"/>'
-                       f'<rect x="{c+x+3}" y="{c-23}" width="4" height="46" rx="2" fill="{ICON_LIGHT}" opacity=".7"/>')
+            out.append(f'<rect x="{c+x}" y="{c-27}" width="14" height="54" rx="6" fill="#ffe2c0" stroke="{INK}" stroke-width="3"/>'
+                       f'<rect x="{c+x+3}" y="{c-23}" width="4" height="46" rx="2" fill="#fff8ee" opacity=".85"/>')
         return "".join(out)
     if kind == "sound":
         sp = [(c - 33, c - 9), (c - 21, c - 9), (c - 4, c - 26), (c - 4, c + 26), (c - 21, c + 9), (c - 33, c + 9)]
@@ -225,8 +241,8 @@ def bulb():
     cx, cy, r = 51.0, 53.8, 46.8
     glass = (f"M{cx-r:.1f},{cy} A{r},{r} 0 0 1 {cx+r:.1f},{cy} C{cx+r:.1f},{cy+22} {cx+22},{cy+30} {cx+19},{cy+43} "
              f"L{cx+18},{cy+47} H{cx-18} L{cx-19},{cy+43} C{cx-22},{cy+30} {cx-r:.1f},{cy+22} {cx-r:.1f},{cy} Z")
-    defs = ('<defs><radialGradient id="bg" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ffe08a"/><stop offset=".5" stop-color="#ffb938"/>'
-            '<stop offset="1" stop-color="#f08a14"/></radialGradient>'
+    defs = ('<defs><radialGradient id="bg" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#fff0a8"/><stop offset=".45" stop-color="#ffc040"/>'
+            '<stop offset="1" stop-color="#e8760c"/></radialGradient>'
             '<linearGradient id="scr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d99ad"/><stop offset=".35" stop-color="#dfe6f1"/><stop offset="1" stop-color="#6a768c"/></linearGradient></defs>')
     p = [defs]
     base = poly([(25.6, 100), (77.5, 100), (76, 160), (70, 169), (33, 169), (28, 160)]) + " Z"
@@ -236,6 +252,7 @@ def bulb():
     p.append('<path d="M35,165 H69" stroke="#5a4a7e" stroke-width="5" stroke-linecap="round"/>')
     p.append(f'<path d="{glass}" fill="url(#bg)" stroke="{INK}" stroke-width="5" stroke-linejoin="round"/>')
     p.append(f'<path d="M{cx-19},{cy+44} H{cx+19} L{cx+19},{cy+50} H{cx-19} Z" fill="#a8b2c4" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>')
+    p.append(f'<circle cx="{cx}" cy="{cy+4}" r="26" fill="#fff4b0" opacity=".5" filter="url(#glow)"/>')
     for dx in (-15, 0, 15):
         p.append(f'<path d="M{cx+dx*0.5},{cy+44} V{cy+22} Q{cx+dx},{cy+10} {cx+dx*1.2},{cy-2} Q{cx+dx*1.1},{cy-12} {cx+dx*0.5},{cy-8}" fill="none" stroke="#7a3b0a" stroke-width="2.8" stroke-linecap="round"/>')
     p.append(f'<ellipse cx="{cx-20}" cy="{cy-22}" rx="14" ry="8" transform="rotate(-35 {cx-20} {cy-22})" fill="#fff" opacity=".75"/>')
