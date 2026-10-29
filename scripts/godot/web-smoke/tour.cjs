@@ -29,7 +29,7 @@ const W = 432, H = 768, S = W / 1080;
   let first = true;
   for (const s of steps) {
     if (s[0] === 'url') {
-      await page.goto(base + (s[1] || ''));
+      await page.goto(base + (s[1] ? s[1] + '&intro=0' : '?intro=0'));
       await page.waitForEvent('console', { predicate: (m) => /AstroLex ready/.test(m.text()), timeout: 120000 });
       await page.waitForTimeout(1500);
       first = false;

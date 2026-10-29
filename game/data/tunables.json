@@ -121,6 +121,7 @@
   "hop.ringSec": 0.35,
   "hop.windSec": 0.35,
   "hud.hintAlpha": 0.35,
+  "intro.holdSec": 6,
   "music.bedDb": -12,
   "music.crossfadeSec": 1.5,
   "music.defaultVolume": 70,

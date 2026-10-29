@@ -34,6 +34,7 @@ const DailyHooks := preload("res://scenes/daily_hooks.gd")
 const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
+const IntroScreen := preload("res://scenes/intro_screen.gd")
 const MusicScript := preload("res://scenes/music.gd")
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const SAVETEST_PATH := "user://save_test.json"
@@ -61,8 +62,21 @@ var daily_today: String = ""
 ## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
 var music: MusicScript
 var _ready_printed: bool = false
+## The intro screen (WP-F.28) shows once per launch before the title. Off in headless runs, so the
+## tests start on the title, and with ?intro=0 on the web (the smoke scripts).
+var show_intro: bool = intro_default()
+## Fade-out length of the intro; tests set 0 to finish it at once.
+var intro_fade_sec: float = 0.35
 ## Tests set this before _ready to stand in for the page's recovery flag ("1" = reloaded by the recovery).
 var recover_override: String = ""
+
+
+static func intro_default() -> bool:
+	if DisplayServer.get_name() == "headless":
+		return false
+	if OS.has_feature("web"):
+		return not str(JavaScriptBridge.eval("window.location.search")).contains("intro=0")
+	return not OS.get_cmdline_user_args().has("--no-intro")
 
 
 static func autoplay_requested() -> bool:
@@ -119,6 +133,8 @@ func _ready() -> void:
 		_begin_level_with_comms()
 	elif _recovered() and not save.resume().is_empty():
 		_resume_level(false)
+	elif show_intro:
+		_show_intro()
 	else:
 		_show_start()
 	telemetry.mark_ready()
@@ -286,6 +302,16 @@ func _swap(node: Node) -> void:
 
 
 # --- screens -----------------------------------------------------------------------------
+
+## The once-per-launch intro: a tap or its timer goes to the title.
+func _show_intro() -> void:
+	show_intro = false
+	var s: Control = IntroScreen.new()
+	s.settings = settings
+	s.fade_sec = intro_fade_sec
+	s.finished.connect(_show_start)
+	_swap(s)
+
 
 func _show_start() -> void:
 	var s: Control = StartScreen.new()

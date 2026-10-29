@@ -52,7 +52,7 @@ async function load(page, cdp, url) {
 
 (async () => {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  const url = `http://127.0.0.1:${server.address().port}/index.html`;
+  const url = `http://127.0.0.1:${server.address().port}/index.html?intro=0`;
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH || undefined,
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
