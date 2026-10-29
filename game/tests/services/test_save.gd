@@ -62,7 +62,7 @@ func test_reset_keeps_player_id() -> void:
 	_each(func(s: RefCounted) -> void:
 		var id: String = s.player_id()
 		assert_eq(id.length(), 16)
-		s.set_profile("ash", "she", "hard", "ADA")
+		s.set_profile("ash", "hard", "ADA")
 		s.record_level(A, "1-01", 0, true, 10)
 		s.reset()
 		assert_true(s.has_profile(), "reset keeps the profile")
@@ -169,7 +169,7 @@ func test_v1_save_migrates_to_v2() -> void:
 	assert_eq(s.stars(A, "1-02"), 0)
 	assert_eq(int(s.data()["progress"][A]["levels"]["1-01"]["best_score"]), 90)
 	assert_true(s.data()["progress"][A]["levels"]["1-01"]["won"] == true)
-	s.set_profile("pip", "he", "easy", "ADA")
+	s.set_profile("pip", "easy", "ADA")
 	var again: RefCounted = Save.real("user://test_save_a.json")
 	assert_true(again.has_profile())
 	assert_eq(again.profile()["character"], "pip")

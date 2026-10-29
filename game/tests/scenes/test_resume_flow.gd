@@ -9,7 +9,7 @@ const A := "act1_low_orbit"
 
 func _returning(s: RefCounted, recover: String = "") -> Node:
 	if not s.has_profile():
-		s.set_profile("wren", "they", "normal", "ADA")
+		s.set_profile("wren", "normal", "ADA")
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	main.daily_today = "2026-10-16"

@@ -1,5 +1,5 @@
 extends Control
-## Pick a Catcher and a pronoun (WP-3.R). Four suit cards in a 2×2 grid, each with the Catcher's
+## Pick a Catcher and a name (WP-3.R; the pronoun pick was removed in WP-F.26). Four suit cards in a 2×2 grid, each with the Catcher's
 ## porthole portrait (as on the game screen), name in their signature colour, role and perk; the
 ## picked card lights up in that colour. Confirm saves the choice (main does that).
 
@@ -8,17 +8,15 @@ const HudArt := preload("res://scenes/hud_art.gd")
 const PlayerName := preload("res://rules/player_name.gd")
 const WebTextField := preload("res://scenes/web_text_field.gd")
 
-const PRONOUNS := ["they", "she", "he"]
 const CARD := Vector2(480, 560)
 const PORTRAIT_D := 236.0
 
-signal confirmed(character_id: String, pronouns: String, player_name: String)
+signal confirmed(character_id: String, player_name: String)
 signal cancelled
 
 ## content.json "characters": [{id, name, role, colour, perk, mod}].
 var characters: Array = []
 var selected: String = ""
-var pronouns: String = "they"
 ## Shows a Back button (when changing from the map or settings).
 var can_cancel: bool = false
 ## The Catcher's name (A-Z, upper-case) and the blocklist it is checked against.
@@ -58,21 +56,6 @@ func _ready() -> void:
 	for c: Dictionary in characters:
 		grid.add_child(_card(c, group))
 	box.add_child(_spacer(6))
-	var prow := HBoxContainer.new()
-	prow.alignment = BoxContainer.ALIGNMENT_CENTER
-	prow.add_theme_constant_override("separation", 16)
-	box.add_child(prow)
-	var pl := Ui.text("Pronouns", 38, Ui.MUTED)
-	pl.custom_minimum_size = Vector2(190, 96)
-	prow.add_child(pl)
-	var pgroup := ButtonGroup.new()
-	for p: String in PRONOUNS:
-		var pb := Ui.choice(p, 40, Vector2(210, 96))
-		pb.name = "Pronoun_%s" % p
-		pb.button_group = pgroup
-		pb.button_pressed = pronouns == p
-		pb.pressed.connect(func() -> void: pronouns = p)
-		prow.add_child(pb)
 	box.add_child(_spacer(4))
 	_input = LineEdit.new()
 	_input.name = "NameInput"
@@ -107,7 +90,7 @@ func _ready() -> void:
 	ok.name = "ConfirmButton"
 	ok.pressed.connect(func() -> void:
 		if name_valid():
-			confirmed.emit(selected, pronouns, player_name))
+			confirmed.emit(selected, player_name))
 	row.add_child(ok)
 	_ok = ok
 	_sync_name()

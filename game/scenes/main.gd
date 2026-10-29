@@ -104,7 +104,7 @@ func _ready() -> void:
 		if offline:
 			save = Save.fake()
 			if demo:
-				save.set_profile("wren", "they", _default_difficulty(), "ADA")
+				save.set_profile("wren", _default_difficulty(), "ADA")
 		elif _savetest_query() != "":
 			save = Save.real(SAVETEST_PATH)  # never the real player's save
 		else:
@@ -194,7 +194,7 @@ func _save_debug_hook() -> void:
 				save.set_resume(act, i, want)
 	if q.contains("ending=1"):
 		if save.player_name() == "":
-			save.set_profile("wren", "they", _default_difficulty(), "KIT")
+			save.set_profile("wren", _default_difficulty(), "KIT")
 		_show_ending.call_deferred()
 	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
 
@@ -322,13 +322,12 @@ func _show_character(can_cancel: bool, then: Callable) -> void:
 	s.reduced_motion = settings.reduced_motion
 	s.characters = _characters()
 	s.selected = str(save.profile().get("character", ""))
-	s.pronouns = str(save.profile().get("pronouns", "they"))
 	s.can_cancel = can_cancel
 	s.player_name = save.player_name()
 	s.blocklist = dictionary.content().get("blocklist", [])
-	s.confirmed.connect(func(id: String, pron: String, nm: String) -> void:
+	s.confirmed.connect(func(id: String, nm: String) -> void:
 		var diff: String = str(save.profile().get("difficulty", ""))
-		save.set_profile(id, pron, diff if diff != "" else _default_difficulty(), nm)
+		save.set_profile(id, diff if diff != "" else _default_difficulty(), nm)
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
@@ -343,7 +342,7 @@ func _show_difficulty(can_cancel: bool, then: Callable) -> void:
 	s.can_cancel = can_cancel
 	s.confirmed.connect(func(id: String) -> void:
 		var p: Dictionary = save.profile()
-		save.set_profile(str(p.get("character", "")), str(p.get("pronouns", "they")), id, str(p.get("name", "")))
+		save.set_profile(str(p.get("character", "")), id, str(p.get("name", "")))
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)

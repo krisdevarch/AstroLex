@@ -52,16 +52,16 @@ func test_character_screen_gates_suit_up_on_the_name() -> void:
 
 func test_save_stores_and_migrates_the_name() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("ash", "she", "hard", "ADA")
+	s.set_profile("ash", "hard", "ADA")
 	assert_eq(s.player_name(), "ADA")
 	var old: Dictionary = Save._migrate({"version": 2, "player_id": "abc", "progress": {}, "profile": {"character": "pip", "pronouns": "he", "difficulty": "easy"}})
 	assert_eq(int(old["version"]), 3)
-	assert_eq(old["profile"], {"character": "pip", "pronouns": "he", "difficulty": "easy", "name": ""})
+	assert_eq(old["profile"], {"character": "pip", "difficulty": "easy", "name": ""}, "pronouns dropped")
 
 
 func test_old_save_without_a_name_is_asked_on_the_map() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "")
+	s.set_profile("wren", "normal", "")
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	tree.root.add_child(main)
@@ -83,7 +83,7 @@ func test_4_12_words_are_listen_then_the_name() -> void:
 	assert_eq(f["words"], ["listen", "ada"])
 	assert_eq(lv["words"], ["listen", "name"], "the original is untouched")
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "MARLO")
+	s.set_profile("wren", "normal", "MARLO")
 	for a in ["act1_low_orbit", "act2_nebula", "act3_tower"]:
 		for i in 12:
 			s.record_level(a, "x%d" % i, i, true, 1, 1)
