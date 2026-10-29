@@ -1501,6 +1501,9 @@ func _show_toast(text: String, color: Color) -> void:
 	_toast.text = text
 	_toast.add_theme_color_override("font_color", color)
 	_toast_t = TOAST_SEC
+	# The pill hugs the text, centred across the screen (WP-F.28: it read poorly over the letters).
+	_toast.size = Vector2.ZERO
+	_toast.position.x = (view_size.x - _toast.size.x) * 0.5
 
 
 # --- HUD -------------------------------------------------------------------------------
@@ -1734,7 +1737,7 @@ func _build_hud() -> void:
 	con.set("k", _mk())
 	con.set("origin", MOCK_CONSOLE)
 	con.position = _m(MOCK_CONSOLE)
-	con.size = ctex.get_size()
+	con.size = ctex.get_size() * HudArt.ART_SCALE
 	con.set("screen", Rect2(_tray_rect().position - con.position, _tray_rect().size))
 	con.set("calm", settings.reduced_motion)
 	_hud.add_child(_ignore(con))
@@ -1772,8 +1775,15 @@ func _build_hud() -> void:
 	_score_row.add_child(_ignore(_combo_label))
 	_toast = Ui.label("", 44, Ui.INK)
 	_toast.name = "Toast"
+	# A dark glass pill like the top chips, so the message reads over the letters and the sky.
+	var tsb := Ui.box(Color(0.05, 0.07, 0.17, 0.86), 36, Color(0.72, 0.78, 0.95, 0.45), 3)
+	tsb.content_margin_left = 34.0
+	tsb.content_margin_right = 34.0
+	tsb.content_margin_top = 8.0
+	tsb.content_margin_bottom = 10.0
+	_toast.add_theme_stylebox_override("normal", tsb)
+	_toast.add_theme_constant_override("outline_size", 0)
 	_toast.position = Vector2(0, _ft + 24.0)
-	_toast.size = Vector2(w, 70)
 	_toast.modulate.a = 0.0
 	_hud.add_child(_toast)
 	_banner = Ui.label("", 110, AMBER)

@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="910" height="532" viewBox="0 0 910 532">
+  <!-- The console tray, redrawn as vector art from the owner's mock (WP-F.28). viewBox = game px (1080 wide),
+       so every MOCK_* geometry in game/scenes/field.gd still lines up: porthole window centre (157.6,170.9) r 99,
+       slot screen (328.5,66,538,240), clock channel (136,419,734,62). -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a8fc0"/><stop offset="0.16" stop-color="#3f6ba3"/>
+      <stop offset="0.6" stop-color="#2f518a"/><stop offset="1" stop-color="#22345f"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fd0e8"/><stop offset="0.35" stop-color="#6a9fcb"/><stop offset="1" stop-color="#3c6496"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a5d78"/><stop offset="0.12" stop-color="#2b5b7b"/>
+      <stop offset="0.35" stop-color="#193f63"/><stop offset="0.52" stop-color="#153c61"/>
+      <stop offset="0.7" stop-color="#1b4a70"/><stop offset="0.86" stop-color="#21648a"/>
+      <stop offset="0.96" stop-color="#389cb4"/><stop offset="1" stop-color="#2e86a2"/>
+    </linearGradient>
+    <linearGradient id="chan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132253"/><stop offset="0.3" stop-color="#14224d"/>
+      <stop offset="0.7" stop-color="#1f4570"/><stop offset="1" stop-color="#244a78"/>
+    </linearGradient>
+    <linearGradient id="barframe" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#92c0e5"/><stop offset="0.2" stop-color="#5b8fbe"/>
+      <stop offset="0.55" stop-color="#43689f"/><stop offset="1" stop-color="#395585"/>
+    </linearGradient>
+    <linearGradient id="leg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3d5a88"/><stop offset="0.5" stop-color="#6d97c4"/><stop offset="1" stop-color="#34507c"/>
+    </linearGradient>
+    <radialGradient id="win" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#17678a"/><stop offset="0.7" stop-color="#0f5873"/><stop offset="1" stop-color="#0a4a66"/>
+    </radialGradient>
+    <linearGradient id="cable" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9c4dc"/><stop offset="1" stop-color="#5f7fa6"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="screenclip"><path id="screenclipp" d="M346,71 L850,71 Q865,71 867,88 L871,112 C877,122 877,132 871,142 L872,262 Q871,291 854,303 L352,305 Q337,299 333,281 L327,252 Q322,232 329,216 L328,122 Q326,100 337,85 Q341,73 346,71 Z"/></clipPath>
+  </defs>
+
+  <!-- legs under the clock bar -->
+  <g stroke="#04071a" stroke-width="4" stroke-linejoin="round">
+    <rect x="223" y="488" width="21" height="44" fill="url(#leg)"/>
+    <rect x="797" y="488" width="31" height="44" fill="url(#leg)"/>
+    <path d="M803,494 L803,532 M818,494 L818,532" stroke="#2a3f66" stroke-width="2.5" fill="none"/>
+  </g>
+  <rect x="219" y="492" width="29" height="10" rx="3" fill="#4a6c9c" stroke="#04071a" stroke-width="3"/>
+
+  <!-- cables from the porthole to the clock bar -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M37,284 C8,318 4,360 28,396 C48,420 82,424 112,429" stroke="#04071a" stroke-width="15"/>
+    <path d="M37,284 C8,318 4,360 28,396 C48,420 82,424 112,429" stroke="url(#cable)" stroke-width="9"/>
+    <path d="M37,284 C8,318 4,360 28,396 C48,420 82,424 112,429" stroke="#e4f0fa" stroke-width="2" stroke-dasharray="9 22" opacity="0.8"/>
+    <path d="M27,300 C16,340 26,400 56,432 C74,454 96,462 112,468" stroke="#04071a" stroke-width="15"/>
+    <path d="M27,300 C16,340 26,400 56,432 C74,454 96,462 112,468" stroke="url(#cable)" stroke-width="9"/>
+    <path d="M27,300 C16,340 26,400 56,432 C74,454 96,462 112,468" stroke="#e4f0fa" stroke-width="2" stroke-dasharray="7 26" opacity="0.7"/>
+  </g>
+  <rect x="26" y="272" width="22" height="14" rx="5" transform="rotate(35 37 279)" fill="#8fb3d6" stroke="#04071a" stroke-width="3"/>
+
+  <!-- clock bar frame and channel -->
+  <rect x="111" y="403" width="773" height="94" rx="47" fill="url(#barframe)" stroke="#04071a" stroke-width="5"/>
+  <rect x="117" y="409" width="761" height="82" rx="41" fill="none" stroke="#a9d3f0" stroke-width="2" opacity="0.55"/>
+  <rect x="136" y="419" width="734" height="62" rx="31" fill="url(#chan)" stroke="#04071a" stroke-width="4"/>
+  <path d="M168,423 H838" stroke="#4d79a9" stroke-width="2" opacity="0.5"/>
+  <rect x="113" y="425" width="15" height="52" rx="5" fill="#34507e" stroke="#04071a" stroke-width="3"/>
+  <circle cx="120" cy="439" r="3" fill="#9fc0e0"/><circle cx="120" cy="463" r="3" fill="#9fc0e0"/>
+  <g stroke="#04071a" stroke-width="3" fill="none"><path d="M790,404 V418 M827,404 V418"/></g>
+  <path d="M728,411 H752" stroke="#d6ecfb" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <path d="M830,408 L836,408" stroke="#d6ecfb" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- body silhouette: outline pass, then fill pass -->
+  <g id="sil">
+    <path d="M200,48 L320,41 C450,35 640,32 780,42 L850,50 Q884,56 891,92 C901,150 906,222 896,282 Q888,322 870,340 C840,362 780,368 700,368 L450,366 Q330,360 250,346 L200,330 Z"/>
+    <circle cx="157.6" cy="170.9" r="152"/>
+    <path d="M9,185 C12,270 62,335 132,352 C176,362 218,358 252,346 L252,200 Z"/>
+  </g>
+  <use href="#sil" fill="#04071a" stroke="#04071a" stroke-width="10" stroke-linejoin="round"/>
+  <use href="#sil" fill="url(#body)"/>
+  <!-- top rim highlight and the neon trapezoid -->
+  <path d="M300,46 L320,43 C450,37 640,34 780,44 L850,52 Q880,58 886,86" fill="none" stroke="url(#rim)" stroke-width="9" stroke-linecap="round" opacity="0.9"/>
+  <path d="M452,38 L466,52 L727,52 L741,42" fill="none" stroke="#04071a" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M452,38 L466,52 L727,52 L741,42" fill="none" stroke="#5fe8ff" stroke-width="3.2" stroke-linejoin="round"/>
+  <!-- lower body bevel -->
+  <path d="M262,318 C400,336 560,346 700,346 C790,346 850,338 888,308" fill="none" stroke="#04071a" stroke-width="7"/>
+  <path d="M262,320 C400,338 560,348 700,348 C790,348 850,340 888,310 L884,326 C850,352 790,362 700,362 L450,360 Q340,356 262,336 Z" fill="#1d2d56" opacity="0.9"/>
+  <path d="M262,316 C400,334 560,344 700,344 C790,344 850,336 888,306" fill="none" stroke="#7fb8dc" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M432,330 L445,317 L742,317 L755,330 Z" fill="#35588e" stroke="#04071a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M432,330 L445,317 M742,317 L755,330" stroke="#9ed3ee" stroke-width="3" stroke-linecap="round"/>
+  <!-- side hint of orange arc, top right -->
+  <path d="M866,64 Q880,70 884,92 L885,112" fill="none" stroke="#04071a" stroke-width="9" stroke-linecap="round"/>
+  <path d="M866,64 Q880,70 884,92 L885,112" fill="none" stroke="#ff9a52" stroke-width="5" stroke-linecap="round"/>
+  <!-- little lights -->
+  <rect x="288" y="61" width="32" height="11" rx="5.5" fill="#ff9a62" stroke="#04071a" stroke-width="2.5"/>
+  <path d="M294,64.5 H312" stroke="#ffd0a8" stroke-width="2" stroke-linecap="round"/>
+  <rect x="332" y="335" width="31" height="10" rx="5" fill="#5ff2ff" stroke="#04071a" stroke-width="2.5"/>
+  <circle cx="376" cy="343" r="4.2" fill="#ff8a5c" stroke="#04071a" stroke-width="2"/>
+  <circle cx="776" cy="342" r="4" fill="#ff8a5c" stroke="#04071a" stroke-width="2"/>
+  <circle cx="789" cy="342" r="4" fill="#ff8a5c" stroke="#04071a" stroke-width="2"/>
+  <rect x="812" y="330" width="32" height="10" rx="5" fill="#5ff2ff" stroke="#04071a" stroke-width="2.5"/>
+  <g stroke="#04071a" stroke-width="1.5">
+    <rect x="283" y="287" width="5" height="19" rx="2" fill="#2a4a7c"/>
+    <rect x="295" y="287" width="5" height="19" rx="2" fill="#ffb25c"/>
+    <rect x="307" y="287" width="5" height="19" rx="2" fill="#ffc77a"/>
+  </g>
+
+  <!-- porthole -->
+  <circle cx="157.6" cy="170.9" r="143" fill="none" stroke="url(#rim)" stroke-width="14"/>
+  <circle cx="157.6" cy="170.9" r="135.5" fill="none" stroke="#04071a" stroke-width="2"/>
+  <circle cx="157.6" cy="170.9" r="131" fill="#2a3a63"/>
+  <circle cx="157.6" cy="170.9" r="131" fill="none" stroke="#04071a" stroke-width="3"/>
+  <circle cx="157.6" cy="170.9" r="127" fill="#1a2547"/>
+  <!-- neon track: cyan segments, orange segments -->
+  <circle cx="157.6" cy="170.9" r="117" fill="none" stroke="#04071a" stroke-width="20"/>
+  <circle cx="157.6" cy="170.9" r="117" fill="none" stroke="#32dff0" stroke-width="15"/>
+  <g transform="translate(157.6 170.9)" fill="none" stroke-width="15">
+    <path d="M -87,-78 A117,117 0 0 1 87,-78" stroke="#ffb36a" stroke-width="15"/>
+    <path d="M 117,5 A117,117 0 0 1 -87,78" stroke="#ff9a52" stroke-width="15"/>
+    <path d="M -87,78 A117,117 0 0 1 -117,-5" stroke="#32dff0" stroke-width="15"/>
+    <path d="M 87,-78 A117,117 0 0 1 117,-5" stroke="#32dff0" stroke-width="15"/>
+    <path d="M-117,5 A117,117 0 0 1 -112,-30" stroke="#32dff0" stroke-width="15"/>
+    <!-- segment gaps -->
+    <g stroke="#1a2547" stroke-width="3.5"><path d="M-125,0 H-108 M108,0 H125 M85,-80 L96,-90 M-85,-80 L-96,-90 M85,80 L96,90 M-85,80 L-96,90"/></g>
+    <circle r="117" stroke="#9ff6ff" stroke-width="2" opacity="0.35"/>
+  </g>
+  <circle cx="157.6" cy="170.9" r="126.5" fill="none" stroke="#04071a" stroke-width="2.5"/>
+  <circle cx="157.6" cy="170.9" r="109" fill="none" stroke="#04071a" stroke-width="5"/>
+  <!-- window (the game draws the Catcher here) -->
+  <circle cx="157.6" cy="170.9" r="102" fill="url(#win)"/>
+  <circle cx="157.6" cy="170.9" r="102" fill="none" stroke="#66ffff" stroke-width="7"/>
+  <circle cx="157.6" cy="170.9" r="97" fill="none" stroke="#0a3a56" stroke-width="2.5"/>
+  <circle cx="157.6" cy="170.9" r="108" fill="none" stroke="#9ff6ff" stroke-width="1.6" opacity="0.5"/>
+  <!-- bolts -->
+  <g stroke="#04071a" stroke-width="3" fill="#6f9ac6">
+    <circle cx="57" cy="67" r="7.5"/><circle cx="259" cy="67" r="7.5"/>
+    <circle cx="53" cy="274" r="7.5"/><circle cx="259" cy="274" r="7.5"/>
+  </g>
+  <!-- lower flange line under the porthole -->
+  <path d="M20,235 C30,295 74,333 134,346 C176,355 214,351 246,340" fill="none" stroke="#04071a" stroke-width="6" stroke-linecap="round"/>
+  <path d="M22,230 C32,290 76,328 134,341 C176,350 214,346 244,335" fill="none" stroke="#7bb6dc" stroke-width="3.5" stroke-linecap="round"/>
+
+  <rect x="136" y="308" width="45" height="13" rx="6.5" fill="#4defff" stroke="#04071a" stroke-width="3"/>
+
+  <!-- slot screen (the game draws slots, letters and wires on it) -->
+  <path d="M346,71 L850,71 Q865,71 867,88 L871,112 C877,122 877,132 871,142 L872,262 Q871,291 854,303 L352,305 Q337,299 333,281 L327,252 Q322,232 329,216 L328,122 Q326,100 337,85 Q341,73 346,71 Z" fill="#04071a" stroke="#04071a" stroke-width="12" stroke-linejoin="round"/>
+  <use href="#screenclipp" fill="url(#screen)"/>
+  <g clip-path="url(#screenclip)">
+    <rect x="320" y="71" width="560" height="9" fill="#5c2f4a" opacity="0.45"/>
+    <rect x="320" y="285" width="560" height="22" fill="#6fd4e8" opacity="0.18"/>
+  </g>
+  <use href="#screenclipp" fill="none" stroke="#5fb8de" stroke-width="3" opacity="0.9" transform="translate(0 0)"/>
+  <g clip-path="url(#screenclip)"><use href="#screenclipp" fill="none" stroke="#2f7fae" stroke-width="9" opacity="0.55"/></g>
+</svg>
