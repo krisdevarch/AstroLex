@@ -62,7 +62,7 @@ var daily_today: String = ""
 ## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
 var music: MusicScript
 var _ready_printed: bool = false
-## The intro screen (WP-F.28) shows once per launch before the title. Off in headless runs, so the
+## The intro screen (WP-F.29) shows once per launch before the title. Off in headless runs, so the
 ## tests start on the title, and with ?intro=0 on the web (the smoke scripts).
 var show_intro: bool = intro_default()
 ## Fade-out length of the intro; tests set 0 to finish it at once.

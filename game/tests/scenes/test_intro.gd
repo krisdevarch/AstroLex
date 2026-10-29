@@ -1,5 +1,5 @@
 extends "res://tests/test_case.gd"
-## The intro screen (WP-F.28): shows once per launch before the title, a tap or the timer ends it.
+## The intro screen (WP-F.29): shows once per launch before the title, a tap or the timer ends it.
 
 const Flow := preload("res://tests/scenes/flow.gd")
 const Save := preload("res://services/save.gd")

@@ -1,17 +1,15 @@
-# WP-F.28 evidence: intro screen with the crew, and a crisp HUD
+# WP-F.28 evidence: a sharp HUD
 
-Branch `claude/project-thread-ub88bv`. Frames are from the web export in headless Chromium at 390x844 CSS px, device pixel ratio 3 (the game caps it at 2, WP-F.16), as on the owner's iPhone.
+Branch `claude/project-thread-dh7ho0`. Frames: 390x844 phone at device pixel ratio 3 (the shell caps the game's ratio at 2, as on a real phone), `scripts/godot/web-smoke/hud-shot.cjs`, query `?autoplay=1&level=1-06&tap=3`.
 
-| AC | Result | Test or command | Artefact |
-|---|---|---|---|
-| 1 Intro screen | pass | `game/tests/scenes/test_intro.gd` (5 tests: off in headless, logo + four bubbles + Tap to start, tap goes to the title and Back from the map shows no second intro, double tap ends it once, timer under reduced motion); `scripts/godot/test.sh` | `intro.jpg`, `title.jpg`, `intro-title-play.jpg` |
-| 2 Intro art | pass | `python3 scripts/art/make_intro.py` (fixed seed; rerun reproduces the committed files) | `game/art/intro/` |
-| 3 Crisp HUD | pass | `scripts/art/hud/gen_hud_svgs.py` + `scripts/art/make_hud.sh` (SVG rendered at 2x); `HudArt.ART_SCALE` 2; mipmapped linear filtering; `test_hud.gd` layout tests unchanged and green | `hud-before.jpg`, `hud-after.jpg`, `play-after.jpg` |
-| 4 Layout | pass, partly | bulb and the three buttons share one centre x (`test_hud.gd`, 0.5 px tolerance); right button rim 11 px and porthole 7 px from the screen edges. Not moved to `SIDE_PAD` (44 px): the console is edge-to-edge art and that would shrink the whole HUD | `hud-after.jpg` |
-| 5 Checks | pass | `validate_data` ok; `scripts/godot/test.sh` 376 passed, 0 failed, no SCRIPT ERROR; `scripts/godot/export.sh web` boots to the intro and to play | this folder |
+| # | Criterion | Result | Check | Artefact |
+|---|---|---|---|---|
+| 1 | Vector HUD art | pass | `scripts/art/make_hud.sh` renders `scripts/art/hud/console.svg`, `bulb.svg` and the six button SVGs (written by `gen_buttons.py`) at 2x into `game/art/hud/*.png` (console 1820x1064, buttons 298x298, bulb 204x344). Same viewBox as the old PNGs, so every `MOCK_*` position is unchanged. | `scripts/art/hud/`, `scripts/art/make_hud.sh` |
+| 2 | Shown sharp | pass | All eight imports lossless (`compress/mode=0`) with mipmaps; `HudArt.ART_SCALE` 0.5 in `Console`, `RingArt`, `Icon._disc`; those controls use `TEXTURE_FILTER_LINEAR_WITH_MIPMAPS`. Slots sit in the screen, liquid in the channel, icons centred in their rings. | `reports/WP-F.28/hud-before-after.jpg`, `before-hud.png`, `after-hud.png` |
+| 3 | Tidy layout | pass | In-round messages ("Drone down", "Letter stolen −2 s", wrong catch) were bare coloured text over the letters; they now sit on a dark glass pill like the top chips, sized to the text and centred. The redraw also drops two dark rectangles the old JPEG cut left at the clock bar's left end. | `reports/WP-F.28/toast-pill.png` |
+| 4 | Checks | pass | `scripts/godot/test.sh`: 371 passed, 0 failed. `scripts/godot/export.sh web` ok (pack 3.8 MB); boots and plays on autoplay in Chromium. | this file |
 
-## Notes
-- Cause of the blur: the console, buttons and bulb were crops of the 572x1024 JPEG mock upscaled 1.89x, with no mipmaps. They are now vector art in the same shapes and places.
-- Game pack: 3.2 MB to 5.0 MB (intro sky 0.6 MB, four bubbles 0.75 MB, logo 0.35 MB, HUD at 2x). The intro, the logo and the console are lossy WebP at 0.92 with mipmaps; the logo is 1300 px, enough for the 2x cap.
-- New tunable `intro.holdSec` (6 s). `?intro=0` skips the intro; the web smoke scripts use it.
-- Placeholder art (O-14): the bubble busts are cut from the 1024 px Catcher art; the sky and logo are generated.
+## What changed in the look
+- The art is a clean vector redraw of the old console, not a pixel copy: the JPEG noise and the painted scan-line texture in the porthole window are gone, the screen's edge notches are simpler, cables, gear and bulb filament are redrawn in the same style.
+- The top chips, wrong-catch pill and all text were already drawn by Godot and were already sharp; they are unchanged.
+- `scripts/art/cut_hud.py` stays for the record; the game no longer uses its output.

@@ -1,4 +1,4 @@
-"""Generates the intro screen art (WP-F.28) into game/art/intro/.
+"""Generates the intro screen art (WP-F.29) into game/art/intro/.
 
   python3 scripts/art/make_intro.py [out_dir] [--characters DIR]
 

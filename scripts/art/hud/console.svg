@@ -1,10 +1,151 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="910" height="532" viewBox="0 0 910 532"><defs>
-<linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d86b6"/><stop offset=".45" stop-color="#3e6192"/><stop offset="1" stop-color="#2a4474"/></linearGradient>
-<linearGradient id="steelD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#33507f"/><stop offset="1" stop-color="#1f3562"/></linearGradient>
-<linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e6a8c"/><stop offset=".5" stop-color="#14527a"/><stop offset="1" stop-color="#1b6f93"/></linearGradient>
-<radialGradient id="pglass" cx=".42" cy=".3" r=".85"><stop offset="0" stop-color="#1f7a98"/><stop offset=".6" stop-color="#124c72"/><stop offset="1" stop-color="#0b2d52"/></radialGradient>
-<linearGradient id="chan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1c3a"/><stop offset=".5" stop-color="#18305a"/><stop offset="1" stop-color="#22406c"/></linearGradient>
-<linearGradient id="cable" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fb4d2"/><stop offset="1" stop-color="#5d7298"/></linearGradient>
-<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
-<filter id="glowS" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2"/></filter>
-</defs><path d="M32.1,285.1 Q32.1,285.1 24.6,296.5 Q17.0,307.8 14.2,322.0 Q11.3,336.1 12.2,350.2 Q13.2,364.4 17.9,374.8 Q22.7,385.2 30.2,391.8 Q37.8,398.4 51.9,405.9 Q66.1,413.5 80.2,418.2 Q94.4,422.9 104.8,426.7 L115.2,430.5" fill="none" stroke="#0a1228" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M32.1,285.1 Q32.1,285.1 24.6,296.5 Q17.0,307.8 14.2,322.0 Q11.3,336.1 12.2,350.2 Q13.2,364.4 17.9,374.8 Q22.7,385.2 30.2,391.8 Q37.8,398.4 51.9,405.9 Q66.1,413.5 80.2,418.2 Q94.4,422.9 104.8,426.7 L115.2,430.5" fill="none" stroke="url(#cable)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><path d="M32.1,285.1 Q32.1,285.1 24.6,296.5 Q17.0,307.8 14.2,322.0 Q11.3,336.1 12.2,350.2 Q13.2,364.4 17.9,374.8 Q22.7,385.2 30.2,391.8 Q37.8,398.4 51.9,405.9 Q66.1,413.5 80.2,418.2 Q94.4,422.9 104.8,426.7 L115.2,430.5" fill="none" stroke="#f2f8ff" stroke-opacity=".85" stroke-width="3.5" stroke-linecap="round" transform="translate(-2,-2)"/><path d="M32.1,285.1 Q32.1,285.1 29.2,301.1 Q26.4,317.2 26.4,336.1 Q26.4,355.0 29.2,370.1 L32.1,385.2" fill="none" stroke="#0a1228" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M32.1,285.1 Q32.1,285.1 29.2,301.1 Q26.4,317.2 26.4,336.1 Q26.4,355.0 29.2,370.1 L32.1,385.2" fill="none" stroke="url(#cable)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><path d="M32.1,285.1 Q32.1,285.1 29.2,301.1 Q26.4,317.2 26.4,336.1 Q26.4,355.0 29.2,370.1 L32.1,385.2" fill="none" stroke="#f2f8ff" stroke-opacity=".85" stroke-width="3.5" stroke-linecap="round" transform="translate(-2,-2)"/><path d="M32.1,398.4 Q32.1,398.4 35.0,407.9 Q37.8,417.3 44.4,428.6 Q51.0,439.9 63.2,449.4 Q75.5,458.8 94.4,462.6 L113.3,466.4" fill="none" stroke="#0a1228" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M32.1,398.4 Q32.1,398.4 35.0,407.9 Q37.8,417.3 44.4,428.6 Q51.0,439.9 63.2,449.4 Q75.5,458.8 94.4,462.6 L113.3,466.4" fill="none" stroke="url(#cable)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><path d="M32.1,398.4 Q32.1,398.4 35.0,407.9 Q37.8,417.3 44.4,428.6 Q51.0,439.9 63.2,449.4 Q75.5,458.8 94.4,462.6 L113.3,466.4" fill="none" stroke="#f2f8ff" stroke-opacity=".85" stroke-width="3.5" stroke-linecap="round" transform="translate(-2,-2)"/><clipPath id="bodyclip"><path d="M200,70 C330,50 700,40 826,46 Q896,50 902,104 L906,246 Q904,300 872,326 C790,348 640,364 470,366 C360,367 270,352 197,318 Z"/></clipPath><path d="M200,70 C330,50 700,40 826,46 Q896,50 902,104 L906,246 Q904,300 872,326 C790,348 640,364 470,366 C360,367 270,352 197,318 Z" fill="url(#steel)" stroke="#0a1228" stroke-width="9" stroke-linejoin="round"/><g clip-path="url(#bodyclip)"><path d="M200,70 C330,50 700,40 826,46 Q896,50 902,104" fill="none" stroke="#bfdcfa" stroke-opacity=".75" stroke-width="5" transform="translate(0,6)"/><path d="M200,70 C330,50 700,40 826,46 Q896,50 902,104" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" transform="translate(0,11)"/><rect x="190" y="326" width="720" height="80" fill="#14264c" opacity=".55"/><path d="M190,326 H900" stroke="#7fa6d6" stroke-opacity=".65" stroke-width="2.5"/><path d="M197,318 C270,350 360,361 470,360 C640,358 790,342 862,320" fill="none" stroke="#0b1633" stroke-opacity=".7" stroke-width="10" transform="translate(0,-5)"/></g><path d="M414.0,326.0 L436.0,346.0 L752.0,346.0 L774.0,326.0 Z" fill="#2c4676" stroke="#0a1228" stroke-width="3" stroke-linejoin="round"/><path d="M446,336 H742" stroke="#7fb0e2" stroke-opacity=".7" stroke-width="2.5" stroke-linecap="round"/><path d="M431,322 L417,346" stroke="#0a1228" stroke-width="3" stroke-linecap="round"/><path d="M429,322 L415,346" stroke="#9cc4ee" stroke-opacity=".5" stroke-width="1.5"/><path d="M759,322 L773,346" stroke="#0a1228" stroke-width="3" stroke-linecap="round"/><path d="M761,322 L775,346" stroke="#9cc4ee" stroke-opacity=".5" stroke-width="1.5"/><path d="M446.0,50.0 L466.0,30.0 L728.0,30.0 L748.0,50.0 Z" fill="#3d6396" stroke="#0a1228" stroke-width="4" stroke-linejoin="round"/><path d="M470,39 H724" stroke="#46e6f6" stroke-width="3.5" stroke-linecap="round"/><path d="M466,34 H728" stroke="#cfeaff" stroke-opacity=".7" stroke-width="2"/><clipPath id="scrclip"><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z"/></clipPath><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="#0a1228" stroke="#0a1228" stroke-width="26" stroke-linejoin="round"/><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="#2d4d7e" stroke="#2d4d7e" stroke-width="20" stroke-linejoin="round"/><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="none" stroke="#7aa6d8" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round" transform="translate(0,-9)" clip-path="url(#bodyclip)"/><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="#0a1228" stroke="#0a1228" stroke-width="8" stroke-linejoin="round"/><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="url(#glass)"/><g clip-path="url(#scrclip)"><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="none" stroke="#082a48" stroke-opacity=".55" stroke-width="22" stroke-linejoin="round"/><path d="M326,66 H870 V150 Q600,185 326,150 Z" fill="#fff" opacity=".12"/><path d="M326,66 H870 V100 Q600,112 326,100 Z" fill="#fff" opacity=".07"/></g><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="none" stroke="#46e6f6" stroke-width="6" stroke-linejoin="round" filter="url(#glowS)" opacity=".55"/><path d="M352,66 H844 Q870,66 870,92 V150 L864,160 V230 L870,242 V288 Q870,312 846,312 H352 Q326,312 326,288 V244 L332,234 V150 L326,140 V92 Q326,66 352,66 Z" fill="none" stroke="#7ff0fb" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,0)"/><path d="M360,300 H838" stroke="#7fe9f5" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/><rect x="289" y="61" width="34" height="11" rx="5.5" fill="#ff9a4a" opacity=".55" filter="url(#glowS)"/><rect x="290" y="62" width="32" height="9" rx="4.5" fill="#ff9a4a" stroke="#0a1228" stroke-width="2"/><rect x="292" y="63" width="28" height="3.0" rx="1.5" fill="#fff" opacity=".35"/><path d="M846,70 Q872,72 880,106 L880,118" fill="none" stroke="#0a1228" stroke-width="12" stroke-linecap="round"/><path d="M846,70 Q872,72 880,106 L880,118" fill="none" stroke="#ff9a4a" stroke-width="6" stroke-linecap="round"/><rect x="332" y="334" width="32" height="10" rx="5.0" fill="#46e6f6" opacity=".55" filter="url(#glowS)"/><rect x="333" y="335" width="30" height="8" rx="4.0" fill="#46e6f6" stroke="#0a1228" stroke-width="2"/><rect x="335" y="336" width="26" height="2.7" rx="1.3" fill="#fff" opacity=".35"/><rect x="812" y="333" width="34" height="10" rx="5.0" fill="#46e6f6" opacity=".55" filter="url(#glowS)"/><rect x="813" y="334" width="32" height="8" rx="4.0" fill="#46e6f6" stroke="#0a1228" stroke-width="2"/><rect x="815" y="335" width="28" height="2.7" rx="1.3" fill="#fff" opacity=".35"/><circle cx="354" cy="340" r="4.2" fill="#ff7a5a" stroke="#0a1228" stroke-width="2"/><circle cx="775" cy="340" r="4.2" fill="#ff7a5a" stroke="#0a1228" stroke-width="2"/><circle cx="788" cy="340" r="4.2" fill="#ff7a5a" stroke="#0a1228" stroke-width="2"/><rect x="288" y="290" width="5" height="17" rx="2" fill="#ff9a4a" stroke="#0a1228" stroke-width="2"/><rect x="297" y="290" width="5" height="17" rx="2" fill="#ff9a4a" stroke="#0a1228" stroke-width="2"/><rect x="306" y="290" width="5" height="17" rx="2" fill="#ff9a4a" stroke="#0a1228" stroke-width="2"/><circle cx="158.0" cy="171.0" r="152" fill="#0a1228"/><circle cx="158.0" cy="171.0" r="147" fill="url(#steel)"/><circle cx="158.0" cy="171.0" r="141" fill="none" stroke="#a9cbef" stroke-opacity=".55" stroke-width="2.5"/><circle cx="158.0" cy="171.0" r="132" fill="#16264a" stroke="#0a1228" stroke-width="4"/><circle cx="59.7" cy="72.7" r="7.5" fill="#22385f" stroke="#0a1228" stroke-width="3"/><circle cx="58.2" cy="71.2" r="2.4" fill="#8fb3dd"/><circle cx="256.3" cy="72.7" r="7.5" fill="#22385f" stroke="#0a1228" stroke-width="3"/><circle cx="254.8" cy="71.2" r="2.4" fill="#8fb3dd"/><circle cx="256.3" cy="269.3" r="7.5" fill="#22385f" stroke="#0a1228" stroke-width="3"/><circle cx="254.8" cy="267.8" r="2.4" fill="#8fb3dd"/><circle cx="59.7" cy="269.3" r="7.5" fill="#22385f" stroke="#0a1228" stroke-width="3"/><circle cx="58.2" cy="267.8" r="2.4" fill="#8fb3dd"/><path d="M46.18,130.30 A119,119 0 0 1 202.58,60.67" fill="none" stroke="#ff9a4a" stroke-width="16" stroke-linecap="round" opacity=".5" filter="url(#glowS)"/><path d="M46.18,130.30 A119,119 0 0 1 202.58,60.67" fill="none" stroke="#0a1228" stroke-width="15" stroke-linecap="round"/><path d="M46.18,130.30 A119,119 0 0 1 202.58,60.67" fill="none" stroke="#ffb066" stroke-width="10" stroke-linecap="round"/><path d="M46.18,130.30 A119,119 0 0 1 202.58,60.67" fill="none" stroke="#ff9a4a" stroke-width="5" stroke-linecap="round"/><path d="M264.96,118.83 A119,119 0 0 1 249.16,247.49" fill="none" stroke="#ff9a4a" stroke-width="16" stroke-linecap="round" opacity=".5" filter="url(#glowS)"/><path d="M264.96,118.83 A119,119 0 0 1 249.16,247.49" fill="none" stroke="#0a1228" stroke-width="15" stroke-linecap="round"/><path d="M264.96,118.83 A119,119 0 0 1 249.16,247.49" fill="none" stroke="#ffb066" stroke-width="10" stroke-linecap="round"/><path d="M264.96,118.83 A119,119 0 0 1 249.16,247.49" fill="none" stroke="#ff9a4a" stroke-width="5" stroke-linecap="round"/><path d="M117.30,282.82 A119,119 0 0 1 43.05,201.80" fill="none" stroke="#ff9a4a" stroke-width="16" stroke-linecap="round" opacity=".5" filter="url(#glowS)"/><path d="M117.30,282.82 A119,119 0 0 1 43.05,201.80" fill="none" stroke="#0a1228" stroke-width="15" stroke-linecap="round"/><path d="M117.30,282.82 A119,119 0 0 1 43.05,201.80" fill="none" stroke="#ffb066" stroke-width="10" stroke-linecap="round"/><path d="M117.30,282.82 A119,119 0 0 1 43.05,201.80" fill="none" stroke="#ff9a4a" stroke-width="5" stroke-linecap="round"/><circle cx="158.0" cy="171.0" r="106" fill="none" stroke="#46e6f6" stroke-width="12" opacity=".5" filter="url(#glow)"/><circle cx="158.0" cy="171.0" r="106" fill="#0a1228"/><circle cx="158.0" cy="171.0" r="104" fill="none" stroke="#46e6f6" stroke-width="7"/><circle cx="158.0" cy="171.0" r="100" fill="url(#pglass)" stroke="#0a1228" stroke-width="2"/><path d="M75.31,140.90 A88,88 0 0 1 135.22,86.00" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="7" stroke-linecap="round"/><rect x="140" y="303" width="40" height="13" rx="6.5" fill="#46e6f6" opacity=".55" filter="url(#glowS)"/><rect x="141" y="304" width="38" height="11" rx="5.5" fill="#46e6f6" stroke="#0a1228" stroke-width="2"/><rect x="143" y="305" width="34" height="3.7" rx="1.8" fill="#fff" opacity=".35"/><path d="M221,488 H244 L248,532 H217 Z" fill="url(#steelD)" stroke="#0a1228" stroke-width="4" stroke-linejoin="round"/><path d="M225,492 V528" stroke="#8fb3dd" stroke-opacity=".5" stroke-width="2.5"/><path d="M796,488 H829 L833,532 H792 Z" fill="url(#steelD)" stroke="#0a1228" stroke-width="4" stroke-linejoin="round"/><path d="M800,492 V528" stroke="#8fb3dd" stroke-opacity=".5" stroke-width="2.5"/><path d="M135,402 H838 Q885,402 885,449.5 Q885,497 838,497 H135 Q111,497 111,473 V426 Q111,402 135,402 Z" fill="url(#steel)" stroke="#0a1228" stroke-width="8" stroke-linejoin="round"/><path d="M140,408 H836" stroke="#bcd8f6" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round"/><path d="M730,411 H786" stroke="#46e6f6" stroke-width="3" stroke-linecap="round"/><path d="M152,419 H838 Q870,419 870,450 Q870,481 838,481 H152 Q136,481 136,465 V435 Q136,419 152,419 Z" fill="url(#chan)" stroke="#0a1228" stroke-width="6" stroke-linejoin="round"/><path d="M156,424 H836" stroke="#fff" stroke-opacity=".12" stroke-width="2.5" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="910" height="532" viewBox="0 0 910 532">
+  <!-- The console tray, redrawn as vector art from the owner's mock (WP-F.28). viewBox = game px (1080 wide),
+       so every MOCK_* geometry in game/scenes/field.gd still lines up: porthole window centre (157.6,170.9) r 99,
+       slot screen (328.5,66,538,240), clock channel (136,419,734,62). -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a8fc0"/><stop offset="0.16" stop-color="#3f6ba3"/>
+      <stop offset="0.6" stop-color="#2f518a"/><stop offset="1" stop-color="#22345f"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fd0e8"/><stop offset="0.35" stop-color="#6a9fcb"/><stop offset="1" stop-color="#3c6496"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a5d78"/><stop offset="0.12" stop-color="#2b5b7b"/>
+      <stop offset="0.35" stop-color="#193f63"/><stop offset="0.52" stop-color="#153c61"/>
+      <stop offset="0.7" stop-color="#1b4a70"/><stop offset="0.86" stop-color="#21648a"/>
+      <stop offset="0.96" stop-color="#389cb4"/><stop offset="1" stop-color="#2e86a2"/>
+    </linearGradient>
+    <linearGradient id="chan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132253"/><stop offset="0.3" stop-color="#14224d"/>
+      <stop offset="0.7" stop-color="#1f4570"/><stop offset="1" stop-color="#244a78"/>
+    </linearGradient>
+    <linearGradient id="barframe" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#92c0e5"/><stop offset="0.2" stop-color="#5b8fbe"/>
+      <stop offset="0.55" stop-color="#43689f"/><stop offset="1" stop-color="#395585"/>
+    </linearGradient>
+    <linearGradient id="leg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3d5a88"/><stop offset="0.5" stop-color="#6d97c4"/><stop offset="1" stop-color="#34507c"/>
+    </linearGradient>
+    <radialGradient id="win" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#17678a"/><stop offset="0.7" stop-color="#0f5873"/><stop offset="1" stop-color="#0a4a66"/>
+    </radialGradient>
+    <linearGradient id="cable" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9c4dc"/><stop offset="1" stop-color="#5f7fa6"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="screenclip"><path id="screenclipp" d="M346,71 L850,71 Q865,71 867,88 L871,112 C877,122 877,132 871,142 L872,262 Q871,291 854,303 L352,305 Q337,299 333,281 L327,252 Q322,232 329,216 L328,122 Q326,100 337,85 Q341,73 346,71 Z"/></clipPath>
+  </defs>
+
+  <!-- legs under the clock bar -->
+  <g stroke="#04071a" stroke-width="4" stroke-linejoin="round">
+    <rect x="223" y="488" width="21" height="44" fill="url(#leg)"/>
+    <rect x="797" y="488" width="31" height="44" fill="url(#leg)"/>
+    <path d="M803,494 L803,532 M818,494 L818,532" stroke="#2a3f66" stroke-width="2.5" fill="none"/>
+  </g>
+  <rect x="219" y="492" width="29" height="10" rx="3" fill="#4a6c9c" stroke="#04071a" stroke-width="3"/>
+
+  <!-- cables from the porthole to the clock bar -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M37,284 C8,318 4,360 28,396 C48,420 82,424 112,429" stroke="#04071a" stroke-width="15"/>
+    <path d="M37,284 C8,318 4,360 28,396 C48,420 82,424 112,429" stroke="url(#cable)" stroke-width="9"/>
+    <path d="M37,284 C8,318 4,360 28,396 C48,420 82,424 112,429" stroke="#e4f0fa" stroke-width="2" stroke-dasharray="9 22" opacity="0.8"/>
+    <path d="M27,300 C16,340 26,400 56,432 C74,454 96,462 112,468" stroke="#04071a" stroke-width="15"/>
+    <path d="M27,300 C16,340 26,400 56,432 C74,454 96,462 112,468" stroke="url(#cable)" stroke-width="9"/>
+    <path d="M27,300 C16,340 26,400 56,432 C74,454 96,462 112,468" stroke="#e4f0fa" stroke-width="2" stroke-dasharray="7 26" opacity="0.7"/>
+  </g>
+  <rect x="26" y="272" width="22" height="14" rx="5" transform="rotate(35 37 279)" fill="#8fb3d6" stroke="#04071a" stroke-width="3"/>
+
+  <!-- clock bar frame and channel -->
+  <rect x="111" y="403" width="773" height="94" rx="47" fill="url(#barframe)" stroke="#04071a" stroke-width="5"/>
+  <rect x="117" y="409" width="761" height="82" rx="41" fill="none" stroke="#a9d3f0" stroke-width="2" opacity="0.55"/>
+  <rect x="136" y="419" width="734" height="62" rx="31" fill="url(#chan)" stroke="#04071a" stroke-width="4"/>
+  <path d="M168,423 H838" stroke="#4d79a9" stroke-width="2" opacity="0.5"/>
+  <rect x="113" y="425" width="15" height="52" rx="5" fill="#34507e" stroke="#04071a" stroke-width="3"/>
+  <circle cx="120" cy="439" r="3" fill="#9fc0e0"/><circle cx="120" cy="463" r="3" fill="#9fc0e0"/>
+  <g stroke="#04071a" stroke-width="3" fill="none"><path d="M790,404 V418 M827,404 V418"/></g>
+  <path d="M728,411 H752" stroke="#d6ecfb" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <path d="M830,408 L836,408" stroke="#d6ecfb" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- body silhouette: outline pass, then fill pass -->
+  <g id="sil">
+    <path d="M200,48 L320,41 C450,35 640,32 780,42 L850,50 Q884,56 891,92 C901,150 906,222 896,282 Q888,322 870,340 C840,362 780,368 700,368 L450,366 Q330,360 250,346 L200,330 Z"/>
+    <circle cx="157.6" cy="170.9" r="152"/>
+    <path d="M9,185 C12,270 62,335 132,352 C176,362 218,358 252,346 L252,200 Z"/>
+  </g>
+  <use href="#sil" fill="#04071a" stroke="#04071a" stroke-width="10" stroke-linejoin="round"/>
+  <use href="#sil" fill="url(#body)"/>
+  <!-- top rim highlight and the neon trapezoid -->
+  <path d="M300,46 L320,43 C450,37 640,34 780,44 L850,52 Q880,58 886,86" fill="none" stroke="url(#rim)" stroke-width="9" stroke-linecap="round" opacity="0.9"/>
+  <path d="M452,38 L466,52 L727,52 L741,42" fill="none" stroke="#04071a" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M452,38 L466,52 L727,52 L741,42" fill="none" stroke="#5fe8ff" stroke-width="3.2" stroke-linejoin="round"/>
+  <!-- lower body bevel -->
+  <path d="M262,318 C400,336 560,346 700,346 C790,346 850,338 888,308" fill="none" stroke="#04071a" stroke-width="7"/>
+  <path d="M262,320 C400,338 560,348 700,348 C790,348 850,340 888,310 L884,326 C850,352 790,362 700,362 L450,360 Q340,356 262,336 Z" fill="#1d2d56" opacity="0.9"/>
+  <path d="M262,316 C400,334 560,344 700,344 C790,344 850,336 888,306" fill="none" stroke="#7fb8dc" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M432,330 L445,317 L742,317 L755,330 Z" fill="#35588e" stroke="#04071a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M432,330 L445,317 M742,317 L755,330" stroke="#9ed3ee" stroke-width="3" stroke-linecap="round"/>
+  <!-- side hint of orange arc, top right -->
+  <path d="M866,64 Q880,70 884,92 L885,112" fill="none" stroke="#04071a" stroke-width="9" stroke-linecap="round"/>
+  <path d="M866,64 Q880,70 884,92 L885,112" fill="none" stroke="#ff9a52" stroke-width="5" stroke-linecap="round"/>
+  <!-- little lights -->
+  <rect x="288" y="61" width="32" height="11" rx="5.5" fill="#ff9a62" stroke="#04071a" stroke-width="2.5"/>
+  <path d="M294,64.5 H312" stroke="#ffd0a8" stroke-width="2" stroke-linecap="round"/>
+  <rect x="332" y="335" width="31" height="10" rx="5" fill="#5ff2ff" stroke="#04071a" stroke-width="2.5"/>
+  <circle cx="376" cy="343" r="4.2" fill="#ff8a5c" stroke="#04071a" stroke-width="2"/>
+  <circle cx="776" cy="342" r="4" fill="#ff8a5c" stroke="#04071a" stroke-width="2"/>
+  <circle cx="789" cy="342" r="4" fill="#ff8a5c" stroke="#04071a" stroke-width="2"/>
+  <rect x="812" y="330" width="32" height="10" rx="5" fill="#5ff2ff" stroke="#04071a" stroke-width="2.5"/>
+  <g stroke="#04071a" stroke-width="1.5">
+    <rect x="283" y="287" width="5" height="19" rx="2" fill="#2a4a7c"/>
+    <rect x="295" y="287" width="5" height="19" rx="2" fill="#ffb25c"/>
+    <rect x="307" y="287" width="5" height="19" rx="2" fill="#ffc77a"/>
+  </g>
+
+  <!-- porthole -->
+  <circle cx="157.6" cy="170.9" r="143" fill="none" stroke="url(#rim)" stroke-width="14"/>
+  <circle cx="157.6" cy="170.9" r="135.5" fill="none" stroke="#04071a" stroke-width="2"/>
+  <circle cx="157.6" cy="170.9" r="131" fill="#2a3a63"/>
+  <circle cx="157.6" cy="170.9" r="131" fill="none" stroke="#04071a" stroke-width="3"/>
+  <circle cx="157.6" cy="170.9" r="127" fill="#1a2547"/>
+  <!-- neon track: cyan segments, orange segments -->
+  <circle cx="157.6" cy="170.9" r="117" fill="none" stroke="#04071a" stroke-width="20"/>
+  <circle cx="157.6" cy="170.9" r="117" fill="none" stroke="#32dff0" stroke-width="15"/>
+  <g transform="translate(157.6 170.9)" fill="none" stroke-width="15">
+    <path d="M -87,-78 A117,117 0 0 1 87,-78" stroke="#ffb36a" stroke-width="15"/>
+    <path d="M 117,5 A117,117 0 0 1 -87,78" stroke="#ff9a52" stroke-width="15"/>
+    <path d="M -87,78 A117,117 0 0 1 -117,-5" stroke="#32dff0" stroke-width="15"/>
+    <path d="M 87,-78 A117,117 0 0 1 117,-5" stroke="#32dff0" stroke-width="15"/>
+    <path d="M-117,5 A117,117 0 0 1 -112,-30" stroke="#32dff0" stroke-width="15"/>
+    <!-- segment gaps -->
+    <g stroke="#1a2547" stroke-width="3.5"><path d="M-125,0 H-108 M108,0 H125 M85,-80 L96,-90 M-85,-80 L-96,-90 M85,80 L96,90 M-85,80 L-96,90"/></g>
+    <circle r="117" stroke="#9ff6ff" stroke-width="2" opacity="0.35"/>
+  </g>
+  <circle cx="157.6" cy="170.9" r="126.5" fill="none" stroke="#04071a" stroke-width="2.5"/>
+  <circle cx="157.6" cy="170.9" r="109" fill="none" stroke="#04071a" stroke-width="5"/>
+  <!-- window (the game draws the Catcher here) -->
+  <circle cx="157.6" cy="170.9" r="102" fill="url(#win)"/>
+  <circle cx="157.6" cy="170.9" r="102" fill="none" stroke="#66ffff" stroke-width="7"/>
+  <circle cx="157.6" cy="170.9" r="97" fill="none" stroke="#0a3a56" stroke-width="2.5"/>
+  <circle cx="157.6" cy="170.9" r="108" fill="none" stroke="#9ff6ff" stroke-width="1.6" opacity="0.5"/>
+  <!-- bolts -->
+  <g stroke="#04071a" stroke-width="3" fill="#6f9ac6">
+    <circle cx="57" cy="67" r="7.5"/><circle cx="259" cy="67" r="7.5"/>
+    <circle cx="53" cy="274" r="7.5"/><circle cx="259" cy="274" r="7.5"/>
+  </g>
+  <!-- lower flange line under the porthole -->
+  <path d="M20,235 C30,295 74,333 134,346 C176,355 214,351 246,340" fill="none" stroke="#04071a" stroke-width="6" stroke-linecap="round"/>
+  <path d="M22,230 C32,290 76,328 134,341 C176,350 214,346 244,335" fill="none" stroke="#7bb6dc" stroke-width="3.5" stroke-linecap="round"/>
+
+  <rect x="136" y="308" width="45" height="13" rx="6.5" fill="#4defff" stroke="#04071a" stroke-width="3"/>
+
+  <!-- slot screen (the game draws slots, letters and wires on it) -->
+  <path d="M346,71 L850,71 Q865,71 867,88 L871,112 C877,122 877,132 871,142 L872,262 Q871,291 854,303 L352,305 Q337,299 333,281 L327,252 Q322,232 329,216 L328,122 Q326,100 337,85 Q341,73 346,71 Z" fill="#04071a" stroke="#04071a" stroke-width="12" stroke-linejoin="round"/>
+  <use href="#screenclipp" fill="url(#screen)"/>
+  <g clip-path="url(#screenclip)">
+    <rect x="320" y="71" width="560" height="9" fill="#5c2f4a" opacity="0.45"/>
+    <rect x="320" y="285" width="560" height="22" fill="#6fd4e8" opacity="0.18"/>
+  </g>
+  <use href="#screenclipp" fill="none" stroke="#5fb8de" stroke-width="3" opacity="0.9" transform="translate(0 0)"/>
+  <g clip-path="url(#screenclip)"><use href="#screenclipp" fill="none" stroke="#2f7fae" stroke-width="9" opacity="0.55"/></g>
+</svg>

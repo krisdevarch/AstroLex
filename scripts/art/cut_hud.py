@@ -1,7 +1,4 @@
-"""SUPERSEDED for the console, buttons and bulb (WP-F.28): they are now vector art, see
-scripts/art/hud/gen_hud_svgs.py and scripts/art/make_hud.sh. Kept for reference.
-
-Cuts the play-screen HUD art out of the owner's target mock (19 Oct 2026, 572x1024).
+"""Cuts the play-screen HUD art out of the owner's target mock (19 Oct 2026, 572x1024).
 
   python3 scripts/art/cut_hud.py <mock.jpeg> [out_dir]   # default out_dir: game/art/hud
 
@@ -11,6 +8,9 @@ mock itself, upscaled to the game's 1080-wide pixels. Everything that changes in
 of the art and drawn by the game: the astronaut in the porthole (the Catcher goes there), the letter
 tiles, wires and slots in the screen, the clock liquid, and the button icons (kept in the *_icon
 copies). Masks are built from the mock's own shapes, measured in mock pixels (MOCK_* in field.gd).
+NOTE (WP-F.28): the game no longer uses this cut. The HUD art is now redrawn as vector SVG in
+scripts/art/hud/*.svg and rendered 2x by scripts/art/make_hud.sh into game/art/hud/. This script stays for the
+record (it produced the 1x geometry the SVGs trace).
 Needs numpy, Pillow and opencv-python-headless.
 """
 import sys

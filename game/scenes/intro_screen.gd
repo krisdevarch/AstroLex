@@ -1,5 +1,5 @@
 extends Control
-## Intro screen (WP-F.28): the first thing on launch. A painted starfield with a diagonal nebula band,
+## Intro screen (WP-F.29): the first thing on launch. A painted starfield with a diagonal nebula band,
 ## the chrome AstroLex logo and the four Catchers in glass bubbles that pop in one after another and
 ## bob out of step. A gleam sweeps the logo, "Tap to start" pulses. A tap anywhere, or intro.holdSec
 ## seconds, emits `finished` (after a short fade). Reduced motion shows everything still at rest.
