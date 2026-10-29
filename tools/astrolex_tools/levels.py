@@ -31,6 +31,11 @@ def _tokens(text: str) -> set[str]:
     return out
 
 
+def _texts(comm: dict) -> list[str]:
+    """Every text a comm can show: its own, and for the Catcher each suit's reply."""
+    return [comm["text"], *comm.get("lines", {}).values()]
+
+
 def spoiler_problems(levels: list[dict]) -> list[str]:
     """Text shown before or between rounds must not give away a word still to be caught.
 
@@ -44,8 +49,8 @@ def spoiler_problems(levels: list[dict]) -> list[str]:
         shown = [("title", lv["title"], here)]
         if "babelIntro" in lv:
             shown.append(("babelIntro", lv["babelIntro"], here))
-        shown += [("commsBefore", c["text"], here) for c in lv["commsBefore"]]
-        shown += [("commsAfter", c["text"], ahead) for c in lv["commsAfter"]]
+        shown += [("commsBefore", t, here) for c in lv["commsBefore"] for t in _texts(c)]
+        shown += [("commsAfter", t, ahead) for c in lv["commsAfter"] for t in _texts(c)]
         for key, text, banned in shown:
             for w in sorted(_tokens(text) & banned):
                 problems.append(f"{lv['id']}: {key} gives away '{w}' before it is caught")
@@ -155,7 +160,8 @@ def check_levels(doc: dict, act_words, blocklist: Blocklist, db: WordDB | None =
                 problems.append(f"{lid}: '{w}' repeated (already in {seen[w]})")
             seen.setdefault(w, lid)
         for key in ("commsBefore", "commsAfter"):
-            n = sum(len(c["text"].split()) for c in lv[key])
+            # the Catcher's reply counts once, at its longest suit line
+            n = sum(max(len(t.split()) for t in _texts(c)) for c in lv[key])
             if n > MAX_COMMS_WORDS:
                 problems.append(f"{lid}: {key} has {n} words (max {MAX_COMMS_WORDS})")
         problems += babel_comms_problems(lv)

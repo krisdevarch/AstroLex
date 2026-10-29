@@ -1,6 +1,6 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act3_tower",
   "tuning": {"burst.seconds": 15, "burst.perLetterSec": 4.0},
   "levels": [
@@ -104,6 +104,7 @@
       "commsAfter": [
         {"who": "rhee", "text": "That was my secret. That was my mistake. Babel's origin is in my past."},
         {"who": "kit", "text": "Catcher, it is your call. Go on or stop. We stay on the channel either way."},
+        {"who": "catcher", "text": "Going on.", "lines": {"wren": "Going on. First, as always.", "juno": "Aye. We finish the haul.", "ash": "Go on. Done talking.", "pip": "Ooh. Going on. For science."}},
         {"who": "ade", "text": "Still here. ok ok ok. Still right here."}
       ]
     },

@@ -148,6 +148,8 @@ func _show(i: int) -> void:
 	var th := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, text_w, TEXT_FS).y
 	var h := maxf(AVATAR_D + 2.0 * PAD - 8.0, PAD + 44.0 + th + PAD)
 	var col := color_for(who)
+	if m.has("colour"):
+		col = Color(str(m["colour"]))  # the Catcher speaks in their suit's colour
 	var p := Panel.new()
 	p.name = "StoryBubble"
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -158,12 +160,12 @@ func _show(i: int) -> void:
 	var av := CrewArt.new()
 	av.name = "Avatar"
 	av.colour = col
-	av.who = who
+	av.who = str(m.get("suit", who)) if who == "catcher" else who
 	av.size = Vector2(AVATAR_D, AVATAR_D)
 	av.position = Vector2(PAD - 6.0, PAD - 6.0)
 	av.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(av)
-	var n := Ui.label(who.capitalize(), NAME_FS, col, HORIZONTAL_ALIGNMENT_LEFT)
+	var n := Ui.label(str(m.get("name", who.capitalize())), NAME_FS, col, HORIZONTAL_ALIGNMENT_LEFT)
 	n.name = "Speaker"
 	n.add_theme_constant_override("outline_size", 0)
 	n.position = Vector2(PAD + AVATAR_D + 14.0, PAD - 8.0)

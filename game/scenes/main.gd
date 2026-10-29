@@ -441,7 +441,27 @@ func _show_bench(auto: bool) -> void:
 func _comms_of(index: int, key: String) -> Array:
 	if index < 0 or index >= levels.size():
 		return []
-	return (levels[index] as Dictionary).get(key, [])
+	return catcher_comms((levels[index] as Dictionary).get(key, []), _profile_character(), save.player_name())
+
+
+## The Catcher's lines (WP-F.27) in the picked suit's voice: its own reply, its colour, and the
+## player's name over the bubble (the suit's name when there is none). Other lines pass through.
+static func catcher_comms(messages: Array, character: Dictionary, player_name: String) -> Array:
+	var out: Array = []
+	for m: Dictionary in messages:
+		if str(m.get("who", "")) != "catcher":
+			out.append(m)
+			continue
+		var suit := str(character.get("id", ""))
+		var lines: Dictionary = m.get("lines", {})
+		out.append({
+			"who": "catcher",
+			"text": str(lines.get(suit, m.get("text", ""))),
+			"suit": suit,
+			"colour": str(character.get("colour", "#00ddff")),
+			"name": player_name.capitalize() if player_name != "" else str(character.get("name", "You")),
+		})
+	return out
 
 
 ## The chatter to play: none in autoplay (the CI smoke), all of it otherwise and in the demo.
@@ -548,6 +568,8 @@ func _on_level_finished(summary: Dictionary, level: Dictionary = {}) -> void:
 		level = levels[level_index]
 	summary["level"] = str(level["id"])
 	summary["act"] = act
+	if level.has("vanta"):
+		summary["vanta"] = float(level["vanta"])  # VANTA's time to beat (WP-F.27)
 	var won: bool = summary.get("won", false)
 	var stars: int = int(summary.get("stars", 1 if won else 0))
 	save.record_level(act, str(level["id"]), level_index, won, int(summary.get("score", 0)), stars)

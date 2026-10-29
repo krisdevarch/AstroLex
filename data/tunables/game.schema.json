@@ -44,6 +44,7 @@
     "spawner.decoys",
     "spawner.maxCopies",
     "spawner.decoyRatio",
+    "spawner.decoyBonus",
     "spawner.refill",
     "spawner.refillDelay",
     "spawner.frontShare",
@@ -280,6 +281,12 @@
       "type": "number",
       "minimum": 0,
       "description": "decoys kept per real catchable letter on the board; the floor is spawner.decoys"
+    },
+    "spawner.decoyBonus": {
+      "type": "integer",
+      "minimum": -5,
+      "maximum": 5,
+      "description": "decoys added after spawner.decoyRatio and the ramp.decoyMax cap (never below 0 decoys); Pip's Sharp eye perk sets -1"
     },
     "spawner.refill": {
       "type": "integer",
