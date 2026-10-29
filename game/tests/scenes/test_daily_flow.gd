@@ -20,7 +20,7 @@ func _win(main: Node, stars: int = 3, left: float = 21.0) -> void:
 
 func test_title_button_plays_the_days_level() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "ADA")
+	s.set_profile("wren", "normal", "ADA")
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	main.daily_today = TODAY

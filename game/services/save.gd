@@ -1,8 +1,8 @@
 extends RefCounted
 ## Progress save (WP-3.5a). The only code that reads or writes the save file.
-## Format v3: {version, player_id, updated_at, profile: {character, pronouns, difficulty, name},
+## Format v3: {version, player_id, updated_at, profile: {character, difficulty, name},
 ##   progress: {act: {next, levels: {id: {best_score, best_stars, won, plays}}}}}.
-## v3 added the Catcher's name ("" in migrated saves). v1 had no profile and `won` was a per-mode dictionary; it migrates on load (a win becomes 1 star).
+## v3 added the Catcher's name ("" in migrated saves). WP-F.26 dropped the pronoun pick; an older save's "pronouns" is discarded on load. v1 had no profile and `won` was a per-mode dictionary; it migrates on load (a win becomes 1 star).
 ## On the web Godot keeps user:// in the browser's IndexedDB. Save.fake() is in-memory and touches no disk.
 
 const VERSION := 3
@@ -174,8 +174,8 @@ func profile() -> Dictionary:
 	return _d["profile"]
 
 
-func set_profile(character: String, pronouns: String, difficulty: String, name: String) -> void:
-	_d["profile"] = {"character": character, "pronouns": pronouns, "difficulty": difficulty, "name": name}
+func set_profile(character: String, difficulty: String, name: String) -> void:
+	_d["profile"] = {"character": character, "difficulty": difficulty, "name": name}
 	_write()
 
 
@@ -237,7 +237,7 @@ func _act(act: String, create: bool = false) -> Dictionary:
 
 
 static func _fresh() -> Dictionary:
-	return {"version": VERSION, "player_id": _new_id(), "updated_at": 0, "profile": {"character": "", "pronouns": "they", "difficulty": "", "name": ""}, "progress": {}}
+	return {"version": VERSION, "player_id": _new_id(), "updated_at": 0, "profile": {"character": "", "difficulty": "", "name": ""}, "progress": {}}
 
 
 static func _new_id() -> String:
@@ -266,7 +266,7 @@ static func _migrate(d: Variant) -> Dictionary:
 	dict["version"] = VERSION
 	var prof: Variant = dict.get("profile")
 	var pf: Dictionary = prof if prof is Dictionary else {}
-	dict["profile"] = {"character": str(pf.get("character", "")), "pronouns": str(pf.get("pronouns", "they")), "difficulty": str(pf.get("difficulty", "")), "name": str(pf.get("name", ""))}
+	dict["profile"] = {"character": str(pf.get("character", "")), "difficulty": str(pf.get("difficulty", "")), "name": str(pf.get("name", ""))}
 	var clean: Dictionary = {}
 	for act in (dict["progress"] as Dictionary):
 		var a: Variant = dict["progress"][act]
