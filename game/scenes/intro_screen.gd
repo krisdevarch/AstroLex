@@ -18,7 +18,7 @@ const TAGLINE := "Catch the letters. Bring the words home."
 const GLOW := Color("4fe3ff")  # field.gd's NEON cyan
 const OUTLINE := Color("0b1a4a")
 const WORD_PX := 210
-const INSIDE_DARK := 0.0
+const CLEAR_GLASS := {"glass.dark": 0.0, "glass.refractPx": 0.0, "glass.blur": 0.0, "glass.magnify": 0.0, "glass.rimBend": 0.12, "glass.chroma": 0.25, "glass.milk": 0.03, "glass.frost": 0.0, "glass.film": 0.45}
 ## id -> [centre x share, centre y share of the view, diameter px (1080 wide), bob amplitude, bob speed, phase, suit colour]
 const BUBBLES := {
 	"wren": [0.27, 0.150, 380.0, 14.0, 1.15, 0.0, "#4fd8eb"],
@@ -81,7 +81,9 @@ func _build_bubbles(view: Vector2) -> void:
 	layer.add_child(rig)
 	rig.configure(Vector2(view.x * 0.5, view.y * 0.3), 1200.0, layer.layer)
 	var tun := GameData.load_tunables().duplicate()
-	tun["glass.dark"] = INSIDE_DARK  # the in-round bubble is dark behind a letter; here the bust must show through
+	# A clear window: the in-round bubble darkens and bends what is behind it; here the bust must read.
+	for key: String in CLEAR_GLASS:
+		tun[key] = CLEAR_GLASS[key]
 	var k := view.x / 1080.0
 	var bubble_scale := float(tun["glass.bubbleScale"])
 	for n in ORDER.size():
@@ -97,7 +99,7 @@ func _build_bubbles(view: Vector2) -> void:
 		bust_holder.name = "IntroBust_%s" % id
 		bust_holder.position = rest
 		back.add_child(bust_holder)
-		var path := "res://brand/characters/%s.png" % id
+		var path := "res://art/intro/%s.png" % id
 		if ResourceLoader.exists(path):
 			var bust := TextureRect.new()
 			bust.name = "Bust"
@@ -107,7 +109,7 @@ func _build_bubbles(view: Vector2) -> void:
 			bust.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 			bust.material = HudArt.clip_material()
 			bust.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			bust.size = Vector2(dia, dia) * 0.9
+			bust.size = Vector2(dia, dia) * 0.94
 			bust.position = -bust.size * 0.5
 			bust_holder.add_child(bust)
 		var px := dia / bubble_scale
