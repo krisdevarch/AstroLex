@@ -38,9 +38,11 @@ func test_intro_shows_the_logo_and_the_four_catchers() -> void:
 	assert_true(Flow.has(main, "IntroLogo"), "logo")
 	assert_true(Flow.has(main, "TapToStart"), "prompt")
 	for id in ["wren", "juno", "ash", "pip"]:
-		var b := main.find_child("IntroBubble_%s" % id, true, false) as TextureRect
-		assert_true(b != null and b.texture != null, "bubble %s with art" % id)
-	assert_true((main.find_child("IntroLogo", true, false) as TextureRect).texture != null, "logo art")
+		var b := main.find_child("IntroBubble_%s" % id, true, false)
+		assert_true(main.find_child("IntroBust_%s" % id, true, false) != null and main.find_child("IntroBust_%s" % id, true, false).find_child("Bust", true, false) != null, "bubble %s with a bust" % id)
+		assert_true(b != null and b.find_child("Glass", true, false) != null, "bubble %s with glass" % id)
+	assert_true(main.find_child("Wordmark", true, false) is Label, "wordmark text")
+	assert_eq((main.find_child("TapToStart", true, false) as Button).text, "Tap to start", "standard button")
 	main.free()
 
 
@@ -81,5 +83,5 @@ func test_timer_ends_the_intro_even_with_reduced_motion() -> void:
 	assert_eq(count[0], 0, "still waiting")
 	intro._process(1.0)
 	assert_eq(count[0], 1, "timer finished it")
-	assert_eq((intro.find_child("IntroBubble_juno", true, false) as Control).scale, Vector2.ONE, "reduced motion: at rest")
+	assert_eq((intro.find_child("IntroBubble_juno", true, false) as Node2D).scale, Vector2.ONE, "reduced motion: at rest")
 	intro.free()

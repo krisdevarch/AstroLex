@@ -1,44 +1,35 @@
 extends Control
-## Intro screen (WP-F.29): the first thing on launch. A painted starfield with a diagonal nebula band,
-## the chrome AstroLex logo and the four Catchers in glass bubbles that pop in one after another and
-## bob out of step. A gleam sweeps the logo, "Tap to start" pulses. A tap anywhere, or intro.holdSec
-## seconds, emits `finished` (after a short fade). Reduced motion shows everything still at rest.
-## The art comes from scripts/art/make_intro.py (placeholder until the final key art lands).
+## Intro screen (WP-F.29): the first thing on launch, built from the game's own kit. The title's painted
+## Low Orbit sky, an "AstroLex" wordmark in Fredoka (cream, navy outline, a soft cyan glow), and the four
+## Catchers' busts under the game's glass bubbles (the title logo's `TileView`, no glyph, so the glass
+## refracts over the bust). The bubbles pop in one after another and bob out of step; the standard
+## orange "Tap to start" button sits low. A tap anywhere, or intro.holdSec seconds, emits `finished`
+## (after a short fade). Reduced motion shows everything still at rest.
 
 const Ui := preload("res://scenes/ui.gd")
+const LightRig := preload("res://scenes/light_rig.gd")
+const HudArt := preload("res://scenes/hud_art.gd")
+const TileViewScene: PackedScene = preload("res://scenes/tile_view.tscn")
 const GameData := preload("res://rules/game_data.gd")
 const AppSettings := preload("res://scenes/app_settings.gd")
 
-const SKY_TEX := "res://art/intro/sky.jpg"
-const LOGO_TEX := "res://art/intro/logo.png"
-const DESIGN := Vector2(1080, 1920)
-const LOGO_W := 1130.0
-const LOGO_CENTER := Vector2(540, 905)
-const TAP_Y := 1690.0
-## id -> [centre in design px, diameter, bob amplitude, bob speed, phase, tilt degrees]
+const WORDMARK := "AstroLex"
+const TAGLINE := "Catch the letters. Bring the words home."
+const GLOW := Color("4fe3ff")  # field.gd's NEON cyan
+const OUTLINE := Color("0b1a4a")
+const WORD_PX := 210
+const INSIDE_DARK := 0.0
+## id -> [centre x share, centre y share of the view, diameter px (1080 wide), bob amplitude, bob speed, phase, suit colour]
 const BUBBLES := {
-	"wren": [Vector2(300, 330), 390.0, 14.0, 1.15, 0.0, 3.0],
-	"juno": [Vector2(775, 555), 530.0, 12.0, 0.85, 1.9, 2.5],
-	"ash": [Vector2(315, 1385), 570.0, 13.0, 0.95, 3.6, 3.0],
-	"pip": [Vector2(805, 1335), 390.0, 16.0, 1.30, 5.0, 4.0],
+	"wren": [0.27, 0.150, 380.0, 14.0, 1.15, 0.0, "#4fd8eb"],
+	"juno": [0.72, 0.245, 520.0, 12.0, 0.85, 1.9, "#f2b544"],
+	"ash": [0.29, 0.640, 540.0, 13.0, 0.95, 3.6, "#5fd3b0"],
+	"pip": [0.75, 0.625, 380.0, 16.0, 1.30, 5.0, "#f27fb2"],
 }
 const ORDER := ["juno", "wren", "ash", "pip"]
 const POP_START := 0.25
 const POP_STEP := 0.28
 const POP_SEC := 0.55
-const GLEAM_EVERY := 3.6
-const GLEAM_SEC := 1.1
-
-const GLEAM_SHADER := """
-shader_type canvas_item;
-uniform float sweep = -1.0;
-void fragment() {
-	vec4 c = texture(TEXTURE, UV);
-	float d = (UV.x + UV.y * 0.30) - sweep;
-	float band = exp(-pow(d / 0.045, 2.0)) * 0.9 + exp(-pow(d / 0.16, 2.0)) * 0.18;
-	COLOR = vec4(c.rgb + vec3(band) * c.a, c.a);
-}
-"""
 
 signal finished
 
@@ -49,12 +40,9 @@ var hold_sec: float = 6.0
 var fade_sec: float = 0.35
 var _t: float = 0.0
 var _done: bool = false
-var _stage: Control
-var _bubbles: Array = []  # [node, rest position, amplitude, speed, phase, tilt degrees]
-var _twinkles: Array = []  # [sprite, speed, phase, base alpha]
-var _logo: TextureRect
-var _gleam: ShaderMaterial
-var _tap: Label
+var _bubbles: Array = []  # [holder, tile view, rest position, amplitude, speed, phase, index]
+var _logo: Control
+var _tap: Button
 var _fade: ColorRect
 
 
@@ -64,16 +52,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	hold_sec = float(GameData.load_tunables().get("intro.holdSec", hold_sec))
 	var view := get_viewport_rect().size
-	_build_sky(view)
-	_stage = Control.new()
-	_stage.name = "IntroStage"
-	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_stage.size = DESIGN
-	_stage.position = ((view - DESIGN) * 0.5).floor()
-	add_child(_stage)
-	_build_bubbles()
-	_build_logo()
-	_build_tap()
+	Ui.add_sky(self, view, 0.3)
+	_build_bubbles(view)
+	_build_logo(view)
+	_build_tap(view)
 	_fade = ColorRect.new()
 	_fade.name = "IntroFade"
 	_fade.color = Color(0.01, 0.02, 0.08, 0.0)
@@ -82,144 +64,142 @@ func _ready() -> void:
 	add_child(_fade)
 
 
-## The sky covers the whole view, whatever its aspect; twinkling sparkles ride on top of it.
-func _build_sky(view: Vector2) -> void:
-	var back := ColorRect.new()
-	back.name = "IntroBack"
-	back.color = Color("07102b")
-	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	back.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+## The bubbles live on a canvas layer under the labels, like the title's logo row: a bust, a
+## glyph-less glass bubble over it, and a thin rim in the Catcher's suit colour.
+func _build_bubbles(view: Vector2) -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "IntroWorld"
+	layer.layer = -1
+	add_child(layer)
+	# The glass refracts a screen copy taken once per frame, so every bust sits on its own layer
+	# behind all the glass, or the later bubbles would look empty.
+	var back := CanvasLayer.new()
+	back.name = "IntroBusts"
+	back.layer = -2
 	add_child(back)
-	var tex := _tex(SKY_TEX)
-	var k := maxf(view.x / DESIGN.x, view.y / DESIGN.y)
-	var sky := TextureRect.new()
-	sky.name = "IntroSky"
-	sky.texture = tex
-	sky.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	sky.stretch_mode = TextureRect.STRETCH_SCALE
-	sky.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sky.size = DESIGN * k
-	sky.position = ((view - DESIGN * k) * 0.5).floor()
-	add_child(sky)
-	var star := _sparkle_texture()
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 2810
-	for i in 16:
-		var s := TextureRect.new()
-		s.name = "Twinkle_%d" % i
-		s.texture = star
-		s.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var px := rng.randf_range(18.0, 40.0)
-		s.size = Vector2(px, px)
-		s.pivot_offset = s.size * 0.5
-		s.position = Vector2(rng.randf_range(0.0, view.x), rng.randf_range(0.0, view.y)) - s.size * 0.5
-		var mat := CanvasItemMaterial.new()
-		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-		s.material = mat
-		var a := rng.randf_range(0.35, 0.8)
-		s.modulate = Color(0.85, 0.93, 1.0, a)
-		add_child(s)
-		_twinkles.append([s, rng.randf_range(0.8, 2.2), rng.randf_range(0.0, TAU), a])
-
-
-func _build_bubbles() -> void:
+	var rig: Node2D = LightRig.new()
+	layer.add_child(rig)
+	rig.configure(Vector2(view.x * 0.5, view.y * 0.3), 1200.0, layer.layer)
+	var tun := GameData.load_tunables().duplicate()
+	tun["glass.dark"] = INSIDE_DARK  # the in-round bubble is dark behind a letter; here the bust must show through
+	var k := view.x / 1080.0
+	var bubble_scale := float(tun["glass.bubbleScale"])
 	for n in ORDER.size():
 		var id: String = ORDER[n]
 		var d: Array = BUBBLES[id]
-		var b := TextureRect.new()
-		b.name = "IntroBubble_%s" % id
-		b.texture = _tex("res://art/intro/%s.png" % id)
-		b.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		b.stretch_mode = TextureRect.STRETCH_SCALE
-		b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var dia: float = d[1]
-		b.size = Vector2(dia, dia)
-		b.pivot_offset = b.size * 0.5
-		var rest: Vector2 = d[0] - b.size * 0.5
-		b.position = rest
-		_stage.add_child(b)
-		_bubbles.append([b, rest, d[2], d[3], d[4], d[5]])
+		var dia: float = float(d[2]) * k
+		var holder := Node2D.new()
+		holder.name = "IntroBubble_%s" % id
+		layer.add_child(holder)
+		var rest := Vector2(view.x * float(d[0]), view.y * float(d[1]))
+		holder.position = rest
+		var bust_holder := Node2D.new()
+		bust_holder.name = "IntroBust_%s" % id
+		bust_holder.position = rest
+		back.add_child(bust_holder)
+		var path := "res://brand/characters/%s.png" % id
+		if ResourceLoader.exists(path):
+			var bust := TextureRect.new()
+			bust.name = "Bust"
+			bust.texture = load(path)
+			bust.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			bust.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			bust.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			bust.material = HudArt.clip_material()
+			bust.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			bust.size = Vector2(dia, dia) * 0.9
+			bust.position = -bust.size * 0.5
+			bust_holder.add_child(bust)
+		var px := dia / bubble_scale
+		var v: Node2D = TileViewScene.instantiate()
+		v.name = "Glass"
+		holder.add_child(v)
+		v.setup("a", px, px / (float(tun["tile.size"]) * view.x), 0, "bubble", settings.reduced_motion, tun, float(n) * 1.7)
+		v.glyph.visible = false
+		v.place(Vector2.ZERO, 0.0, 0.5)
+		var rim := Rim.new()
+		rim.name = "Rim"
+		rim.radius = dia * 0.5
+		rim.colour = Color(str(d[6]))
+		holder.add_child(rim)
+		_bubbles.append([holder, v, rest, float(d[3]), float(d[4]), float(d[5]), bust_holder])
 		if not settings.reduced_motion:
-			b.scale = Vector2.ZERO
-			b.modulate.a = 0.0
+			_pop(0.0, holder, bust_holder)
 			var tw := create_tween()
 			tw.tween_interval(POP_START + POP_STEP * n)
-			tw.tween_property(b, "modulate:a", 1.0, 0.18)
-			tw.parallel().tween_property(b, "scale", Vector2.ONE, POP_SEC).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw.tween_method(_pop.bind(holder, bust_holder), 0.0, 1.0, POP_SEC).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-func _build_logo() -> void:
-	var tex := _tex(LOGO_TEX)
-	_logo = TextureRect.new()
+## One pop-in step for a bubble and its bust (v 0..1, overshooting with the back ease).
+func _pop(v: float, holder: Node2D, bust: Node2D) -> void:
+	for n: Node2D in [holder, bust]:
+		n.scale = Vector2.ONE * v
+		n.modulate.a = clampf(v * 4.0, 0.0, 1.0)
+
+
+## A thin ring in the suit colour around a bubble.
+class Rim extends Node2D:
+	var radius: float = 100.0
+	var colour: Color = Color.WHITE
+
+	func _draw() -> void:
+		draw_arc(Vector2.ZERO, radius * 0.985, 0.0, TAU, 96, Color(colour, 0.22), radius * 0.05, true)
+		draw_arc(Vector2.ZERO, radius * 0.97, 0.0, TAU, 96, Color(colour, 0.75), maxf(3.0, radius * 0.014), true)
+
+
+## The wordmark: cream Fredoka with a navy outline over a few soft cyan copies, and the tagline.
+func _build_logo(view: Vector2) -> void:
+	var k := view.x / 1080.0
+	_logo = Control.new()
 	_logo.name = "IntroLogo"
-	_logo.texture = tex
-	_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_logo.stretch_mode = TextureRect.STRETCH_SCALE
-	_logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sz := tex.get_size() if tex != null else Vector2(1900, 435)
-	_logo.size = Vector2(LOGO_W, LOGO_W * sz.y / sz.x)
-	_logo.pivot_offset = _logo.size * 0.5
-	_logo.position = LOGO_CENTER - _logo.size * 0.5
-	var sh := Shader.new()
-	sh.code = GLEAM_SHADER
-	_gleam = ShaderMaterial.new()
-	_gleam.shader = sh
-	_gleam.set_shader_parameter("sweep", -1.0)
-	_logo.material = _gleam
-	_stage.add_child(_logo)
+	var w := view.x
+	var h := WORD_PX * k * 1.3
+	_logo.size = Vector2(w, h + 110.0 * k)
+	_logo.position = Vector2(0.0, view.y * 0.435 - h * 0.5)
+	add_child(_logo)
+	var glow_levels := [[96, 0.04], [72, 0.05], [52, 0.07], [34, 0.1]]
+	for g in glow_levels:
+		var gl := Ui.text(WORDMARK, int(WORD_PX * k), Color(GLOW, 0.0))
+		gl.add_theme_color_override("font_outline_color", Color(GLOW, float(g[1])))
+		gl.add_theme_constant_override("outline_size", int(float(g[0]) * k))
+		gl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+		gl.size = Vector2(w, h)
+		gl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_logo.add_child(gl)
+	var word := Ui.text(WORDMARK, int(WORD_PX * k), Ui.CREAM)
+	word.name = "Wordmark"
+	word.add_theme_color_override("font_outline_color", OUTLINE)
+	word.add_theme_constant_override("outline_size", int(22.0 * k))
+	word.add_theme_color_override("font_shadow_color", Color(0.0, 0.02, 0.1, 0.6))
+	word.add_theme_constant_override("shadow_offset_y", int(10.0 * k))
+	word.add_theme_constant_override("shadow_outline_size", int(22.0 * k))
+	word.size = Vector2(w, h)
+	word.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_logo.add_child(word)
+	var tag := Ui.text(TAGLINE, 46, Ui.CREAM)
+	tag.name = "Tagline"
+	tag.position = Vector2((w - 1000.0) * 0.5, h - 10.0 * k)
+	tag.size = Vector2(1000, 70)
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_logo.add_child(tag)
 	if not settings.reduced_motion:
-		_logo.scale = Vector2(0.86, 0.86)
 		_logo.modulate.a = 0.0
 		var tw := create_tween()
-		tw.tween_interval(0.05)
-		tw.tween_property(_logo, "modulate:a", 1.0, 0.4)
-		tw.parallel().tween_property(_logo, "scale", Vector2.ONE, 0.7).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_interval(0.1)
+		tw.tween_property(_logo, "modulate:a", 1.0, 0.7)
 
 
-func _build_tap() -> void:
-	_tap = Ui.text("Tap to start", 58, Color("f4f7ff"))
+func _build_tap(view: Vector2) -> void:
+	_tap = Ui.primary("Tap to start", 62, Vector2(600, 156))
 	_tap.name = "TapToStart"
-	_tap.size = Vector2(DESIGN.x, 90)
-	_tap.position = Vector2(0, TAP_Y)
-	_tap.add_theme_color_override("font_shadow_color", Color(0.02, 0.05, 0.25, 0.9))
-	_tap.add_theme_constant_override("shadow_outline_size", 14)
-	_tap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var pill := PanelContainer.new()
-	pill.name = "TapPill"
-	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := Ui.box(Color(0.02, 0.04, 0.16, 0.62), 60, Color(0.5, 0.8, 1.0, 0.35), 3)
-	sb.shadow_color = Color(0.1, 0.4, 0.9, 0.35)
-	sb.shadow_size = 24
-	pill.add_theme_stylebox_override("panel", sb)
-	pill.size = Vector2(520, 100)
-	pill.position = Vector2((DESIGN.x - 520.0) * 0.5, TAP_Y - 5.0)
-	_stage.add_child(pill)
-	_stage.add_child(_tap)
+	_tap.position = Vector2((view.x - 600.0) * 0.5, view.y - 380.0)
+	_tap.size = Vector2(600, 156)
+	_tap.pivot_offset = _tap.size * 0.5
+	_tap.pressed.connect(finish)
+	add_child(_tap)
 	if not settings.reduced_motion:
 		_tap.modulate.a = 0.0
-
-
-## A soft 4-point star, drawn once.
-func _sparkle_texture() -> Texture2D:
-	var n := 64
-	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
-	var c := (n - 1) * 0.5
-	for y in n:
-		for x in n:
-			var dx := absf(x - c) / c
-			var dy := absf(y - c) / c
-			var arm := exp(-pow(dy / 0.06, 2.0)) * pow(maxf(1.0 - dx, 0.0), 2.0) + exp(-pow(dx / 0.06, 2.0)) * pow(maxf(1.0 - dy, 0.0), 2.0)
-			var core := exp(-(dx * dx + dy * dy) / 0.02)
-			var v := clampf(arm + core, 0.0, 1.0)
-			img.set_pixel(x, y, Color(1, 1, 1, v))
-	return ImageTexture.create_from_image(img)
-
-
-func _tex(path: String) -> Texture2D:
-	return load(path) as Texture2D if ResourceLoader.exists(path) else null
 
 
 func _process(delta: float) -> void:
@@ -229,25 +209,16 @@ func _process(delta: float) -> void:
 	if settings.reduced_motion:
 		return
 	for e in _bubbles:
-		var b: Control = e[0]
-		var ph: float = _t * e[3] + e[4]
-		b.position = e[1] + Vector2(sin(ph * 0.7) * e[2] * 0.4, sin(ph) * e[2])
-		b.rotation = deg_to_rad(sin(ph * 0.8 + 1.0) * e[5])
-	for e in _twinkles:
-		var s: Control = e[0]
-		var k := 0.5 + 0.5 * sin(_t * e[1] + e[2])
-		s.modulate.a = e[3] * (0.15 + 0.85 * k)
-		s.scale = Vector2.ONE * (0.6 + 0.5 * k)
-	var phase := fmod(_t - 1.2, GLEAM_EVERY)
-	if _t > 1.2 and phase < GLEAM_SEC:
-		_gleam.set_shader_parameter("sweep", lerpf(-0.25, 1.35, phase / GLEAM_SEC))
-	else:
-		_gleam.set_shader_parameter("sweep", -1.0)
-	var pulse := 0.5 + 0.5 * sin(_t * 3.4)
+		var b: Node2D = e[0]
+		var ph: float = _t * e[4] + e[5]
+		b.position = e[2] + Vector2(sin(ph * 0.7) * e[3] * 0.4, sin(ph) * e[3])
+		b.rotation = deg_to_rad(sin(ph * 0.8 + 1.0) * 2.0)
+		(e[6] as Node2D).position = b.position
+		(e[6] as Node2D).rotation = b.rotation
+		(e[1] as Node2D).call("place", Vector2.ZERO, _t, 0.5)
 	var appear := clampf((_t - 1.1) / 0.5, 0.0, 1.0)
-	_tap.modulate.a = appear * (0.55 + 0.45 * pulse)
-	_tap.scale = Vector2.ONE * (1.0 + 0.03 * pulse)
-	_tap.pivot_offset = _tap.size * 0.5
+	_tap.modulate.a = appear
+	_tap.scale = Vector2.ONE * (1.0 + 0.02 * (0.5 + 0.5 * sin(_t * 3.0)))
 
 
 func _gui_input(event: InputEvent) -> void:
