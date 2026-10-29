@@ -7,7 +7,7 @@ const Save := preload("res://services/save.gd")
 
 func _main_with_intro() -> Node:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "ADA")
+	s.set_profile("wren", "normal", "ADA")
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	main.save = s
 	main.show_intro = true

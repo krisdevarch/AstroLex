@@ -3,7 +3,7 @@
   python3 scripts/art/make_intro.py [out_dir] [--characters DIR]
 
   sky.jpg    1080x1920  deep-blue starfield with a diagonal nebula band of star dust
-  logo.png   ~1900 px   chrome "AstroLex" wordmark (Fredoka Bold, outline, cyan glow, magenta underside)
+  logo.png   1300 px    chrome "AstroLex" wordmark (Fredoka Bold, outline, cyan glow, magenta underside)
   <id>.png   640 px     the four Catchers as busts in glass bubbles (cut from the 1024 px Catcher art)
 
 Reproducible (fixed seed). Uses only game/fonts/Fredoka.ttf and the four Catcher PNGs
@@ -231,14 +231,15 @@ def make_logo(out):
 
     img = Image.fromarray((np.clip(canvas, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA")
     img = img.crop(img.getbbox())
-    k = 1900 / img.size[0]
-    img = img.resize((1900, round(img.size[1] * k)), Image.LANCZOS)
+    k = LOGO_PX / img.size[0]
+    img = img.resize((LOGO_PX, round(img.size[1] * k)), Image.LANCZOS)
     img.save(out / "logo.png", optimize=True)
     print("logo", img.size)
 
 
 # ---------------------------------------------------------------------------------------------
 BUBBLE = 640
+LOGO_PX = 1300  # drawn 1130 game px wide; the 2x pixel-ratio cap never needs more
 CROPS = {  # x, y, size in the 1024 px art: head and shoulders
     "wren": (130, 30, 760),
     "juno": (130, 40, 760),
