@@ -552,11 +552,18 @@ func field_centre() -> Vector2:
 
 ## Anchors this round needs: the first two words' letters, the decoys they bring, anchors.spare free spots
 ## for hops and volleys, and one for the spot Babel's porthole may take.
+## Decoys wanted for `real` catchable letters: the larger of the ramp floor and decoyRatio per letter,
+## capped by ramp.decoyMax, then spawner.decoyBonus (Pip's Sharp eye is -1) added after the ratio so it always counts.
+func _decoy_target(real: int) -> int:
+	var d := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	return maxi(0, d + int(round(_num("spawner.decoyBonus"))))
+
+
 func _anchor_demand() -> int:
 	var real := 0
 	for i in mini(2, words.size()):
 		real += words[i].length()
-	var decoys := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	var decoys := _decoy_target(real)
 	_letters_target = real + decoys
 	return real + decoys + int(_num("anchors.spare")) + 1
 
@@ -843,7 +850,7 @@ func _ensure_decoys() -> void:
 					trap_have[t.ch] = int(trap_have.get(t.ch, 0)) + 1
 			elif t.alive:
 				real += 1
-	var want := mini(int(_num("ramp.decoyMax")), maxi(int(ramp()["decoys"]), ceili(_num("spawner.decoyRatio") * real)))
+	var want := _decoy_target(real)
 	if _num("spawner.refill") >= 1.0:
 		# WP-F.25 (owner: "always replace the letters when guessed"): the letters on the field stay as many as
 		# the round started with (the first two words' letters plus their decoys, _letters_target), so every

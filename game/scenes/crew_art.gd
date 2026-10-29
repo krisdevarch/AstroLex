@@ -1,13 +1,15 @@
 extends Control
 ## Crew portraits (WP-F.3, art WP-F.13a): each speaker is an illustrated bust (res://art/crew/<who>.png,
 ## vector sticker art in the style of the Catcher art, rendered from scripts/art/crew/*.svg) clipped to
-## a disc inside a ring in the speaker's colour. Babel uses his sprite, cropped to the helmet. Unknown
-## speakers get a plain face.
+## a disc inside a ring in the speaker's colour. Babel uses his sprite, cropped to the helmet. The
+## Catcher's suits (WP-F.27) use their portrait busts. Unknown speakers get a plain face.
 
 const BABEL_TEX := "res://art/babel/babel.png"
 const BABEL_CROP := Rect2(80, 8, 260, 260)  # the helmet, in babel.png px
 const CREW_TEX := "res://art/crew/%s.png"
 const CREW := ["rhee", "ade", "kit", "vanta", "tomas"]
+const SUIT_TEX := "res://brand/characters/%s.png"
+const SUITS := ["wren", "juno", "ash", "pip"]
 const CREW_FRAME := 0.92  # the bust PNGs are framed for a centred circle crop of this share
 const INK := Color("1b2333")
 const SKIN := Color("f2c6a0")
@@ -28,6 +30,9 @@ func _draw() -> void:
 	draw_circle(c, ri, colour.darkened(0.45))
 	if who == "babel":
 		_disc_texture(c, ri, load(BABEL_TEX), BABEL_CROP)
+	elif who in SUITS:
+		var st := load(SUIT_TEX % who) as Texture2D
+		_disc_texture(c, ri, st, Rect2(Vector2.ZERO, st.get_size()))
 	elif who in CREW:
 		var tex := crew_texture(who)
 		_disc_texture(c, ri, tex, Rect2(tex.get_size() * (1.0 - CREW_FRAME) * 0.5, tex.get_size() * CREW_FRAME))

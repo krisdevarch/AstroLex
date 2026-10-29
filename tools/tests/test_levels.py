@@ -172,3 +172,15 @@ def test_codex_problems_pass_and_fail():
     assert L.codex_problems(by_act, bad) == [
         "codex: 1-04 has 2 notes (expected 1)", "codex: 1-05 has no note",
         "codex: 1-04 note is for 'boat', not one of coat, hat"]
+
+
+def test_catcher_lines_are_checked_for_spoilers(doc, words):
+    lv = doc["levels"][0]
+    lv["commsBefore"] = [{"who": "catcher", "text": "Ready.", "lines": {"wren": f"First {lv['words'][0]}!", "juno": "Aye.", "ash": "Shh.", "pip": "Ooh."}}]
+    assert any("gives away" in p for p in check(doc, words))
+
+
+def test_catcher_reply_counts_once_at_its_longest_line(doc, words):
+    long = "word " * 61
+    doc["levels"][0]["commsAfter"] = [{"who": "catcher", "text": "Ready.", "lines": {"wren": long, "juno": "Aye.", "ash": "Shh.", "pip": "Ooh."}}]
+    assert any("commsAfter has 61 words" in p for p in check(doc, words))

@@ -1,6 +1,6 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act2_nebula",
   "tuning": {"burst.seconds": 25, "burst.perLetterSec": 2.75},
   "levels": [
@@ -20,7 +20,7 @@
     },
     {
       "id": "2-02", "order": 2, "title": "A Time to Beat", "beat": "VANTA's first message: a time and a challenge. After: the feelings it stirs up.",
-      "pacing": "teach", "words": ["fear", "rage", "envy"], "seed": 2102, "babel": true, "babelIntro": "Feelings already? Careful, they are catching.",
+      "pacing": "teach", "words": ["fear", "rage", "envy"], "seed": 2102, "babel": true, "vanta": 38, "babelIntro": "Feelings already? Careful, they are catching.",
       "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "38 seconds. That is my time on this cloud. Beat it, Catcher."},
@@ -101,7 +101,7 @@
     },
     {
       "id": "2-08", "order": 8, "title": "Hard Edges", "beat": "VANTA is dismissive of Rhee; the crew's anger and pride.",
-      "pacing": "core", "words": ["anger", "pride", "spite", "scorn"], "seed": 2108, "babel": true, "babelIntro": "Sharp ones now. Mind your fingers.",
+      "pacing": "core", "words": ["anger", "pride", "spite", "scorn"], "seed": 2108, "babel": true, "vanta": 36, "babelIntro": "Sharp ones now. Mind your fingers.",
       "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "Sharp words, same clock. I did it in 36. Rhee reads cards. I read the clock."},
@@ -156,7 +156,7 @@
     },
     {
       "id": "2-12", "order": 12, "title": "The Ghost", "beat": "Encounter: Rhee recovers grief and her voice breaks. VANTA sets a last time. Tomas names a feeling.",
-      "pacing": "encounter", "words": ["love", "grief"], "seed": 2112, "babel": true, "babelIntro": "Two words left in this cloud. I know both. Do you?",
+      "pacing": "encounter", "words": ["love", "grief"], "seed": 2112, "babel": true, "vanta": 30, "babelIntro": "Two words left in this cloud. I know both. Do you?",
       "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "burst.seconds": 26},
       "commsBefore": [
         {"who": "vanta", "text": "Two words. 30 seconds, my time. Beat it."},
@@ -164,6 +164,7 @@
       ],
       "commsAfter": [
         {"who": "rhee", "text": "Grief. Grief is love with nowhere to go. I... forgive me. I need a moment."},
+        {"who": "catcher", "text": "We are here.", "lines": {"wren": "I'll wait. Just this once.", "juno": "Aye. Take all you need.", "ash": "Shh. We are here.", "pip": "For the record, that was brave."}},
         {"who": "tomas", "text": "I miss you. I am not scared."}
       ]
     }

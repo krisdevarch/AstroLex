@@ -115,11 +115,14 @@ func test_ending_names_the_catcher_in_tomas_text() -> void:
 	e.player_name = "ADA"
 	e.total_stars = 40
 	tree.root.add_child(e)
-	assert_eq(e.cards.size(), 3)
-	assert_true(str(e.cards[0]["text"]).contains("Listen"), "Rhee first")
+	assert_eq(e.cards.size(), 4)
+	assert_true(str(e.cards[0]["text"]).contains("let them change you"), "Rhee first, as in 4-12")
+	assert_eq(e.cards[0]["colour"], Color("F8BC04"), "Rhee's amber")
 	var text := e.find_child("EndingText", true, false) as Label
 	e.advance()
-	assert_true(text.text.contains("Thank you, Ada."), "Tomas names the Catcher")
+	assert_eq(text.text, "I was wrong about words. Thank you, Ada.", "Babel's sincere line")
+	e.advance()
+	assert_true(text.text.contains("Thank you, Ada. Come and see"), "Tomas names the Catcher")
 	e.advance()
 	assert_eq(text.text, "Every word is home.")
 	e.advance()

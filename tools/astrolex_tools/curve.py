@@ -5,7 +5,7 @@ Exit code 1 when a level or act is flagged.
 
 Model (constants are modelling assumptions, not player-facing numbers; the real knobs are the tunables):
   letters = sum of word lengths;  word = letters / words
-  decoys  = min(ramp.decoyMax, max(spawner.decoys, ceil(spawner.decoyRatio * word)))   (round.gd _ensure_decoys, round 1)
+  decoys  = min(ramp.decoyMax, max(spawner.decoys, ceil(spawner.decoyRatio * word))) + spawner.decoyBonus   (round.gd _decoy_target, round 1)
   tiles   = word + decoys                                  (tiles in play for the word being caught)
   est/letter = BASE_SEC + SEARCH_SEC * tiles + SPEED_SEC * drift.speed
   est = letters * est/letter + thief + hazard losses, where
@@ -51,6 +51,7 @@ def estimate(words: list[str], tuning: dict, profile: str = "skilled") -> dict:
     letters = sum(len(w) for w in words)
     word = letters / len(words)
     decoys = min(tuning["ramp.decoyMax"], max(tuning["spawner.decoys"], math.ceil(tuning["spawner.decoyRatio"] * word)))
+    decoys = max(0, decoys + tuning.get("spawner.decoyBonus", 0))
     tiles = word + decoys
     per_letter = p["BASE_SEC"] + p["SEARCH_SEC"] * tiles + p["SPEED_SEC"] * tuning["drift.speed"]
     base = letters * per_letter

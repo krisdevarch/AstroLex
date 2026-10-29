@@ -11,6 +11,7 @@
   "spawner.decoys": 4,
   "spawner.maxCopies": 2,
   "spawner.decoyRatio": 1.0,
+  "spawner.decoyBonus": 0,
   "spawner.refill": 1,
   "spawner.refillDelay": 0.4,
   "spawner.frontShare": 1.0,
