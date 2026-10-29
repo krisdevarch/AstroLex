@@ -12,14 +12,14 @@ const AppSettings := preload("res://scenes/app_settings.gd")
 const SKY_TEX := "res://art/intro/sky.jpg"
 const LOGO_TEX := "res://art/intro/logo.png"
 const DESIGN := Vector2(1080, 1920)
-const LOGO_W := 1000.0
+const LOGO_W := 1130.0
 const LOGO_CENTER := Vector2(540, 905)
-const TAP_Y := 1790.0
+const TAP_Y := 1690.0
 ## id -> [centre in design px, diameter, bob amplitude, bob speed, phase, tilt degrees]
 const BUBBLES := {
 	"wren": [Vector2(300, 330), 390.0, 14.0, 1.15, 0.0, 3.0],
 	"juno": [Vector2(775, 555), 530.0, 12.0, 0.85, 1.9, 2.5],
-	"ash": [Vector2(315, 1420), 570.0, 13.0, 0.95, 3.6, 3.0],
+	"ash": [Vector2(315, 1385), 570.0, 13.0, 0.95, 3.6, 3.0],
 	"pip": [Vector2(805, 1335), 390.0, 16.0, 1.30, 5.0, 4.0],
 }
 const ORDER := ["juno", "wren", "ash", "pip"]
@@ -187,6 +187,16 @@ func _build_tap() -> void:
 	_tap.add_theme_color_override("font_shadow_color", Color(0.02, 0.05, 0.25, 0.9))
 	_tap.add_theme_constant_override("shadow_outline_size", 14)
 	_tap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pill := PanelContainer.new()
+	pill.name = "TapPill"
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := Ui.box(Color(0.02, 0.04, 0.16, 0.62), 60, Color(0.5, 0.8, 1.0, 0.35), 3)
+	sb.shadow_color = Color(0.1, 0.4, 0.9, 0.35)
+	sb.shadow_size = 24
+	pill.add_theme_stylebox_override("panel", sb)
+	pill.size = Vector2(520, 100)
+	pill.position = Vector2((DESIGN.x - 520.0) * 0.5, TAP_Y - 5.0)
+	_stage.add_child(pill)
 	_stage.add_child(_tap)
 	if not settings.reduced_motion:
 		_tap.modulate.a = 0.0

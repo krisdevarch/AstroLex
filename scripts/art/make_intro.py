@@ -83,21 +83,24 @@ def make_sky(out):
     d = (xx - cx0) * nx + (yy - cy0) * ny + wob
     along = (xx - cx0) * np.cos(ang) + (yy - cy0) * np.sin(ang)
     taper = np.clip(1.15 - np.abs(along) / 1450, 0.25, 1)
-    core = np.exp(-(d / (95 * taper)) ** 2)
-    halo = np.exp(-(d / (270 * taper)) ** 2)
+    core = np.exp(-(d / (120 * taper)) ** 2)
+    halo = np.exp(-(d / (330 * taper)) ** 2)
     n1 = fbm(rng, (H, W), 5, 6, 0.62)
     n2 = fbm(rng, (H, W), 9, 5, 0.6)
-    filament = np.clip((n1 - 0.38) * 2.6, 0, 1)
-    dust = halo * (0.35 + 0.85 * n2) + core * filament * 0.9
+    filament = np.clip((n1 - 0.30) * 2.8, 0, 1)
+    dust = halo * (0.45 + 0.95 * n2) + core * (0.5 + filament) * 0.9
     mixc = fbm(rng, (H, W), 3, 3)[..., None]
     purple = np.array([0.42, 0.22, 0.85], np.float32)
     cyan = np.array([0.18, 0.62, 1.00], np.float32)
     magenta = np.array([0.80, 0.30, 0.85], np.float32)
     tint = purple * (1 - mixc) + cyan * mixc
     tint = tint * 0.82 + magenta * 0.18 * (1 - mixc)
-    img = screen_blend(img, tint * (dust * 0.62)[..., None])
+    img = screen_blend(img, tint * (dust * 1.0)[..., None])
     # luminous cool core
-    img = screen_blend(img, (np.array([0.35, 0.65, 1.0], np.float32) * (core * filament * 0.28)[..., None]))
+    img = screen_blend(img, (np.array([0.35, 0.65, 1.0], np.float32) * (core * (0.4 + filament) * 0.5)[..., None]))
+    # blue-white heart of the river
+    heart = np.exp(-(d / (45 * taper)) ** 2) * (0.35 + 0.65 * n2)
+    img = screen_blend(img, np.array([0.65, 0.88, 1.0], np.float32) * (heart * 0.28)[..., None])
 
     # stars: sparse background + dense dust in the band
     star = np.zeros((H, W), np.float32)
@@ -105,10 +108,10 @@ def make_sky(out):
     px = rng.integers(0, W, n_bg)
     py = rng.integers(0, H, n_bg)
     star[py, px] = rng.random(n_bg) ** 3 * 0.9 + 0.1
-    prob = np.clip(halo * 0.9 + core * 1.0, 0, 1) ** 1.3
+    prob = np.clip(halo * 1.0 + core * 1.4, 0, 1) ** 1.1
     r = rng.random((H, W))
-    dense = (r < prob * 0.020).astype(np.float32) * (rng.random((H, W)) ** 2.2)
-    star = np.maximum(star, dense)
+    dense = (r < prob * 0.075).astype(np.float32) * (rng.random((H, W)) ** 2.2)
+    star = np.maximum(star, dense * 1.3)
     tiny = star.copy()
     soft = blur(star, 0.7) * 2.6
     soft = np.clip(soft, 0, 1)
@@ -198,11 +201,11 @@ def make_logo(out):
     fill = fill * (1 - 0.55 * edge[..., None]) + np.array([0.2, 0.3, 0.5], np.float32) * 0.55 * edge[..., None]
 
     # outline (dark navy), then neon cyan ring, then glow
-    o1 = dilate(u8, 14)
+    o1 = dilate(u8, 24)
     o1a = blur(o1.astype(np.float32) / 255, 1.6)
-    ring_o = dilate(u8, 24)
+    ring_o = dilate(u8, 36)
     ring_a = blur(ring_o.astype(np.float32) / 255, 1.6)
-    glow = blur(dilate(u8, 20).astype(np.float32) / 255, 26)
+    glow = blur(dilate(u8, 30).astype(np.float32) / 255, 30)
 
 
     canvas = np.zeros((h, w, 4), np.float32)
@@ -215,12 +218,12 @@ def make_logo(out):
         canvas[..., :3] = (rgb * al + canvas[..., :3] * oa * (1 - al)) / np.maximum(na, 1e-6)
         canvas[..., 3:4] = na
 
-    over((0.15, 0.80, 1.0), np.clip(glow * 0.85, 0, 1))
+    over((0.15, 0.80, 1.0), np.clip(glow * 1.5, 0, 1))
     over((0.12, 0.70, 1.0), np.clip(ring_a - o1a, 0, 1) * 0.9)  # cyan neon ring
     over((0.05, 0.08, 0.24), o1a)  # dark navy outline
     # magenta rim at the lower edge of the outline
-    low = np.clip(o1a - np.roll(o1a, -9, 0), 0, 1)
-    over((0.95, 0.25, 0.85), np.clip(low * 2.2, 0, 1) * 0.9)
+    low = np.clip(o1a - np.roll(o1a, -16, 0), 0, 1)
+    over((1.0, 0.30, 0.88), np.clip(low * 3.0, 0, 1))
     over(fill, a)
     # top gleam on the letters
     top = np.clip(a - np.roll(a, 7, 0), 0, 1)
