@@ -75,14 +75,16 @@ body {
 	position: absolute;
 	left: 0;
 	right: 0;
-	top: 34%;
+	top: calc(40.5% - var(--w) * 0.0972);
 	margin: 0;
-	font-weight: 600;
+	font-weight: 700;
 	text-align: center;
-	font-size: calc(var(--w) * 0.17);
+	font-size: calc(var(--w) * 0.1944);
 	line-height: 1;
-	color: #fff;
-	text-shadow: 0 0 0.1em rgba(79, 216, 235, 0.95), 0 0 0.3em rgba(79, 216, 235, 0.65), 0 0 0.7em rgba(79, 216, 235, 0.35);
+	color: #efe8d6;
+	-webkit-text-stroke: 0.21em #0b1a4a;
+	paint-order: stroke fill;
+	text-shadow: 0 0.05em 0.02em rgba(0, 5, 26, 0.6), 0 0 0.14em rgba(79, 227, 255, 0.3), 0 0 0.4em rgba(79, 227, 255, 0.2);
 }
 
 #bar-wrap {

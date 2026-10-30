@@ -18,7 +18,11 @@ TEMPLATE = ROOT / "scripts/web/shell.template.html"
 SHELL = ROOT / "game/web/shell.html"
 SPLASH = ROOT / "game/brand/splash.png"
 GLYPHS = "AstroLexSTRO0123456789%"
-CYAN = (79, 216, 235)
+CYAN = (79, 227, 255)  # field.gd NEON
+CREAM = (239, 232, 214)
+NAVY = (11, 26, 74)
+WORD_PX = 210  # as crew_title.gd, at 1080 wide
+LOGO_Y = 0.405  # wordmark centre, share of the height, as crew_title.gd
 VEIL = [(0.0, (5, 8, 20, 0.40)), (0.5, (5, 8, 20, 0.58)), (1.0, (5, 8, 20, 0.80))]  # as in the shell CSS
 
 
@@ -52,7 +56,7 @@ def font_b64():
         return ""
     f = TTFont(str(FONT))
     if "fvar" in f:
-        f = instancer.instantiateVariableFont(f, {"wght": 600, "wdth": 100})
+        f = instancer.instantiateVariableFont(f, {"wght": 700, "wdth": 100})
     opts = subset.Options()
     opts.flavor = "woff2"
     opts.layout_features = []
@@ -68,25 +72,31 @@ def font_b64():
 
 
 def make_splash(art):
+    """The intro's wordmark (crew_title.gd): Fredoka 700 at 210/1080 of the width, cream with a navy outline,
+    a soft cyan glow and a dark drop shadow, centred at 40.5% of the height."""
     w, h = 1080, 1920
     img = veil(cover(art, w, h))
-    size = round(w * 0.17)
+    size = WORD_PX
     font = ImageFont.truetype(str(FONT), size)
     try:
-        font.set_variation_by_axes([600, 100])
+        font.set_variation_by_axes([700, 100])
     except Exception:
         pass
     text = "AstroLex"
-    cx = w / 2
-    asc, desc = font.getmetrics()
-    y = h * 0.34 - (asc + desc - size) / 2  # CSS line-height:1 centres the content area in a 1em line box
+    cx, cy = w / 2, h * LOGO_Y
+    ol = 22  # outline, px at 1080 wide
     glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    ImageDraw.Draw(glow).text((cx, y), text, font=font, fill=CYAN + (255,), anchor="mt")
-    for blur, alpha in ((size * 0.35, 0.35), (size * 0.15, 0.65), (size * 0.05, 0.95)):
+    ImageDraw.Draw(glow).text((cx, cy), text, font=font, fill=CYAN + (255,), anchor="mm", stroke_width=ol, stroke_fill=CYAN + (255,))
+    for blur, alpha in ((size * 0.30, 0.22), (size * 0.14, 0.30)):
         g = glow.filter(ImageFilter.GaussianBlur(blur))
         g.putalpha(g.getchannel("A").point(lambda v, a=alpha: round(v * a)))
         img = Image.alpha_composite(img, g)
-    ImageDraw.Draw(img).text((cx, y), text, font=font, fill=(255, 255, 255, 255), anchor="mt")
+    shadow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).text((cx, cy + 10), text, font=font, fill=(0, 5, 26, 255), anchor="mm", stroke_width=ol, stroke_fill=(0, 5, 26, 255))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(4))
+    shadow.putalpha(shadow.getchannel("A").point(lambda v: round(v * 0.6)))
+    img = Image.alpha_composite(img, shadow)
+    ImageDraw.Draw(img).text((cx, cy), text, font=font, fill=CREAM + (255,), anchor="mm", stroke_width=ol, stroke_fill=NAVY + (255,))
     # Godot's web export only takes PNG: 720x1280, 256-colour dithered keeps it near 270 KB.
     img.convert("RGB").resize((720, 1280), Image.LANCZOS).quantize(256, dither=Image.FLOYDSTEINBERG).save(SPLASH, optimize=True)
 
