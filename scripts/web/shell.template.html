@@ -38,6 +38,7 @@ body {
 /* Loading overlay: sits over the canvas until the engine has started, then fades out. */
 #status {
 	--w: min(100vw, 56.25vh);
+	--u: calc(var(--w) / 1080);
 	position: fixed;
 	inset: 0;
 	z-index: 10;
@@ -66,81 +67,67 @@ body {
 	overflow: hidden;
 	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 	box-sizing: border-box;
-	background:
-		linear-gradient(180deg, rgba(5, 8, 20, 0.40) 0%, rgba(5, 8, 20, 0.58) 50%, rgba(5, 8, 20, 0.80) 100%),
-		url(data:image/jpeg;base64,{{BG_B64}}) center / cover no-repeat;
+	background: #050814 url(data:image/jpeg;base64,{{STILL_B64}}) center / cover no-repeat;
 }
 
-#logo {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: calc(40.5% - var(--w) * 0.0972);
-	margin: 0;
-	font-weight: 700;
-	text-align: center;
-	font-size: calc(var(--w) * 0.1944);
-	line-height: 1;
-	color: #efe8d6;
-	-webkit-text-stroke: 0.21em #0b1a4a;
-	paint-order: stroke fill;
-	text-shadow: 0 0.05em 0.02em rgba(0, 5, 26, 0.6), 0 0 0.14em rgba(79, 227, 255, 0.3), 0 0 0.4em rgba(79, 227, 255, 0.2);
-}
-
-#bar-wrap {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 56%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: calc(var(--w) * 0.03);
-}
-
-#status-progress {
-	appearance: none;
-	-webkit-appearance: none;
+/* All sizes below are in design units u = stage width / 1080, the same units game/scenes/intro_screen.gd
+   uses, so the overlay and the Godot intro put the button and the bar in the same place. */
+#bar {
 	display: none;
-	width: 62%;
-	height: calc(var(--w) * 0.036);
-	border: 0;
-	border-radius: 999px;
-	overflow: hidden;
-	background: rgba(5, 8, 20, 0.6);
-	box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 0 18px rgba(255, 100, 104, 0.25);
+	position: absolute;
+	left: 50%;
+	bottom: calc(var(--u) * 370);
+	width: calc(var(--u) * 560);
+	height: calc(var(--u) * 560 * 94 / 773);
+	transform: translateX(-50%);
+	filter: drop-shadow(0 calc(var(--u) * 6) calc(var(--u) * 10) rgba(0, 3, 14, 0.5));
 }
 
-#status-progress::-webkit-progress-bar {
-	background: transparent;
-}
-
-#status-progress::-webkit-progress-value {
-	border-radius: 999px;
-	background: linear-gradient(90deg, #ff6468, #feab7b);
-	transition: width 0.2s linear;
-}
-
-#status-progress::-moz-progress-bar {
-	border-radius: 999px;
-	background: linear-gradient(90deg, #ff6468, #feab7b);
-}
-
-#status-progress:indeterminate {
-	background: linear-gradient(90deg, rgba(5, 8, 20, 0.6) 0%, #ff6468 30%, #feab7b 50%, #ff6468 70%, rgba(5, 8, 20, 0.6) 100%) 0 0 / 200% 100%;
-	animation: sweep 1.4s linear infinite;
-}
-
-@keyframes sweep {
-	to { background-position: -200% 0; }
+#bar > svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
 }
 
 #status-percent {
+	position: absolute;
+	right: calc(var(--u) * 560 * 36 / 773);
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	font-size: calc(var(--u) * 27);
+	color: #fff;
+	letter-spacing: 0.03em;
+	text-shadow: 0 1px 4px rgba(5, 8, 20, 0.95);
+}
+
+/* The intro's "Tap to start" in its disabled look (ui.gd primary, "disabled"): same size and place as the
+   Godot button, which takes over from this overlay once the engine is up. */
+#btn {
+	position: absolute;
+	left: 50%;
+	bottom: calc(var(--u) * 180);
+	width: calc(var(--u) * 600);
+	height: calc(var(--u) * 150);
+	transform: translateX(-50%);
+	box-sizing: border-box;
+	border-radius: calc(var(--u) * 75);
+	background: #736b61;
+	border-bottom: calc(var(--u) * 10) solid #9c540c;
+	color: #333340;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-bottom: calc(var(--u) * 10);
+	font-size: calc(var(--u) * 62);
+	line-height: 1;
+	white-space: nowrap;
+}
+
+#stage.notice #btn, #stage.notice #bar {
 	display: none;
-	font-size: calc(var(--w) * 0.05);
-	color: #feab7b;
-	letter-spacing: 0.04em;
-	text-shadow: 0 1px 6px rgba(5, 8, 20, 0.9);
 }
 
 #status-notice {
@@ -148,7 +135,7 @@ body {
 	position: absolute;
 	left: 0;
 	right: 0;
-	top: 56%;
+	bottom: calc(var(--u) * 200);
 	background-color: #5b3943;
 	border-radius: 0.5rem;
 	border: 1px solid #9b3943;
@@ -161,30 +148,6 @@ body {
 	padding: 1rem;
 	text-align: center;
 	z-index: 1;
-}
-
-.bubble {
-	position: absolute;
-	width: calc(var(--w) * var(--s));
-	height: calc(var(--w) * var(--s));
-	left: calc(var(--x) * 1%);
-	top: calc(var(--y) * 1%);
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: calc(var(--w) * var(--s) * 0.5);
-	color: rgba(255, 255, 255, 0.85);
-	background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.30), rgba(79, 216, 235, 0.14) 55%, rgba(79, 216, 235, 0.05));
-	box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22), 0 0 18px rgba(79, 216, 235, 0.20);
-	opacity: 0.8;
-	animation: drift var(--d) ease-in-out infinite alternate;
-	animation-delay: var(--t);
-}
-
-@keyframes drift {
-	from { transform: translate(0, 0) rotate(-6deg); }
-	to { transform: translate(calc(var(--w) * 0.05), calc(var(--w) * -0.09)) rotate(8deg); }
 }
 
 /* Shown when the browser drops the game's graphics (WebGL context lost, WP-F.16). */
@@ -240,7 +203,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.bubble, #status-progress:indeterminate { animation: none; }
 	#status { transition-duration: 0.01s; }
 }
 		</style>
@@ -257,19 +219,11 @@ body {
 
 		<div id="status">
 			<div id="stage">
-				<div class="bubble" style="--s:.17;--x:8;--y:12;--d:7s;--t:-1s">A</div>
-				<div class="bubble" style="--s:.12;--x:76;--y:9;--d:9s;--t:-4s">S</div>
-				<div class="bubble" style="--s:.2;--x:68;--y:22;--d:8s;--t:-2s">T</div>
-				<div class="bubble" style="--s:.13;--x:12;--y:70;--d:10s;--t:-6s">R</div>
-				<div class="bubble" style="--s:.18;--x:72;--y:72;--d:7.5s;--t:-3s">O</div>
-				<div class="bubble" style="--s:.11;--x:44;--y:84;--d:9.5s;--t:-5s">L</div>
-				<div class="bubble" style="--s:.15;--x:20;--y:86;--d:8.5s;--t:-7s">E</div>
-				<div class="bubble" style="--s:.1;--x:86;--y:50;--d:11s;--t:-8s">X</div>
-				<h1 id="logo">AstroLex</h1>
-				<div id="bar-wrap">
-					<progress id="status-progress"></progress>
+				<div id="bar">
+					{{BAR_SVG}}
 					<div id="status-percent"></div>
 				</div>
+				<div id="btn">Tap to start</div>
 				<div id="status-notice"></div>
 			</div>
 		</div>
@@ -574,13 +528,86 @@ body {
 	}
 }());
 
+// The load bar: the play screen's clock liquid (HudArt.Liquid) in the clock bar's frame, drawn into the
+// SVG made by make_loading.py. Coral to peach, a rolling wave with a pale crest, small bubbles; still
+// under prefers-reduced-motion. window.__alxLoad(share) sets the target (-1 = size unknown).
+(function () {
+	const svg = document.getElementById('liquid');
+	if (!svg) { return; }
+	const NS = 'http://www.w3.org/2000/svg';
+	const W = 734, H = 62, PAD = 4.5;
+	const h = H - PAD * 2, full = W - PAD * 2, r = h / 2;
+	const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const mk = (tag, attrs) => {
+		const e = document.createElementNS(NS, tag);
+		for (const k in attrs) { e.setAttribute(k, attrs[k]); }
+		svg.appendChild(e);
+		return e;
+	};
+	const body = mk('path', { fill: 'url(#liq)' });
+	const crest = mk('path', { fill: 'none', stroke: 'rgba(255,230,209,.75)', 'stroke-width': 4, 'stroke-linejoin': 'round' });
+	const dots = [];
+	for (let i = 0; i < 9; i++) { dots.push(mk('circle', { r: i < 7 ? 2.5 + (i % 3) * 1.5 : 3.5, fill: 'rgb(255,219,214)' })); }
+	let target = 0, shown = 0, t = 0, last = performance.now();
+	const surf = (x, ph) => PAD + 0.34 * h + 0.24 * h * Math.sin(x / 48 + ph);
+	const frac = (v) => v - Math.floor(v);
+	function draw() {
+		const ph = calm ? 0 : t * 1.3;
+		const front = PAD + Math.max(r * 1.2, full * shown);
+		const corner = 7;
+		const steps = Math.max(2, Math.floor((front - corner - PAD) / 6));
+		const cap = (x) => { const dx = PAD + r - x; return x < PAD + r ? Math.sqrt(Math.max(0, r * r - dx * dx)) : r; };
+		const top = [];
+		for (let i = 0; i <= steps; i++) {
+			const x = PAD + (front - corner - PAD) * i / steps, c = cap(x);
+			top.push([x, Math.min(Math.max(surf(x, ph), PAD + r - c), PAD + r + c * 0.6)]);
+		}
+		const pts = top.slice();
+		pts.push([front, top[top.length - 1][1] + corner], [front, PAD + h]);
+		for (let i = 0; i < steps; i++) {
+			const x = front - corner + (PAD - front + corner) * i / steps;
+			pts.push([x, PAD + r + cap(x)]);
+		}
+		const f = (p) => p[0].toFixed(1) + ',' + p[1].toFixed(1);
+		body.setAttribute('d', 'M' + pts.map(f).join('L') + 'Z');
+		crest.setAttribute('d', 'M' + top.map((p) => f([p[0], p[1] + 3])).join('L'));
+		for (let i = 0; i < 7; i++) {
+			const bx = PAD + r * 0.6 + ((i * 113 + (calm ? 0 : t * (9 + i * 3))) % Math.max(1, front - PAD - r));
+			const rise = calm ? 0.5 : frac(i * 0.31 + t * (0.18 + 0.04 * i));
+			const by = (PAD + h - 6) + (surf(bx, ph) + 6 - (PAD + h - 6)) * rise;
+			dots[i].setAttribute('cx', bx.toFixed(1)); dots[i].setAttribute('cy', by.toFixed(1));
+			dots[i].setAttribute('opacity', 0.7);
+		}
+		for (let i = 0; i < 2; i++) {
+			const dx = PAD + front * (0.25 + 0.45 * i);
+			const hop = calm ? 0 : Math.max(0, Math.sin(t * 1.4 + i * 2));
+			dots[7 + i].setAttribute('cx', dx.toFixed(1));
+			dots[7 + i].setAttribute('cy', (surf(dx, ph) - 5 - 10 * hop).toFixed(1));
+			dots[7 + i].setAttribute('opacity', 0.65 * (0.4 + 0.6 * hop));
+		}
+	}
+	function frame(now) {
+		const dt = Math.min(0.1, (now - last) / 1000);
+		last = now;
+		t += dt;
+		if (target < 0) { shown = Math.min(0.9, shown + (0.9 - shown) * dt * 0.25); }
+		else { shown += (target - shown) * Math.min(1, dt * 6); }
+		draw();
+		if (document.getElementById('liquid')) { requestAnimationFrame(frame); }
+	}
+	window.__alxLoad = (share) => { target = share; };
+	draw();
+	requestAnimationFrame(frame);
+}());
+
 const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
 	const statusOverlay = document.getElementById('status');
-	const statusProgress = document.getElementById('status-progress');
+	const statusStage = document.getElementById('stage');
+	const statusBar = document.getElementById('bar');
 	const statusPercent = document.getElementById('status-percent');
 	const statusNotice = document.getElementById('status-notice');
 
@@ -592,7 +619,7 @@ const engine = new Engine(GODOT_CONFIG);
 			return;
 		}
 		if (mode === 'hidden') {
-			// Hand-off: the engine's own boot splash (same painting and logo) is already on the canvas.
+			// Hand-off: the Godot intro (same art, button enabled) is already drawn under this overlay.
 			initializing = false;
 			statusMode = mode;
 			requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -604,8 +631,8 @@ const engine = new Engine(GODOT_CONFIG);
 			return;
 		}
 		statusOverlay.style.visibility = 'visible';
-		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
-		statusPercent.style.display = mode === 'progress' ? 'block' : 'none';
+		statusBar.style.display = mode === 'progress' ? 'block' : 'none';
+		statusStage.classList.toggle('notice', mode === 'notice');
 		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
 		statusMode = mode;
 	}
@@ -674,12 +701,10 @@ const engine = new Engine(GODOT_CONFIG);
 		engine.startGame({
 			'onProgress': function (current, total) {
 				if (current > 0 && total > 0) {
-					statusProgress.max = total;
-					statusProgress.value = current;
+					window.__alxLoad(current / total);
 					statusPercent.textContent = Math.min(100, Math.floor(current / total * 100)) + '%';
 				} else {
-					statusProgress.removeAttribute('value');
-					statusProgress.removeAttribute('max');
+					window.__alxLoad(-1);
 					statusPercent.textContent = '';
 				}
 			},

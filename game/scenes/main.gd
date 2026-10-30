@@ -309,6 +309,10 @@ func _show_intro() -> void:
 	var s: Control = IntroScreen.new()
 	s.settings = settings
 	s.fade_sec = intro_fade_sec
+	# On the web the HTML loader already shows the intro's art, so nothing pops in; ?intro=still draws
+	# the art alone for game/brand/intro_still.jpg.
+	s.pop = not OS.has_feature("web")
+	s.still = OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search")).contains("intro=still")
 	s.finished.connect(_show_start)
 	_swap(s)
 

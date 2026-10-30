@@ -4,6 +4,9 @@ extends Control
 ## Catchers' busts under glass bubbles). The bubbles pop in one after another and bob out of step; the
 ## standard orange "Tap to start" button sits where the title's menu starts. A tap anywhere, or intro.holdSec seconds, emits `finished`
 ## (after a short fade). Reduced motion shows everything still at rest.
+## On the web the HTML loader (scripts/web/make_loading.py) already shows this screen's art with a
+## disabled button and a load bar, so `pop` is off there: it appears at rest, bobbing, button enabled.
+## `still` (?intro=still) draws the art at rest with no button, for the loader's still image.
 
 const Ui := preload("res://scenes/ui.gd")
 const CrewTitle := preload("res://scenes/crew_title.gd")
@@ -17,6 +20,12 @@ var settings: AppSettings = AppSettings.new()
 var hold_sec: float = 6.0
 ## Length of the fade to black when it ends; 0 emits `finished` at once.
 var fade_sec: float = 0.35
+## Plays the pop-in and fades (off on the web, where the loader is already on screen).
+var pop: bool = true
+## Art only, at rest, no button and no timer: the capture mode for game/brand/intro_still.jpg.
+var still: bool = false
+## The button's top edge is this far above the view's bottom (also read by make_loading.py).
+const TAP_FROM_BOTTOM := 330.0
 var _t: float = 0.0
 var _done: bool = false
 var _crew: RefCounted = CrewTitle.new()
@@ -30,8 +39,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	hold_sec = float(GameData.load_tunables().get("intro.holdSec", hold_sec))
 	var view := get_viewport_rect().size
-	Ui.add_sky(self, view, 0.3)
-	_crew.build(self, view, settings, true)
+	var sky_box := Vector2(maxf(CrewTitle.box_size(view).x, view.x), view.y)
+	var sky := Ui.add_sky(self, sky_box, 0.3)
+	(sky.get_parent() as CanvasLayer).offset = Vector2((view.x - sky_box.x) * 0.5, 0.0)
+	_crew.build(self, view, settings, pop and not still)
 	_build_tap(view)
 	_fade = ColorRect.new()
 	_fade.name = "IntroFade"
@@ -44,23 +55,27 @@ func _ready() -> void:
 func _build_tap(view: Vector2) -> void:
 	_tap = Ui.primary("Tap to start", 62, Vector2(CrewTitle.MENU_W, 150))
 	_tap.name = "TapToStart"
-	_tap.position = Vector2((view.x - CrewTitle.MENU_W) * 0.5, CrewTitle.menu_top(view))
+	_tap.position = Vector2((view.x - CrewTitle.MENU_W) * 0.5, view.y - TAP_FROM_BOTTOM)
 	_tap.size = Vector2(CrewTitle.MENU_W, 150)
 	_tap.pivot_offset = _tap.size * 0.5
 	_tap.pressed.connect(finish)
 	add_child(_tap)
-	if not settings.reduced_motion:
+	if still:
+		_tap.visible = false
+	elif pop and not settings.reduced_motion:
 		_tap.modulate.a = 0.0
 
 
 func _process(delta: float) -> void:
+	if still:
+		return
 	_t += delta
 	if not _done and _t >= hold_sec:
 		finish()
 	if settings.reduced_motion:
 		return
 	_crew.bob(_t)
-	var appear := clampf((_t - 1.1) / 0.5, 0.0, 1.0)
+	var appear := clampf((_t - 1.1) / 0.5, 0.0, 1.0) if pop else 1.0
 	_tap.modulate.a = appear
 	_tap.scale = Vector2.ONE * (1.0 + 0.02 * (0.5 + 0.5 * sin(_t * 3.0)))
 
@@ -71,7 +86,7 @@ func _gui_input(event: InputEvent) -> void:
 		press = event.pressed
 	elif event is InputEventScreenTouch:
 		press = event.pressed
-	if press:
+	if press and not still:
 		accept_event()
 		finish()
 

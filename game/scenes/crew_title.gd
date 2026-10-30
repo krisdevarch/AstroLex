@@ -33,6 +33,9 @@ const MENU_FROM_BOTTOM := 450.0
 const MENU_W := 600.0
 
 var settings: RefCounted
+## Top-left of the 1080x1920 design box (scaled by view height) inside the view; x is negative on tall
+## phones, where the box is cover-fitted like the web loader's still (scripts/web/make_loading.py).
+var origin: Vector2 = Vector2.ZERO
 var logo: Control
 ## [holder, tile view, rest position, amplitude, speed, phase, bust holder]
 var bubbles: Array = []
@@ -43,11 +46,24 @@ static func menu_top(view: Vector2) -> float:
 	return view.y - MENU_FROM_BOTTOM
 
 
+## The design box in view pixels: the 1080x1920 layout scaled to the view's height. On a phone taller
+## than 9:16 it is wider than the view and the sides are cropped (cover fit); on a wide view it is
+## centred. Everything is placed inside it, so the web loader's still of the intro matches on any phone.
+static func box_size(view: Vector2) -> Vector2:
+	return Vector2(1080.0 * view.y / 1920.0, view.y)
+
+
+static func box_origin(view: Vector2) -> Vector2:
+	return Vector2((view.x - box_size(view).x) * 0.5, 0.0)
+
+
 ## Builds everything under `host`. `pop` plays the intro's pop-in and fade; otherwise all is at rest.
 func build(host: Control, view: Vector2, app_settings: RefCounted, pop: bool) -> void:
 	settings = app_settings
-	_build_bubbles(host, view, pop)
-	_build_logo(host, view, pop)
+	origin = box_origin(view)
+	var box := box_size(view)
+	_build_bubbles(host, box, pop)
+	_build_logo(host, box, pop)
 
 
 ## Screen-space circles of the bubbles at rest (centre, radius), for layout checks.
@@ -73,7 +89,7 @@ func _build_bubbles(host: Control, view: Vector2, pop: bool) -> void:
 	host.add_child(back)
 	var rig: Node2D = LightRig.new()
 	layer.add_child(rig)
-	rig.configure(Vector2(view.x * 0.5, view.y * 0.3), 1200.0, layer.layer)
+	rig.configure(origin + Vector2(view.x * 0.5, view.y * 0.3), 1200.0, layer.layer)
 	var tun := GameData.load_tunables().duplicate()
 	# A clear window: the in-round bubble darkens and bends what is behind it; here the bust must read.
 	for key: String in CLEAR_GLASS:
@@ -87,7 +103,7 @@ func _build_bubbles(host: Control, view: Vector2, pop: bool) -> void:
 		var holder := Node2D.new()
 		holder.name = "CrewBubble_%s" % id
 		layer.add_child(holder)
-		var rest := Vector2(view.x * float(d[0]), view.y * float(d[1]))
+		var rest := origin + Vector2(view.x * float(d[0]), view.y * float(d[1]))
 		holder.position = rest
 		var bust_holder := Node2D.new()
 		bust_holder.name = "CrewBust_%s" % id
@@ -152,7 +168,7 @@ func _build_logo(host: Control, view: Vector2, pop: bool) -> void:
 	var w := view.x
 	var h := WORD_PX * k * 1.3
 	logo.size = Vector2(w, h + 110.0 * k)
-	logo.position = Vector2(0.0, view.y * LOGO_Y - h * 0.5)
+	logo.position = origin + Vector2(0.0, view.y * LOGO_Y - h * 0.5)
 	host.add_child(logo)
 	var glow_levels := [[96, 0.04], [72, 0.05], [52, 0.07], [34, 0.1]]
 	for g in glow_levels:
@@ -173,10 +189,10 @@ func _build_logo(host: Control, view: Vector2, pop: bool) -> void:
 	word.size = Vector2(w, h)
 	word.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	logo.add_child(word)
-	var tag := Ui.text(TAGLINE, 46, Ui.CREAM)
+	var tag := Ui.text(TAGLINE, int(46.0 * k), Ui.CREAM)
 	tag.name = "Tagline"
-	tag.position = Vector2((w - 1000.0) * 0.5, h - 10.0 * k)
-	tag.size = Vector2(1000, 70)
+	tag.position = Vector2((w - 1000.0 * k) * 0.5, h - 10.0 * k)
+	tag.size = Vector2(1000.0 * k, 70.0 * k)
 	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	logo.add_child(tag)
 	if pop and not settings.reduced_motion:
