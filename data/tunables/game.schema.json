@@ -167,6 +167,7 @@
     "hazard.shimmerSec",
     "perf.playFps",
     "perf.menuFps",
+    "intro.holdSec",
     "drift.shyRadius",
     "drift.shyPush",
     "drift.rippleRadius",
@@ -918,6 +919,7 @@
       "minimum": 15,
       "description": "frame cap on menus, the pause menu and other screens. Sits a little above 30 on purpose, for the same reason as perf.playFps"
     },
+    "intro.holdSec": {"type": "number", "minimum": 1, "description": "seconds the intro screen shows before it moves on to the title by itself; a tap anywhere skips it (WP-F.29)"},
     "drift.shyRadius": {"type": "number", "minimum": 0, "description": "letters within this distance of a drone edge away from it, field units (0 = off)"},
     "drift.shyPush": {"type": "number", "minimum": 0, "description": "speed of the shy push, field units per second at zero distance"},
     "drift.rippleRadius": {"type": "number", "minimum": 0, "description": "a catch pushes letters within this distance outward, field units (0 = off)"},

@@ -136,6 +136,7 @@
   "hazard.shimmerSec": 2,
   "perf.playFps": 64,
   "perf.menuFps": 32,
+  "intro.holdSec": 6,
   "drift.shyRadius": 0.16,
   "drift.shyPush": 0.22,
   "drift.rippleRadius": 0.4,

@@ -34,12 +34,12 @@ const server = http.createServer((req, res) => {
   const nextLine = () => page.waitForEvent('console', { predicate: (m) => NEXT.test(m.text()), timeout: TIMEOUT_MS }).catch(() => null);
 
   let p1 = nextLine();
-  await page.goto(base + '?savetest=1&win=1');
+  await page.goto(base + '?savetest=1&win=1&intro=0');
   const first = await p1;
   // Give Godot time to flush user:// to IndexedDB.
   await page.waitForTimeout(GAP_MS);
   const p2 = nextLine();
-  await page.goto(base + '?savetest=1');
+  await page.goto(base + '?savetest=1&intro=0');
   const second = await p2;
   await browser.close();
   server.close();

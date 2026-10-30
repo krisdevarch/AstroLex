@@ -38,7 +38,7 @@ async function open(browser, base, query = '') {
   page.on('pageerror', (e) => errors.push(String(e)));
   const ready = () => page.waitForEvent('console', { predicate: (m) => READY.test(m.text()), timeout: TIMEOUT_MS });
   const first = ready();
-  await page.goto(base + query);
+  await page.goto(base + (query ? query + '&intro=0' : '?intro=0'));
   await first;
   await page.waitForFunction(() => window.__alxLog.some((x) => x.ev === 'engine started'), null, { timeout: 30000 });
   await page.waitForTimeout(500);
@@ -98,7 +98,7 @@ const cases = {
     const { context, page, errors, ready } = await open(browser, base, '?savetest=1&setresume=1-04');
     await page.waitForTimeout(1500);  // let Godot flush user:// to IndexedDB
     const back = ready();
-    await page.goto(base + '?savetest=1');
+    await page.goto(base + '?savetest=1&intro=0');
     await back;
     await page.waitForTimeout(500);
     const resumed = page.waitForEvent('console', { predicate: (m) => /AstroLex resumed level=1-04/.test(m.text()), timeout: TIMEOUT_MS }).then(() => true, () => false);
