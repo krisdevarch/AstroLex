@@ -26,7 +26,6 @@ func test_new_player_reaches_the_map_with_a_profile_saved() -> void:
 	for id in ["wren", "juno", "ash", "pip"]:
 		assert_true(Flow.has(main, "Swatch_%s" % id) and Flow.has(main, "Character_%s" % id), "card %s" % id)
 	Flow.press(main, "Character_ash")
-	Flow.press(main, "Pronoun_she")
 	(main.find_child("NameInput", true, false) as LineEdit).text_changed.emit("Ada")
 	Flow.press(main, "ConfirmButton")
 	assert_true(Flow.has(main, "DifficultySelect"), "difficulty next")
@@ -34,14 +33,15 @@ func test_new_player_reaches_the_map_with_a_profile_saved() -> void:
 	Flow.press(main, "ConfirmButton")
 	assert_true(Flow.has(main, "LevelMap"), "map after the two choices")
 	assert_true(s.has_profile(), "profile saved")
-	assert_eq(s.profile(), {"character": "ash", "pronouns": "she", "difficulty": "hard", "name": "ADA"})
+	assert_eq(s.profile(), {"character": "ash", "difficulty": "hard", "name": "ADA"})
+	assert_false(Flow.has(main, "Pronoun_she"), "no pronoun pick")
 	assert_eq(main._mods().size(), 2, "difficulty and character mods")
 	main.free()
 
 
 func test_map_shows_four_acts_locks_and_stars() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "ADA")
+	s.set_profile("wren", "normal", "ADA")
 	s.record_level("act1_low_orbit", "1-01", 0, true, 50, 3)
 	var main: Node = Flow.returning(tree, s)
 	Flow.press(main, "StartButton")
@@ -137,7 +137,7 @@ func test_pause_menu_resume_restart_and_quit() -> void:
 
 func test_field_gets_character_colour_and_content_when_supported() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("juno", "he", "easy", "ADA")
+	s.set_profile("juno", "easy", "ADA")
 	var main: Node = Flow.returning(tree, s)
 	var f := Flow.to_field(main)
 	if "tether_colour" in f:

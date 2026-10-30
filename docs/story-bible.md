@@ -36,10 +36,10 @@ Babel did not scatter words at random. It sorted by meaning, because it thinks i
 **Rule 4. What Babel can and cannot do.**
 - Babel has no voice of its own. It holds no words. It can speak only by rearranging letters the Catcher has already restored in the current level. The pool is the letters on the board, with multiplicity.
 - It cannot use a letter you have not caught. This is the game's signature moment, and it is why Babel cannot say your name until you do.
-- One exception (owner, 16 Oct 2026): when Babel flies in at the start of a level, he says one short line of his own in a bubble (`babelIntro` in the level files, owner-approved like all text). Everything he says during play still follows this rule.
+- One exception (owner, 16 Oct 2026): when Babel flies in at the start of a level, it says one short line of its own in a bubble (`babelIntro` in the level files, owner-approved like all text). Everything it says during play still follows this rule. The ending's Babel card ("I was wrong about words. Thank you, <name>.") is the only other exception: its one sincere line (§6, owner answer 4).
 - Built today: from level 1-04 on, Babel's thief drones fly at tiles the player needs and carry them off. Tapping (tethering) a drone frees the tile. Not built yet, kept as later ideas: counterfeits, anagram traps and Stroop jamming of the visor. Shape and pattern would stay honest.
 - It cannot lie in a way the player cannot catch.
-- At the start of every level Babel flies in, says his `babelIntro` line, and shoots that level's letters out of his gun into the field. It is showing off, and it is also proof that it holds the words.
+- At the start of every level Babel flies in, says its `babelIntro` line, and shoots that level's letters out of its gun into the field. It is showing off, and it is also proof that it holds the words.
 - Babel is deterministic. Its lines come from owner-approved templates and the level's letter pool, pass a blocklist and a family-safe filter, and no language model runs at runtime.
 
 ## 3. Characters
@@ -51,19 +51,19 @@ Signature colours are from design direction section 9. Each shows on the bubble,
 - **Traits:** new, quick, stubborn.
 - **Want:** to do the job well, then to get their name back.
 - **Fear:** that the name is gone for good, and that being good at the job is all they are.
-- **Voice sheet:** The Catcher has few lines. Most are one-word choices or short replies, three to six words. They tease back. They say "ok", "on it", "heard". They never explain how they feel, never give speeches, never use the name they lost. The player picks pronouns and look; the lines never assume a gender.
+- **Voice sheet:** The Catcher has few lines. Most are one-word choices or short replies, three to six words. They tease back. They say "ok", "on it", "heard". They never explain how they feel, never give speeches, never use the name they lost. The player picks the look; the lines never assume a gender (there is no pronoun pick).
 - **Arc:** Prologue, nameless and willing. Act I, competent and cheerful. Act II, shaken by grief. Act III, angry at Rhee, then steady. Act IV, calm enough to let Babel finish. The last word is their own name.
 
 #### The four Catchers (playable suits)
 
-The player picks one of four Catchers at the start (`data/characters.json`). Each is a different being who answered the Lexicon Corps' call, with a past that explains their suit perk. The story beats, the arc and the lost name are the same for all four; only a little flavour changes: one comms line in Act I, the way they say "ok", and the portrait. The player still picks pronouns, so none of the four has a fixed gender in the text. Art: `docs/design/characters/`.
+The player picks one of four Catchers at the start (`data/characters.json`). Each is a different being who answered the Lexicon Corps' call, with a past that explains their suit perk. The story beats, the arc and the lost name are the same for all four; only a little flavour changes: one comms line in Act I, the way they say "ok", and the portrait. There is no pronoun pick and no line names a gender for the Catcher, so none of the four has a fixed gender in the text. Art: `docs/design/characters/`.
 
 - **Wren, the courier** (cyan #4FD8EB, Quick line: the tether flies 15% faster). A fin-eared racer who ran messages between stations when the comm lines went dead. Wren learned to be first because a late message was a lost one. Cheeky and confident, goggles always up. Says "first!" instead of "on it".
 - **Juno, the pirate** (amber #F2B544, Wide grip: catches forgive a 25% wider miss). A two-eyed salvage pirate who once raided the wrecks of the Loud Wars for scrap: hat with a skull badge, an eyepatch over the left eye, a peg leg from an old hull collapse, a spyglass on the belt. When Babel took the words, Juno found a better haul. Now Juno plunders the drift for letters and hands every one back. Big hands and a wide grip from years of hauling cargo. Warm, loud, generous. Says "aye" and calls the board "the haul". Juno never steals from people, only from Babel's hoard.
 - **Ash, the ninja** (seafoam #5FD3B0, Low profile: Babel's drones fly 20% slower). A violet-eyed ninja warrior from a silent order that trained in the dark between stations, long before Babel made silence the law. Ash moves so quietly that Babel's drones lose track. Masked, red headband, a finger to the lips. Ash carries two blades on the back and never draws them on anyone; in the Corps they are line-cutters, used only to free a snagged tether. Calm, few words even for a Catcher. Says "shh" and "done".
 - **Pip, the scientist** (pink #F27FB2, Sharp eye: one fewer decoy letter). A one-eyed field scientist in a puffy suit with star antennae and a lens over that giant eye. Pip spots a forged letter before anyone else because Pip has been studying Babel's forgeries since the first week. Curious and delighted by everything. Says "ooh" and "for the record".
 
-**First reply by Catcher.** The Prologue has no words, so in the first Act I comms, when Rhee asks "Ready?", the reply depends on the pick: Wren "Already there.", Juno "Aye. Show me the haul.", Ash "Shh. Ready.", Pip "Ooh. Yes. Ready." Owner approval needed for these lines.
+**The Catcher's replies (WP-F.27, owner-approved 29 Oct 2026).** The Catcher speaks four times, each in the picked suit's voice (`"who": "catcher"` with `lines` per suit in `data/levels/`): after 1-01, to Rhee's "Ready?" (Wren "Already there.", Juno "Aye. Show me the haul.", Ash "Shh. Ready.", Pip "Ooh. Yes. Ready."); after Rhee's voice breaks in 2-12; after Kit's "Go on or stop" in 3-08; and before the last two words in 4-12. The bubble shows the player's name in the suit's colour.
 
 ### Rhee Vashti
 - **Colour:** amber #F8BC04.
@@ -210,7 +210,7 @@ The principle: silence is not peace, and listening is. The tone is hopeful. It l
 
 The bible as a whole stays `status: draft` until the owner flips it to `approved`.
 
-Update, 16 Oct 2026 (draft, owner to approve): rule 2 now describes the burst clock as one charge of suit air; rule 4 now describes the drones and Babel shooting the letters from his gun; the tone rule says "lost burst". Counterfeits, anagram traps, Stroop, ghost races and the Codex are marked as not built. The Act I-IV comms and Babel intros in `data/levels/` were rewritten to match.
+Update, 16 Oct 2026 (draft, owner to approve): rule 2 now describes the burst clock as one charge of suit air; rule 4 now describes the drones and Babel shooting the letters from its gun; the tone rule says "lost burst". Counterfeits, anagram traps, Stroop, ghost races and the Codex are marked as not built. The Act I-IV comms and Babel intros in `data/levels/` were rewritten to match.
 
 ## 9. Open questions (answered above)
 

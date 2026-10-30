@@ -40,11 +40,13 @@ func test_counterfeit_and_trap_tiles_get_their_marks() -> void:
 		if t.kind == "counterfeit":
 			forged += 1
 			assert_true(v.get_node_or_null("HazardRing") != null, "forgery has the shimmer node")
+			assert_true((v.glyph as Label).get_theme_color("font_color") != Color.WHITE, "forgery's letter is tinted")
 		elif t.kind == "trap":
 			trap += 1
 			assert_true(v.get_node_or_null("HazardRing") != null, "trap has a ring")
 		else:
 			assert_true(v.get_node_or_null("HazardRing") == null, "plain tile has none")
+			assert_eq((v.glyph as Label).get_theme_color("font_color"), Color.WHITE, "plain letter is white")
 	assert_true(forged >= 1, "a forgery is on the field")
 	assert_true(trap >= 1, "a trap letter is on the field")
 	f.free()

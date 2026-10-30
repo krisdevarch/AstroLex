@@ -121,11 +121,13 @@ static func _glow(tone: Color) -> Texture2D:
 	return t
 
 
-## Rhee's, Tomas's and the closing card. Tomas names the Catcher (his full message, bible: Act IV).
+## Rhee's, Babel's, Tomas's and the closing card. Babel's one sincere line and Tomas's full message
+## both name the Catcher (bible §6). Rhee's definition matches her 4-12 line (WP-F.27).
 static func build_cards(catcher: String) -> Array:
 	var nm := PlayerName.display(catcher) if catcher != "" else "Catcher"
 	return [
-		{"who": "Rhee", "colour": Color("b9a6ff"), "text": "I wrote the wrong definition. I wrote: wait for your turn. Listen means: to let a word in without answering it."},
+		{"who": "Rhee", "colour": Color("F8BC04"), "text": "I gave Babel a wrong meaning of listen. I wrote: wait for your turn. It means: let them change you."},
+		{"who": "Babel", "colour": Color("7070FF"), "text": "I was wrong about words. Thank you, %s." % nm},
 		{"who": "Tomas", "colour": Color("FF6B35"), "text": "I can say all of it now. I love you, Gran. Thank you, %s. Come and see the water with us." % nm},
 		{"who": "", "colour": Ui.GOLD_LIGHT, "text": "Every word is home."},
 	]

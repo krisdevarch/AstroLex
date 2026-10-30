@@ -1,6 +1,6 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act1_low_orbit",
   "tuning": {"burst.seconds": 50, "burst.perLetterSec": 1.0},
   "levels": [
@@ -18,7 +18,9 @@
       "commsAfter": [
         {"who": "rhee", "text": "Good catch. Your tether is a little eager. It will learn manners."},
         {"who": "kit", "text": "Suit on, gloves sealed, and the air smells of metal. For science, I like it."},
-        {"who": "ade", "text": "ok ok ok, my glove smells like a sandwich. Nobody touch it."}
+        {"who": "ade", "text": "ok ok ok, my glove smells like a sandwich. Nobody touch it."},
+        {"who": "rhee", "text": "You don't remember your name. Neither do I. Let's start with something smaller. Ready?"},
+        {"who": "catcher", "text": "Ready.", "lines": {"wren": "Already there.", "juno": "Aye. Show me the haul.", "ash": "Shh. Ready.", "pip": "Ooh. Yes. Ready."}}
       ]
     },
     {
@@ -169,6 +171,7 @@
       ],
       "commsAfter": [
         {"who": "kit", "text": "He crossed the bridge, and the river stayed calm. He even skipped a rock."},
+        {"who": "babel", "text": "BRAVE TRICK."},
         {"who": "rhee", "text": "That is the ring clear. A message just came through."},
         {"who": "tomas", "text": "Water. I can say water."}
       ]

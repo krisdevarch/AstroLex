@@ -61,9 +61,17 @@ func test_wrong_catch_flashes_the_tile_and_shows_the_toast() -> void:
 		f.advance(DT)
 		steps += 1
 	assert_eq(int(f.game_round.stats["wrong"]), 1, "the catch was wrong")
-	assert_eq(f._toast.text, "Not in the record   −1 s", "toast text")
+	assert_true(f._toast.text.begins_with("Not in the record   −1 s"), "toast text: %s" % f._toast.text)
 	assert_true(f._toast.modulate.a > 0.0, "toast visible")
 	assert_true(view._flash_t > 0.0, "tile view is flashing")
+	# WP-F.24: the wrong-catch counter counts it, pops and names the cap.
+	assert_eq(f._mistakes.used, 1, "one wrong catch counted")
+	assert_eq((f._mistakes.find_child("Count", true, false) as Label).text, "1 / %d" % int(f._tun["burst.maxWrong"]), "counter text")
+	f.advance(DT * 6)
+	assert_true(f._mistakes.scale.x > 1.01, "the counter pops")
+	for _i in 60:
+		f.advance(DT)
+	assert_true(absf(f._mistakes.scale.x - 1.0) < 1e-3, "and settles")
 	assert_true(f._views.has(target.id), "wrong tile stays in play")
 	f.free()
 

@@ -45,7 +45,8 @@ uniform float film_sat : hint_range(0.0, 1.0) = 0.6;  // bubble look: rainbow sa
 uniform float film_width = 13.0;  // bubble look: rim width in texture px
 uniform float gloss : hint_range(0.0, 1.0) = 0.0;  // bubble look: the white highlight crescent and dot, top-left
 uniform bool bubble = false;      // soap bubble: whole-ball lens, thin-film rainbow rim, highlight spot
-uniform float bubble_time = 0.0;
+uniform float bubble_phase = 0.0;  // per-tile offset of the rim drift (set once; WP-F.24: the drift runs on TIME)
+uniform float bubble_drift = 0.4;  // radians per second the rim rainbow turns; 0 holds it still (reduced motion)
 
 void vertex() {
 	vec2 p = VERTEX;
@@ -139,7 +140,7 @@ void fragment() {
 	if (bubble && !shard) {
 		// Soap-bubble rim (owner mock v3): a thin iridescent band that drifts slowly, a bright line
 		// top-left and bottom-right, and a white highlight crescent with a dot, top-left.
-		float ang = atan(g.y, g.x) + bubble_time * 0.4;
+		float ang = atan(g.y, g.x) + (TIME + bubble_phase) * bubble_drift;
 		// Target mock (19 Oct 2026): a bold rainbow rim (pink, gold, green, cyan, violet) round the ball.
 		vec3 irid = mix(0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + ang * 2.0), vec3(1.0), 1.0 - film_sat);
 		float edge = smoothstep(film_width, 0.0, -d) * (0.55 + 0.45 * smoothstep(film_width, 3.0, -d));

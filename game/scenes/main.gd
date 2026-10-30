@@ -34,6 +34,7 @@ const DailyHooks := preload("res://scenes/daily_hooks.gd")
 const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
+const IntroScreen := preload("res://scenes/intro_screen.gd")
 const MusicScript := preload("res://scenes/music.gd")
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const SAVETEST_PATH := "user://save_test.json"
@@ -61,8 +62,21 @@ var daily_today: String = ""
 ## Placeholder music (WP-F.8): menu bed on the menu screens, the act's bed on the game screen.
 var music: MusicScript
 var _ready_printed: bool = false
+## The intro screen (WP-F.29) shows once per launch before the title. Off in headless runs, so the
+## tests start on the title, and with ?intro=0 on the web (the smoke scripts).
+var show_intro: bool = intro_default()
+## Fade-out length of the intro; tests set 0 to finish it at once.
+var intro_fade_sec: float = 0.35
 ## Tests set this before _ready to stand in for the page's recovery flag ("1" = reloaded by the recovery).
 var recover_override: String = ""
+
+
+static func intro_default() -> bool:
+	if DisplayServer.get_name() == "headless":
+		return false
+	if OS.has_feature("web"):
+		return not str(JavaScriptBridge.eval("window.location.search")).contains("intro=0")
+	return not OS.get_cmdline_user_args().has("--no-intro")
 
 
 static func autoplay_requested() -> bool:
@@ -104,7 +118,7 @@ func _ready() -> void:
 		if offline:
 			save = Save.fake()
 			if demo:
-				save.set_profile("wren", "they", _default_difficulty(), "ADA")
+				save.set_profile("wren", _default_difficulty(), "ADA")
 		elif _savetest_query() != "":
 			save = Save.real(SAVETEST_PATH)  # never the real player's save
 		else:
@@ -119,6 +133,8 @@ func _ready() -> void:
 		_begin_level_with_comms()
 	elif _recovered() and not save.resume().is_empty():
 		_resume_level(false)
+	elif show_intro:
+		_show_intro()
 	else:
 		_show_start()
 	telemetry.mark_ready()
@@ -194,7 +210,7 @@ func _save_debug_hook() -> void:
 				save.set_resume(act, i, want)
 	if q.contains("ending=1"):
 		if save.player_name() == "":
-			save.set_profile("wren", "they", _default_difficulty(), "KIT")
+			save.set_profile("wren", _default_difficulty(), "KIT")
 		_show_ending.call_deferred()
 	print("AstroLex save next=%s" % str((levels[level_index] as Dictionary)["id"]))
 
@@ -287,6 +303,20 @@ func _swap(node: Node) -> void:
 
 # --- screens -----------------------------------------------------------------------------
 
+## The once-per-launch intro: a tap or its timer goes to the title.
+func _show_intro() -> void:
+	show_intro = false
+	var s: Control = IntroScreen.new()
+	s.settings = settings
+	s.fade_sec = intro_fade_sec
+	# On the web the HTML loader already shows the intro's art, so nothing pops in; ?intro=still draws
+	# the art alone for game/brand/intro_still.jpg.
+	s.pop = not OS.has_feature("web")
+	s.still = OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search")).contains("intro=still")
+	s.finished.connect(_show_start)
+	_swap(s)
+
+
 func _show_start() -> void:
 	var s: Control = StartScreen.new()
 	s.name = "StartScreen"
@@ -322,13 +352,12 @@ func _show_character(can_cancel: bool, then: Callable) -> void:
 	s.reduced_motion = settings.reduced_motion
 	s.characters = _characters()
 	s.selected = str(save.profile().get("character", ""))
-	s.pronouns = str(save.profile().get("pronouns", "they"))
 	s.can_cancel = can_cancel
 	s.player_name = save.player_name()
 	s.blocklist = dictionary.content().get("blocklist", [])
-	s.confirmed.connect(func(id: String, pron: String, nm: String) -> void:
+	s.confirmed.connect(func(id: String, nm: String) -> void:
 		var diff: String = str(save.profile().get("difficulty", ""))
-		save.set_profile(id, pron, diff if diff != "" else _default_difficulty(), nm)
+		save.set_profile(id, diff if diff != "" else _default_difficulty(), nm)
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
@@ -343,7 +372,7 @@ func _show_difficulty(can_cancel: bool, then: Callable) -> void:
 	s.can_cancel = can_cancel
 	s.confirmed.connect(func(id: String) -> void:
 		var p: Dictionary = save.profile()
-		save.set_profile(str(p.get("character", "")), str(p.get("pronouns", "they")), id, str(p.get("name", "")))
+		save.set_profile(str(p.get("character", "")), id, str(p.get("name", "")))
 		then.call())
 	s.cancelled.connect(then)
 	_swap(s)
@@ -442,7 +471,27 @@ func _show_bench(auto: bool) -> void:
 func _comms_of(index: int, key: String) -> Array:
 	if index < 0 or index >= levels.size():
 		return []
-	return (levels[index] as Dictionary).get(key, [])
+	return catcher_comms((levels[index] as Dictionary).get(key, []), _profile_character(), save.player_name())
+
+
+## The Catcher's lines (WP-F.27) in the picked suit's voice: its own reply, its colour, and the
+## player's name over the bubble (the suit's name when there is none). Other lines pass through.
+static func catcher_comms(messages: Array, character: Dictionary, player_name: String) -> Array:
+	var out: Array = []
+	for m: Dictionary in messages:
+		if str(m.get("who", "")) != "catcher":
+			out.append(m)
+			continue
+		var suit := str(character.get("id", ""))
+		var lines: Dictionary = m.get("lines", {})
+		out.append({
+			"who": "catcher",
+			"text": str(lines.get(suit, m.get("text", ""))),
+			"suit": suit,
+			"colour": str(character.get("colour", "#00ddff")),
+			"name": player_name.capitalize() if player_name != "" else str(character.get("name", "You")),
+		})
+	return out
 
 
 ## The chatter to play: none in autoplay (the CI smoke), all of it otherwise and in the demo.
@@ -549,6 +598,8 @@ func _on_level_finished(summary: Dictionary, level: Dictionary = {}) -> void:
 		level = levels[level_index]
 	summary["level"] = str(level["id"])
 	summary["act"] = act
+	if level.has("vanta"):
+		summary["vanta"] = float(level["vanta"])  # VANTA's time to beat (WP-F.27)
 	var won: bool = summary.get("won", false)
 	var stars: int = int(summary.get("stars", 1 if won else 0))
 	save.record_level(act, str(level["id"]), level_index, won, int(summary.get("score", 0)), stars)

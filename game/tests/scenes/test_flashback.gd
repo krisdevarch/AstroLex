@@ -22,7 +22,7 @@ func test_new_player_goes_straight_to_the_map() -> void:
 
 func test_settings_has_no_prologue_replay() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "Kit")
+	s.set_profile("wren", "normal", "Kit")
 	var main: Node = Flow.returning(tree, s)
 	main._show_settings(main._show_map)
 	assert_true(Flow.has(main, "SettingsScreen"))
@@ -44,7 +44,7 @@ func test_flag_persists_in_the_save_file() -> void:
 
 func test_flashback_plays_before_3_06_once_and_skips() -> void:
 	var s: RefCounted = Save.fake()
-	s.set_profile("wren", "they", "normal", "Kit")
+	s.set_profile("wren", "normal", "Kit")
 	var main: Node = Flow.returning(tree, s)
 	main.act = "act3_tower"
 	main.levels = main.dictionary.levels("act3_tower")

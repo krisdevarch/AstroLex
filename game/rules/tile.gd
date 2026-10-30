@@ -7,32 +7,32 @@ var ch: String = ""
 var decoy: bool = false
 var plane: int = 0
 var pos: Vector2 = Vector2.ZERO
-var vel: Vector2 = Vector2.ZERO
+var prev_pos: Vector2 = Vector2.ZERO  # where the last fixed step left it (WP-F.24: the view interpolates)
 var alive: bool = true
 ## Draw radius in field units (tile.size * plane scale / 2); also the bounce inset.
 var radius: float = 0.0
 var carried_by: int = -1
-## Spawn speed (field units per second); drift steers and surges around it. 0: plain straight drift.
-var base_speed: float = 0.0
+## Back-plane shards only: straight drift (field units per second). Catchable tiles have no velocity; they hold an anchor.
+var vel: Vector2 = Vector2.ZERO
 
 ## Hazard kind (WP-F.1): "" for a plain tile, "counterfeit" (a forged copy of a needed letter, a decoy)
 ## or "trap" (one letter of Babel's counter-word, a decoy).
 var kind: String = ""
 
-## Motion style (WP-F.18), set at spawn for real letters only: "wander" (default), "orbit" or "dart".
-var style: String = "wander"
-## Orbit: current angle (radians) and the offset from the wandering centre.
-var orbit_angle: float = 0.0
-var orbit_off: Vector2 = Vector2.ZERO
-## Orbit: wander speed scale that keeps the mean speed at the base speed despite the circling.
-var orbit_k: float = 1.0
-## Dart: cycle length, per-tile phase offset (seconds), cycle index last seen, speed norm and burst flag.
-var dart_len: float = 0.0
-var dart_phase: float = 0.0
-var dart_idx: int = -1
-var dart_norm: float = 1.0
-var dart_burst: bool = false
-## Ripple impulse: outward velocity at full strength and the seconds of it left.
+## Anchored drift (WP-F.21): index of the anchor this tile holds (-1: none, e.g. while a drone carries it).
+var anchor: int = -1
+## Spring offset from the anchor (ripples, shyness) and its velocity; round.gd clamps the total deviation.
+var off: Vector2 = Vector2.ZERO
+var off_vel: Vector2 = Vector2.ZERO
+## Hop state: destination anchor (-1: not hopping), seconds of wind-up left, seconds flown, flight length,
+## whether it has taken off, and where it took off from (relative to the field's body offset).
+var hop_to: int = -1
+var hop_wind: float = 0.0
+var hop_t: float = 0.0
+var hop_sec: float = 0.0
+var hop_air: bool = false
+var hop_from: Vector2 = Vector2.ZERO
+## Ripple impulse: outward velocity it adds to the spring in total, and the seconds of it left.
 var kick: Vector2 = Vector2.ZERO
 var kick_t: float = 0.0
 ## Seconds until a letter Babel fired mid-round lands (babel.throwSec); until then it cannot be caught or grabbed.

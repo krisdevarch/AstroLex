@@ -66,6 +66,7 @@ var _out_t: float = -1.0
 var _toast: Label
 var _toast_t: float = 0.0
 var _chosen: bool = false
+var _vanta_dy: float = 0.0  # room for VANTA's line under the stats
 
 
 func _ready() -> void:
@@ -73,15 +74,18 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var won: bool = summary.get("won", false)
 	_earned = clampi(int(summary.get("stars", 1 if won else 0)), 0, 3)
+	var vanta := vanta_text(summary)
+	_vanta_dy = 52.0 if vanta != "" else 0.0
 	_card = Panel.new()
 	_card.name = "LevelCardPanel"
 	_card.add_theme_stylebox_override("panel", Ui.box(CARD_FILL, 44, CARD_EDGE, 5))
-	_card.size = Vector2(CARD_W, (CARD_H if telemetry != null else CARD_H - 110.0) + (DAILY_EXTRA if daily else 0.0))
+	_card.size = Vector2(CARD_W, (CARD_H if telemetry != null else CARD_H - 110.0) + (DAILY_EXTRA if daily else 0.0) + _vanta_dy)
 	_card.position = centre - _card.size * 0.5
 	_card.pivot_offset = _card.size * 0.5
 	_card.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_card)
-	var title := Ui.label(("Signal caught" if won else "Signal lost") if daily else ("Sector cleared" if won else "Out of time"), 66, TEXT_CREAM if won else LOSS)
+	var lost_title := "Too many wrong catches" if str(summary.get("reason", "")) == "mistakes" else "Out of time"
+	var title := Ui.label(("Signal caught" if won else "Signal lost") if daily else ("Sector cleared" if won else lost_title), 66, TEXT_CREAM if won else LOSS)
 	title.name = "EndTitle"
 	title.add_theme_constant_override("outline_size", 0)
 	title.position = Vector2(0, 34)
@@ -109,6 +113,13 @@ func _ready() -> void:
 	stats.position = Vector2(0, 318)
 	stats.size = Vector2(CARD_W, 50)
 	_card.add_child(stats)
+	if vanta != "":
+		var vl := Ui.label(vanta, 32, Color("C9374C").lightened(0.25))
+		vl.name = "VantaStat"
+		vl.add_theme_constant_override("outline_size", 0)
+		vl.position = Vector2(0, 366)
+		vl.size = Vector2(CARD_W, 44)
+		_card.add_child(vl)
 	# Buttons: the primary one in the Hint button's orange, the others in the HUD's navy.
 	# Won: Next (orange) and Retry, with a quiet Map link under them. Lost: Retry (orange) and Map.
 	if daily:
@@ -139,7 +150,7 @@ func _ready() -> void:
 
 
 func _build_buttons(won: bool) -> void:
-	var y := 392.0
+	var y := 392.0 + _vanta_dy
 	var first := _pill("NextButton" if won else "RetryButton", "Next" if won else "Retry", Vector2(CARD_W * 0.5 - 300.0, y), Vector2(340, 112), true)
 	var second := _pill("RetryButton" if won else "MapButton", "Retry" if won else "Map", Vector2(CARD_W * 0.5 + 60.0, y), Vector2(240, 112), false)
 	if won:
@@ -196,6 +207,15 @@ func prepare_image() -> void:
 	vp.queue_free()
 	if not bytes.is_empty():
 		share_b64 = Marshalls.raw_to_base64(bytes)
+
+
+## VANTA's time against yours, after a won level where VANTA posted one (WP-F.27); "" otherwise.
+static func vanta_text(s: Dictionary) -> String:
+	if not s.has("vanta") or not bool(s.get("won", false)) or bool(s.get("daily", false)):
+		return ""
+	var theirs := int(ceil(float(s["vanta"])))
+	var yours := int(ceil(float(s.get("secs", 0.0))))
+	return "VANTA %d s   ·   You %d s   ·   %s" % [theirs, yours, "Beaten!" if yours < theirs else "Keep up."]
 
 
 func _stats_text(won: bool) -> String:

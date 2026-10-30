@@ -15,11 +15,17 @@ func _make(seed_value := 1, round_no := 1, act := "act1_low_orbit", mods: Array 
 	return Round.create(_tun, _content, act, seed_value, round_no, mods)
 
 
-## Lands a shot on the tile deterministically: it stops drifting, then the shot resolves.
+## Lands a shot on the tile deterministically: the shot resolves well inside the hit tolerance.
 func _catch(r: Round, tile: RefCounted) -> void:
-	tile.vel = Vector2.ZERO
 	assert_true(r.fire(tile.id), "fire")
 	r.step(0.5)
+
+
+## Removes every other catchable tile, so only `tile` is on the field.
+func _alone(r: Round, tile: RefCounted) -> void:
+	for o in r.tiles.duplicate():
+		if o != tile and o.plane < 2:
+			r._remove(o)
 
 
 func _first_real(r: Round, ch: String) -> RefCounted:
@@ -135,22 +141,20 @@ func test_tiles_stay_inside_the_bounds_while_drifting() -> void:
 	for _i in 600:
 		r.step(0.0166667)
 		for t in r.tiles:
-			assert_true(t.pos.x >= t.radius - 1e-6 and t.pos.x <= 1.0 - t.radius + 1e-6, "x")
-			assert_true(t.pos.y >= 0.32 + t.radius - 1e-6 and t.pos.y <= 1.6 - t.radius + 1e-6, "y")
+			# Back shards bounce inside the field; anchored letters keep their centre in it (the body offset is clamped).
+			var slack: float = t.radius if t.plane >= 2 else 0.0
+			assert_true(t.pos.x >= slack - 1e-6 and t.pos.x <= float(_tun["field.width"]) - slack + 1e-6, "x")
+			assert_true(t.pos.y >= 0.32 + slack - 1e-6 and t.pos.y <= 1.6 - slack + 1e-6, "y")
 	assert_true(float(r.stats["secs"]) > 9.9)
 
 
-func test_drift_speed_is_within_the_variation_band_and_ramps() -> void:
+func test_back_shard_speed_follows_drift_speed_and_ramps() -> void:
 	for round_no in [1, 4]:
 		var r := _make(5, round_no)
-		var base: float = float(_tun["drift.speed"]) * (1.0 + float(_tun["ramp.driftStep"]) * (round_no - 1))
-		var band: float = float(_tun["drift.speedVariation"])
+		var want: float = float(_tun["drift.speed"]) * (1.0 + float(_tun["ramp.driftStep"]) * (round_no - 1)) * float(_tun["plane.backSpeedMul"])
 		for t in r.tiles:
 			if t.plane >= 2:
-				continue
-			var s: float = t.vel.length()
-			var b: float = base * (float(_tun["plane.midSpeedMul"]) if t.plane == 1 else 1.0)  # mid layer: parallax
-			assert_true(s >= b * (1.0 - band) - 1e-6 and s <= b * (1.0 + band) + 1e-6, "speed %f base %f plane %d" % [s, b, t.plane])
+				assert_true(absf(t.vel.length() - want) < 1e-6, "back speed %f want %f" % [t.vel.length(), want])
 
 
 func test_ramp_numbers() -> void:
@@ -165,7 +169,15 @@ func test_ramp_numbers() -> void:
 	for t in _make(1, 20, "act1_low_orbit", [NO_RATIO]).tiles:
 		if t.plane < 2 and t.decoy:
 			decoys += 1
-	assert_eq(decoys, 14)
+	assert_eq(decoys, mini(14, _make(1, 20, "act1_low_orbit", [NO_RATIO]).anchor_count() - _real_count(_make(1, 20, "act1_low_orbit", [NO_RATIO]))), "decoys are capped by the free anchors")
+
+
+func _real_count(r: Round) -> int:
+	var n := 0
+	for t in r.tiles:
+		if t.plane < 2 and not t.decoy:
+			n += 1
+	return n
 
 
 func test_decoy_ratio_sets_decoys_per_real_letter() -> void:
@@ -180,7 +192,8 @@ func test_decoy_ratio_sets_decoys_per_real_letter() -> void:
 				else:
 					real += 1
 		var cap := int(_tun["ramp.decoyMax"])
-		assert_eq(decoys, maxi(r.ramp()["decoys"], mini(cap, ceili(float(_tun["spawner.decoyRatio"]) * real))), "decoys seed %d" % seed_value)
+		var want: int = maxi(r.ramp()["decoys"], mini(cap, ceili(float(_tun["spawner.decoyRatio"]) * real)))
+		assert_eq(decoys, mini(want, r.anchor_count() - real), "decoys seed %d (capped by the anchors)" % seed_value)
 		_assert_no_word_letter_decoys(r)
 
 
@@ -227,7 +240,7 @@ func test_catch_preview_slot_then_carry_over() -> void:
 	assert_true(r.active[filled_slot]["filled"], "preview catch carried into the active word")
 
 
-func test_wrong_catch_unneeded_resets_combo_and_flips_velocity() -> void:
+func test_wrong_catch_unneeded_resets_combo() -> void:
 	var r := _make(21)
 	_catch(r, _first_real(r, r.words[0][0]))
 	assert_true(r.combo > 1.0)
@@ -239,14 +252,9 @@ func test_wrong_catch_unneeded_resets_combo_and_flips_velocity() -> void:
 			break
 	assert_false(letters.contains(decoy.ch))
 	r.drain_events()
-	decoy.vel = Vector2(0.05, -0.02)
-	var before: Vector2 = decoy.vel
 	r.fire(decoy.id)
-	# compare with the velocity just before the catch, so a bump with a neighbour while the line flies
-	# (or a wall bounce after) cannot hide the flip
 	var ev: Array[Dictionary] = []
 	for i in 30:
-		before = decoy.vel
 		r.step(1.0 / 60.0)
 		ev.append_array(r.drain_events())
 		if not _of_type(ev, "wrong").is_empty():
@@ -257,8 +265,7 @@ func test_wrong_catch_unneeded_resets_combo_and_flips_velocity() -> void:
 	assert_eq(r.stats["wrong"], 1)
 	assert_true(r.tiles.has(decoy), "wrong tile stays alive")
 	assert_true(decoy.alive)
-	assert_true(decoy.vel.dot(before) < 0.0, "velocity flipped")
-	assert_true(absf(r.time_left - (30.0 - 1.0 - float(r.stats["secs"]))) < 0.01, "wrong costs 1 s: %f" % r.time_left)
+	assert_true(absf(r.time_left - (30.0 - float(_tun["burst.wrongCost"]) - float(r.stats["secs"]))) < 0.01, "wrong costs burst.wrongCost: %f" % r.time_left)
 
 
 func test_wrong_catch_surplus_when_letter_is_in_word_but_no_open_slot() -> void:
@@ -272,6 +279,7 @@ func test_wrong_catch_surplus_when_letter_is_in_word_but_no_open_slot() -> void:
 				break
 	assert_true(ch != "")
 	_catch(r, _first_real(r, ch))
+	r.step(1.0)  # the refill (and its surplus trim) follows the catch after spawner.refillDelay (WP-F.25)
 	var extra = r._spawn(ch, true, 0)
 	extra.landing = 0.0  # already landed (WP-F.18: a mid-round spawn flies in first)
 	r.drain_events()
@@ -300,6 +308,7 @@ func test_surplus_real_copy_and_word_letter_decoy_dissolve_after_next_catch() ->
 	var decoy_extra = r._spawn(first, true, 1)
 	r.drain_events()
 	_catch(r, _first_real(r, first))
+	r.step(1.0)  # the refill (and its surplus trim) follows the catch after spawner.refillDelay (WP-F.25)
 	var dissolved := _of_type(r.drain_events(), "dissolve")
 	var ids := []
 	for d in dissolved:
@@ -307,18 +316,21 @@ func test_surplus_real_copy_and_word_letter_decoy_dissolve_after_next_catch() ->
 	assert_true(ids.has(real_extra.id), "extra real copy dissolved")
 	assert_true(ids.has(decoy_extra.id), "decoy of a word letter dissolved (letter first is now filled)")
 	assert_false(r.tiles.has(real_extra))
-	# decoy count is topped back up
+	# decoy count is topped back up: the field stays as full as it started (WP-F.25), so the caught
+	# letter is made up for by a fifth decoy (8 word letters + 4 decoys = 12 = 7 real + 5 decoys).
 	var decoys := 0
 	for t in r.tiles:
 		if t.plane < 2 and t.decoy:
 			decoys += 1
-	assert_eq(decoys, 4)
+	assert_eq(decoys, 5)
 
 
 func test_real_copies_dissolve_before_decoys_of_the_same_letter() -> void:
 	var r := _make(31)
 	var ch: String = r.words[0][0]
 	# one unfilled slot for ch; add a decoy and a second real copy: the second real copy goes first
+	r._make_room()  # anchors are scarce: free two so both extra letters can spawn
+	r._make_room()
 	var real2 = r._spawn(ch, false, 0)
 	var decoy2 = r._spawn(ch, true, 0)
 	r.drain_events()
@@ -336,9 +348,11 @@ func test_real_copies_dissolve_before_decoys_of_the_same_letter() -> void:
 func test_escape_when_the_tile_moves_more_than_tolerance() -> void:
 	var r := _make(2)
 	var tile := _first_real(r, r.words[0][0])
-	tile.vel = Vector2.ZERO
 	r.fire(tile.id)
-	tile.pos += Vector2(0.2, 0.0)
+	# Move the anchor toward the middle of the field, so the wall clamp cannot shorten the move; the other
+	# letters go first so the separation safety net cannot push the tile back toward the aim point.
+	_alone(r, tile)
+	r._anchors[tile.anchor] += Vector2(0.2 if tile.pos.x < 0.5 else -0.2, 0.0)
 	r.step(0.5)
 	var ev := r.drain_events()
 	assert_eq(_of_type(ev, "escape").size(), 1)
@@ -349,9 +363,9 @@ func test_escape_when_the_tile_moves_more_than_tolerance() -> void:
 	# The forgiving tolerance (0.06 * 1.6) applies to everything: 0.07 is a hit.
 	var q := _make(2)
 	var t2 := _first_real(q, q.words[0][0])
-	t2.vel = Vector2.ZERO
 	q.fire(t2.id)
-	t2.pos += Vector2(0.07, 0.0)
+	_alone(q, t2)
+	q._anchors[t2.anchor] += Vector2(0.07 if t2.pos.x < 0.5 else -0.07, 0.0)
 	q.step(0.5)
 	assert_eq(_of_type(q.drain_events(), "escape").size(), 0)
 
@@ -362,7 +376,7 @@ func test_travel_time_scales_with_distance() -> void:
 	r.fire(tile.id)
 	var d: float = r.origin().distance_to(tile.pos)
 	assert_true(absf(r.shot["dur"] - 0.2 * (0.7 + 0.3 * d / 1.6)) < 1e-9)
-	assert_eq(r.origin(), Vector2(0.5, 1.6))
+	assert_eq(r.origin(), Vector2(float(_tun["field.width"]) * 0.5, 1.6))
 
 
 func test_one_shot_in_flight_and_one_queued() -> void:
@@ -396,7 +410,7 @@ func test_clock_runs_out_and_loses() -> void:
 	assert_eq(r.state, "lost")
 	assert_eq(r.time_left, 0.0)
 	var ev := r.drain_events()
-	assert_eq(ev[ev.size() - 1], {"type": "round_end", "won": false})
+	assert_eq(ev[ev.size() - 1], {"type": "round_end", "won": false, "reason": "time"})
 	assert_eq(_of_type(ev, "round_end").size(), 1)
 	assert_true(float(r.stats["secs"]) > 29.9 and float(r.stats["secs"]) < 30.1)
 	assert_eq(r.stats["min_time"], 0.0)
@@ -761,25 +775,17 @@ func test_thousand_seeded_rounds_are_solvable_in_drift() -> void:
 	assert_true(worst < 30.0)
 
 
-func test_back_tiles_drift_slower_than_catchable_tiles() -> void:
+func test_back_tiles_drift_slower_than_the_pace_of_the_field() -> void:
 	var r := _make(77)
-	var back := 0.0
-	var front := 0.0
 	var nb := 0
-	var nf := 0
+	var cap: float = float(_tun["drift.speed"]) * float(r.ramp()["drift"]) * float(_tun["plane.backSpeedMul"])
 	for t in r.tiles:
 		if t.plane >= 2:
-			back += t.vel.length()
 			nb += 1
-		else:
-			front += t.vel.length()
-			nf += 1
-	assert_true(nb > 0 and nf > 0, "both kinds exist")
-	assert_true(back / nb < front / nf * 0.6, "back mean speed well below catchable mean")
-	var cap: float = float(_tun["drift.speed"]) * float(r.ramp()["drift"]) * (1.0 + float(_tun["drift.speedVariation"])) * float(_tun["plane.backSpeedMul"])
-	for t in r.tiles:
-		if t.plane >= 2:
 			assert_true(t.vel.length() <= cap + 0.0001, "back speed capped by backSpeedMul")
+		else:
+			assert_true(t.anchor >= 0, "catchable letters are anchored")
+	assert_true(nb > 0, "back shards exist")
 
 
 func test_thief_cannot_grab_tile_under_an_inflight_shot() -> void:
@@ -819,7 +825,7 @@ func _min_slack(r: Round) -> float:
 	var gap: float = float(_tun["tile.minGap"])
 	var live: Array = []
 	for t in r.tiles:
-		if t.alive and t.plane < 2:
+		if t.alive and t.plane < 2 and not t.hop_air:  # a hopper in flight is lifted over the others
 			live.append(t)
 	for i in live.size():
 		for j in range(i + 1, live.size()):
@@ -843,28 +849,25 @@ func test_catchable_tiles_keep_their_gap_while_drifting() -> void:
 		for _i in 1200:
 			r.step(1.0 / 60.0)
 			worst = minf(worst, _min_slack(r))
-		assert_true(worst >= -0.01, "seed %d slack %f" % [seed_value, worst])
+		assert_true(worst >= -1e-6, "seed %d slack %f" % [seed_value, worst])
 
 
-func test_head_on_pair_bounces() -> void:
+func test_overlapping_pair_is_pushed_apart() -> void:
 	var r := _make(5)
-	for t in r.tiles:
-		t.alive = false
+	for t in r.tiles.duplicate():
+		r._remove(t)
 	var a: RefCounted = r._spawn("A", true, 0)
 	var b: RefCounted = r._spawn("B", true, 0)
 	a.pos = Vector2(0.4, 0.9)
 	b.pos = Vector2(0.4 + a.radius + b.radius + 0.01, 0.9)
-	a.vel = Vector2(0.1, 0.0)
-	b.vel = Vector2(-0.1, 0.0)
 	r._separate_tiles()
-	assert_true(a.vel.x < 0.0 and b.vel.x > 0.0, "velocities exchanged")
 	assert_true(b.pos.x - a.pos.x >= a.radius + b.radius + float(_tun["tile.minGap"]) - 1e-6, "pushed apart")
 
 
 func test_letter_layers_may_overlap_but_not_within_a_layer() -> void:
 	var r := _make(5)
-	for t in r.tiles:
-		t.alive = false
+	for t in r.tiles.duplicate():
+		r._remove(t)
 	var a: RefCounted = r._spawn("A", true, 0)
 	var b: RefCounted = r._spawn("B", true, 1)
 	var c: RefCounted = r._spawn("C", true, 1)
@@ -876,36 +879,3 @@ func test_letter_layers_may_overlap_but_not_within_a_layer() -> void:
 	assert_true(a.pos.distance_to(b.pos) < a.radius, "so a mid letter can sit behind a front letter")
 	assert_true(c.pos.distance_to(b.pos) >= b.radius + c.radius + float(_tun["tile.minGap"]) - 1e-6, "letters on one layer push apart")
 	assert_true(b.radius < a.radius, "the mid layer is smaller")
-
-
-func test_letters_swoop_on_curved_paths_and_surge() -> void:
-	var r := _make(5)
-	var t = null
-	for c in r.tiles:
-		if c.plane == 0:
-			t = c
-			break
-	var heading0: float = t.vel.angle()
-	var speeds: Array[float] = []
-	var turned := 0.0
-	for i in 240:  # four seconds
-		r.step(1.0 / 60.0)
-		speeds.append(t.vel.length())
-		turned = maxf(turned, absf(angle_difference(heading0, t.vel.angle())))
-	assert_true(turned > 0.2, "heading turns without a wall (%f rad)" % turned)
-	assert_true(speeds.max() > speeds.min() * 1.2, "speed surges and eases")
-	# a bump with a neighbour on the same plane swaps velocity along the contact, so bound by the fastest one
-	var top_base := 0.0
-	for c in r.tiles:
-		if c.plane == t.plane:
-			top_base = maxf(top_base, c.base_speed)
-	assert_true(speeds.max() <= top_base * (1.0 + float(_tun["drift.surge"])) * 1.6 + 1e-6, "surge stays bounded")
-
-
-func test_a_stopped_letter_stays_stopped() -> void:
-	var r := _make(5)
-	for t in r.tiles:
-		t.vel = Vector2.ZERO
-	r.step(0.5)
-	for t in r.tiles:
-		assert_true(t.vel.length() < 1e-6, "no steering on a stopped tile")

@@ -151,7 +151,7 @@ static func link(t: String, size: int = 38, min_size: Vector2 = Vector2(300, 80)
 	return b
 
 
-## A toggle in a group (suit, difficulty, pronouns, settings): navy when off; when on, a lit edge
+## A toggle in a group (suit, difficulty, settings): navy when off; when on, a lit edge
 ## in `accent` over a slightly lifted fill.
 static func choice(t: String, size: int = 42, min_size: Vector2 = Vector2(260, 100), accent: Color = TEAL) -> Button:
 	var b := secondary(t, size, min_size)

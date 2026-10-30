@@ -15,7 +15,7 @@ func _max_gap(f: Node2D) -> float:
 	var worst := 0.0
 	for t in f.game_round.tiles:
 		var v: Node2D = f._views[t.id]
-		worst = maxf(worst, v.position.distance_to(f.to_screen(t.pos)))
+		worst = maxf(worst, v.position.distance_to(f.to_screen(f.game_round.view_pos(t))))  # the view draws between the last two steps (WP-F.24)
 	return worst
 
 
@@ -255,5 +255,5 @@ func test_letters_ease_into_their_drift_after_the_throw() -> void:
 	for _i in 60:
 		f.advance(1.0 / 60.0)
 	assert_eq(f.game_round.drift_scale, 1.0, "full drift once settled")
-	assert_true(early < t.base_speed * 0.1 * 0.5, "the first frames move only a little")
+	assert_true(early < float(f.game_round._num("anchors.swayX")) * 0.5, "the first frames move only a little")
 	f.free()

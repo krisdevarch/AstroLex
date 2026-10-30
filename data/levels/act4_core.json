@@ -1,6 +1,6 @@
 {
   "$schema": "./levels.schema.json",
-  "status": "draft",
+  "status": "approved",
   "act": "act4_core",
   "tuning": {"burst.seconds": 10, "burst.perLetterSec": 4.75},
   "levels": [
@@ -87,6 +87,7 @@
         {"who": "rhee", "text": "Let it. Do not rush it. Hear all of it."}
       ],
       "commsAfter": [
+        {"who": "babel", "text": "SPEAK. I REPLY."},
         {"who": "ade", "text": "It asked what it got wrong. Out loud. I did not expect that."}
       ]
     },
@@ -114,7 +115,7 @@
         {"who": "rhee", "text": "People words now. Hold them gently."}
       ],
       "commsAfter": [
-        {"who": "tomas", "text": "My family is at home. My mother, she ___ for me. A friend, too. I can say it now."}
+        {"who": "tomas", "text": "My family is at home. My mother, she sings for me. A friend, too. I can say it now."}
       ]
     },
     {
@@ -138,6 +139,7 @@
         {"who": "rhee", "text": "Babel has waited a long time for someone to ask it."}
       ],
       "commsAfter": [
+        {"who": "babel", "text": "ONE QUESTION."},
         {"who": "rhee", "text": "I have kept something for you, Catcher. I will give it to you at the end."}
       ]
     },
@@ -148,7 +150,8 @@
       "commsBefore": [
         {"who": "kit", "text": "Two left. We are all here."},
         {"who": "ade", "text": "No joke. I am proud of you. Go."},
-        {"who": "rhee", "text": "Babel will not stop you. That is its choice. Let it finish."}
+        {"who": "rhee", "text": "Babel will not stop you. That is its choice. Let it finish."},
+        {"who": "catcher", "text": "Here it comes.", "lines": {"wren": "First word. Last word. Mine.", "juno": "Aye. Last of the haul.", "ash": "Shh. Listening.", "pip": "Ooh. Here it comes."}}
       ],
       "commsAfter": [
         {"who": "rhee", "text": "I gave Babel a wrong meaning of listen. I wrote: wait for your turn. It means: let them change you."},

@@ -4,6 +4,35 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "anchors.spacing",
+    "anchors.maxOffset",
+    "anchors.bodyRoom",
+    "anchors.spare",
+    "anchors.clearX",
+    "anchors.clearY",
+    "anchors.clearRadius",
+    "anchors.swayX",
+    "anchors.swayY",
+    "anchors.swayHz",
+    "anchors.waveAmp",
+    "anchors.waveHz",
+    "anchors.waveLen",
+    "anchors.spring",
+    "anchors.damping",
+    "anchors.speedRef",
+    "drift.bob",
+    "drift.bobHz",
+    "hop.every",
+    "hop.jitter",
+    "hop.firstAt",
+    "hop.windSec",
+    "hop.flySec",
+    "hop.fromLevel",
+    "hop.arcPx",
+    "hop.ringPx",
+    "hop.ringSec",
+    "tile.flinchSquash",
+    "tether.comboWarm",
     "tether.travelTime",
     "tether.travelMinMul",
     "tether.travelDistMul",
@@ -12,13 +41,12 @@
     "tap.marginPx",
     "tap.driftMarginMul",
     "drift.speed",
-    "drift.speedVariation",
-    "drift.curve",
-    "drift.curveHz",
-    "drift.surge",
-    "drift.surgeHz",
     "spawner.decoys",
+    "spawner.maxCopies",
     "spawner.decoyRatio",
+    "spawner.decoyBonus",
+    "spawner.refill",
+    "spawner.refillDelay",
     "spawner.frontShare",
     "spawner.wordsPerLevel",
     "score.letterValue",
@@ -43,6 +71,7 @@
     "babel.swayAmp",
     "babel.recoilPx",
     "sim.stepSec",
+    "field.width",
     "field.height",
     "field.topMargin",
     "tile.size",
@@ -55,7 +84,6 @@
     "plane.backScale",
     "plane.backAlpha",
     "plane.backSpeedMul",
-    "plane.midSpeedMul",
     "plane.midDim",
     "plane.backDesaturate",
     "plane.backTiles",
@@ -108,6 +136,7 @@
     "burst.seconds",
     "burst.perLetterSec",
     "burst.wrongCost",
+    "burst.maxWrong",
     "burst.hintCost",
     "burst.restoreBonus",
     "score.timeBonus",
@@ -138,13 +167,7 @@
     "hazard.shimmerSec",
     "perf.playFps",
     "perf.menuFps",
-    "drift.orbitShare",
-    "drift.orbitRadius",
-    "drift.orbitHz",
-    "drift.dartShare",
-    "drift.dartEvery",
-    "drift.dartBoost",
-    "drift.dartSec",
+    "intro.holdSec",
     "drift.shyRadius",
     "drift.shyPush",
     "drift.rippleRadius",
@@ -173,6 +196,35 @@
     "babel.volleyLifeSec"
   ],
   "properties": {
+    "anchors.spacing": {"type": "number", "minimum": 0.05, "description": "honeycomb anchor spacing, centre to centre, field units; must be at least tile.size + tile.minGap + 2 * anchors.maxOffset"},
+    "anchors.maxOffset": {"type": "number", "minimum": 0, "description": "largest distance a letter's wave, bob and spring offset together may take it from its anchor, field units"},
+    "anchors.bodyRoom": {"type": "number", "minimum": 0, "description": "gap between the anchor lattice and the field walls that the sway and the gust may move the whole lattice into, field units"},
+    "anchors.spare": {"type": "integer", "minimum": 0, "description": "free anchors the lattice keeps beyond the round's letters and decoys, for hops, volleys and refills"},
+    "anchors.clearX": {"type": "number", "description": "x of the centre of Babel's porthole in field units (mirrors babel.cornerX and the field layout), kept clear of anchors"},
+    "anchors.clearY": {"type": "number", "description": "y of the centre of Babel's porthole in field units (mirrors babel.cornerY and the field layout), kept clear of anchors"},
+    "anchors.clearRadius": {"type": "number", "minimum": 0, "description": "radius around the porthole centre (porthole plus name tag) that no anchored letter may reach, field units"},
+    "anchors.swayX": {"type": "number", "minimum": 0, "description": "whole-field sway amplitude, x, field units"},
+    "anchors.swayY": {"type": "number", "minimum": 0, "description": "whole-field sway amplitude, y, field units"},
+    "anchors.swayHz": {"type": "number", "minimum": 0, "description": "whole-field sway cycles per second at drift.speed = anchors.speedRef"},
+    "anchors.waveAmp": {"type": "number", "minimum": 0, "description": "amplitude of the wave rolling through the anchors, field units (at most anchors.maxOffset)"},
+    "anchors.waveHz": {"type": "number", "minimum": 0, "description": "wave cycles per second at drift.speed = anchors.speedRef"},
+    "anchors.waveLen": {"type": "number", "minimum": 0.05, "description": "wavelength of the rolling wave, field units"},
+    "anchors.spring": {"type": "number", "minimum": 1, "description": "stiffness of the offset spring (per second squared)"},
+    "anchors.damping": {"type": "number", "minimum": 0, "description": "damping of the offset spring (per second)"},
+    "anchors.speedRef": {"type": "number", "minimum": 0.001, "description": "drift.speed at which sway, wave and hop rate run at 1x"},
+    "drift.bob": {"type": "number", "minimum": 0, "description": "per-letter bob amplitude, field units"},
+    "drift.bobHz": {"type": "number", "minimum": 0, "description": "bob cycles per second"},
+    "hop.arcPx": {"type": "number", "minimum": 0, "maximum": 300, "description": "view only: how far a hopping letter lifts at mid-flight, in design px"},
+    "hop.ringPx": {"type": "number", "minimum": 0, "maximum": 300, "description": "view only: radius the landing ripple ring grows to, in design px"},
+    "hop.ringSec": {"type": "number", "minimum": 0.05, "maximum": 2, "description": "view only: seconds the landing ripple ring takes"},
+    "tile.flinchSquash": {"type": "number", "minimum": 0, "maximum": 0.4, "description": "view only: squash of the letter nearest a missed shot, share of its size"},
+    "tether.comboWarm": {"type": "number", "minimum": 0, "maximum": 1, "description": "view only: how far the tether colour shifts toward coral at max combo; 0 turns it off"},
+    "hop.every": {"type": "number", "minimum": 0, "description": "mean seconds between hops at drift.speed = anchors.speedRef; 0 turns hops off"},
+    "hop.jitter": {"type": "number", "minimum": 0, "description": "seconds added or removed at random from hop.every"},
+    "hop.firstAt": {"type": "number", "minimum": 0, "description": "round second of the first hop"},
+    "hop.windSec": {"type": "number", "minimum": 0, "description": "wind-up (tell) before a hop takes off, seconds"},
+    "hop.flySec": {"type": "number", "minimum": 0.05, "description": "flight time of a hop, seconds"},
+    "hop.fromLevel": {"type": "number", "minimum": 0, "description": "first Act I level order with hops (Act II and later always have them)"},
     "$schema": {
       "type": "string"
     },
@@ -216,46 +268,42 @@
       "minimum": 0,
       "description": "field units per second, before per-tile variation"
     },
-    "drift.speedVariation": {
-      "type": "number",
-      "minimum": 0,
-      "description": "fraction of drift.speed each tile varies by"
-    },
-    "drift.curve": {
-      "type": "number",
-      "minimum": 0,
-      "description": "radians per second at the peak of a letter's swerve; 0 drifts in straight lines"
-    },
-    "drift.curveHz": {
-      "type": "number",
-      "minimum": 0,
-      "description": "how often a letter's swerve swings from one side to the other, per second"
-    },
-    "drift.surge": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 0.9,
-      "description": "fraction a letter's speed surges above and eases below its spawn speed"
-    },
-    "drift.surgeHz": {
-      "type": "number",
-      "minimum": 0,
-      "description": "surges per second"
-    },
     "spawner.decoys": {
       "type": "integer",
       "minimum": 0,
       "description": "decoys on the board in round 1"
+    },
+    "spawner.maxCopies": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "most copies of one letter a plain decoy may bring the field to (needed letters, counterfeits and trap letters are not capped); 0 turns the cap off"
     },
     "spawner.decoyRatio": {
       "type": "number",
       "minimum": 0,
       "description": "decoys kept per real catchable letter on the board; the floor is spawner.decoys"
     },
+    "spawner.decoyBonus": {
+      "type": "integer",
+      "minimum": -5,
+      "maximum": 5,
+      "description": "decoys added after spawner.decoyRatio and the ramp.decoyMax cap (never below 0 decoys); Pip's Sharp eye perk sets -1"
+    },
+    "spawner.refill": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: the letters on the field stay as many as the two words' letters plus their decoys, so a caught letter is replaced (by a decoy on its own spot); 0: decoys follow the real letters left and the field thins out"
+    },
+    "spawner.refillDelay": {
+      "type": "number",
+      "minimum": 0,
+      "description": "seconds after a right catch before the replacement letter appears on the caught letter's spot (0: at once)"
+    },
     "spawner.frontShare": {
       "type": "number",
       "minimum": 0,
-      "description": "share of catchable tiles that start on the front plane"
+      "description": "share of catchable tiles on the front plane (1: the mid plane is retired, anchored drift)"
     },
     "spawner.wordsPerLevel": {
       "type": "integer",
@@ -372,10 +420,15 @@
       "minimum": 0,
       "description": "fixed simulation step in seconds"
     },
+    "field.width": {
+      "type": "number",
+      "minimum": 0.5,
+      "description": "field width in field units; the view fits width x (height - topMargin) to the screen with one scale, so 1.33 spans a 1080x1920 screen edge to edge"
+    },
     "field.height": {
       "type": "number",
       "minimum": 0,
-      "description": "field height in field units (width is 1.0)"
+      "description": "field height in field units"
     },
     "field.topMargin": {
       "type": "number",
@@ -434,11 +487,6 @@
       "type": "number",
       "minimum": 0,
       "description": "drift speed multiplier for back-plane tiles (parallax)"
-    },
-    "plane.midSpeedMul": {
-      "type": "number",
-      "minimum": 0,
-      "description": "drift speed multiplier for mid-plane letters (2.5D parallax)"
     },
     "plane.midDim": {
       "type": "number",
@@ -711,6 +759,11 @@
       "minimum": 0,
       "description": "seconds lost per wrong catch"
     },
+    "burst.maxWrong": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "wrong catches (plain or forged) that lose the round, so tapping every letter cannot win; 0 means no limit"
+    },
     "burst.hintCost": {
       "type": "number",
       "minimum": 0,
@@ -866,13 +919,7 @@
       "minimum": 15,
       "description": "frame cap on menus, the pause menu and other screens. Sits a little above 30 on purpose, for the same reason as perf.playFps"
     },
-    "drift.orbitShare": {"type": "number", "minimum": 0, "maximum": 1, "description": "share of real letters that circle a slowly wandering centre instead of wandering (WP-F.18)"},
-    "drift.orbitRadius": {"type": "number", "minimum": 0, "description": "orbit radius, field units"},
-    "drift.orbitHz": {"type": "number", "minimum": 0, "description": "orbit turns per second"},
-    "drift.dartShare": {"type": "number", "minimum": 0, "maximum": 1, "description": "share of real letters that glide, slow almost to a stop, then dart off in a new direction (WP-F.18)"},
-    "drift.dartEvery": {"type": "number", "minimum": 0.5, "description": "mean seconds between darts"},
-    "drift.dartBoost": {"type": "number", "minimum": 1, "maximum": 3, "description": "peak speed multiplier of a dart; capped so taps still land"},
-    "drift.dartSec": {"type": "number", "minimum": 0.05, "description": "how long a dart lasts, seconds"},
+    "intro.holdSec": {"type": "number", "minimum": 1, "description": "seconds the intro screen shows before it moves on to the title by itself; a tap anywhere skips it (WP-F.29)"},
     "drift.shyRadius": {"type": "number", "minimum": 0, "description": "letters within this distance of a drone edge away from it, field units (0 = off)"},
     "drift.shyPush": {"type": "number", "minimum": 0, "description": "speed of the shy push, field units per second at zero distance"},
     "drift.rippleRadius": {"type": "number", "minimum": 0, "description": "a catch pushes letters within this distance outward, field units (0 = off)"},
