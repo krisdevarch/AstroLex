@@ -35,7 +35,7 @@ The repo is public, so issues are public. Results are anonymous: a random 6-char
 
 Rules:
 - The **issue body** holds a short markdown summary plus one fenced `json` block with everything except `events`, so the URL stays under 6,000 characters. Between the summary and the json block is a `### How did it feel?` section where the tester types a free-text note; the dashboard lists it (HTML comments stripped). A `[playtest]` issue whose body is only the bare results JSON (pasted from **Copy results**) is counted too. Drop `babel_lines`, then trim `errors` to the last 5, if needed.
-- **Copy results** includes `events`, capped at 600: fire, catch, wrong, escape, tap_miss (with nearest tile distance), restore, babel and round_end, each with `t` in seconds.
+- **Copy results** includes `events`, capped at 600: fire, catch, wrong, counterfeit (a forged letter was caught, with `ch`), trap (with `word`), escape, tap_miss (with nearest tile distance), restore, babel and round_end, each with `t` in seconds.
 - `level` (round record): the authored level id such as `"1-01"`, or `""` for a random round. Added 9 Oct 2026; older results lack it.
 - `build.commit` comes from `game/data/build.json`, written by `scripts/godot/export.sh` from `git rev-parse --short HEAD` (gitignored). The value is `"dev"` when the file is absent.
 - `load.boot_ms` is the time from page start to the engine starting. `load.ready_ms` is the time to the first screen. Both come from `performance.now()` on the web, and are null elsewhere.
