@@ -86,6 +86,23 @@ func test_summary_json_matches_the_contract() -> void:
 	f.free()
 
 
+## Playtest 26 Oct 2026: forged letters were caught but never logged, so the log looked like a needed
+## letter being refused.
+func test_forged_letter_catch_is_an_event() -> void:
+	var t: RefCounted = Telemetry.fake()
+	var f: Node2D = FieldScene.instantiate()
+	f.print_ready = false
+	tree.root.add_child(f)
+	t.begin_round(f, 1, 1)
+	f.begin(1, 1)
+	f.skip_intro()
+	f.emit_signal("game_event", {"type": "counterfeit", "tile_id": -1, "ch": "r", "pos": Vector2.ZERO})
+	var last: Dictionary = t.events[t.events.size() - 1]
+	assert_eq(last["type"], "counterfeit")
+	assert_eq(last["ch"], "r")
+	f.free()
+
+
 func test_missed_taps_are_counted_with_nearest_distance() -> void:
 	var t: RefCounted = Telemetry.fake()
 	var f: Node2D = FieldScene.instantiate()

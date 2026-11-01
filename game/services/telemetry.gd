@@ -186,6 +186,10 @@ func _on_game_event(e: Dictionary) -> void:
 			_add_event("wrong", {"ch": str(e.get("ch", "")), "kind": kind})
 		"escape":
 			_add_event("escape")
+		"counterfeit":
+			_add_event("counterfeit", {"ch": str(e.get("ch", ""))})
+		"trap":
+			_add_event("trap", {"word": str(e.get("word", ""))})
 		"restore":
 			_add_event("restore", {"word": str(e.get("word", ""))})
 		"babel":
