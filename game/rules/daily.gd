@@ -35,10 +35,11 @@ const LOSE_LINES := [
 	"The signal slipped. It is a slippery thing.",
 	"Not today. Tomorrow has fresh letters.",
 ]
-## Normal tuning with Act II's hazards: counterfeits at 0.3 and one trap, a 45 s burst.
+## Normal tuning with Act II's hazards: one trap, a 45 s burst. No counterfeits (owner, 6 Nov 2026:
+## every copy of a letter the word needs is accepted, and all letters look alike).
 const TUNING := {
 	"burst.seconds": 45, "spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5,
-	"thief.interval": 9, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1,
+	"thief.interval": 9, "hazard.counterfeitRatio": 0, "hazard.traps": 1,
 }
 
 

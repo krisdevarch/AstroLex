@@ -54,7 +54,7 @@ func test_level_shape_and_no_spoilers() -> void:
 	for w in lv["words"]:
 		assert_false(str(lv["id"]).contains(str(w)), "nor does the id")
 	assert_eq(lv["tuning"]["burst.seconds"], 45)
-	assert_eq(lv["tuning"]["hazard.counterfeitRatio"], 0.3)
+	assert_eq(lv["tuning"]["hazard.counterfeitRatio"], 0, "no forgeries: every copy of a needed letter counts")
 	assert_eq(lv["tuning"]["hazard.traps"], 1)
 	assert_true((lv["commsBefore"] as Array).is_empty(), "no comms")
 	assert_eq(lv["babelIntro"], Daily.INTRO)
