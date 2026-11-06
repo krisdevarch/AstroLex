@@ -1,4 +1,8 @@
 extends Control
+## WP-F.31: the game no longer shows this screen; the intro is now the title itself (start_screen.gd with
+## `intro`), so nothing is rebuilt between them. It stays only for `?intro=still`, the capture of the art
+## for the web loader's picture (scripts/godot/web-smoke/intro-still.cjs).
+##
 ## Intro screen (WP-F.29): the first thing on launch, built from the game's own kit. The painted Low
 ## Orbit sky and the crew look it shares with the title (`crew_title.gd`: the wordmark and the four
 ## Catchers' busts under glass bubbles). The bubbles pop in one after another and bob out of step; the

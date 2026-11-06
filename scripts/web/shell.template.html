@@ -612,6 +612,9 @@ const engine = new Engine(GODOT_CONFIG);
 	const statusNotice = document.getElementById('status-notice');
 
 	let initializing = true;
+	// Set by the game (main.gd) once its first screen has been drawn twice.
+	let drawn = false;
+	window.__alxDrawn = () => { drawn = true; };
 	let statusMode = '';
 
 	function setStatusMode(mode) {
@@ -710,7 +713,19 @@ const engine = new Engine(GODOT_CONFIG);
 			},
 		}).then(() => {
 			window.__alxStarted();
-			setStatusMode('hidden');
+			// WP-F.31: hold the loader until the game says its first screen is drawn (main.gd
+			// _tell_page_when_drawn), so the boot splash or a blank frame never shows through the fade.
+			// A slow first frame (shader compiles on a phone) can take seconds; after 10 s fade anyway.
+			window.__alxLoad(1);
+			statusPercent.textContent = '100%';
+			let handedOff = false;
+			const handOff = () => {
+				if (handedOff) { return; }
+				handedOff = true;
+				setStatusMode('hidden');
+			};
+			if (drawn) { handOff(); } else { window.__alxDrawn = handOff; }
+			setTimeout(handOff, 10000);
 		}, displayFailureNotice);
 	}
 }());
