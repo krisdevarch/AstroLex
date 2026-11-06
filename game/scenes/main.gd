@@ -65,8 +65,8 @@ var _ready_printed: bool = false
 ## The intro screen (WP-F.29) shows once per launch before the title. Off in headless runs, so the
 ## tests start on the title, and with ?intro=0 on the web (the smoke scripts).
 var show_intro: bool = intro_default()
-## Fade-out length of the intro; tests set 0 to finish it at once.
-var intro_fade_sec: float = 0.35
+## Cross-fade from the intro's "Tap to start" to the menu; tests set 0 to swap at once.
+var intro_reveal_sec: float = 0.4
 ## Tests set this before _ready to stand in for the page's recovery flag ("1" = reloaded by the recovery).
 var recover_override: String = ""
 
@@ -138,6 +138,19 @@ func _ready() -> void:
 	else:
 		_show_start()
 	telemetry.mark_ready()
+	_tell_page_when_drawn()
+
+
+## Web (WP-F.31): the HTML loader stays up until the first screen has really been drawn, then fades
+## into it, so the boot splash or a half-built frame never shows between the loader and the game.
+func _tell_page_when_drawn() -> void:
+	if not OS.has_feature("web"):
+		return
+	for i in 2:
+		await RenderingServer.frame_post_draw
+	if not is_inside_tree():
+		return
+	JavaScriptBridge.eval("window.__alxDrawn && window.__alxDrawn()", true)
 
 
 ## True when the page reloaded itself after losing graphics (WP-F.20); reads and clears the flag.
@@ -303,24 +316,29 @@ func _swap(node: Node) -> void:
 
 # --- screens -----------------------------------------------------------------------------
 
-## The once-per-launch intro: a tap or its timer goes to the title.
+## The once-per-launch intro (WP-F.31): the title itself, opening with only "Tap to start"; a tap or
+## its timer fades the menu in on the same screen. ?intro=still draws the art alone (IntroScreen) for
+## game/brand/intro_still.jpg, the web loader's picture.
 func _show_intro() -> void:
 	show_intro = false
-	var s: Control = IntroScreen.new()
-	s.settings = settings
-	s.fade_sec = intro_fade_sec
-	# On the web the HTML loader already shows the intro's art, so nothing pops in; ?intro=still draws
-	# the art alone for game/brand/intro_still.jpg.
-	s.pop = not OS.has_feature("web")
-	s.still = OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search")).contains("intro=still")
-	s.finished.connect(_show_start)
-	_swap(s)
+	if OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search")).contains("intro=still"):
+		var still: Control = IntroScreen.new()
+		still.settings = settings
+		still.pop = false
+		still.still = true
+		_swap(still)
+		return
+	_show_start(true)
 
 
-func _show_start() -> void:
+func _show_start(as_intro: bool = false) -> void:
 	var s: Control = StartScreen.new()
 	s.name = "StartScreen"
 	s.settings = settings
+	s.intro = as_intro
+	# On the web the HTML loader already shows this art, so nothing pops in.
+	s.pop = as_intro and not OS.has_feature("web")
+	s.reveal_sec = intro_reveal_sec
 	s.start_label = "Continue" if save.has_profile() else "New game"
 	s.start_pressed.connect(func() -> void:
 		if save.has_profile():
