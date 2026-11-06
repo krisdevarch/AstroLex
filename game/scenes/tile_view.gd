@@ -12,13 +12,13 @@ const GLASS_GAIN := Vector3(1.55, 1.52, 1.28)
 const GLASS_ACCENT := Color(0.35, 0.85, 1.0)
 const LOOKS: Array[String] = ["glass", "bubble"]
 const DEFAULT_LOOK := "bubble"
-## Babel's hazards (WP-F.1): forgeries shimmer periwinkle, trap letters wear a faint periwinkle ring,
-## and while the colour channel is jammed decoys pulse the Catcher's cyan and needed letters periwinkle.
+## Babel's hazards (WP-F.1): forgeries shimmer periwinkle and while the colour channel is jammed decoys
+## pulse the Catcher's cyan and needed letters periwinkle. No shipped level turns either on any more, and
+## trap letters look like any other letter (owner, 6 Nov 2026: every A is an A, no colour coding).
 const HAZARD_PERIWINKLE := Color("7579f0")
 const SHIMMER_ARC := 1.1  # radians of the sweeping glint
 const FORGED_GLYPH := Color("b9bcff")  # a forgery's letter, periwinkle where a real one is white
 const SHIMMER_RIM_ALPHA := 0.5  # the rim a forgery always has, plain enough to see on a phone
-const TRAP_RING_ALPHA := 0.32
 const JAM_PULSE_HZ := 1.6
 
 @onready var shadow: Sprite2D = $Shadow
@@ -156,7 +156,7 @@ func setup(p_ch: String, p_size_px: float, plane_scale: float, p_plane: int, p_t
 	glyph.modulate = Color(GLASS_GAIN.x, GLASS_GAIN.y, GLASS_GAIN.z, 1.0)
 
 
-## Marks the tile as a hazard: a counterfeit shimmers, a trap letter wears a ring.
+## Marks the tile as a hazard: a counterfeit shimmers; a trap letter looks plain.
 func set_kind(k: String) -> void:
 	kind = k
 	# A forgery's letter is tinted too (owner playtests, 26 and 30 Oct 2026: a rim alone was missed on a phone).
@@ -183,7 +183,7 @@ class HopTellRing extends Node2D:
 
 
 func _refresh_ring() -> void:
-	if is_star or (kind == "" and jam_colour == 0):
+	if is_star or (kind != "counterfeit" and jam_colour == 0):
 		if _ring != null:
 			_ring.queue_free()
 			_ring = null
@@ -243,11 +243,7 @@ class HazardRing extends Node2D:
 			c.a = 0.45 + 0.5 * pulse
 			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, c, width * 1.6, true)
 			return
-		if kind == "trap":
-			var tc := Color("7579f0")
-			tc.a = TRAP_RING_ALPHA
-			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, tc, width * 0.8, true)
-		elif kind == "counterfeit":
+		if kind == "counterfeit":
 			var rim := Color("7579f0")
 			rim.a = SHIMMER_RIM_ALPHA
 			draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, rim, width * 0.9, true)

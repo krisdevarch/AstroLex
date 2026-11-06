@@ -43,7 +43,8 @@ func test_counterfeit_and_trap_tiles_get_their_marks() -> void:
 			assert_true((v.glyph as Label).get_theme_color("font_color") != Color.WHITE, "forgery's letter is tinted")
 		elif t.kind == "trap":
 			trap += 1
-			assert_true(v.get_node_or_null("HazardRing") != null, "trap has a ring")
+			assert_true(v.get_node_or_null("HazardRing") == null, "a trap letter looks like any other letter")
+			assert_eq((v.glyph as Label).get_theme_color("font_color"), Color.WHITE, "trap letter is white")
 		else:
 			assert_true(v.get_node_or_null("HazardRing") == null, "plain tile has none")
 			assert_eq((v.glyph as Label).get_theme_color("font_color"), Color.WHITE, "plain letter is white")

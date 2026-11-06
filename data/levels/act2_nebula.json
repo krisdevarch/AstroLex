@@ -7,7 +7,7 @@
     {
       "id": "2-01", "order": 1, "title": "Pink Gas", "beat": "Opening: the crew's wonder. Kit asks if the pink gas is normal; Ade: do not touch the pink.",
       "pacing": "teach", "words": ["joy", "awe", "glee"], "seed": 2101, "babel": true, "babelIntro": "Pink gas. Pretty. I see you looking at it.",
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "kit", "text": "The gas is pink. Is that normal?"},
         {"who": "ade", "text": "ok ok ok, do not touch the pink. Whatever it is, do not touch it."},
@@ -21,7 +21,7 @@
     {
       "id": "2-02", "order": 2, "title": "A Time to Beat", "beat": "VANTA's first message: a time and a challenge. After: the feelings it stirs up.",
       "pacing": "teach", "words": ["fear", "rage", "envy"], "seed": 2102, "babel": true, "vanta": 38, "babelIntro": "Feelings already? Careful, they are catching.",
-      "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 2, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 9, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "38 seconds. That is my time on this cloud. Beat it, Catcher."},
         {"who": "kit", "text": "Who is VANTA? Why are they timing us?"},
@@ -35,7 +35,7 @@
     {
       "id": "2-03", "order": 3, "title": "Signal Below", "beat": "A message from below the cloud: Tomas, small and far away.",
       "pacing": "core", "words": ["lonely", "sad", "gloom"], "seed": 2103, "babel": true, "babelIntro": "A voice under the cloud? Be careful what you answer.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.13, "plane.backTiles": 5, "thief.interval": 8, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "kit", "text": "Wait, a signal from under the cloud? Someone is down there."},
         {"who": "rhee", "text": "A small voice, a long way down. Hold the shape, and bring it closer."}
@@ -48,7 +48,7 @@
     {
       "id": "2-04", "order": 4, "title": "Heavy Air", "beat": "Kit starts to doubt Rhee; the air feels heavy.",
       "pacing": "core", "words": ["doubt", "worry", "dread"], "seed": 2104, "babel": true, "babelIntro": "Heavy in here. Keep your head up, Catcher.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "ade", "text": "The air feels heavy. Is it me? Please tell me it is me."},
         {"who": "rhee", "text": "It is the gas. Dark words weigh more. Go slowly."},
@@ -62,7 +62,7 @@
     {
       "id": "2-05", "order": 5, "title": "Game Face", "beat": "Ade covers fear with jokes.",
       "pacing": "core", "words": ["panic", "cheer", "brave"], "seed": 2105, "babel": true, "babelIntro": "Slow down. I am starting to watch you play.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "ade", "text": "ok ok ok, I am fine. I am hilarious. Nobody look at my hands."},
         {"who": "kit", "text": "Ade, your hands are shaking. Wait, why all the jokes?"},
@@ -76,7 +76,7 @@
     {
       "id": "2-06", "order": 6, "title": "Still Pocket", "beat": "Rest and mid: hope, calm, trust restored; Babel notices and speaks for the first time, in an anagram.",
       "pacing": "rest", "words": ["hope", "calm", "trust"], "seed": 2106, "babel": true, "babelIntro": "Hmm. You stayed still. I noticed.",
-      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0.3, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 3, "drift.speed": 0.14, "plane.backTiles": 6, "thief.interval": 8, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "rhee", "text": "A still pocket. Take a breath. Your hands can be loose here."},
         {"who": "kit", "text": "Three gentle ones in a row. Is this a trick? For science, I am asking."}
@@ -89,7 +89,7 @@
     {
       "id": "2-07", "order": 7, "title": "Going Quiet", "beat": "Kit asks why Rhee went quiet. These are the feelings Rhee hides.",
       "pacing": "core", "words": ["shame", "guilt", "pity", "mercy"], "seed": 2107, "babel": true, "babelIntro": "Pulled under yet? Surface, then. I will wait.",
-      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "kit", "text": "Rhee, you went quiet when Babel spoke. Wait, why?"},
         {"who": "rhee", "text": "Habit. Four more now, and they pull. Hold your line."}
@@ -102,7 +102,7 @@
     {
       "id": "2-08", "order": 8, "title": "Hard Edges", "beat": "VANTA is dismissive of Rhee; the crew's anger and pride.",
       "pacing": "core", "words": ["anger", "pride", "spite", "scorn"], "seed": 2108, "babel": true, "vanta": 36, "babelIntro": "Sharp ones now. Mind your fingers.",
-      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "Sharp words, same clock. I did it in 36. Rhee reads cards. I read the clock."},
         {"who": "ade", "text": "VANTA is very fast. I am also fast. At lunch."}
@@ -115,7 +115,7 @@
     {
       "id": "2-09", "order": 9, "title": "Quiet Drift", "beat": "Quiet, hurting words. Kit spots Rhee's clue phrase in Babel's line.",
       "pacing": "core", "words": ["regret", "longing", "sorrow", "ache"], "seed": 2109, "babel": true, "babelIntro": "Quiet out here, is it not? I know that quiet.",
-      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0.35, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 6, "thief.interval": 7, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "ade", "text": "A quiet one. I will talk the whole time so it does not get weird."},
         {"who": "rhee", "text": "Take it softly. These sting a little."}
@@ -129,7 +129,7 @@
     {
       "id": "2-10", "order": 10, "title": "Soft Front", "beat": "Someone seems to be looking after the crew.",
       "pacing": "core", "words": ["warmth", "comfort", "tender", "relief"], "seed": 2110, "babel": true, "babelIntro": "Cozy cloud. Do not nod off, Catcher.",
-      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 7, "thief.interval": 7, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 4, "drift.speed": 0.15, "plane.backTiles": 7, "thief.interval": 7, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "kit", "text": "Wait, why does it feel like someone is looking after us?"},
         {"who": "ade", "text": "Soft gas, soft light. I am not saying nap. I am saying horizontal."},
@@ -143,7 +143,7 @@
     {
       "id": "2-11", "order": 11, "title": "Deep Pink", "beat": "Late: the gas thickens and turns cold; VANTA is two rings ahead; the crew finds courage.",
       "pacing": "core", "words": ["courage", "scared", "peace", "delight"], "seed": 2111, "babel": true, "babelIntro": "Thicker now. Even I lose track in here.",
-      "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1},
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0, "hazard.traps": 1},
       "commsBefore": [
         {"who": "vanta", "text": "I am two rings ahead of you. Do not wait up."},
         {"who": "kit", "text": "The gas is thick enough to chew. Wait, why is it so cold?"}
@@ -157,7 +157,7 @@
     {
       "id": "2-12", "order": 12, "title": "The Ghost", "beat": "Encounter: Rhee recovers grief and her voice breaks. VANTA sets a last time. Tomas names a feeling.",
       "pacing": "encounter", "words": ["love", "grief"], "seed": 2112, "babel": true, "vanta": 30, "babelIntro": "Two words left in this cloud. I know both. Do you?",
-      "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0.4, "hazard.traps": 1, "burst.seconds": 26},
+      "tuning": {"spawner.decoys": 5, "drift.speed": 0.16, "plane.backTiles": 7, "thief.interval": 6, "hazard.counterfeitRatio": 0, "hazard.traps": 1, "burst.seconds": 26},
       "commsBefore": [
         {"who": "vanta", "text": "Two words. 30 seconds, my time. Beat it."},
         {"who": "rhee", "text": "One of these is old. Take it gently."}
