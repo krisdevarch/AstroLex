@@ -1,4 +1,4 @@
-# WP-F.31: Any copy of a needed letter counts, no colour coding
+# WP-F.32: Any copy of a needed letter counts, no colour coding
 
 Owner report (6 Nov 2026, project thread): "why multiple letters are different colors, it should accept the letters that are in the word. if there are two A for example, it should accept every A that i can tap on. we should not make them different color."
 

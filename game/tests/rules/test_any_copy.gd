@@ -1,5 +1,5 @@
 extends "res://tests/test_case.gd"
-## WP-F.31 (owner, 6 Nov 2026): "if there are two A for example, it should accept every A that i can
+## WP-F.32 (owner, 6 Nov 2026): "if there are two A for example, it should accept every A that i can
 ## tap on. we should not make them different color." Every copy of a letter the words still need is
 ## a right catch, in every shipped level, and no level makes letters look different by role.
 
