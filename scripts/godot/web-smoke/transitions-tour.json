@@ -1,0 +1,8 @@
+[["url","?tour=1&intro=0"],["shot","01-title"],
+ ["tap","SettingsButton"],["wait",1200],["shot","02-settings"],
+ ["tap","BackButton"],["wait",1200],
+ ["tap","StartButton"],["wait",1500],["shot","03-character"],
+ ["tap","Character_juno"],["wait",300],["tap","NameInput"],["wait",300],["type","KRIS"],["wait",500],
+ ["tap","ConfirmButton"],["wait",1500],["shot","04-difficulty"],
+ ["tap","ConfirmButton"],["wait",2000],["shot","05-map"],
+ ["tap","Level_1-01"],["wait",2500],["shot","06-field"],["wait",5000],["shot","07-field-later"]]

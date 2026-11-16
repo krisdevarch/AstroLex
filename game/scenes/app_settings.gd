@@ -47,14 +47,27 @@ func save_to(path: String = PATH) -> int:
 	return cf.save(path)
 
 
+## True when the device asks apps for less motion (iOS/Android/desktop "Reduce motion"; the browser's
+## prefers-reduced-motion on the web). Used as the default until the player sets the switch (WP-F.33).
+static func os_prefers_reduced_motion() -> bool:
+	if DisplayServer.get_name() == "headless":
+		return false
+	if OS.has_feature("web"):
+		return bool(JavaScriptBridge.eval("!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)", true))
+	if DisplayServer.has_method("accessibility_should_reduce_animation"):
+		return bool(DisplayServer.call("accessibility_should_reduce_animation"))
+	return false
+
+
 func load_from(path: String = PATH) -> void:
 	var cf := ConfigFile.new()
 	if cf.load(path) != OK:
+		reduced_motion = os_prefers_reduced_motion()
 		return
 	var t := str(cf.get_value("look", "treatment", DEFAULT_TREATMENT))
 	if TREATMENTS.has(t):
 		treatment = t
-	reduced_motion = bool(cf.get_value("look", "reduced_motion", false))
+	reduced_motion = bool(cf.get_value("look", "reduced_motion", os_prefers_reduced_motion()))
 	var h := str(cf.get_value("look", HINT_KEY, DEFAULT_HINT))
 	if HINTS.has(h):
 		hint = h

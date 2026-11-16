@@ -27,6 +27,7 @@ const COLUMNS := 4
 const BADGE := Vector2(236, 286)
 const DISC_D := 156.0
 const BAR_H := 150.0
+const BUTTON_NAMES := {"BackButton": "Home", "DailyButton": "Daily Signal", "SettingsButton": "Settings", "DifficultyButton": "Difficulty", "CharacterButton": "Catcher", "CodexButton": "Codex", "InboxButton": "Inbox"}
 
 signal level_chosen(act: String, index: int)
 signal character_pressed
@@ -54,7 +55,7 @@ func _ready() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.name = "MapScroll"
 	_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_scroll.offset_top = BAR_H + 20.0
+	_scroll.offset_top = BAR_H + float(Ui.safe_insets(view)["top"]) + 20.0
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	add_child(_scroll)
@@ -73,6 +74,7 @@ func _ready() -> void:
 		_add_act(list, act)
 	_build_bar(view)
 	_scroll_to_focus.call_deferred()
+	Ui.focus_main(_focus)
 
 
 func _build_bar(view: Vector2) -> void:
@@ -82,9 +84,10 @@ func _build_bar(view: Vector2) -> void:
 	sb.border_color = Color(Ui.SLATE, 0.9)
 	sb.border_width_bottom = 3
 	bar.add_theme_stylebox_override("panel", sb)
-	bar.size = Vector2(view.x, BAR_H)
+	var top: float = Ui.safe_insets(view)["top"]
+	bar.size = Vector2(view.x, BAR_H + top)
 	add_child(bar)
-	var y := (BAR_H - 110.0) * 0.5
+	var y := top + (BAR_H - 110.0) * 0.5
 	var home := _round_button("BackButton", "home", Vector2(30, y))
 	home.pressed.connect(func() -> void: back_pressed.emit())
 	bar.add_child(home)
@@ -102,7 +105,7 @@ func _build_bar(view: Vector2) -> void:
 	stars.add_child(srow)
 	bar.add_child(stars)
 	stars.reset_size()
-	stars.position = Vector2(170, (BAR_H - 96.0) * 0.5)
+	stars.position = Vector2(170, top + (BAR_H - 96.0) * 0.5)
 	var x := view.x - 30.0 - 110.0
 	for spec: Array in [["DailyButton", "signal", daily_pressed], ["SettingsButton", "settings", settings_pressed], ["DifficultyButton", "gauge", difficulty_pressed], ["CharacterButton", "suit", character_pressed], ["CodexButton", "book", codex_pressed], ["InboxButton", "envelope", inbox_pressed]]:
 		var b := _round_button(spec[0], spec[1], Vector2(x, y))
@@ -130,6 +133,10 @@ func _round_button(node_name: String, kind: String, pos: Vector2) -> Button:
 		b.add_theme_stylebox_override(st, s)
 	b.position = pos
 	b.size = Vector2(110, 110)
+	var label := str(BUTTON_NAMES.get(node_name, ""))
+	b.tooltip_text = label
+	if "accessibility_name" in b:
+		b.set("accessibility_name", label)
 	var ic := MapIcon.new()
 	ic.kind = kind
 	ic.size = b.size
@@ -375,3 +382,9 @@ class MapIcon extends Control:
 				for i in 8:
 					var d := Vector2.from_angle(TAU * float(i) / 8.0)
 					draw_line(c + d * 20.0, c + d * 30.0, col, 9.0)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		back_pressed.emit()

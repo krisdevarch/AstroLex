@@ -39,7 +39,7 @@ static func finished(main: Node, summary: Dictionary) -> void:
 	DailyRecord.record(main.save, date, won, stars, float(summary.get("time_left", 0.0)))
 	var f: Node = main._field()
 	if f == null:
-		main._show_start()
+		main._back(main._show_start)
 		return
 	var c: Control = LevelCard.new()
 	c.name = "LevelCard"
@@ -48,5 +48,5 @@ static func finished(main: Node, summary: Dictionary) -> void:
 	c.daily = true
 	c.daily_date = date
 	c.daily_words = Daily.words_for(date, main.dictionary.content())
-	c.map.connect(main._show_start)  # Back
+	c.map.connect(main._back.bind(main._show_start))  # Back
 	f.show_card(c)

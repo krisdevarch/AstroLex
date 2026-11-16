@@ -17,8 +17,11 @@ var new_message: bool = false
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Ui.add_sky(self, get_viewport_rect().size, 0.4)
+	var inset := Ui.safe_insets(get_viewport_rect().size)
 	var centre := CenterContainer.new()
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.offset_top = float(inset["top"])
+	centre.offset_bottom = -float(inset["bottom"])
 	add_child(centre)
 	var card := PanelContainer.new()
 	card.name = "CompleteCard"
@@ -65,7 +68,16 @@ func _ready() -> void:
 		n.name = "NextActButton"
 		n.pressed.connect(func() -> void: next_act.emit())
 		box.add_child(n)
+		Ui.focus_main(n)
 	var m := Ui.secondary("Back to map", 46, Vector2(640, 118))
 	m.name = "MapButton"
 	m.pressed.connect(func() -> void: back_to_map.emit())
 	box.add_child(m)
+	if final:
+		Ui.focus_main(m)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		back_to_map.emit()

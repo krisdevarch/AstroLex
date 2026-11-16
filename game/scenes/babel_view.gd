@@ -79,6 +79,7 @@ func setup(view_size: Vector2, tun: Dictionary, p_reduced: bool) -> void:
 	_sprite = Sprite2D.new()
 	_sprite.name = "BabelSprite"
 	_sprite.texture = TEX
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_sprite.region_enabled = true
 	_sprite.region_rect = CROP
 	_sprite.scale = Vector2(_k, _k)

@@ -16,8 +16,11 @@ func _ready() -> void:
 	dim.color = Color(0.02, 0.03, 0.08, 0.7)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
+	var inset := Ui.safe_insets(get_viewport_rect().size)
 	var centre := CenterContainer.new()
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.offset_top = float(inset["top"])
+	centre.offset_bottom = -float(inset["bottom"])
 	add_child(centre)
 	var card := PanelContainer.new()
 	card.name = "PauseCard"
@@ -39,9 +42,16 @@ func _ready() -> void:
 	resume.name = "ResumeButton"
 	resume.pressed.connect(func() -> void: resumed.emit())
 	box.add_child(resume)
+	Ui.focus_main(resume)
 	for spec: Array in [["RestartButton", "Restart level", restarted], ["QuitButton", "Quit to map", quit]]:
 		var b := Ui.secondary(spec[1], 46, Vector2(620, 118))
 		b.name = spec[0]
 		var sig: Signal = spec[2]
 		b.pressed.connect(func() -> void: sig.emit())
 		box.add_child(b)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		resumed.emit()
