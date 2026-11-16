@@ -13,3 +13,5 @@ Branch `claude/project-thread-vbb5ew`. Web build exported with `scripts/godot/ex
 | 7 Suite and smoke | pass | `scripts/godot/test.sh`: 402 passed, 0 failed, no SCRIPT ERROR; `smoke.cjs`: main scene ran in 2.8 s | this file |
 
 Not checked here: the feel on a real phone (owner playtest), a screen reader on a real device (VoiceOver / TalkBack), and the cost of the one-frame screen read-back on a low-end phone.
+
+New tunables (data/tunables/game.json, schema entries in game.schema.json, exported to game/data/tunables.json): `transition.outSec` 0.2, `transition.inSec` 0.38, `transition.inDelaySec` 0.05, `transition.playSec` 0.55, `transition.calmSec` 0.2, `transition.zoom` 0.05, `transition.playZoom` 0.14, `transition.rise` 36, `transition.overlaySec` 0.22.
