@@ -35,8 +35,15 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if show_sky:
 		Ui.add_sky(self, get_viewport_rect().size, 0.66)
+	var view := get_viewport_rect().size
+	var inset := Ui.safe_insets(view)
+	var head_h: float = float(inset["top"]) + 150.0
+	var foot_h: float = float(inset["bottom"]) + 200.0
 	var scroll := ScrollContainer.new()
+	scroll.name = "SettingsScroll"
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_top = head_h
+	scroll.offset_bottom = -foot_h
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	add_child(scroll)
@@ -44,14 +51,48 @@ func _ready() -> void:
 	var centre := CenterContainer.new()
 	centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	centre.custom_minimum_size = Vector2(0, get_viewport_rect().size.y)
+	centre.custom_minimum_size = Vector2(0, view.y - head_h - foot_h)
 	scroll.add_child(centre)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 18)
 	centre.add_child(box)
+	# Fixed header and footer on navy, so the title and Done are always on screen.
+	var header := Ui.Fade.new()
+	header.name = "SettingsHeader"
+	header.top = Color(Ui.NAVY_DEEP, 0.96)
+	header.bottom = Color(Ui.NAVY_DEEP, 0.96)
+	header.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	header.offset_bottom = head_h
+	add_child(header)
 	var title := Ui.text("Settings", 88)
 	title.name = "SettingsTitle"
-	box.add_child(title)
+	title.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	title.offset_top = float(inset["top"])
+	title.offset_bottom = head_h
+	add_child(title)
+	var footer := Ui.Fade.new()
+	footer.name = "SettingsFooter"
+	footer.top = Color(Ui.NAVY_DEEP, 0.96)
+	footer.bottom = Color(Ui.NAVY_DEEP, 0.96)
+	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	footer.offset_top = -foot_h
+	add_child(footer)
+	var fade_top := Ui.Fade.new()
+	fade_top.name = "FadeTop"
+	fade_top.top = Color(Ui.NAVY_DEEP, 0.96)
+	fade_top.bottom = Color(Ui.NAVY_DEEP, 0.0)
+	fade_top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	fade_top.offset_top = head_h
+	fade_top.offset_bottom = head_h + 56.0
+	add_child(fade_top)
+	var fade_bot := Ui.Fade.new()
+	fade_bot.name = "FadeBottom"
+	fade_bot.top = Color(Ui.NAVY_DEEP, 0.0)
+	fade_bot.bottom = Color(Ui.NAVY_DEEP, 0.96)
+	fade_bot.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	fade_bot.offset_top = -foot_h - 56.0
+	fade_bot.offset_bottom = -foot_h
+	add_child(fade_bot)
 	box.add_child(_section("Letter look"))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -107,7 +148,7 @@ func _ready() -> void:
 	hcb.name = "HighContrast"
 	hcb.toggled.connect(func(on: bool) -> void: _comfort("high_contrast", on))
 	box.add_child(hcb)
-	var cr := Ui.link("Credits and privacy", 32, Vector2(400, 70))
+	var cr := Ui.link("Credits and privacy", 32, Vector2(400, 88))
 	cr.name = "CreditsButton"
 	cr.pressed.connect(func() -> void: credits_pressed.emit())
 	cr.visible = show_sky  # not over the game screen: the pause menu has no way back from it
@@ -152,7 +193,7 @@ func _ready() -> void:
 	codex.name = "CodexButton"
 	codex.pressed.connect(func() -> void: codex_pressed.emit())
 	box.add_child(codex)
-	var bench := Ui.link("Frame-rate test", 32, Vector2(400, 70))
+	var bench := Ui.link("Frame-rate test", 32, Vector2(400, 88))
 	bench.name = "BenchButton"
 	bench.pressed.connect(func() -> void: bench_pressed.emit())
 	box.add_child(bench)
@@ -170,9 +211,14 @@ func _ready() -> void:
 	rrow.add_child(cpy)
 	var back := Ui.primary("Done", 52, Vector2(560, 136))
 	back.name = "BackButton"
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_KEEP_SIZE)
+	back.offset_top = -foot_h + 32.0
+	back.offset_bottom = back.offset_top + 136.0
+	back.offset_left = -280.0
+	back.offset_right = 280.0
 	back.pressed.connect(func() -> void: closed.emit())
-	box.add_child(back)
+	add_child(back)
+	Ui.focus_main(back)
 
 
 func _section(t: String) -> Control:
@@ -235,3 +281,9 @@ func _do_reset() -> void:
 	save.reset()
 	_reset_btn.text = "Progress reset"
 	_cancel_reset()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		closed.emit()

@@ -23,6 +23,7 @@ const ORANGE_RIM := Color("9c540c")
 const BUTTON_INK := Color("1c2740")  # text on orange
 const GOLD := Color("F8BC04")
 const GOLD_LIGHT := Color("ffe27a")
+const FOCUS_W := 5
 const LOCKED := Color(0.5, 0.55, 0.68, 0.55)
 
 
@@ -43,6 +44,52 @@ static func card_box(edge: Color = SLATE, radius: int = 40, edge_w: int = 4, fil
 	s.shadow_size = 18
 	s.shadow_offset = Vector2(0, 8)
 	return s
+
+
+## The keyboard focus ring: a teal outline drawn outside the control (expand margins).
+static func focus_ring(radius: int = 24, width: int = FOCUS_W) -> StyleBoxFlat:
+	var s := box(Color(0, 0, 0, 0), radius + width, TEAL, width)
+	s.set_expand_margin_all(float(width))
+	return s
+
+
+## Focus `c` once the screen is in the tree (menus call this on their main action).
+static func focus_main(c: Control) -> void:
+	if c != null:
+		c.grab_focus.call_deferred()
+
+
+static var _insets: Dictionary = {}
+const MIN_TOP := 24.0
+
+
+## The phone's unsafe margins {top, bottom} in game units (notch, home indicator). Top is floored at
+## MIN_TOP so nothing touches the very edge. Cached per launch.
+static func safe_insets(view: Vector2) -> Dictionary:
+	if _insets.is_empty():
+		_insets = _read_insets(view)
+	return {"top": maxf(MIN_TOP, float(_insets["top"])), "bottom": float(_insets["bottom"])}
+
+
+static func _read_insets(view: Vector2) -> Dictionary:
+	var out := {"top": 0.0, "bottom": 0.0}
+	if DisplayServer.get_name() == "headless":
+		return out
+	if OS.has_feature("web"):
+		var js := "(function(){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';document.body.appendChild(d);var c=getComputedStyle(d);var r=[parseFloat(c.paddingTop)||0,parseFloat(c.paddingBottom)||0,window.innerWidth];document.body.removeChild(d);return r.join(',');})()"
+		var res: Variant = JavaScriptBridge.eval(js, true)
+		var parts := str(res).split(",")
+		if parts.size() == 3 and float(parts[2]) > 0.0:
+			var k := view.x / float(parts[2])
+			out["top"] = float(parts[0]) * k
+			out["bottom"] = float(parts[1]) * k
+		return out
+	var screen := Vector2(DisplayServer.screen_get_size())
+	var area := Rect2(DisplayServer.get_display_safe_area())
+	if screen.y > 0.0 and area.size.y > 0.0:
+		out["top"] = maxf(0.0, area.position.y) / screen.y * view.y
+		out["bottom"] = maxf(0.0, screen.y - area.end.y) / screen.y * view.y
+	return out
 
 
 static func label(text: String, size: int, color: Color = INK, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_CENTER) -> Label:
@@ -130,7 +177,7 @@ static func secondary(t: String, size: int = 44, min_size: Vector2 = Vector2(420
 	b.add_theme_stylebox_override("pressed", box(Color(0.06, 0.09, 0.16, 0.97), r, TEAL, 4))
 	b.add_theme_stylebox_override("hover_pressed", box(Color(0.06, 0.09, 0.16, 0.97), r, TEAL, 4))
 	b.add_theme_stylebox_override("disabled", box(Color(0.07, 0.09, 0.15, 0.7), r, Color(0.25, 0.3, 0.42, 0.6), 3))
-	b.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), r, Color(1, 1, 1, 0.6), 2))
+	b.add_theme_stylebox_override("focus", focus_ring(r))
 	for c: String in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(c, CREAM)
 	b.add_theme_color_override("font_disabled_color", LOCKED)
@@ -138,13 +185,14 @@ static func secondary(t: String, size: int = 44, min_size: Vector2 = Vector2(420
 
 
 ## A text-only link (Map under Next, Back on a sub-screen).
-static func link(t: String, size: int = 38, min_size: Vector2 = Vector2(300, 80)) -> Button:
+static func link(t: String, size: int = 38, min_size: Vector2 = Vector2(300, 88)) -> Button:
 	var b := Button.new()
 	b.text = t
 	b.custom_minimum_size = min_size
 	b.add_theme_font_size_override("font_size", GameFont.scaled(size))
-	for st: String in ["normal", "hover", "pressed", "hover_pressed", "focus"]:
+	for st: String in ["normal", "hover", "pressed", "hover_pressed"]:
 		b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
+	b.add_theme_stylebox_override("focus", focus_ring(24))
 	b.add_theme_color_override("font_color", MUTED)
 	for c: String in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(c, CREAM)
@@ -357,3 +405,15 @@ class LockIcon extends Control:
 		draw_arc(c + Vector2(0, -s * 0.05), s * 0.2, PI, TAU, 20, colour, s * 0.09, true)
 		draw_rect(body, colour)
 		draw_circle(c + Vector2(0, s * 0.15), s * 0.06, Color(0.05, 0.07, 0.14))
+
+
+## A vertical gradient strip from `top` to `bottom` colour (scroll-edge fades, header and footer bars).
+class Fade extends Control:
+	var top: Color = Color(NAVY_DEEP, 1.0)
+	var bottom: Color = Color(NAVY_DEEP, 0.0)
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, size.y), Vector2(0, size.y)]), PackedColorArray([top, top, bottom, bottom]))

@@ -4,6 +4,7 @@ extends Control
 ## picked card lights up in that colour. Confirm saves the choice (main does that).
 
 const Ui := preload("res://scenes/ui.gd")
+const GameFont := preload("res://scenes/game_font.gd")
 const HudArt := preload("res://scenes/hud_art.gd")
 const PlayerName := preload("res://rules/player_name.gd")
 const WebTextField := preload("res://scenes/web_text_field.gd")
@@ -37,8 +38,11 @@ func _ready() -> void:
 	Ui.add_sky(self, view, 0.62)
 	if selected == "" and not characters.is_empty():
 		selected = str((characters[0] as Dictionary)["id"])
+	var inset := Ui.safe_insets(view)
 	var centre := CenterContainer.new()
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.offset_top = float(inset["top"])
+	centre.offset_bottom = -float(inset["bottom"])
 	add_child(centre)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
@@ -64,7 +68,7 @@ func _ready() -> void:
 	_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_input.custom_minimum_size = Vector2(620, 110)
 	_input.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_input.add_theme_font_size_override("font_size", 56)
+	_input.add_theme_font_size_override("font_size", GameFont.scaled(56))
 	_input.add_theme_color_override("font_color", Ui.CREAM)
 	_input.add_theme_color_override("font_placeholder_color", Ui.MUTED)
 	_input.add_theme_stylebox_override("normal", Ui.box(Ui.NAVY, 30, Ui.SLATE, 4))
@@ -94,6 +98,8 @@ func _ready() -> void:
 	row.add_child(ok)
 	_ok = ok
 	_sync_name()
+	var card := find_child("Character_%s" % selected, true, false) as Control
+	Ui.focus_main(_ok if not _ok.disabled or card == null else card)
 
 
 func name_valid() -> bool:
@@ -211,3 +217,10 @@ func _process(delta: float) -> void:
 		(p[1] as Control).queue_redraw()
 		var holder := p[0] as Control
 		holder.position.y = float(p[2]) + (sin(_t * 2.2) * 6.0 if id == selected else 0.0)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		if can_cancel:
+			cancelled.emit()

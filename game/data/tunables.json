@@ -191,5 +191,14 @@
   "tile.spawnInSec": 0.25,
   "tile.stretch": 0.12,
   "tile.swayDeg": 6,
-  "tile.swaySpeed": 0.6
+  "tile.swaySpeed": 0.6,
+  "transition.calmSec": 0.2,
+  "transition.inDelaySec": 0.05,
+  "transition.inSec": 0.38,
+  "transition.outSec": 0.2,
+  "transition.overlaySec": 0.22,
+  "transition.playSec": 0.55,
+  "transition.playZoom": 0.14,
+  "transition.rise": 36,
+  "transition.zoom": 0.05
 }

@@ -35,6 +35,16 @@ const DictService := preload("res://services/dictionary.gd")
 const FieldScene: PackedScene = preload("res://scenes/field.tscn")
 
 const IntroScreen := preload("res://scenes/intro_screen.gd")
+const ScreenTransition := preload("res://scenes/screen_transition.gd")
+const Announcer := preload("res://services/announcer.gd")
+## What a screen reader hears when each screen opens (WP-F.33).
+const SCREEN_NAMES := {
+	"StartScreen": "AstroLex. Title screen", "CharacterSelect": "Choose your Catcher",
+	"DifficultySelect": "Choose difficulty", "LevelMap": "Level map", "SettingsScreen": "Settings",
+	"CodexScreen": "Rhee's Codex", "InboxScreen": "Inbox", "Credits": "Credits and privacy",
+	"ActComplete": "Act complete", "BetaComplete": "Beta complete", "Ending": "The ending",
+	"Field": "Game screen", "GlassBench": "Frame-rate test",
+}
 const MusicScript := preload("res://scenes/music.gd")
 const AUTOPLAY_SEED := 20261008  # random (non-level) rounds only
 const SAVETEST_PATH := "user://save_test.json"
@@ -69,6 +79,11 @@ var show_intro: bool = intro_default()
 var intro_reveal_sec: float = 0.4
 ## Tests set this before _ready to stand in for the page's recovery flag ("1" = reloaded by the recovery).
 var recover_override: String = ""
+## Screen changes (WP-F.33): the hand-over animation, and the kind the next _swap plays (reset after).
+var transition: ScreenTransition
+var _next_kind: int = ScreenTransition.FORWARD
+## Screen reader voice (web aria-live region). Tests may set Announcer.fake() before _ready.
+var announcer: RefCounted
 
 
 static func intro_default() -> bool:
@@ -110,6 +125,12 @@ func _ready() -> void:
 	levels = dictionary.levels(act)
 	settings.load_from()
 	settings.apply_audio()
+	transition = ScreenTransition.new()
+	transition.reduced_motion = settings.reduced_motion
+	add_child(transition)
+	if announcer == null:
+		announcer = Announcer.real()
+	get_viewport().gui_focus_changed.connect(_on_focus_changed)
 	music = MusicScript.new()
 	music.name = "Music"
 	add_child(music)
@@ -139,6 +160,34 @@ func _ready() -> void:
 		_show_start()
 	telemetry.mark_ready()
 	_tell_page_when_drawn()
+	_tour_hook()
+
+
+## Web-only, ?tour=1 (evidence scripts): window.__alxFind(name) stores the on-screen centre of the
+## first visible node with that name in window.__alxFound as [x, y] shares of the view (or null), so a
+## script can tap a button without hard-coded coordinates on any phone shape.
+var _find_cb: JavaScriptObject
+
+
+func _tour_hook() -> void:
+	if not OS.has_feature("web") or not str(JavaScriptBridge.eval("window.location.search")).contains("tour=1"):
+		return
+	_find_cb = JavaScriptBridge.create_callback(func(args: Array) -> void:
+		var n := _find_visible(get_tree().root, str(args[0]))
+		var out := "null"
+		if n != null:
+			var view := get_viewport().get_visible_rect().size
+			var c := n.get_global_transform_with_canvas() * (n.size * 0.5)
+			out = "[%f,%f]" % [c.x / view.x, c.y / view.y]
+		JavaScriptBridge.eval("window.__alxFound = %s" % out))
+	JavaScriptBridge.get_interface("window").__alxFind = _find_cb
+
+
+static func _find_visible(root: Node, want: String) -> Control:
+	for n in root.find_children(want, "Control", true, false):
+		if (n as Control).is_visible_in_tree():
+			return n as Control
+	return null
 
 
 ## Web (WP-F.31): the HTML loader stays up until the first screen has really been drawn, then fades
@@ -301,7 +350,12 @@ func _cap_fps(play: bool) -> void:
 	Engine.max_fps = int(GameData.load_tunables()["perf.playFps" if play else "perf.menuFps"])
 
 
+## Replaces the screen at once (game logic and tests see the new one straight away), then plays the
+## hand-over from a still of the old one (screen_transition.gd); _next_kind picks the motion.
 func _swap(node: Node) -> void:
+	var kind := _next_kind
+	_next_kind = ScreenTransition.FORWARD
+	var still: Texture2D = transition.capture() if screen != null and transition != null else null
 	_close_pause()
 	if screen != null:
 		remove_child(screen)
@@ -312,6 +366,40 @@ func _swap(node: Node) -> void:
 		daily_date = ""
 		music.play(MusicScript.MENU)
 	add_child(node)
+	move_child(transition, -1)
+	transition.reduced_motion = settings.reduced_motion
+	var sec := transition.play(still, node as CanvasItem, kind) if node is CanvasItem else 0.0
+	if sec > 0.0:
+		_smooth_for(sec)
+	announcer.say(str(SCREEN_NAMES.get(str(node.name), "")))
+
+
+## Menus run at the low frame cap (perf.menuFps) to keep phones cool; a hand-over at 32 fps judders,
+## so the cap lifts to the play rate while it runs.
+func _smooth_for(sec: float) -> void:
+	Engine.max_fps = maxi(Engine.max_fps, int(GameData.load_tunables()["perf.playFps"]))
+	get_tree().create_timer(sec + 0.05).timeout.connect(func() -> void:
+		if transition != null and not transition.busy():
+			_cap_fps(_field() != null and pause_menu == null))
+
+
+## Back out of a sub-screen: the next swap plays the BACK motion.
+func _back(then: Callable) -> void:
+	_next_kind = ScreenTransition.BACK
+	then.call()
+
+
+## Into play from a menu: the next swap zooms through into the game screen.
+func _into_play(then: Callable) -> void:
+	if _field() == null:
+		_next_kind = ScreenTransition.PLAY
+	then.call()
+
+
+## Keyboard focus moved: say what is focused (screen readers on the web).
+func _on_focus_changed(c: Control) -> void:
+	if announcer != null:
+		announcer.say(Announcer.label_of(c))
 
 
 # --- screens -----------------------------------------------------------------------------
@@ -345,7 +433,7 @@ func _show_start(as_intro: bool = false) -> void:
 			if save.resume().is_empty():
 				_show_map()
 			else:
-				_resume_level(true)
+				_into_play(_resume_level.bind(true))
 		else:
 			_show_character(false, func() -> void: _show_difficulty(false, _show_map)))
 	s.settings_pressed.connect(_show_settings.bind(_show_start))
@@ -357,7 +445,10 @@ func _show_start(as_intro: bool = false) -> void:
 
 
 func _start_daily() -> void:
-	DailyHooks.start(self)
+	if save.has_profile():
+		_into_play(DailyHooks.start.bind(self))
+	else:
+		DailyHooks.start(self)
 
 
 func _on_daily_finished(summary: Dictionary) -> void:
@@ -377,7 +468,7 @@ func _show_character(can_cancel: bool, then: Callable) -> void:
 		var diff: String = str(save.profile().get("difficulty", ""))
 		save.set_profile(id, diff if diff != "" else _default_difficulty(), nm)
 		then.call())
-	s.cancelled.connect(then)
+	s.cancelled.connect(_back.bind(then))
 	_swap(s)
 
 
@@ -392,7 +483,7 @@ func _show_difficulty(can_cancel: bool, then: Callable) -> void:
 		var p: Dictionary = save.profile()
 		save.set_profile(str(p.get("character", "")), id, str(p.get("name", "")))
 		then.call())
-	s.cancelled.connect(then)
+	s.cancelled.connect(_back.bind(then))
 	_swap(s)
 
 
@@ -410,14 +501,14 @@ func _show_map() -> void:
 		act = a
 		levels = dictionary.levels(a)
 		level_index = i
-		_begin_level_with_comms())
+		_into_play(_begin_level_with_comms))
 	m.character_pressed.connect(_show_character.bind(true, _show_map))
 	m.difficulty_pressed.connect(_show_difficulty.bind(true, _show_map))
 	m.settings_pressed.connect(_show_settings.bind(_show_map))
 	m.codex_pressed.connect(_show_codex.bind(_show_map))
 	m.inbox_pressed.connect(_show_inbox.bind(_show_map))
 	m.daily_pressed.connect(_start_daily)
-	m.back_pressed.connect(_show_start)
+	m.back_pressed.connect(_back.bind(_show_start))
 	_swap(m)
 
 
@@ -426,7 +517,7 @@ func _show_settings(back: Callable) -> void:
 	s.name = "SettingsScreen"
 	s.settings = settings
 	s.save = save
-	s.closed.connect(back)
+	s.closed.connect(_back.bind(back))
 	s.character_pressed.connect(func() -> void: _show_character(true, _show_settings.bind(back)))
 	s.difficulty_pressed.connect(func() -> void: _show_difficulty(true, _show_settings.bind(back)))
 	s.bench_pressed.connect(func() -> void: _show_bench(false))
@@ -460,7 +551,7 @@ func _show_codex(back: Callable) -> void:
 	c.name = "CodexScreen"
 	c.save = save
 	c.dictionary = dictionary
-	c.closed.connect(back)
+	c.closed.connect(_back.bind(back))
 	_swap(c)
 
 
@@ -470,7 +561,7 @@ func _show_inbox(back: Callable) -> void:
 	c.save = save
 	c.dictionary = dictionary
 	c.reduced_motion = settings.reduced_motion
-	c.closed.connect(back)
+	c.closed.connect(_back.bind(back))
 	_swap(c)
 
 
@@ -636,7 +727,7 @@ func _show_card(summary: Dictionary) -> void:
 	c.telemetry = telemetry
 	c.next.connect(_go_next)
 	c.retry.connect(_start_level)
-	c.map.connect(_show_map)
+	c.map.connect(_back.bind(_show_map))
 	f.show_card(c)
 	if demo and bool(summary.get("won", false)) and is_inside_tree():
 		get_tree().create_timer(DEMO_NEXT_SEC).timeout.connect(func() -> void:
@@ -659,12 +750,13 @@ func _go_next() -> void:
 
 
 func _show_ending() -> void:
+	_next_kind = ScreenTransition.FADE
 	var e: Control = Ending.new()
 	e.name = "Ending"
 	e.player_name = save.player_name()
 	e.total_stars = save.total_stars()
 	e.reduced_motion = settings.reduced_motion
-	e.back_to_map.connect(_show_map)
+	e.back_to_map.connect(_back.bind(_show_map))
 	e.credits_pressed.connect(func() -> void: _show_credits(_show_map))
 	_swap(e)
 
@@ -672,11 +764,12 @@ func _show_ending() -> void:
 func _show_credits(back: Callable) -> void:
 	var c: Control = Credits.new()
 	c.name = "Credits"
-	c.closed.connect(back)
+	c.closed.connect(_back.bind(back))
 	_swap(c)
 
 
 func _show_complete(final: bool) -> void:
+	_next_kind = ScreenTransition.FADE
 	var c: Control = ActComplete.new()
 	c.name = "BetaComplete" if final else "ActComplete"
 	c.final = final
@@ -689,10 +782,10 @@ func _show_complete(final: bool) -> void:
 			act = str(order[at + 1])
 			levels = dictionary.levels(act)
 			level_index = 0
-			_begin_level_with_comms()
+			_into_play(_begin_level_with_comms)
 		else:
 			_show_map())
-	c.back_to_map.connect(_show_map)
+	c.back_to_map.connect(_back.bind(_show_map))
 	c.new_message = StoryData.unread(save, dictionary) > 0
 	c.open_inbox.connect(_show_inbox.bind(_show_map))
 	_swap(c)
@@ -718,13 +811,15 @@ func _show_pause(f: Node) -> void:
 		_close_pause()
 		telemetry.playing = false
 		save.clear_resume()
-		_show_map())
+		_back(_show_map))
 	pause_menu = p
 	var layer := CanvasLayer.new()  # above the field's HUD layer
 	layer.name = "PauseLayer"
 	layer.layer = 40
 	layer.add_child(p)
 	add_child(layer)
+	ScreenTransition.overlay_in(self, [p], p.find_child("PauseCard", true, false) as Control, settings.reduced_motion)
+	announcer.say("Paused")
 
 
 ## The field's settings button: pause, then settings on top; closing returns to the pause menu.
@@ -752,6 +847,8 @@ func _show_field_settings(f: Node) -> void:
 			pause_menu.visible = true)
 	layer.add_child(s)
 	add_child(layer)
+	ScreenTransition.overlay_in(self, [back, s], null, settings.reduced_motion)
+	announcer.say("Settings")
 
 
 func _close_pause() -> void:

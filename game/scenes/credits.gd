@@ -32,8 +32,9 @@ func _ready() -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 100)
 	margin.add_theme_constant_override("margin_right", 100)
-	margin.add_theme_constant_override("margin_top", 160)
-	margin.add_theme_constant_override("margin_bottom", 160)
+	var inset := Ui.safe_insets(get_viewport_rect().size)
+	margin.add_theme_constant_override("margin_top", 160 + int(inset["top"]))
+	margin.add_theme_constant_override("margin_bottom", 160 + int(inset["bottom"]))
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.add_child(box)
 	scroll.add_child(margin)
@@ -54,6 +55,7 @@ func _ready() -> void:
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(func() -> void: closed.emit())
 	box.add_child(back)
+	Ui.focus_main(back)
 
 
 func _para(t: String, size: int, color: Color) -> Label:
@@ -61,3 +63,9 @@ func _para(t: String, size: int, color: Color) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(880, 0)
 	return l
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		closed.emit()

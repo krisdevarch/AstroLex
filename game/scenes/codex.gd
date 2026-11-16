@@ -27,8 +27,9 @@ func _ready() -> void:
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right"]:
 		margin.add_theme_constant_override("margin_" + side, 40)
-	margin.add_theme_constant_override("margin_top", 60)
-	margin.add_theme_constant_override("margin_bottom", 40)
+	var inset := Ui.safe_insets(get_viewport_rect().size)
+	margin.add_theme_constant_override("margin_top", 36 + int(inset["top"]))
+	margin.add_theme_constant_override("margin_bottom", 40 + int(inset["bottom"]))
 	add_child(margin)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 20)
@@ -66,6 +67,7 @@ func _ready() -> void:
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(func() -> void: closed.emit())
 	col.add_child(back)
+	Ui.focus_main(back)
 
 
 func _card(id: String, level_title: String, note: Dictionary, won: bool) -> Control:
@@ -100,3 +102,9 @@ func _card(id: String, level_title: String, note: Dictionary, won: bool) -> Cont
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.add_child(body)
 	return card
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		closed.emit()

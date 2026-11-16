@@ -20,8 +20,11 @@ var can_cancel: bool = false
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Ui.add_sky(self, get_viewport_rect().size, 0.62)
+	var inset := Ui.safe_insets(get_viewport_rect().size)
 	var centre := CenterContainer.new()
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.offset_top = float(inset["top"])
+	centre.offset_bottom = -float(inset["bottom"])
 	add_child(centre)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 28)
@@ -48,6 +51,7 @@ func _ready() -> void:
 	ok.name = "ConfirmButton"
 	ok.pressed.connect(func() -> void: confirmed.emit(selected))
 	row.add_child(ok)
+	Ui.focus_main(ok)
 
 
 func _card(o: Dictionary, index: int, group: ButtonGroup) -> Button:
@@ -105,3 +109,10 @@ class Gauge extends Control:
 			sb.border_color = tone.darkened(0.35) if i < bars else Color(0.4, 0.47, 0.65, 0.7)
 			sb.set_border_width_all(3)
 			draw_style_box(sb, r)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		if can_cancel:
+			cancelled.emit()
