@@ -60,11 +60,17 @@ var _shoot: Dictionary = {}
 var _shoot_wait: float = 4.0
 
 
+## One shader for every backdrop (WP-F.34): a new Shader per screen made the browser compile it again
+## on each menu change.
+static var _shader: Shader
+
+
 func _ready() -> void:
-	var sh := Shader.new()
-	sh.code = SAT_SHADER
+	if _shader == null:
+		_shader = Shader.new()
+		_shader.code = SAT_SHADER
 	_mat = ShaderMaterial.new()
-	_mat.shader = sh
+	_mat.shader = _shader
 	_sky = Sprite2D.new()
 	_sky.name = "Sky"
 	_sky.centered = false
