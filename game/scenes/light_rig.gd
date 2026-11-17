@@ -9,21 +9,32 @@ const LAMP_HEIGHT := 520.0
 const TEX := 256
 
 
+## The lamp's radial falloff, built once per launch (WP-F.34): a GradientTexture2D is drawn on the
+## CPU, and rebuilding it for every title screen cost tens of milliseconds in the browser.
+static var _tex: GradientTexture2D
+
+
+static func _lamp_texture() -> GradientTexture2D:
+	if _tex == null:
+		var grad := Gradient.new()
+		grad.offsets = PackedFloat32Array([0.0, 1.0])
+		grad.colors = PackedColorArray([Color.WHITE, Color.BLACK])
+		_tex = GradientTexture2D.new()
+		_tex.gradient = grad
+		_tex.fill = GradientTexture2D.FILL_RADIAL
+		_tex.fill_from = Vector2(0.5, 0.5)
+		_tex.fill_to = Vector2(1.0, 0.5)
+		_tex.width = TEX
+		_tex.height = TEX
+	return _tex
+
+
 func configure(lamp_pos: Vector2, reach_px: float, layer: int) -> void:
 	var mod := CanvasModulate.new()
 	mod.name = "Ambient"
 	mod.color = AMBIENT
 	add_child(mod)
-	var grad := Gradient.new()
-	grad.offsets = PackedFloat32Array([0.0, 1.0])
-	grad.colors = PackedColorArray([Color.WHITE, Color.BLACK])
-	var tex := GradientTexture2D.new()
-	tex.gradient = grad
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.5)
-	tex.fill_to = Vector2(1.0, 0.5)
-	tex.width = TEX
-	tex.height = TEX
+	var tex := _lamp_texture()
 	var lamp := PointLight2D.new()
 	lamp.name = "VisorLamp"
 	lamp.position = lamp_pos

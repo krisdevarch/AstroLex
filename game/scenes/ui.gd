@@ -280,7 +280,19 @@ static func slider(label: String, value: float, width: float = 820.0) -> VBoxCon
 	return v
 
 
+## Drawn once per launch (WP-F.34): building them pixel by pixel on every Settings visit was slow on
+## the web.
+static var _icon_cache: Dictionary = {}
+
+
 static func _knob(lit: bool) -> Texture2D:
+	var key := "knob%s" % lit
+	if not _icon_cache.has(key):
+		_icon_cache[key] = _knob_draw(lit)
+	return _icon_cache[key]
+
+
+static func _knob_draw(lit: bool) -> Texture2D:
 	var d := 56
 	var img := Image.create(d, d, false, Image.FORMAT_RGBA8)
 	var r := float(d) * 0.5
@@ -293,6 +305,13 @@ static func _knob(lit: bool) -> Texture2D:
 
 
 static func _switch_icon(on: bool) -> Texture2D:
+	var key := "switch%s" % on
+	if not _icon_cache.has(key):
+		_icon_cache[key] = _switch_draw(on)
+	return _icon_cache[key]
+
+
+static func _switch_draw(on: bool) -> Texture2D:
 	var w := 112
 	var h := 60
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)

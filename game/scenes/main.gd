@@ -172,6 +172,9 @@ var _find_cb: JavaScriptObject
 func _tour_hook() -> void:
 	if not OS.has_feature("web") or not str(JavaScriptBridge.eval("window.location.search")).contains("tour=1"):
 		return
+	var q := str(JavaScriptBridge.eval("window.location.search"))
+	if q.contains("slowtx="):
+		transition.slow = maxf(1.0, float(q.substr(q.find("slowtx=") + 7).get_slice("&", 0)))
 	_find_cb = JavaScriptBridge.create_callback(func(args: Array) -> void:
 		var n := _find_visible(get_tree().root, str(args[0]))
 		var out := "null"
@@ -351,24 +354,31 @@ func _cap_fps(play: bool) -> void:
 
 
 ## Replaces the screen at once (game logic and tests see the new one straight away), then plays the
-## hand-over from a still of the old one (screen_transition.gd); _next_kind picks the motion.
+## hand-over with the old one kept live above it (screen_transition.gd); _next_kind picks the motion.
 func _swap(node: Node) -> void:
 	var kind := _next_kind
 	_next_kind = ScreenTransition.FORWARD
-	var still: Texture2D = transition.capture() if screen != null and transition != null else null
+	var t0 := Time.get_ticks_usec()
 	_close_pause()
+	var animate := screen != null and transition != null and transition.can_play(kind)
 	if screen != null:
-		remove_child(screen)
-		screen.queue_free()
+		if animate:
+			transition.take_outgoing(screen)  # stays live above the new one until the change ends
+		else:
+			remove_child(screen)
+			screen.queue_free()
 	screen = node
 	if node.name != "Field":
 		_cap_fps(false)
 		daily_date = ""
 		music.play(MusicScript.MENU)
 	add_child(node)
-	move_child(transition, -1)
 	transition.reduced_motion = settings.reduced_motion
-	var sec := transition.play(still, node as CanvasItem, kind) if node is CanvasItem else 0.0
+	var sec := transition.play(node as CanvasItem, kind) if animate and node is CanvasItem else 0.0
+	if not animate or not node is CanvasItem:
+		transition.finish()
+	if _find_cb != null:
+		print("AstroLex swap to=%s swap_ms=%.1f" % [node.name, float(Time.get_ticks_usec() - t0) / 1000.0])
 	if sec > 0.0:
 		_smooth_for(sec)
 	announcer.say(str(SCREEN_NAMES.get(str(node.name), "")))

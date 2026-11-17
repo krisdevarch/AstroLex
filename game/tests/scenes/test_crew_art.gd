@@ -50,11 +50,11 @@ func test_who_set_after_add_child_and_unknown_speaker() -> void:
 	root.free()
 
 
-func test_imports_have_mipmaps_and_lossless() -> void:
+func test_imports_have_mipmaps_and_high_quality() -> void:
 	for p in IMPORTS:
 		var f := FileAccess.open(p, FileAccess.READ)
 		assert_true(f != null, p)
 		if f:
 			var txt := f.get_as_text()
 			assert_true(txt.contains("mipmaps/generate=true"), p + " mipmaps")
-			assert_true(txt.contains("compress/mode=0"), p + " lossless")
+			assert_true(txt.contains("compress/mode=0") or (txt.contains("compress/mode=1") and txt.contains("compress/lossy_quality=0.9")), p + " lossless or WebP at 0.9 (0.7 smeared the faces)")

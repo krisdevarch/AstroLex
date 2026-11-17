@@ -38,11 +38,16 @@ static func bar_fill_box(c1: Color, c2: Color, h: int = 28) -> StyleBoxTexture:
 	return sb
 
 
+## One clip shader for every portrait (WP-F.34), so the browser compiles it once.
+static var _clip_shader: Shader
+
+
 static func clip_material() -> ShaderMaterial:
-	var sh := Shader.new()
-	sh.code = CLIP_SHADER
+	if _clip_shader == null:
+		_clip_shader = Shader.new()
+		_clip_shader.code = CLIP_SHADER
 	var m := ShaderMaterial.new()
-	m.shader = sh
+	m.shader = _clip_shader
 	return m
 
 

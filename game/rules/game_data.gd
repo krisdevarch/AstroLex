@@ -8,8 +8,15 @@ const CONTENT_PATH := "res://data/content.json"
 
 
 ## Flat dictionary keyed like "oxygen.max" (numbers arrive as floats).
+## Read once per launch (WP-F.34: a dozen screens and nodes each re-read and re-parsed the file on
+## every screen change, which is slow in the browser); callers get their own copy.
+static var _tunables_cache: Dictionary = {}
+
+
 static func load_tunables() -> Dictionary:
-	return _load(TUNABLES_PATH)
+	if _tunables_cache.is_empty():
+		_tunables_cache = _load(TUNABLES_PATH)
+	return _tunables_cache.duplicate()
 
 
 ## {acts, lexicon, theme, templates, anagrams}.
